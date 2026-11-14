@@ -7,7 +7,11 @@ import {
   Loader2,
   Pencil,
   Percent,
-  Plus,
+  Filter,
+  LineChart,
+  PieChart,
+  Radio,
+  Users,
   Receipt,
   Repeat2,
   Send,
@@ -46,41 +50,57 @@ import {
   SourcesBlock,
 } from "./DeskBlocks";
 import { DeskKpi } from "./DeskParts";
+import {
+  BoardCustomizeButton,
+  HomeBoard,
+  type BoardLayout,
+  type BoardWidget,
+  type Span,
+} from "@/components/dashboard/HomeBoard";
 
 // Bosh sahifa → «Ish stoli»: the company's main figures for a period next
 // to the period before (5CRM's dashboard, in the platform's look). Every
-// card has its "!" and ⚙; «Vidjet qo'shish» picks which blocks this person
-// sees; «Telegram» sends the figures to their chat; «Tarix» shows the last
+// card has its "!" and ⚙; «Panelni sozlash» moves, resizes, adds and
+// removes the cards (HomeBoard, per person); «Telegram» sends the figures to their chat; «Tarix» shows the last
 // 12 months; «Eksport» writes an Excel file.
 
 const PRESETS: DeskPreset[] = ["today", "week", "month", "year", "range"];
-const WIDGETS = [
-  "today",
-  "revenue",
-  "count",
-  "avgCheck",
-  "newClients",
-  "repeat",
-  "conversion",
-  "plan",
-  "channels",
-  "sources",
-  "dynamics",
-  "funnel",
-  "managers",
-] as const;
-type Widget = (typeof WIDGETS)[number];
-const STORE = "desk.hidden.v1";
 const PRESET_STORE = "desk.preset.v1";
 
-function readHidden(): Widget[] {
-  try {
-    const v = JSON.parse(localStorage.getItem(STORE) ?? "[]");
-    return Array.isArray(v) ? v.filter((x) => (WIDGETS as readonly string[]).includes(x)) : [];
-  } catch {
-    return [];
-  }
-}
+const KPI_SIZES: Span[] = [3, 4, 6, 12];
+const BLOCK_SIZES: Span[] = [6, 8, 12];
+const DESK_DEFAULTS: BoardLayout = {
+  order: [
+    "today",
+    "revenue",
+    "count",
+    "avgCheck",
+    "newClients",
+    "repeat",
+    "conversion",
+    "plan",
+    "channels",
+    "sources",
+    "dynamics",
+    "funnel",
+    "managers",
+  ],
+  size: {
+    today: 4,
+    revenue: 4,
+    count: 4,
+    avgCheck: 4,
+    newClients: 4,
+    repeat: 4,
+    conversion: 4,
+    plan: 4,
+    channels: 12,
+    sources: 12,
+    dynamics: 12,
+    funnel: 12,
+    managers: 12,
+  },
+};
 
 const fmtDay = (ymd: string) => ymd.split("-").reverse().join(".");
 
@@ -97,11 +117,10 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
   const [preset, setPresetState] = useState<DeskPreset>("month");
   const [custom, setCustom] = useState<{ from: string; to: string } | undefined>();
   const [funnel, setFunnel] = useState<string | null>(null);
-  const [hidden, setHidden] = useState<Widget[]>([]);
+  const [editing, setEditing] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   useEffect(() => {
-    setHidden(readHidden());
     try {
       const p = localStorage.getItem(PRESET_STORE) as DeskPreset | null;
       if (p && p !== "range" && PRESETS.includes(p)) setPresetState(p);
@@ -119,16 +138,6 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
       }
     }
   }
-  function toggleWidget(w: Widget, on: boolean) {
-    const next = on ? hidden.filter((x) => x !== w) : [...hidden, w];
-    setHidden(next);
-    try {
-      localStorage.setItem(STORE, JSON.stringify(next));
-    } catch {
-      /* private window */
-    }
-  }
-  const shown = (w: Widget) => !hidden.includes(w);
 
   const period = useMemo(() => deskPeriod(preset, new Date(), custom), [preset, custom]);
   const query = { ...period, funnel };
@@ -230,6 +239,197 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
   const btn =
     "ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-foreground disabled:opacity-50";
 
+  // The desk as a board (HomeBoard): «Panelni sozlash» moves, resizes,
+  // adds and removes its cards; each person's layout is kept in this browser.
+  const boardWidgets: BoardWidget[] = d
+    ? [
+        {
+          id: "today",
+          title: t("desk.today"),
+          icon: Wallet,
+          tone: "emerald",
+          sizes: KPI_SIZES,
+          node: (
+            <DeskKpi
+              tipKey="desk.today"
+              label={t("desk.today")}
+              icon={Wallet}
+              tone="emerald"
+              rawValue={d.today.revenue}
+              value={format(d.today.revenue)}
+              change={change({ cur: d.today.revenue, prev: d.today.yRevenue })}
+              prevText={t("desk.yesterdayUntil", {
+                time: d.today.until,
+                v: format(d.today.yRevenue),
+              })}
+            />
+          ),
+        },
+        {
+          id: "revenue",
+          title: revenueLabel,
+          icon: TrendingUp,
+          tone: "primary",
+          sizes: KPI_SIZES,
+          node: (
+            <DeskKpi
+              tipKey="desk.revenue"
+              label={revenueLabel}
+              icon={TrendingUp}
+              tone="primary"
+              rawValue={d.revenue.cur}
+              value={format(d.revenue.cur)}
+              change={change(d.revenue)}
+              prevText={`(${prevWord}: ${format(d.revenue.prev)})`}
+            />
+          ),
+        },
+        {
+          id: "count",
+          title: t("desk.count"),
+          icon: ShoppingCart,
+          tone: "sky",
+          sizes: KPI_SIZES,
+          node: (
+            <DeskKpi
+              tipKey="desk.count"
+              label={t("desk.count")}
+              icon={ShoppingCart}
+              tone="sky"
+              rawValue={d.count.cur}
+              value={t("desk.pcs", { n: d.count.cur })}
+              change={change(d.count)}
+              prevText={`(${t("desk.prevPeriodShort")}: ${t("desk.pcs", { n: d.count.prev })})`}
+            />
+          ),
+        },
+        {
+          id: "avgCheck",
+          title: t("desk.avgCheck"),
+          icon: Receipt,
+          tone: "amber",
+          sizes: KPI_SIZES,
+          node: (
+            <DeskKpi
+              tipKey="desk.avgCheck"
+              label={t("desk.avgCheck")}
+              icon={Receipt}
+              tone="amber"
+              rawValue={d.avgCheck.cur}
+              value={format(d.avgCheck.cur)}
+              change={change(d.avgCheck)}
+              prevText={`(${t("desk.prevPeriodShort")}: ${format(d.avgCheck.prev)})`}
+            />
+          ),
+        },
+        {
+          id: "newClients",
+          title: t("desk.newClients"),
+          icon: UserPlus,
+          tone: "sky",
+          sizes: KPI_SIZES,
+          node: (
+            <DeskKpi
+              tipKey="desk.newClients"
+              label={t("desk.newClients")}
+              icon={UserPlus}
+              tone="sky"
+              rawValue={d.newClients.cur}
+              value={t("desk.pcs", { n: d.newClients.cur })}
+              change={change(d.newClients)}
+              prevText={`(${t("desk.prevPeriodShort")}: ${t("desk.pcs", { n: d.newClients.prev })})`}
+            />
+          ),
+        },
+        {
+          id: "repeat",
+          title: t("desk.repeat"),
+          icon: Repeat2,
+          tone: "violet",
+          sizes: KPI_SIZES,
+          node: (
+            <DeskKpi
+              tipKey="desk.repeat"
+              label={t("desk.repeat")}
+              icon={Repeat2}
+              tone="violet"
+              rawValue={d.repeat.cur}
+              value={t("desk.pcs", { n: d.repeat.cur })}
+              change={change(d.repeat)}
+              prevText={`(${t("desk.prevPeriodShort")}: ${t("desk.pcs", { n: d.repeat.prev })})`}
+            />
+          ),
+        },
+        {
+          id: "conversion",
+          title: t("desk.conversion"),
+          icon: Percent,
+          tone: "rose",
+          sizes: KPI_SIZES,
+          node: (
+            <DeskKpi
+              tipKey="desk.conversion"
+              label={t("desk.conversion")}
+              icon={Percent}
+              tone="rose"
+              rawValue={d.conversion.cur}
+              value={`${d.conversion.cur}%`}
+              change={change(d.conversion)}
+              prevText={`(${t("desk.prevPeriodShort")}: ${d.conversion.prev}% · ${t("desk.leadsN", { n: d.leads.cur })})`}
+            />
+          ),
+        },
+        {
+          id: "plan",
+          title: t("desk.plan"),
+          icon: Target,
+          tone: "amber",
+          sizes: KPI_SIZES,
+          node: <PlanCard d={d} canEdit={canPlan} onEdit={() => setPlanOpen(true)} />,
+        },
+        {
+          id: "channels",
+          title: t("desk.channels"),
+          icon: Radio,
+          tone: "sky",
+          sizes: BLOCK_SIZES,
+          node: <ChannelsBlock d={d} />,
+        },
+        {
+          id: "sources",
+          title: t("desk.sources"),
+          icon: PieChart,
+          tone: "violet",
+          sizes: BLOCK_SIZES,
+          node: <SourcesBlock d={d} />,
+        },
+        {
+          id: "dynamics",
+          title: t("desk.dynamics"),
+          icon: LineChart,
+          tone: "primary",
+          sizes: BLOCK_SIZES,
+          node: <DynamicsBlock d={d} curLabel={periodText} prevLabel={prevText} />,
+        },
+        {
+          id: "funnel",
+          title: t("desk.funnel"),
+          icon: Filter,
+          tone: "amber",
+          sizes: BLOCK_SIZES,
+          node: <FunnelBlock d={d} onPick={setFunnel} />,
+        },
+        {
+          id: "managers",
+          title: t("desk.managers"),
+          icon: Users,
+          tone: "emerald",
+          sizes: BLOCK_SIZES,
+          node: <ManagersBlock d={d} />,
+        },
+      ]
+    : [];
+
   return (
     <div className="space-y-4">
       {/* One row: the company (small, top left) and, on the right, the
@@ -302,28 +502,7 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
               </option>
             ))}
           </select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button type="button" className={btn}>
-                <Plus className="h-4 w-4" />
-                {t("desk.addWidget")}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 p-2">
-              <p className="px-2 pb-1.5 pt-1 text-[12px] font-semibold text-muted-foreground">
-                {t("desk.widgetsHint")}
-              </p>
-              {WIDGETS.map((w) => (
-                <label
-                  key={w}
-                  className="flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1.5 text-[13px] hover:bg-accent/60"
-                >
-                  {w === "revenue" ? revenueLabel : t(`desk.${w}`)}
-                  <Switch checked={shown(w)} onCheckedChange={(v) => toggleWidget(w, v)} />
-                </label>
-              ))}
-            </PopoverContent>
-          </Popover>
+          {!editing && <BoardCustomizeButton onClick={() => setEditing(true)} />}
           <button
             type="button"
             className={btn}
@@ -361,102 +540,13 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 phone:gap-2">
-            {shown("today") && (
-              <DeskKpi
-                tipKey="desk.today"
-                label={t("desk.today")}
-                icon={Wallet}
-                tone="emerald"
-                rawValue={d.today.revenue}
-                value={format(d.today.revenue)}
-                change={change({ cur: d.today.revenue, prev: d.today.yRevenue })}
-                prevText={t("desk.yesterdayUntil", {
-                  time: d.today.until,
-                  v: format(d.today.yRevenue),
-                })}
-              />
-            )}
-            {shown("revenue") && (
-              <DeskKpi
-                tipKey="desk.revenue"
-                label={revenueLabel}
-                icon={TrendingUp}
-                tone="primary"
-                rawValue={d.revenue.cur}
-                value={format(d.revenue.cur)}
-                change={change(d.revenue)}
-                prevText={`(${prevWord}: ${format(d.revenue.prev)})`}
-              />
-            )}
-            {shown("count") && (
-              <DeskKpi
-                tipKey="desk.count"
-                label={t("desk.count")}
-                icon={ShoppingCart}
-                tone="sky"
-                rawValue={d.count.cur}
-                value={t("desk.pcs", { n: d.count.cur })}
-                change={change(d.count)}
-                prevText={`(${t("desk.prevPeriodShort")}: ${t("desk.pcs", { n: d.count.prev })})`}
-              />
-            )}
-            {shown("avgCheck") && (
-              <DeskKpi
-                tipKey="desk.avgCheck"
-                label={t("desk.avgCheck")}
-                icon={Receipt}
-                tone="amber"
-                rawValue={d.avgCheck.cur}
-                value={format(d.avgCheck.cur)}
-                change={change(d.avgCheck)}
-                prevText={`(${t("desk.prevPeriodShort")}: ${format(d.avgCheck.prev)})`}
-              />
-            )}
-            {shown("newClients") && (
-              <DeskKpi
-                tipKey="desk.newClients"
-                label={t("desk.newClients")}
-                icon={UserPlus}
-                tone="sky"
-                rawValue={d.newClients.cur}
-                value={t("desk.pcs", { n: d.newClients.cur })}
-                change={change(d.newClients)}
-                prevText={`(${t("desk.prevPeriodShort")}: ${t("desk.pcs", { n: d.newClients.prev })})`}
-              />
-            )}
-            {shown("repeat") && (
-              <DeskKpi
-                tipKey="desk.repeat"
-                label={t("desk.repeat")}
-                icon={Repeat2}
-                tone="violet"
-                rawValue={d.repeat.cur}
-                value={t("desk.pcs", { n: d.repeat.cur })}
-                change={change(d.repeat)}
-                prevText={`(${t("desk.prevPeriodShort")}: ${t("desk.pcs", { n: d.repeat.prev })})`}
-              />
-            )}
-            {shown("conversion") && (
-              <DeskKpi
-                tipKey="desk.conversion"
-                label={t("desk.conversion")}
-                icon={Percent}
-                tone="rose"
-                rawValue={d.conversion.cur}
-                value={`${d.conversion.cur}%`}
-                change={change(d.conversion)}
-                prevText={`(${t("desk.prevPeriodShort")}: ${d.conversion.prev}% · ${t("desk.leadsN", { n: d.leads.cur })})`}
-              />
-            )}
-            {shown("plan") && <PlanCard d={d} canEdit={canPlan} onEdit={() => setPlanOpen(true)} />}
-          </div>
-
-          {shown("channels") && <ChannelsBlock d={d} />}
-          {shown("sources") && <SourcesBlock d={d} />}
-          {shown("dynamics") && <DynamicsBlock d={d} curLabel={periodText} prevLabel={prevText} />}
-          {shown("funnel") && <FunnelBlock d={d} onPick={setFunnel} />}
-          {shown("managers") && <ManagersBlock d={d} />}
+          <HomeBoard
+            boardKey="desk"
+            widgets={boardWidgets}
+            defaults={DESK_DEFAULTS}
+            editing={editing}
+            onEditingChange={setEditing}
+          />
         </>
       )}
 

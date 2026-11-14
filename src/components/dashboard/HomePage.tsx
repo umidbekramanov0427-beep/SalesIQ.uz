@@ -41,7 +41,12 @@ import {
   type KpiId,
   PeriodSegment,
 } from "@/components/dashboard/HomeOverview";
-import { HomeBoard, type BoardLayout, type BoardWidget } from "@/components/dashboard/HomeBoard";
+import {
+  BoardCustomizeButton,
+  HomeBoard,
+  type BoardLayout,
+  type BoardWidget,
+} from "@/components/dashboard/HomeBoard";
 import type { CardTone } from "@/lib/tones";
 import {
   DashboardFilterRow,
@@ -593,18 +598,7 @@ export function HomePage() {
               <>
                 <div className="mb-3 mt-5 flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold text-subtle">{periodCaption}</p>
-                  {!editingBoard && (
-                    <span className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditingBoard(true)}
-                        className="inline-flex h-9 items-center gap-2 rounded-xl ctl-soft px-3.5 text-[13px] font-semibold text-foreground phone:hidden hover:text-primary"
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        {t("board.customize")}
-                      </button>
-                    </span>
-                  )}
+                  {!editingBoard && <BoardCustomizeButton onClick={() => setEditingBoard(true)} />}
                 </div>
                 <HomeBoard
                   widgets={boardWidgets}

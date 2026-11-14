@@ -143,7 +143,10 @@ export function HomeBoard({
   editing,
   onEditingChange,
   aliases = NO_ALIASES,
+  boardKey = "home",
 }: {
+  /** Whose layout this is (each page keeps its own, per person). */
+  boardKey?: string;
   widgets: BoardWidget[];
   defaults: BoardLayout;
   editing: boolean;
@@ -153,7 +156,7 @@ export function HomeBoard({
 }) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const storeKey = user ? `salesiq.home.board.v1.${user.id}` : null;
+  const storeKey = user ? `salesiq.${boardKey}.board.v1.${user.id}` : null;
   const byId = useMemo(() => new Map(widgets.map((w) => [w.id, w])), [widgets]);
   const saved = useSavedLayout(storeKey);
   const base = useMemo(
@@ -626,5 +629,20 @@ export function HomeBoard({
         </div>
       )}
     </div>
+  );
+}
+
+/** «Panelni sozlash»: opens a page's board editor (move, resize, add, remove cards). */
+export function BoardCustomizeButton({ onClick }: { onClick: () => void }) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3.5 text-[13px] font-semibold text-foreground hover:text-primary phone:hidden"
+    >
+      <LayoutDashboard className="h-4 w-4" />
+      {t("board.customize")}
+    </button>
   );
 }
