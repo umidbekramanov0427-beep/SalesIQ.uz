@@ -4,7 +4,14 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { canOpenSection } from "@/lib/access-rules";
 import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { useBrowserZoom } from "@/lib/browser-zoom";
-import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+} from "react";
 import {
   Bell,
   ChevronDown,
@@ -24,9 +31,9 @@ import {
   Users,
   Megaphone,
   Copy,
-  Pencil,
-  Power,
-  SunMoon,
+  Monitor,
+  UserRoundPen,
+  X as XIcon,
   Plus,
   Check,
   Loader2,
@@ -37,6 +44,7 @@ import { copyText } from "@/lib/clipboard";
 import { businessInitials, type BusinessItem } from "@/lib/businesses";
 
 import { createPortal } from "react-dom";
+import { SearchResultList, useSearchResults } from "@/components/layout/SearchPalette";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
 import {
@@ -543,7 +551,6 @@ function FunnelsNavGroup({
 
 export function AppSidebar({
   collapsed: collapsedProp,
-  onOpenSearch,
   onEditProfile,
   compact = false,
   onToggle,
@@ -734,7 +741,7 @@ export function AppSidebar({
       <TooltipProvider delayDuration={0}>
         {/* The page always keeps the narrow rail's width; the opened menu
           lies over the page from it instead of pushing the page aside. */}
-        <div className="relative h-dvh w-[80px] shrink-0 phone:hidden" style={railFrame}>
+        <div className="relative h-dvh w-[72px] shrink-0 phone:hidden" style={railFrame}>
           <aside
             className={cn(
               // bg-background (not bg-sidebar) -- the icon rail sits one shade
@@ -749,7 +756,7 @@ export function AppSidebar({
               // pushing its bottom nav items (Sozlamalar, AI yordamchi, the
               // user menu) below the fold with no way to reach them.
               "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
-              compact ? "w-[80px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
+              compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
             )}
             style={railHeight}
           >
@@ -779,15 +786,16 @@ export function AppSidebar({
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="relative h-dvh w-[80px] shrink-0 phone:hidden" style={railFrame}>
+      <div className="relative h-dvh w-[72px] shrink-0 phone:hidden" style={railFrame}>
         <aside
           className={cn(
             // See the platform-owner rail above for why this is bg-background,
             // not bg-sidebar.
             "absolute left-0 top-0 z-40 flex h-dvh flex-col border-r border-sidebar-border bg-background transition-[width,box-shadow] duration-300 ease-out",
-            compact ? "w-[80px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
+            compact ? "w-[72px]" : collapsed ? "w-[132px]" : "w-[264px] shadow-2xl",
           )}
           style={railHeight}
+          data-app-rail
         >
           <div
             className={cn(
@@ -818,12 +826,7 @@ export function AppSidebar({
             <LogoPanel
               open={logoPanel}
               onClose={() => setLogoPanel(false)}
-              left={compact ? 88 : collapsed ? 140 : 272}
               isAdmin={isAdmin}
-              onSearch={(q) => {
-                setLogoPanel(false);
-                onOpenSearch?.(q);
-              }}
               onEditProfile={() => {
                 setLogoPanel(false);
                 onEditProfile?.();
@@ -900,31 +903,35 @@ export function AppSidebar({
       </div>
       {/* The notifications drawer (opened from the user menu's "Xabarlar"),
         outside the rail's counter-zoom, beside the rail's on-screen edge. */}
-      <RailNotifications railWidth={(compact ? 80 : collapsed ? 132 : 264) / pageZoom} hideButton />
+      <RailNotifications railWidth={(compact ? 72 : collapsed ? 132 : 264) / pageZoom} hideButton />
     </TooltipProvider>
   );
 }
 
 /**
- * The logo's account bar (as in 5CRM): across the top of the screen -- the
- * person signed in and the company's client number, «Biznes» (switch
- * between my businesses or add one), Profil and Chiqish, search over the whole
- * platform, and on the right the language and the theme (auto / light /
- * dark). Under it the page dims; a click there, on the logo again or Esc
- * closes it.
+ * The logo's account bar (as in 5CRM): a floating bar along the top, next
+ * to the sidebar (never over it) -- who is signed in and the company's
+ * client number, «Biznes», search over the whole platform (live, the
+ * results open under the field as part of it), Profil / Chiqish, the
+ * language and the theme. Under it the page dims; a click there, on the
+ * logo again or Esc closes it.
  */
-function LogoPanel({
-  open,
-  onClose,
-  left,
-  onSearch,
-  onEditProfile,
-}: {
+function LogoPanel(props: {
   open: boolean;
   onClose: () => void;
-  left: number;
   isAdmin: boolean;
-  onSearch: (query: string) => void;
+  onEditProfile: () => void;
+}) {
+  if (!props.open || typeof document === "undefined") return null;
+  return createPortal(<LogoBar {...props} />, document.body);
+}
+
+function LogoBar({
+  onClose,
+  onEditProfile,
+}: {
+  onClose: () => void;
+  isAdmin: boolean;
   onEditProfile: () => void;
 }) {
   const { t, lang, setLang } = useI18n();
@@ -932,42 +939,149 @@ function LogoPanel({
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [active, setActive] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
+  const searching = q.trim().length > 0;
+  const { results, groups, isFetching, feed } = useSearchResults(q, true, onClose);
+  // Starts right after the sidebar, measured (the rail follows the
+  // browser's zoom, so a fixed number would put the bar over it).
+  const [left, setLeft] = useState(88);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const rail = document.querySelector<HTMLElement>("[data-app-rail]");
+      setLeft(Math.round((rail?.getBoundingClientRect().right ?? 80) + 8));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
   useEffect(() => {
-    if (!open) return;
-    setQ("");
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (q) setQ("");
+      else onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-  if (!open || typeof document === "undefined") return null;
+  }, [onClose, q]);
+  useEffect(() => setActive(0), [q]);
+  useEffect(() => {
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-index="${active}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [active]);
+
   const roleLabel = user?.role ? t(ROLE_KEY[user.role] ?? "") : "";
-  const cell =
-    "flex h-full shrink-0 flex-col items-center justify-center gap-1 px-5 text-[12.5px] font-semibold";
-  return createPortal(
+  const initials =
+    (user?.name || user?.email || "?")
+      .split(/[\s@.]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]!.toUpperCase())
+      .join("") || "?";
+  const action =
+    "inline-flex h-10 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold transition-colors";
+
+  return (
     <div className="fixed inset-0 z-[70]" onMouseDown={onClose}>
+      {feed}
       <div className="absolute inset-0 bg-black/30 animate-in fade-in-0 duration-150" />
       <div
         role="dialog"
         aria-label={t("logoPanel.open")}
         onMouseDown={(e) => e.stopPropagation()}
         style={{ left }}
-        className="absolute right-0 top-0 flex h-16 items-stretch border-b border-border bg-popover text-popover-foreground shadow-[0_12px_32px_-12px_rgb(0_0_0/0.35)] animate-in fade-in-0 slide-in-from-top-2 duration-150"
+        className="@container absolute right-3 top-2 flex h-[60px] items-center gap-2 rounded-2xl border border-border bg-popover pl-3 pr-2 text-popover-foreground shadow-[0_18px_48px_-16px_rgb(0_0_0/0.45)] animate-in fade-in-0 slide-in-from-top-2 duration-150"
       >
-        {/* Who is signed in, their role and the company's client number. */}
-        <div className="flex min-w-0 shrink flex-col justify-center border-r border-border px-5">
-          <p className="max-w-[300px] truncate text-[14.5px] font-bold text-foreground">
-            {user?.email || user?.name || "—"}
-          </p>
-          <ClientNumber roleLabel={roleLabel} />
+        {/* Who is signed in */}
+        <div className="flex shrink-0 items-center gap-2.5 pr-1">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/12 text-[12.5px] font-bold text-primary">
+            {initials}
+          </span>
+          <div className="min-w-0">
+            <p className="max-w-[150px] truncate text-[13.5px] font-semibold @min-[1120px]:max-w-[220px] leading-tight text-foreground">
+              {user?.email || user?.name || "—"}
+            </p>
+            <ClientNumber roleLabel={roleLabel} />
+          </div>
         </div>
 
-        <div className="flex shrink-0 items-center px-4">
-          <BusinessSwitcher />
+        <span className="h-8 w-px shrink-0 bg-border" />
+        <BusinessSwitcher />
+        <span className="h-8 w-px shrink-0 bg-border" />
+
+        {/* Search: live, the results open under the field as part of it. */}
+        <div className="relative min-w-[180px] flex-1">
+          <label
+            className={cn(
+              "flex h-10 items-center gap-2 border bg-surface px-3 transition-colors",
+              searching
+                ? "rounded-t-xl border-primary/50 border-b-transparent bg-popover"
+                : "rounded-xl border-border focus-within:border-primary/50",
+            )}
+          >
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setActive((a) => Math.min(results.length - 1, a + 1));
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setActive((a) => Math.max(0, a - 1));
+                } else if (e.key === "Enter") {
+                  e.preventDefault();
+                  results[active]?.go();
+                }
+              }}
+              placeholder={t("logoPanel.search")}
+              className="min-w-0 flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-subtle"
+            />
+            {searching ? (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                aria-label={t("logoPanel.clear")}
+                className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <XIcon className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <kbd className="rounded-md border border-border bg-card px-1.5 text-[10.5px] font-semibold text-muted-foreground">
+                ⌘K
+              </kbd>
+            )}
+          </label>
+          {searching && (
+            <div className="absolute inset-x-0 top-full z-[1] overflow-hidden rounded-b-xl border border-t-0 border-primary/50 bg-popover shadow-[0_24px_48px_-20px_rgb(0_0_0/0.5)]">
+              <div className="mx-3 h-px bg-border" />
+              <SearchResultList
+                listRef={listRef}
+                results={results}
+                groups={groups}
+                active={active}
+                onActive={setActive}
+                searching={q.trim().length >= 2}
+                isFetching={isFetching}
+                className="max-h-[min(60vh,520px)] overflow-y-auto p-1.5"
+              />
+            </div>
+          )}
         </div>
 
-        <button type="button" onClick={onEditProfile} className={cn(cell, "hover:bg-accent")}>
-          <Pencil className="h-[18px] w-[18px]" />
-          {t("logoPanel.profile")}
+        <span className="h-8 w-px shrink-0 bg-border" />
+
+        <button
+          type="button"
+          onClick={onEditProfile}
+          title={t("logoPanel.profile")}
+          className={cn(action, "text-foreground hover:bg-accent")}
+        >
+          <UserRoundPen className="h-4 w-4 text-muted-foreground" />
+          <span className="hidden @min-[1120px]:inline">{t("logoPanel.profile")}</span>
         </button>
         <button
           type="button"
@@ -975,93 +1089,75 @@ function LogoPanel({
             onClose();
             void signOut().then(() => navigate({ to: "/login", replace: true }));
           }}
-          className={cn(cell, "text-destructive hover:bg-destructive/10")}
+          className={cn(action, "text-destructive hover:bg-destructive/10")}
         >
-          <Power className="h-[18px] w-[18px]" />
-          {t("logoPanel.logout")}
+          <LogOut className="h-4 w-4" />
+          <span className="hidden @min-[1120px]:inline">{t("logoPanel.logout")}</span>
         </button>
 
-        {/* Search over the whole platform. */}
-        <form
-          className="flex min-w-0 flex-1 items-center px-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSearch(q.trim());
-          }}
-        >
-          <label className="flex h-10 w-full max-w-[440px] items-center gap-2 rounded-full border border-border bg-background px-3.5 focus-within:border-primary">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t("logoPanel.search")}
-              className="min-w-0 flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
-            />
-            <kbd className="rounded-[6px] border border-border bg-card px-1.5 text-[10px] font-semibold text-muted-foreground">
-              ⌘K
-            </kbd>
-          </label>
-        </form>
+        <span className="h-8 w-px shrink-0 bg-border" />
 
-        {/* Language and theme, on the right. */}
-        <div className="flex shrink-0 items-stretch border-l border-border bg-surface/60">
-          <div className="flex items-center px-3">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex h-10 items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-[13px] font-semibold text-foreground hover:border-primary/50"
-                >
-                  <span className="text-[16px] leading-none">{LANG_FLAGS[lang]}</span>
-                  {LANG_SHORT[lang]}
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="z-[80] w-40 p-1">
-                {LANGS.map((l) => (
-                  <button
-                    key={l}
-                    type="button"
-                    onClick={() => setLang(l)}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] hover:bg-accent",
-                      l === lang && "bg-primary/10 font-semibold text-primary",
-                    )}
-                  >
-                    <span className="text-[16px] leading-none">{LANG_FLAGS[l]}</span>
-                    {LANG_SHORT[l]}
-                  </button>
-                ))}
-              </PopoverContent>
-            </Popover>
-          </div>
+        {/* Language */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={cn(action, "gap-1.5 px-2.5 text-foreground hover:bg-accent")}
+              aria-label={t("logoPanel.lang")}
+            >
+              <span className="text-[15px] leading-none">{LANG_FLAGS[lang]}</span>
+              {LANG_SHORT[lang]}
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="z-[80] w-36 p-1">
+            {LANGS.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLang(l)}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] hover:bg-accent",
+                  l === lang && "bg-primary/10 font-semibold text-primary",
+                )}
+              >
+                <span className="text-[15px] leading-none">{LANG_FLAGS[l]}</span>
+                {LANG_SHORT[l]}
+                {l === lang && <Check className="ml-auto h-3.5 w-3.5" />}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+
+        {/* Theme: auto / light / dark */}
+        <div
+          role="radiogroup"
+          aria-label={t("logoPanel.theme")}
+          className="ctl-track flex items-center gap-0.5 rounded-xl p-0.5"
+        >
           {(["system", "light", "dark"] as ThemeMode[]).map((m) => {
-            const Icon = m === "system" ? SunMoon : m === "light" ? Sun : Moon;
+            const Icon = m === "system" ? Monitor : m === "light" ? Sun : Moon;
             const on = mode === m;
             return (
               <button
                 key={m}
                 type="button"
+                role="radio"
+                aria-checked={on}
+                aria-selected={on}
+                data-state={on ? "active" : "inactive"}
+                title={t(`logoPanel.theme.${m}`)}
+                aria-label={t(`logoPanel.theme.${m}`)}
                 onClick={() => setMode(m)}
-                aria-pressed={on}
-                className={cn(
-                  cell,
-                  "w-[84px] px-0 font-medium",
-                  on
-                    ? "bg-primary/[0.12] text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                )}
+                className="ctl-tab grid h-9 w-9 place-items-center rounded-[10px]"
               >
-                <Icon className="h-[19px] w-[19px]" />
-                {m === "system" ? "auto" : m}
+                <Icon className="h-4 w-4" />
               </button>
             );
           })}
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
 
@@ -1071,8 +1167,8 @@ function ClientNumber({ roleLabel }: { roleLabel: string }) {
   const { data: org } = useMyOrganization();
   const number = clientNumber(org?.id);
   return (
-    <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
-      <span className="truncate">{roleLabel}</span>
+    <p className="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-[12px] leading-tight text-muted-foreground">
+      <span>{roleLabel}</span>
       {number && (
         <>
           <span>·</span>
@@ -1089,9 +1185,9 @@ function ClientNumber({ roleLabel }: { roleLabel: string }) {
             }
             aria-label={t("logoPanel.copy")}
             title={t("logoPanel.copy")}
-            className="grid h-6 w-6 place-items-center rounded-md hover:bg-accent hover:text-foreground"
+            className="-my-1 grid h-5 w-5 place-items-center rounded-md hover:bg-accent hover:text-foreground"
           >
-            <Copy className="h-3.5 w-3.5" />
+            <Copy className="h-3 w-3" />
           </button>
         </>
       )}
@@ -1164,14 +1260,14 @@ function BusinessSwitcher() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-10 max-w-[280px] items-center gap-2 rounded-full border border-border bg-card pl-1.5 pr-3.5 text-[13.5px] font-semibold text-foreground hover:border-primary/50"
+          className="inline-flex h-10 max-w-[240px] items-center gap-2 rounded-xl px-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-accent data-[state=open]:bg-accent"
         >
           <BusinessFace item={current} size={28} />
           <span className="flex min-w-0 flex-col items-start leading-tight">
             <span className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
               {t("biz.label")}
             </span>
-            <span className="max-w-[190px] truncate">{current.name}</span>
+            <span className="max-w-[160px] truncate">{current.name}</span>
           </span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
