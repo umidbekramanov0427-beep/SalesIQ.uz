@@ -646,3 +646,74 @@ export function BoardCustomizeButton({ onClick }: { onClick: () => void }) {
     </button>
   );
 }
+
+export type CardBoardItem = {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  tone: CardTone;
+  node: ReactNode;
+  /** Starting width (12 = the full row); figure cards default to a quarter. */
+  span?: Span;
+  /** Widths it may take; figure cards: 1/4, 1/3, 1/2, full. */
+  sizes?: Span[];
+};
+
+const FIGURE_SIZES: Span[] = [3, 4, 6, 12];
+
+/**
+ * A page's cards as a board with «Panelni sozlash» (move, resize, add,
+ * remove; each person's layout kept per page in this browser). Pass the
+ * cards in their default order; `toolbar` sits left of the button.
+ */
+export function CardBoard({
+  boardKey,
+  items,
+  toolbar,
+  className,
+}: {
+  boardKey: string;
+  items: CardBoardItem[];
+  toolbar?: ReactNode;
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const widgets = useMemo<BoardWidget[]>(
+    () =>
+      items.map((i) => ({
+        id: i.id,
+        title: i.title,
+        icon: i.icon,
+        tone: i.tone,
+        sizes: i.sizes ?? FIGURE_SIZES,
+        node: i.node,
+      })),
+    [items],
+  );
+  const idsKey = items.map((i) => `${i.id}:${i.span ?? 3}`).join(",");
+  const defaults = useMemo<BoardLayout>(
+    () => ({
+      order: items.map((i) => i.id),
+      size: Object.fromEntries(items.map((i) => [i.id, i.span ?? 3])) as Record<string, Span>,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [idsKey],
+  );
+  return (
+    <div className={className}>
+      {!editing && (
+        <div className="mb-3 flex items-center justify-end gap-2 phone:hidden">
+          {toolbar}
+          <BoardCustomizeButton onClick={() => setEditing(true)} />
+        </div>
+      )}
+      <HomeBoard
+        boardKey={boardKey}
+        widgets={widgets}
+        defaults={defaults}
+        editing={editing}
+        onEditingChange={setEditing}
+      />
+    </div>
+  );
+}
