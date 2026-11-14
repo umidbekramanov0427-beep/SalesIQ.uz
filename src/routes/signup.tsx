@@ -146,7 +146,7 @@ function SignupPage() {
             {t("signup.selectedPlan", { plan: PLAN_LABELS[plan] })}
           </span>
           {invite && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-500">
               <Gift className="h-3.5 w-3.5" />
               {t("signup.invited", { n: invite.bonusDays })}
             </span>
