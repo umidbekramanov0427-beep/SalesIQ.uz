@@ -8,6 +8,7 @@ import {
 } from "@/components/layout/CardTools";
 import { BadgeCheck, CircleDollarSign, PhoneCall, Users, type LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FigureCard } from "@/components/layout/Primitives";
 import { FitText } from "@/components/ui/fit-text";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -59,34 +60,22 @@ function MetricCard({
   const chrome = useCardChrome({ label: title, value: `${rate.pct}%` });
   if (chrome.hidden) return <HiddenCard chrome={chrome} label={title} />;
   return (
-    <div
-      className={cn("surface-card flex min-w-0 flex-col p-4 sm:p-5", cardStateClass(chrome.state))}
+    <FigureCard
+      icon={Icon}
+      tone={tone}
+      label={title}
+      tools={<CardTools chrome={chrome} label={title} text={info} />}
+      value={loading ? <Skeleton className="mt-1 h-8 w-24" /> : <FitText>{rate.pct}%</FitText>}
+      valueClassName={cn(TONE_TEXT[tone], valueStateClass(chrome.state))}
+      className={cardStateClass(chrome.state)}
     >
-      <p className="flex min-h-10 items-start gap-2 text-sm font-bold leading-snug text-foreground">
-        <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", TONE_TEXT[tone])} />
-        <span className="min-w-0 flex-1">{title}</span>
-        <CardTools chrome={chrome} label={title} text={info} />
-      </p>
-      {loading ? (
-        <Skeleton className="mt-4 h-9 w-24" />
-      ) : (
-        <p
-          className={cn(
-            "mt-3 font-display text-3xl font-extrabold tabular-nums sm:text-4xl",
-            TONE_TEXT[tone],
-            valueStateClass(chrome.state),
-          )}
-        >
-          <FitText>{rate.pct}%</FitText>
-        </p>
-      )}
       <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={cn("h-full rounded-full transition-[width] duration-700", FILL[tone])}
           style={{ width: `${Math.min(100, rate.pct)}%` }}
         />
       </div>
-      <dl className="mt-3 space-y-1 text-xs">
+      <dl className="mt-3 space-y-1 text-[13px]">
         <div className="flex items-center justify-between gap-2">
           <dt className="text-muted-foreground">{numLabel}</dt>
           <dd className="font-semibold tabular-nums text-foreground">{rate.num}</dd>
@@ -96,7 +85,7 @@ function MetricCard({
           <dd className="font-semibold tabular-nums text-foreground">{rate.den}</dd>
         </div>
       </dl>
-    </div>
+    </FigureCard>
   );
 }
 

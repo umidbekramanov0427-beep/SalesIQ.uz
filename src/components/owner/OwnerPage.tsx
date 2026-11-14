@@ -1,7 +1,13 @@
 import type { ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { AdminConsoleHeader, IconTile, InfoTip } from "@/components/layout/Primitives";
+import {
+  AdminConsoleHeader,
+  FigureCard,
+  FigureLine,
+  IconTile,
+  InfoTip,
+} from "@/components/layout/Primitives";
 import { keysForText, useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/lib/nav";
 import type { CardTone } from "@/lib/tones";
@@ -104,32 +110,17 @@ export function OwnerStat({
   });
   if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div
-      className={cn(
-        "admin-card flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4",
-        cardStateClass(chrome.state),
-      )}
+    <FigureCard
+      icon={icon}
+      tone={TONES[tone]}
+      label={label}
+      tools={<CardTools chrome={chrome} label={label} text={info} />}
+      value={value}
+      valueClassName={valueStateClass(chrome.state)}
+      className={cardStateClass(chrome.state)}
     >
-      <div className="flex items-center gap-2.5">
-        <IconTile icon={icon} tone={TONES[tone]} size="sm" />
-        <span
-          className="console-caption line-clamp-2 min-w-0 flex-1 !leading-[1.35] !tracking-[0.08em] [overflow-wrap:anywhere]"
-          title={label}
-        >
-          {label}
-        </span>
-        <CardTools chrome={chrome} label={label} text={info} />
-      </div>
-      <p
-        className={cn(
-          "font-display text-[26px] font-semibold leading-none tracking-tight tabular-nums text-foreground",
-          valueStateClass(chrome.state),
-        )}
-      >
-        {value}
-      </p>
-      {note && <p className="truncate font-mono text-[11.5px] text-muted-foreground">{note}</p>}
-    </div>
+      {note && <FigureLine className="truncate">{note}</FigureLine>}
+    </FigureCard>
   );
 }
 

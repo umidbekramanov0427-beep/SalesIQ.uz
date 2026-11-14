@@ -6,8 +6,18 @@ import {
 } from "@/components/dashboard/CardSettings";
 import { useCardSettings } from "@/lib/home-card-settings";
 import { useMemo, type ReactNode } from "react";
-import { AlarmClockOff, AlertTriangle, CalendarClock, GitBranch, User, Users } from "lucide-react";
-import { SectionCard, StatCard, InfoTip } from "@/components/layout/Primitives";
+import {
+  AlarmClockOff,
+  AlertTriangle,
+  CalendarClock,
+  GitBranch,
+  ListChecks,
+  Target,
+  User,
+  Users,
+  XCircle,
+} from "lucide-react";
+import { IconTile, SectionCard, StatCard, InfoTip } from "@/components/layout/Primitives";
 import { useI18n } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -301,11 +311,12 @@ export function DashboardKpiCards({
   const lostMax = lost.settings.target ?? null;
   const lostOver = lostMax != null && funnelStats.lostCount > lostMax;
   const hiddenTasks = new Set(tasks.settings.hide ?? []);
-  const corner = "absolute right-2 top-2 z-[1]";
 
   return (
     <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       <StatCard
+        icon={Target}
+        iconTone="emerald"
         label={t("dash.card.potentialSales")}
         tipKey="dash.card.potentialSales"
         value={String(potentialSalesCount)}
@@ -340,6 +351,8 @@ export function DashboardKpiCards({
         }
       />
       <StatCard
+        icon={XCircle}
+        iconTone="rose"
         label={t("dash.card.lostLeads")}
         tipKey="dash.card.lostLeads"
         value={String(funnelStats.lostCount)}
@@ -364,61 +377,61 @@ export function DashboardKpiCards({
           </CardSettingsButton>
         }
       />
-      <div className="surface-card relative col-span-2 overflow-hidden p-2.5 sm:p-4">
-        <div className={corner}>
-          <CardSettingsButton
-            title={t("dash.card.tasks")}
-            changed={tasks.changed}
-            onReset={tasks.reset}
-          >
-            <SettingSection label={t("cardset.metrics")} hint={t("cardset.metricsHint")}>
-              <div className="space-y-2.5">
-                {(["today", "overdue"] as const).map((k) => (
-                  <ToggleRow
-                    key={k}
-                    label={t(k === "today" ? "dash.card.tasksDueToday" : "dash.card.tasksOverdue")}
-                    checked={!hiddenTasks.has(k)}
-                    onChange={(v) => {
-                      const next = new Set(hiddenTasks);
-                      if (v) next.delete(k);
-                      else next.add(k);
-                      if (next.size >= 2) return;
-                      tasks.update({ hide: [...next] });
-                    }}
-                  />
-                ))}
-              </div>
-            </SettingSection>
-          </CardSettingsButton>
+      <div className="surface-card relative col-span-2 flex flex-col overflow-hidden p-5 phone:p-4">
+        <div className="flex items-start justify-between gap-2">
+          <IconTile icon={ListChecks} tone="sky" size="md" />
+          <span className="flex items-center gap-1">
+            <InfoTip text={t("dash.card.tasksInfo")} />
+            <CardSettingsButton
+              title={t("dash.card.tasks")}
+              changed={tasks.changed}
+              onReset={tasks.reset}
+            >
+              <SettingSection label={t("cardset.metrics")} hint={t("cardset.metricsHint")}>
+                <div className="space-y-2.5">
+                  {(["today", "overdue"] as const).map((k) => (
+                    <ToggleRow
+                      key={k}
+                      label={t(
+                        k === "today" ? "dash.card.tasksDueToday" : "dash.card.tasksOverdue",
+                      )}
+                      checked={!hiddenTasks.has(k)}
+                      onChange={(v) => {
+                        const next = new Set(hiddenTasks);
+                        if (v) next.delete(k);
+                        else next.add(k);
+                        if (next.size >= 2) return;
+                        tasks.update({ hide: [...next] });
+                      }}
+                    />
+                  ))}
+                </div>
+              </SettingSection>
+            </CardSettingsButton>
+          </span>
         </div>
-        <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-[13px]">
+        <p className="mt-3.5 text-[14px] font-semibold text-muted-foreground">
           {t("dash.card.tasks")}
-          <InfoTip text={t("dash.card.tasksInfo")} />
         </p>
-        <div
-          className={cn(
-            "mt-2 grid gap-2 sm:mt-3 sm:gap-3",
-            hiddenTasks.size ? "grid-cols-1" : "grid-cols-2",
-          )}
-        >
+        <div className={cn("mt-2.5 grid gap-3", hiddenTasks.size ? "grid-cols-1" : "grid-cols-2")}>
           {!hiddenTasks.has("today") && (
-            <div className="rounded-xl bg-success/10 p-2 sm:p-3">
-              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-success sm:text-[11px]">
-                <CalendarClock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+            <div className="rounded-xl bg-success/10 p-3">
+              <p className="flex items-center gap-1.5 text-[13px] font-semibold text-success">
+                <CalendarClock className="h-4 w-4" />
                 {t("dash.card.tasksDueToday")}
               </p>
-              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-success sm:mt-2 sm:text-[26px]">
+              <p className="mt-1.5 font-display text-[28px] font-bold leading-tight tabular-nums text-success phone:text-[22px]">
                 <FitText>{taskStats.data?.dueToday ?? 0}</FitText>
               </p>
             </div>
           )}
           {!hiddenTasks.has("overdue") && (
-            <div className="rounded-xl bg-destructive/10 p-2 sm:p-3">
-              <p className="flex items-center gap-1 text-[9.5px] font-semibold text-destructive sm:text-[11px]">
-                <AlarmClockOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+            <div className="rounded-xl bg-destructive/10 p-3">
+              <p className="flex items-center gap-1.5 text-[13px] font-semibold text-destructive">
+                <AlarmClockOff className="h-4 w-4" />
                 {t("dash.card.tasksOverdue")}
               </p>
-              <p className="mt-1.5 font-display text-lg font-bold leading-none tabular-nums text-destructive sm:mt-2 sm:text-[26px]">
+              <p className="mt-1.5 font-display text-[28px] font-bold leading-tight tabular-nums text-destructive phone:text-[22px]">
                 <FitText>{taskStats.data?.overdue ?? 0}</FitText>
               </p>
             </div>

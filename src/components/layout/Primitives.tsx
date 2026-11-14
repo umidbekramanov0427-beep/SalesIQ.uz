@@ -12,6 +12,9 @@ import {
 import { PageTools } from "@/components/layout/PageTools";
 import {
   AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  ChartNoAxesColumn,
   CheckCircle2,
   ChevronDown,
   CircleDashed,
@@ -467,6 +470,110 @@ export function AdminConsoleHeader({
   );
 }
 
+// ---- Figure cards ------------------------------------------------------------
+// Every figure card has Ish stoli's shape (the owner's pick): a colored icon
+// tile with the card's tools ("!", gear) across from it, the name in clear
+// 14px, a large figure, then its lines (change, the period before, hints)
+// in 13px -- nothing smaller. StatCard, DeskKpi and the pages' own figure
+// cards all draw through FigureCard so they read as one family.
+
+export function FigureCard({
+  icon,
+  tone = "primary",
+  label,
+  labelExtra,
+  tools,
+  value,
+  valueClassName,
+  className,
+  nested = false,
+  children,
+}: {
+  icon: LucideIcon;
+  tone?: CardTone;
+  label: ReactNode;
+  /** Beside the name (a pencil, a badge). */
+  labelExtra?: ReactNode;
+  /** Top right: the card's "!" and gear (CardTools) or its own buttons. */
+  tools?: ReactNode;
+  value: ReactNode;
+  valueClassName?: string;
+  /** cardStateClass(...) and the like. */
+  className?: string;
+  /** Inside another card: a quieter surface. */
+  nested?: boolean;
+  /** Under the figure: FigureLine rows, bars, small charts. */
+  children?: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "stat-card relative flex min-w-0 flex-col p-5 phone:p-4",
+        nested
+          ? "rounded-[10px] border border-border/70 bg-surface/60 dark:bg-white/[0.025]"
+          : "surface-card",
+        className,
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <IconTile icon={icon} tone={tone} size="md" />
+        {tools && <span className="flex shrink-0 items-center gap-1">{tools}</span>}
+      </div>
+      <p className="mt-3.5 flex min-w-0 items-center gap-1.5 text-[14px] font-semibold leading-snug text-muted-foreground">
+        <span className="min-w-0 truncate" title={typeof label === "string" ? label : undefined}>
+          {label}
+        </span>
+        {labelExtra}
+      </p>
+      <div
+        className={cn(
+          "mt-1.5 min-w-0 font-display text-[28px] font-bold leading-tight tracking-tight tabular-nums text-foreground phone:text-[22px]",
+          valueClassName,
+        )}
+      >
+        {value}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** A line under a figure card's value (13px, muted by default). */
+export function FigureLine({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <p
+      className={cn("mt-1 line-clamp-2 text-[13px] leading-snug text-muted-foreground", className)}
+    >
+      {children}
+    </p>
+  );
+}
+
+/** A change against the period before: +12% green, −5% red. */
+export function FigureDelta({
+  value,
+  lowerIsBetter = false,
+}: {
+  value: number | null;
+  lowerIsBetter?: boolean;
+}) {
+  if (value === null) return <span className="text-muted-foreground">—</span>;
+  const good = lowerIsBetter ? value <= 0 : value >= 0;
+  const Icon = value >= 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 font-semibold tabular-nums",
+        good ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {value >= 0 ? "+" : ""}
+      {value}%
+    </span>
+  );
+}
+
 export function StatCard({
   label,
   value,
@@ -485,19 +592,14 @@ export function StatCard({
   value: string;
   delta?: number;
   hint?: string;
-  // Every tone now renders on the same neutral surface-card background —
-  // no per-tone card color or accent bar, per the user's explicit "stop
-  // tinting cards different colors, make them all one background" request.
-  // "danger" is the one semantic exception kept: red text (not a red card)
-  // for a metric that genuinely needs to read as an alert. "mint" and
-  // "danger-soft" are kept as no-ops (same as "default") for prop-level
-  // backwards compatibility at call sites, rather than touching every one.
+  // Every card sits on the same neutral surface; "danger" is the one
+  // semantic exception kept: a red figure (not a red card) for a metric that
+  // genuinely needs to read as an alert. The other tones are kept for the
+  // callers and look the same.
   tone?: "default" | "mint" | "danger" | "danger-soft" | "hero";
   info?: string;
-  // Bumps the value up a size for a card meant to read as an alert rather
-  // than a routine metric.
+  /** Kept for the callers; every figure is large now. */
   emphasize?: boolean;
-  // Admin look: an icon tile beside the label.
   icon?: LucideIcon;
   iconTone?: CardTone;
   /** The label's i18n key: the card's explainer and settings follow it. */
@@ -507,147 +609,39 @@ export function StatCard({
   /** The card's own controls, beside its "!". */
   extraTools?: ReactNode;
 }) {
+  void emphasize;
   const isDanger = tone === "danger";
-  const StatIcon = icon;
   const tip = useTipText(info, undefined, label);
   const admin = useContext(AdminLook);
   const nestedStat = useContext(InsideSectionCard);
   const chrome = useCardChrome({ tipKey, label, value });
   if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
-  const tools = (
-    <CardTools
-      chrome={chrome}
-      label={label}
-      text={info ? tip : undefined}
-      gear={gear}
-      extra={extraTools}
-    />
-  );
-  if (admin) {
-    return (
-      <div
-        className={cn(
-          "stat-card flex min-w-0 flex-col gap-3 rounded-[8px] border p-4",
-          nestedStat
-            ? "border-border/70 bg-surface/60 dark:bg-white/[0.025]"
-            : "admin-card border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
-          cardStateClass(chrome.state),
-        )}
-      >
-        <div className="flex items-center gap-2.5">
-          {icon && <IconTile icon={icon} tone={isDanger ? "rose" : iconTone} size="sm" />}
-          <p className="console-caption flex min-w-0 flex-1 items-center gap-1.5 !leading-[1.35] !tracking-[0.08em]">
-            <span className="min-w-0 truncate" title={label}>
-              {label}
-            </span>
-          </p>
-          {tools}
-        </div>
-        <p
-          className={cn(
-            "font-display text-[26px] font-semibold leading-none tracking-tight tabular-nums",
-            isDanger ? "text-destructive" : "text-foreground",
-            valueStateClass(chrome.state),
-          )}
-        >
-          <FitText>{value}</FitText>
-        </p>
-        {(hint || delta !== undefined) && (
-          <p className="font-mono text-[12px] leading-snug text-muted-foreground">
-            {delta !== undefined && (
-              <span
-                className={cn(
-                  "mr-1.5 font-semibold",
-                  delta >= 0 ? "text-success" : "text-destructive",
-                )}
-              >
-                {delta >= 0 ? "+" : ""}
-                {delta}%
-              </span>
-            )}
-            {hint}
-          </p>
-        )}
-      </div>
-    );
-  }
   return (
-    <div
-      className={cn(
-        // No corner-radius override any more -- a stat tile used to get a
-        // sharper 6px corner than the 10px SectionCard/surface-card
-        // baseline ("Hybrid shape"), which the user later found too edgy;
-        // it now just inherits surface-card's own var(--radius), matching
-        // every other card on the platform. surface-card also carries its
-        // own ambient brand-color glow (see its definition in styles.css)
-        // instead of a per-card accent bar.
-        "stat-card surface-card relative overflow-hidden p-2.5 sm:p-3.5 md:p-4",
-        cardStateClass(chrome.state),
-      )}
+    <FigureCard
+      icon={icon ?? ChartNoAxesColumn}
+      tone={isDanger ? "rose" : iconTone}
+      label={label}
+      tools={
+        <CardTools
+          chrome={chrome}
+          label={label}
+          text={info ? tip : undefined}
+          gear={gear}
+          extra={extraTools}
+        />
+      }
+      value={<FitText>{value}</FitText>}
+      valueClassName={cn(isDanger && "text-destructive", valueStateClass(chrome.state))}
+      className={cardStateClass(chrome.state)}
+      nested={admin && nestedStat}
     >
-      <p
-        className={cn(
-          // Was text-[10px]/text-xs/text-[13px] -- smaller than the delta/hint
-          // row below it, so the label naming WHAT the number means read as
-          // the least important thing on the card instead of the second most
-          // important (after the value itself). Bumped a step up at every
-          // breakpoint so it reads clearly without competing with the value.
-          "flex items-center gap-1 text-xs font-bold sm:gap-1.5 sm:text-[13px] md:text-sm",
-          isDanger ? "text-destructive" : "text-muted-foreground",
-        )}
-      >
-        {/* min-w-0 lets this shrink inside the flex row so long labels
-            truncate instead of wrapping to a second line -- a wrapped
-            label pushes the value down only on that one card, breaking
-            the row's otherwise-even alignment with its neighbors. */}
-        {StatIcon && (
-          <StatIcon
-            aria-hidden
-            className={cn("h-4 w-4 shrink-0", TONE_TEXT[isDanger ? "rose" : iconTone])}
-          />
-        )}
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-        {tools}
-      </p>
-      <p
-        className={cn(
-          "mt-1 animate-in fade-in-0 slide-in-from-bottom-1 font-display font-bold leading-none tracking-tight tabular-nums duration-500 sm:mt-2 md:mt-3",
-          emphasize
-            ? "text-[19px] sm:text-[26px] md:text-[38px]"
-            : "text-base sm:text-[22px] md:text-[30px]",
-          isDanger ? "text-destructive" : "text-foreground",
-          valueStateClass(chrome.state),
-        )}
-      >
-        <FitText>{value}</FitText>
-      </p>
-      <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5 sm:mt-2.5 sm:gap-2">
-        {delta !== undefined && (
-          <span
-            className={cn(
-              // Was text-xs/sm:text-sm -- as big as or bigger than the label
-              // above it, so a secondary delta pulled the eye before the
-              // label did. Kept a size below the label at every breakpoint.
-              "text-[11px] font-bold tabular-nums sm:text-xs",
-              delta >= 0 ? "text-success" : "text-destructive",
-            )}
-          >
-            {delta >= 0 ? "+" : ""}
-            {delta}%
-          </span>
-        )}
-        {hint && (
-          <span
-            className={cn(
-              "min-w-0 text-[11px] font-semibold tabular-nums [overflow-wrap:anywhere] sm:text-xs",
-              isDanger ? "text-destructive/80" : "text-foreground/65",
-            )}
-          >
-            {hint}
-          </span>
-        )}
-      </div>
-    </div>
+      {delta !== undefined && (
+        <FigureLine>
+          <FigureDelta value={delta} />
+        </FigureLine>
+      )}
+      {hint && <FigureLine className={cn(isDanger && "text-destructive/80")}>{hint}</FigureLine>}
+    </FigureCard>
   );
 }
 

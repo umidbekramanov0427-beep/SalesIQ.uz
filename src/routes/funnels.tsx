@@ -42,11 +42,14 @@ import {
   Lock,
 } from "lucide-react";
 import {
+  FigureCard,
+  FigureLine,
   PageHeader,
   SectionCard,
   StatCard,
   Pill,
   PageLoader,
+  type CardTone,
 } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TagChip } from "@/components/crm/tag-editor";
@@ -576,32 +579,46 @@ const METRIC_TONE = {
   },
 } as const;
 
-function DayStat({ label, value, tone }: { label: string; value: string; tone: string }) {
+function DayStat({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+  icon: LucideIcon;
+}) {
   const chrome = useCardChrome({ label, value });
   if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border bg-muted/30 px-4 py-3",
-        cardStateClass(chrome.state),
-      )}
-    >
-      <p className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-        <CardTools chrome={chrome} label={label} />
-      </p>
-      <p
-        className={cn(
-          "mt-1 text-[28px] font-extrabold leading-none tabular-nums",
-          tone,
-          valueStateClass(chrome.state),
-        )}
-      >
-        {value}
-      </p>
-    </div>
+    <FigureCard
+      icon={icon}
+      tone={DAY_TONE[tone] ?? "primary"}
+      label={label}
+      tools={<CardTools chrome={chrome} label={label} />}
+      value={value}
+      valueClassName={cn(tone, valueStateClass(chrome.state))}
+      className={cardStateClass(chrome.state)}
+    />
   );
 }
+
+// The day figures' text colors as their tiles' tones.
+const DAY_TONE: Record<string, CardTone> = {
+  "text-success": "emerald",
+  "text-amber-600 dark:text-amber-400": "amber",
+  "text-destructive": "rose",
+  "text-primary": "primary",
+};
+
+const METRIC_FIGURE_TONE: Record<keyof typeof METRIC_TONE, CardTone> = {
+  primary: "primary",
+  success: "emerald",
+  danger: "rose",
+  warning: "amber",
+};
 
 function FunnelMetric({
   icon: Icon,
@@ -624,39 +641,25 @@ function FunnelMetric({
   const chrome = useCardChrome({ label, value });
   if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div
-      className={cn(
-        "flex flex-col rounded-2xl border border-border bg-card p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-colors hover:border-primary/30",
-        cardStateClass(chrome.state),
-      )}
+    <FigureCard
+      icon={Icon}
+      tone={METRIC_FIGURE_TONE[tone]}
+      label={label}
+      tools={<CardTools chrome={chrome} label={label} text={info} />}
+      value={<FitText>{value}</FitText>}
+      valueClassName={valueStateClass(chrome.state)}
+      className={cardStateClass(chrome.state)}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="flex min-w-0 flex-1 items-center gap-1.5 text-[12px] font-semibold uppercase leading-snug tracking-wide text-muted-foreground">
-          <span className="min-w-0">{label}</span>
-          <CardTools chrome={chrome} label={label} text={info} />
-        </p>
-        <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", c.chip)}>
-          <Icon className="h-[18px] w-[18px]" />
-        </span>
-      </div>
-      <FitText
-        className={cn(
-          "mt-2 text-[26px] font-extrabold tabular-nums tracking-tight text-foreground",
-          valueStateClass(chrome.state),
-        )}
-      >
-        {value}
-      </FitText>
       {progress !== undefined && (
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+        <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-muted">
           <div
             className={cn("h-full rounded-full", c.bar)}
             style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
           />
         </div>
       )}
-      <p className="mt-2 text-[12.5px] leading-snug text-muted-foreground">{hint}</p>
-    </div>
+      <FigureLine>{hint}</FigureLine>
+    </FigureCard>
   );
 }
 
@@ -1380,6 +1383,7 @@ function FunnelDetail({
                 tone: "emerald",
                 node: (
                   <DayStat
+                    icon={CalendarCheck}
                     label={t("funnels.day.tasksToday")}
                     value={String(dayStats.tasksToday)}
                     tone="text-success"
@@ -1393,6 +1397,7 @@ function FunnelDetail({
                 tone: "amber",
                 node: (
                   <DayStat
+                    icon={ClipboardList}
                     label={t("funnels.day.noTasks")}
                     value={String(dayStats.noTasks)}
                     tone="text-amber-600 dark:text-amber-400"
@@ -1406,6 +1411,7 @@ function FunnelDetail({
                 tone: "rose",
                 node: (
                   <DayStat
+                    icon={AlarmClock}
                     label={t("funnels.day.overdue")}
                     value={String(dayStats.overdueTasks)}
                     tone="text-destructive"
@@ -1419,6 +1425,7 @@ function FunnelDetail({
                 tone: "primary",
                 node: (
                   <DayStat
+                    icon={UserPlus}
                     label={t("funnels.day.newLeads")}
                     value={`${dayStats.newToday} / ${dayStats.newYesterday}`}
                     tone="text-primary"

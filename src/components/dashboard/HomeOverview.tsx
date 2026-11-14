@@ -53,7 +53,7 @@ import {
   type Unit,
 } from "@/lib/home-metrics";
 import { RailGlyph } from "@/components/layout/RailGlyph";
-import { InfoTip } from "@/components/layout/Primitives";
+import { FigureCard, FigureLine, InfoTip, type CardTone } from "@/components/layout/Primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useFunnelStats,
@@ -196,6 +196,16 @@ export function PeriodSegment({
 /* ---------------------------------------------------------------- KPIs */
 
 type Tone = { icon: string; bg: string; line: string };
+// The KPI tones as the platform's figure-card tones (IconTile).
+const FIGURE_TONE: Record<string, CardTone> = {
+  blue: "primary",
+  green: "emerald",
+  amber: "amber",
+  sky: "sky",
+  violet: "violet",
+  pink: "rose",
+};
+
 const TONES: Record<string, Tone> = {
   blue: { icon: "text-blue-500", bg: "bg-blue-500/12", line: "#3b82f6" },
   green: { icon: "text-emerald-500", bg: "bg-emerald-500/12", line: "#34d399" },
@@ -264,7 +274,7 @@ function DeltaPill({ kpi, lowerIsBetter }: { kpi: Kpi; lowerIsBetter?: boolean |
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-semibold tabular-nums",
         good ? "bg-success/12 text-success" : "bg-destructive/12 text-destructive",
       )}
     >
@@ -476,53 +486,41 @@ function MetricCard({
           style={{ width: `${Math.round(goal.ratio * 100)}%` }}
         />
       </div>
-      <p className="mt-1 truncate text-[11px] text-subtle">
+      <p className="mt-1 truncate text-[13px] text-muted-foreground">
         {t("cardset.goalLine", { v: fmtUnit(unit, target), p: Math.round(goal.ratio * 100) })}
       </p>
     </div>
   );
 
   return (
-    <div className="surface-card group relative flex min-w-0 flex-col p-3.5 transition-colors duration-75 hover:border-primary/40">
-      {/* The card's settings sit in its corner and show while the pointer is
-          on the card; the name keeps the row, its «!» right after it. */}
-      <span className="absolute right-1.5 top-1.5 opacity-0 transition-opacity duration-75 group-focus-within:opacity-100 group-hover:opacity-100 phone:opacity-100">
-        {settingsPanel}
-      </span>
-      <div className="flex items-center gap-2 pr-5">
-        <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-[6px]", c.bg)}>
-          <RailGlyph icon={def.icon} className={cn("h-4 w-4", c.icon)} />
-        </span>
-        <span
-          title={def.label}
-          className="line-clamp-2 min-w-0 text-[10.5px] font-bold uppercase leading-tight tracking-[0.07em] text-muted-foreground"
-        >
-          {def.label}
-        </span>
-        <InfoTip className="shrink-0" text={isDefault ? def.info : t(`${fKey}.desc`)} />
-      </div>
-      <p
-        className={cn(
-          "truncate font-display font-bold leading-none tracking-tight tabular-nums",
-          view === "card" ? "mt-3 text-[26px]" : "mt-2.5 text-[21px]",
-          valueClass,
-        )}
-      >
-        {value}
-      </p>
-      <p className="mt-1.5 truncate text-[11.5px] text-subtle">{sub}</p>
+    <FigureCard
+      icon={def.icon}
+      tone={FIGURE_TONE[def.tone] ?? "primary"}
+      label={def.label}
+      className="group transition-colors duration-75 hover:border-primary/40"
+      tools={
+        <>
+          <InfoTip className="shrink-0" text={isDefault ? def.info : t(`${fKey}.desc`)} />
+          {/* The card's settings show while the pointer is on the card. */}
+          <span className="opacity-0 transition-opacity duration-75 group-focus-within:opacity-100 group-hover:opacity-100 phone:opacity-100">
+            {settingsPanel}
+          </span>
+        </>
+      }
+      value={<span className="block truncate">{value}</span>}
+      valueClassName={cn(view !== "card" && "text-[24px]", valueClass)}
+    >
+      <FigureLine className="truncate">{sub}</FigureLine>
       {goalBar}
 
       {view === "card" && (
         <>
-          <div className="mt-2.5 flex items-center justify-between gap-2">
+          <div className="mt-3 flex items-center justify-between gap-2">
             {compare ? <DeltaPill kpi={kpi} lowerIsBetter={low} /> : <span />}
             <Sparkline series={kpi.series} color={c.line} />
           </div>
           {compare && (
-            <p className="mt-1.5 text-[11px] text-subtle">
-              {isDefault && def.baseFoot ? def.baseFoot : t("home2.vsPrev")}
-            </p>
+            <FigureLine>{isDefault && def.baseFoot ? def.baseFoot : t("home2.vsPrev")}</FigureLine>
           )}
         </>
       )}
@@ -537,7 +535,7 @@ function MetricCard({
             format={(v) => fmtUnit(unit, v)}
           />
           {compare && (
-            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-subtle">
+            <div className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
               <DeltaPill kpi={kpi} lowerIsBetter={low} />
               <span className="truncate">{t("home2.vsPrev")}</span>
             </div>
@@ -547,15 +545,15 @@ function MetricCard({
 
       {view === "list" && (
         <div className="mt-2.5 min-h-0 flex-1">
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-subtle">
+          <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
             {t("cardset.byPeople")}
           </p>
           {owners.length === 0 ? (
-            <p className="mt-1.5 text-[11.5px] text-subtle">{t("cardset.noPeople")}</p>
+            <p className="mt-1.5 text-[13px] text-muted-foreground">{t("cardset.noPeople")}</p>
           ) : (
             <ol className="mt-1 max-h-[132px] space-y-0.5 overflow-y-auto pr-0.5">
               {owners.map((o, i) => (
-                <li key={o.ownerId} className="flex items-center gap-1.5 text-[12px] leading-6">
+                <li key={o.ownerId} className="flex items-center gap-1.5 text-[13px] leading-6">
                   <span className="w-4 shrink-0 text-right tabular-nums text-subtle">{i + 1}</span>
                   <span className="min-w-0 flex-1 truncate text-foreground">
                     {names.get(o.ownerId) ?? "—"}
@@ -578,7 +576,7 @@ function MetricCard({
           )}
         </div>
       )}
-    </div>
+    </FigureCard>
   );
 }
 

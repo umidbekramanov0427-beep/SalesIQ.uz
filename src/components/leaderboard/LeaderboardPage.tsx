@@ -10,8 +10,13 @@ import {
   Play,
   RefreshCw,
   Search,
+  Percent,
+  ShoppingCart,
   Tag as TagIcon,
+  TrendingUp,
   Trophy,
+  Users,
+  Wallet,
 } from "lucide-react";
 import {
   CartesianGrid,
@@ -471,6 +476,8 @@ export function Leaderboard({
       {!embedded && (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 xl:grid-cols-5">
           <StatCard
+            icon={Users}
+            iconTone="primary"
             label={t("lb.totalLeadsCount")}
             tipKey="lb.totalLeadsCount"
             value={String(funnelStats.totalLeads)}
@@ -478,12 +485,16 @@ export function Leaderboard({
             info={t("lb.info.totalLeadsCount")}
           />
           <StatCard
+            icon={Percent}
+            iconTone="violet"
             label={t("lb.avgConversion")}
             tipKey="lb.avgConversion"
             value={pct(funnelStats.conversion)}
             info={t("lb.info.avgConversion")}
           />
           <StatCard
+            icon={ShoppingCart}
+            iconTone="sky"
             label={t("lb.sales")}
             tipKey="lb.sales"
             value={String(funnelStats.wonCount)}
@@ -494,6 +505,8 @@ export function Leaderboard({
             info={t("lb.info.sales")}
           />
           <StatCard
+            icon={Wallet}
+            iconTone="emerald"
             label={t("lb.totalRevenue")}
             tipKey="lb.totalRevenue"
             value={format(funnelStats.totalRevenue)}
@@ -501,6 +514,8 @@ export function Leaderboard({
             tone="hero"
           />
           <StatCard
+            icon={TrendingUp}
+            iconTone="amber"
             label={t("lb.todayRevenue")}
             tipKey="lb.todayRevenue"
             value={format(todayRevenue)}

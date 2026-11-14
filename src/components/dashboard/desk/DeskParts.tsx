@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import {
   CardTools,
   HiddenCard,
@@ -8,32 +7,25 @@ import {
   useCardChrome,
   valueStateClass,
 } from "@/components/layout/CardTools";
-import { IconTile, SectionCard, type CardTone } from "@/components/layout/Primitives";
+import {
+  FigureCard,
+  FigureDelta,
+  FigureLine,
+  SectionCard,
+  type CardTone,
+} from "@/components/layout/Primitives";
 import { cn } from "@/lib/utils";
 
 // Ish stoli's and Telefon's building blocks, on the platform's own
 // primitives: a figure card (StatCard) and a titled block (SectionCard).
 
 export function Change({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-muted-foreground">—</span>;
-  const up = value >= 0;
-  const Icon = up ? ArrowUpRight : ArrowDownRight;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-0.5 font-semibold tabular-nums",
-        up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400",
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {up ? "+" : ""}
-      {value}%
-    </span>
-  );
+  return <FigureDelta value={value} />;
 }
 
 // The big figure card (icon tile on top, the name, a large figure, its
-// change and the period before) -- the owner's pick for Ish stoli.
+// change and the period before) -- the owner's pick for Ish stoli, and the
+// shape every figure card on the platform now has (FigureCard).
 export function DeskKpi({
   tipKey,
   label,
@@ -60,40 +52,24 @@ export function DeskKpi({
   const chrome = useCardChrome({ tipKey, label, value: rawValue });
   if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div
-      className={cn(
-        "stat-card flex min-w-0 flex-col surface-card p-4",
-        cardStateClass(chrome.state),
-      )}
+    <FigureCard
+      icon={icon}
+      tone={tone}
+      label={label}
+      labelExtra={titleExtra}
+      tools={<CardTools chrome={chrome} label={label} />}
+      value={value}
+      valueClassName={valueStateClass(chrome.state)}
+      className={cardStateClass(chrome.state)}
     >
-      <div className="flex items-start justify-between gap-2">
-        <IconTile icon={icon} tone={tone} size="md" />
-        <CardTools chrome={chrome} label={label} />
-      </div>
-      <p className="mt-3 flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground">
-        <span className="min-w-0 truncate">{label}</span>
-        {titleExtra}
-      </p>
-      <div
-        className={cn(
-          "mt-1.5 font-display text-[26px] font-bold leading-tight tracking-tight tabular-nums text-foreground phone:text-[19px]",
-          valueStateClass(chrome.state),
-        )}
-      >
-        {value}
-      </div>
       {children}
       {change !== undefined && (
-        <p className="mt-1 text-[12.5px]">
+        <FigureLine>
           <Change value={change} />
-        </p>
+        </FigureLine>
       )}
-      {prevText && (
-        <p className="mt-0.5 line-clamp-2 text-[12px] tabular-nums text-muted-foreground">
-          {prevText}
-        </p>
-      )}
-    </div>
+      {prevText && <FigureLine className="tabular-nums">{prevText}</FigureLine>}
+    </FigureCard>
   );
 }
 

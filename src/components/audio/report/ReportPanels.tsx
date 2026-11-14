@@ -2,9 +2,11 @@ import { lazy, Suspense, useMemo, type ReactNode } from "react";
 import {
   CardTools,
   HiddenCard,
+  cardStateClass,
   useCardChrome,
   valueStateClass,
 } from "@/components/layout/CardTools";
+import { FigureCard, FigureLine } from "@/components/layout/Primitives";
 import { InfoTip } from "@/components/layout/InfoTip";
 import {
   Award,
@@ -71,7 +73,7 @@ export function useTabelItems(
     };
   }, [calls]);
   const totalGraded = GRADES.reduce((s, g) => s + stats.counts[g], 0);
-  const sheet = "rp-sheet h-full px-[18px] py-3.5 phone:px-3.5 phone:py-3";
+  const sheet = "h-full";
   const wait = (node: ReactNode) =>
     loading ? <Skeleton className="h-[104px] w-full rounded-xl" /> : node;
   const cell = (
@@ -86,7 +88,9 @@ export function useTabelItems(
     title: label,
     icon,
     tone,
-    node: wait(<TabelCell className={sheet} label={label} value={value} sub={sub} />),
+    node: wait(
+      <TabelCell className={sheet} icon={icon} tone={tone} label={label} value={value} sub={sub} />,
+    ),
   });
   return [
     cell(
@@ -121,22 +125,26 @@ export function useTabelItems(
       tone: "violet",
       span: 4,
       node: wait(
-        <div className={sheet}>
-          <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
-            <span className="min-w-0 flex-1 truncate">{t("rp.tAvgGrade")}</span>
-            <InfoTip tipKeys={["rp.tAvgGrade"]} title={t("rp.tAvgGrade")} />
-          </p>
-          <p className="mt-0.5 flex items-baseline gap-2">
-            <GradeLetter
-              grade={stats.avg != null ? gradeOf(stats.avg) : null}
-              className="text-[34px]"
-            />
-            {stats.avg != null && (
-              <span className="font-mono text-[13px] font-semibold">{stats.avg}</span>
-            )}
-          </p>
-          <p className="rp-mute text-[12px]">{t("rp.tLow", { count: stats.counts.D })}</p>
-        </div>,
+        <FigureCard
+          icon={Award}
+          tone="violet"
+          label={t("rp.tAvgGrade")}
+          className={sheet}
+          tools={<InfoTip tipKeys={["rp.tAvgGrade"]} title={t("rp.tAvgGrade")} />}
+          value={
+            <span className="flex items-baseline gap-2">
+              <GradeLetter
+                grade={stats.avg != null ? gradeOf(stats.avg) : null}
+                className="text-[30px]"
+              />
+              {stats.avg != null && (
+                <span className="font-mono text-[15px] font-semibold">{stats.avg}</span>
+              )}
+            </span>
+          }
+        >
+          <FigureLine>{t("rp.tLow", { count: stats.counts.D })}</FigureLine>
+        </FigureCard>,
       ),
     },
     {
@@ -147,33 +155,39 @@ export function useTabelItems(
       span: 8,
       sizes: [4, 6, 8, 12],
       node: wait(
-        <div className={sheet}>
-          <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
-            <span className="min-w-0 flex-1 truncate">{t("rp.tSpread")}</span>
-            <InfoTip tipKeys={["rp.tSpread"]} title={t("rp.tSpread")} />
-          </p>
-          {totalGraded === 0 ? (
-            <p className="rp-mute mt-3 text-[13px]">{t("rp.tNoGrades")}</p>
-          ) : (
-            <div className="mt-2 flex h-[30px] gap-0.5 overflow-hidden rounded-md">
-              {GRADES.map((g) =>
-                stats.counts[g] === 0 ? null : (
-                  <span
-                    key={g}
-                    className="grid min-w-[34px] place-items-center text-[13px] font-semibold text-white"
-                    style={{
-                      width: `${(stats.counts[g] / totalGraded) * 100}%`,
-                      background: GRADE_BG[g],
-                    }}
-                  >
-                    {g} {stats.counts[g]}
-                  </span>
-                ),
-              )}
-            </div>
-          )}
-          <p className="rp-mute mt-1.5 text-[11.5px]">A ≥ 80 · B 60–79 · C 40–59 · D &lt; 40</p>
-        </div>,
+        <FigureCard
+          icon={ChartBar}
+          tone="rose"
+          label={t("rp.tSpread")}
+          className={sheet}
+          tools={<InfoTip tipKeys={["rp.tSpread"]} title={t("rp.tSpread")} />}
+          value={
+            totalGraded === 0 ? (
+              <span className="text-[15px] font-medium text-muted-foreground">
+                {t("rp.tNoGrades")}
+              </span>
+            ) : (
+              <div className="mt-1 flex h-[34px] gap-0.5 overflow-hidden rounded-md">
+                {GRADES.map((g) =>
+                  stats.counts[g] === 0 ? null : (
+                    <span
+                      key={g}
+                      className="grid min-w-[38px] place-items-center text-[14px] font-semibold text-white"
+                      style={{
+                        width: `${(stats.counts[g] / totalGraded) * 100}%`,
+                        background: GRADE_BG[g],
+                      }}
+                    >
+                      {g} {stats.counts[g]}
+                    </span>
+                  ),
+                )}
+              </div>
+            )
+          }
+        >
+          <FigureLine>A ≥ 80 · B 60–79 · C 40–59 · D &lt; 40</FigureLine>
+        </FigureCard>,
       ),
     },
   ];
@@ -184,33 +198,30 @@ function TabelCell({
   value,
   sub,
   className,
+  icon,
+  tone,
 }: {
   label: string;
   value: string;
   sub: string;
   className: string;
+  icon: LucideIcon;
+  tone: CardTone;
 }) {
   const chrome = useCardChrome({ label, value });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} className="m-2" />;
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <div
-      className={cn(className, chrome.state === "bad" && "bg-rose-500/[0.06]")}
-      style={{ borderColor: "var(--rp-rule)" }}
+    <FigureCard
+      icon={icon}
+      tone={tone}
+      label={label}
+      tools={<CardTools chrome={chrome} label={label} text={sub} />}
+      value={value}
+      valueClassName={valueStateClass(chrome.state)}
+      className={cn(className, cardStateClass(chrome.state))}
     >
-      <p className="rp-mute flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]">
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-        <CardTools chrome={chrome} label={label} text={sub} />
-      </p>
-      <p
-        className={cn(
-          "rp-display mt-0.5 text-[30px] leading-tight tabular-nums phone:text-[24px]",
-          valueStateClass(chrome.state),
-        )}
-      >
-        {value}
-      </p>
-      <p className="rp-mute text-[12px]">{sub}</p>
-    </div>
+      <FigureLine>{sub}</FigureLine>
+    </FigureCard>
   );
 }
 
