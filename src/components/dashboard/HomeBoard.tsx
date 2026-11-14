@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -602,33 +603,40 @@ export function HomeBoard({
         </div>
       </aside>
 
-      {/* The card under the pointer while it is carried. */}
-      {drag && dragged && (
-        <div
-          aria-hidden
-          className="pointer-events-none fixed z-[80] flex flex-col overflow-hidden rounded-[var(--radius)] border border-primary/60 bg-card shadow-[0_24px_60px_-20px_rgb(0_0_0/0.5),0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)]"
-          style={{
-            left: drag.x - drag.offX,
-            top: drag.y - drag.offY,
-            width: drag.w,
-            height: drag.h,
-            transform: "rotate(0.8deg) scale(1.02)",
-          }}
-        >
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-            <GripVertical className="h-4 w-4 text-subtle" />
-            <span
-              className={cn("grid h-6 w-6 place-items-center rounded-md", TONE_TILE[dragged.tone])}
-            >
-              <dragged.icon className="h-3.5 w-3.5" />
-            </span>
-            <span className="truncate text-[13px] font-semibold text-foreground">
-              {dragged.title}
-            </span>
-          </div>
-          <div className="flex-1 bg-[repeating-linear-gradient(135deg,transparent_0_12px,color-mix(in_oklab,var(--primary)_6%,transparent)_12px_24px)]" />
-        </div>
-      )}
+      {/* The card under the pointer while it is carried (on the body, so a
+          board inside a dialog -- transformed -- still places it right). */}
+      {drag &&
+        dragged &&
+        createPortal(
+          <div
+            aria-hidden
+            className="pointer-events-none fixed z-[80] flex flex-col overflow-hidden rounded-[var(--radius)] border border-primary/60 bg-card shadow-[0_24px_60px_-20px_rgb(0_0_0/0.5),0_0_0_4px_color-mix(in_oklab,var(--primary)_15%,transparent)]"
+            style={{
+              left: drag.x - drag.offX,
+              top: drag.y - drag.offY,
+              width: drag.w,
+              height: drag.h,
+              transform: "rotate(0.8deg) scale(1.02)",
+            }}
+          >
+            <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+              <GripVertical className="h-4 w-4 text-subtle" />
+              <span
+                className={cn(
+                  "grid h-6 w-6 place-items-center rounded-md",
+                  TONE_TILE[dragged.tone],
+                )}
+              >
+                <dragged.icon className="h-3.5 w-3.5" />
+              </span>
+              <span className="truncate text-[13px] font-semibold text-foreground">
+                {dragged.title}
+              </span>
+            </div>
+            <div className="flex-1 bg-[repeating-linear-gradient(135deg,transparent_0_12px,color-mix(in_oklab,var(--primary)_6%,transparent)_12px_24px)]" />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

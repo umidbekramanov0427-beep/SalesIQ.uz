@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { CardBoard } from "@/components/dashboard/HomeBoard";
 import {
   CardTools,
   HiddenCard,
@@ -11,6 +12,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlarmClock,
+  CalendarCheck,
+  UserPlus,
   ArrowLeft,
   BarChart3,
   Archive,
@@ -1364,163 +1367,285 @@ function FunnelDetail({
               </span>
             </DialogTitle>
           </DialogHeader>
-          {/* Today, amoCRM-style: the numbers a rep starts the day with. */}
-          <div className="grid gap-3 px-6 pt-6 sm:grid-cols-2 lg:grid-cols-4">
-            <DayStat
-              label={t("funnels.day.tasksToday")}
-              value={String(dayStats.tasksToday)}
-              tone="text-success"
-            />
-            <DayStat
-              label={t("funnels.day.noTasks")}
-              value={String(dayStats.noTasks)}
-              tone="text-amber-600 dark:text-amber-400"
-            />
-            <DayStat
-              label={t("funnels.day.overdue")}
-              value={String(dayStats.overdueTasks)}
-              tone="text-destructive"
-            />
-            <DayStat
-              label={t("funnels.day.newLeads")}
-              value={`${dayStats.newToday} / ${dayStats.newYesterday}`}
-              tone="text-primary"
-            />
-          </div>
-          <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-4">
-            <FunnelMetric
-              icon={Users}
-              label={t("funnels.leadsInFunnel")}
-              value={String(shownLeads.length)}
-              hint={t("funnels.allStages")}
-              info={t("funnels.leadsInFunnelInfo")}
-              tone="primary"
-            />
-            <FunnelMetric
-              icon={TrendingUp}
-              label={t("funnels.lateFunnelConversion")}
-              value={`${lateFunnelConversionRate}%`}
-              hint={t("funnels.lateFunnelConversionHint")}
-              info={t("funnels.lateFunnelConversionInfo")}
-              progress={lateFunnelConversionRate}
-              tone="primary"
-            />
-            <FunnelMetric
-              icon={Wallet}
-              label={t("funnels.lateFunnelRevenue")}
-              value={format(stageMeta.lateFunnelRevenue)}
-              hint={t("funnels.lateFunnelRevenueHint")}
-              info={t("funnels.lateFunnelRevenueInfo")}
-              tone="success"
-            />
-            <FunnelMetric
-              icon={XCircle}
-              label={t("funnels.lostLeadsCount")}
-              value={String(lostCount)}
-              hint={t("funnels.lostLeadsHint")}
-              info={t("funnels.lostLeadsCountInfo")}
-              tone="danger"
-            />
-            <FunnelMetric
-              icon={Trophy}
-              label={t("funnels.fullPaymentCount")}
-              value={String(stageMeta.fullPaymentCount)}
-              hint={t("funnels.fullPaymentCountHint")}
-              info={t("funnels.fullPaymentCountInfo")}
-              tone="success"
-            />
-            <FunnelMetric
-              icon={CircleDollarSign}
-              label={t("funnels.avgLateFunnelDeal")}
-              value={format(avgLateFunnelDeal)}
-              hint={t("funnels.avgLateFunnelDealHint")}
-              info={t("funnels.avgLateFunnelDealInfo")}
-              tone="primary"
-            />
-            <FunnelMetric
-              icon={Percent}
-              label={t("funnels.fullPaymentConversionRate")}
-              value={`${fullPaymentConversionRate}%`}
-              hint={t("funnels.fullPaymentConversionRateHint")}
-              info={t("funnels.fullPaymentConversionRateInfo")}
-              progress={fullPaymentConversionRate}
-              tone="success"
-            />
-            <FunnelMetric
-              icon={ClipboardList}
-              label={t("funnels.openLeads")}
-              value={String(openCount)}
-              hint={t("funnels.openLeadsHint")}
-              info={t("funnels.openLeadsHint")}
-              tone="warning"
-            />
-          </div>
-
-          {/* Who got what today -- each salesperson's day in this funnel. */}
-          <div className="px-6 pb-6">
-            <p className="mb-3 text-[12px] font-bold uppercase tracking-wider text-subtle">
-              {t("funnels.byOwnerToday")}
-            </p>
-            {ownerToday.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-[13px] text-subtle">
-                {t("funnels.noLeads")}
-              </p>
-            ) : (
-              <div className="overflow-x-auto rounded-2xl border border-border">
-                <table className="w-full min-w-[640px] text-[13px]">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40 text-left text-[11.5px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      <th className="px-4 py-2.5">{t("funnels.col.owner")}</th>
-                      <th className="px-3 py-2.5 text-right">{t("funnels.col.totalToday")}</th>
-                      <th className="px-3 py-2.5 text-right">{t("funnels.col.newToday")}</th>
-                      <th className="px-3 py-2.5 text-right">{t("funnels.col.handedToday")}</th>
-                      <th className="px-3 py-2.5 text-right">{t("funnels.col.tasksToday")}</th>
-                      <th className="px-3 py-2.5 text-right">{t("funnels.col.overdue")}</th>
-                      <th className="px-4 py-2.5 text-right">{t("funnels.col.noTasks")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {ownerToday.map((r) => (
-                      <tr key={r.id} className="tabular-nums">
-                        <td className="px-4 py-2.5">
-                          <span className="flex items-center gap-2 font-semibold text-foreground">
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/12 text-[11px] font-bold text-primary">
-                              {r.name.slice(0, 1).toUpperCase()}
-                            </span>
-                            <span className="truncate">{r.name}</span>
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5 text-right text-[15px] font-extrabold text-foreground">
-                          {r.created + r.handed}
-                        </td>
-                        <td className="px-3 py-2.5 text-right text-foreground">{r.created}</td>
-                        <td className="px-3 py-2.5 text-right text-foreground">{r.handed}</td>
-                        <td className="px-3 py-2.5 text-right font-semibold text-success">
-                          {r.tasks}
-                        </td>
-                        <td
-                          className={cn(
-                            "px-3 py-2.5 text-right font-semibold",
-                            r.overdue ? "text-destructive" : "text-subtle",
-                          )}
-                        >
-                          {r.overdue}
-                        </td>
-                        <td
-                          className={cn(
-                            "px-4 py-2.5 text-right font-semibold",
-                            r.noTasks ? "text-amber-600 dark:text-amber-400" : "text-subtle",
-                          )}
-                        >
-                          {r.noTasks}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          {/* The funnel's numbers as a board (CardBoard): today's four, the
+              eight funnel figures and each salesperson's day. */}
+          <CardBoard
+            className="p-6"
+            boardKey="funnels.stats"
+            items={[
+              {
+                id: "day:tasksToday",
+                title: t("funnels.day.tasksToday"),
+                icon: CalendarCheck,
+                tone: "emerald",
+                node: (
+                  <DayStat
+                    label={t("funnels.day.tasksToday")}
+                    value={String(dayStats.tasksToday)}
+                    tone="text-success"
+                  />
+                ),
+              },
+              {
+                id: "day:noTasks",
+                title: t("funnels.day.noTasks"),
+                icon: ClipboardList,
+                tone: "amber",
+                node: (
+                  <DayStat
+                    label={t("funnels.day.noTasks")}
+                    value={String(dayStats.noTasks)}
+                    tone="text-amber-600 dark:text-amber-400"
+                  />
+                ),
+              },
+              {
+                id: "day:overdue",
+                title: t("funnels.day.overdue"),
+                icon: AlarmClock,
+                tone: "rose",
+                node: (
+                  <DayStat
+                    label={t("funnels.day.overdue")}
+                    value={String(dayStats.overdueTasks)}
+                    tone="text-destructive"
+                  />
+                ),
+              },
+              {
+                id: "day:newLeads",
+                title: t("funnels.day.newLeads"),
+                icon: UserPlus,
+                tone: "primary",
+                node: (
+                  <DayStat
+                    label={t("funnels.day.newLeads")}
+                    value={`${dayStats.newToday} / ${dayStats.newYesterday}`}
+                    tone="text-primary"
+                  />
+                ),
+              },
+              {
+                id: "m:leadsInFunnel",
+                title: t("funnels.leadsInFunnel"),
+                icon: Users,
+                tone: "primary",
+                node: (
+                  <FunnelMetric
+                    icon={Users}
+                    label={t("funnels.leadsInFunnel")}
+                    value={String(shownLeads.length)}
+                    hint={t("funnels.allStages")}
+                    info={t("funnels.leadsInFunnelInfo")}
+                    tone="primary"
+                  />
+                ),
+              },
+              {
+                id: "m:lateFunnelConversion",
+                title: t("funnels.lateFunnelConversion"),
+                icon: TrendingUp,
+                tone: "primary",
+                node: (
+                  <FunnelMetric
+                    icon={TrendingUp}
+                    label={t("funnels.lateFunnelConversion")}
+                    value={`${lateFunnelConversionRate}%`}
+                    hint={t("funnels.lateFunnelConversionHint")}
+                    info={t("funnels.lateFunnelConversionInfo")}
+                    progress={lateFunnelConversionRate}
+                    tone="primary"
+                  />
+                ),
+              },
+              {
+                id: "m:lateFunnelRevenue",
+                title: t("funnels.lateFunnelRevenue"),
+                icon: Wallet,
+                tone: "emerald",
+                node: (
+                  <FunnelMetric
+                    icon={Wallet}
+                    label={t("funnels.lateFunnelRevenue")}
+                    value={format(stageMeta.lateFunnelRevenue)}
+                    hint={t("funnels.lateFunnelRevenueHint")}
+                    info={t("funnels.lateFunnelRevenueInfo")}
+                    tone="success"
+                  />
+                ),
+              },
+              {
+                id: "m:lostLeadsCount",
+                title: t("funnels.lostLeadsCount"),
+                icon: XCircle,
+                tone: "rose",
+                node: (
+                  <FunnelMetric
+                    icon={XCircle}
+                    label={t("funnels.lostLeadsCount")}
+                    value={String(lostCount)}
+                    hint={t("funnels.lostLeadsHint")}
+                    info={t("funnels.lostLeadsCountInfo")}
+                    tone="danger"
+                  />
+                ),
+              },
+              {
+                id: "m:fullPaymentCount",
+                title: t("funnels.fullPaymentCount"),
+                icon: Trophy,
+                tone: "emerald",
+                node: (
+                  <FunnelMetric
+                    icon={Trophy}
+                    label={t("funnels.fullPaymentCount")}
+                    value={String(stageMeta.fullPaymentCount)}
+                    hint={t("funnels.fullPaymentCountHint")}
+                    info={t("funnels.fullPaymentCountInfo")}
+                    tone="success"
+                  />
+                ),
+              },
+              {
+                id: "m:avgLateFunnelDeal",
+                title: t("funnels.avgLateFunnelDeal"),
+                icon: CircleDollarSign,
+                tone: "primary",
+                node: (
+                  <FunnelMetric
+                    icon={CircleDollarSign}
+                    label={t("funnels.avgLateFunnelDeal")}
+                    value={format(avgLateFunnelDeal)}
+                    hint={t("funnels.avgLateFunnelDealHint")}
+                    info={t("funnels.avgLateFunnelDealInfo")}
+                    tone="primary"
+                  />
+                ),
+              },
+              {
+                id: "m:fullPaymentConversionRate",
+                title: t("funnels.fullPaymentConversionRate"),
+                icon: Percent,
+                tone: "emerald",
+                node: (
+                  <FunnelMetric
+                    icon={Percent}
+                    label={t("funnels.fullPaymentConversionRate")}
+                    value={`${fullPaymentConversionRate}%`}
+                    hint={t("funnels.fullPaymentConversionRateHint")}
+                    info={t("funnels.fullPaymentConversionRateInfo")}
+                    progress={fullPaymentConversionRate}
+                    tone="success"
+                  />
+                ),
+              },
+              {
+                id: "m:openLeads",
+                title: t("funnels.openLeads"),
+                icon: ClipboardList,
+                tone: "amber",
+                node: (
+                  <FunnelMetric
+                    icon={ClipboardList}
+                    label={t("funnels.openLeads")}
+                    value={String(openCount)}
+                    hint={t("funnels.openLeadsHint")}
+                    info={t("funnels.openLeadsHint")}
+                    tone="warning"
+                  />
+                ),
+              },
+              {
+                // Who got what today -- each salesperson's day in this funnel.
+                id: "ownerToday",
+                title: t("funnels.byOwnerToday"),
+                icon: Users,
+                tone: "sky",
+                span: 12,
+                sizes: [8, 12],
+                node: (
+                  <div className="surface-card p-4">
+                    <p className="mb-3 text-[12px] font-bold uppercase tracking-wider text-subtle">
+                      {t("funnels.byOwnerToday")}
+                    </p>
+                    {ownerToday.length === 0 ? (
+                      <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-[13px] text-subtle">
+                        {t("funnels.noLeads")}
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto rounded-2xl border border-border">
+                        <table className="w-full min-w-[640px] text-[13px]">
+                          <thead>
+                            <tr className="border-b border-border bg-muted/40 text-left text-[11.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <th className="px-4 py-2.5">{t("funnels.col.owner")}</th>
+                              <th className="px-3 py-2.5 text-right">
+                                {t("funnels.col.totalToday")}
+                              </th>
+                              <th className="px-3 py-2.5 text-right">
+                                {t("funnels.col.newToday")}
+                              </th>
+                              <th className="px-3 py-2.5 text-right">
+                                {t("funnels.col.handedToday")}
+                              </th>
+                              <th className="px-3 py-2.5 text-right">
+                                {t("funnels.col.tasksToday")}
+                              </th>
+                              <th className="px-3 py-2.5 text-right">{t("funnels.col.overdue")}</th>
+                              <th className="px-4 py-2.5 text-right">{t("funnels.col.noTasks")}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {ownerToday.map((r) => (
+                              <tr key={r.id} className="tabular-nums">
+                                <td className="px-4 py-2.5">
+                                  <span className="flex items-center gap-2 font-semibold text-foreground">
+                                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/12 text-[11px] font-bold text-primary">
+                                      {r.name.slice(0, 1).toUpperCase()}
+                                    </span>
+                                    <span className="truncate">{r.name}</span>
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-right text-[15px] font-extrabold text-foreground">
+                                  {r.created + r.handed}
+                                </td>
+                                <td className="px-3 py-2.5 text-right text-foreground">
+                                  {r.created}
+                                </td>
+                                <td className="px-3 py-2.5 text-right text-foreground">
+                                  {r.handed}
+                                </td>
+                                <td className="px-3 py-2.5 text-right font-semibold text-success">
+                                  {r.tasks}
+                                </td>
+                                <td
+                                  className={cn(
+                                    "px-3 py-2.5 text-right font-semibold",
+                                    r.overdue ? "text-destructive" : "text-subtle",
+                                  )}
+                                >
+                                  {r.overdue}
+                                </td>
+                                <td
+                                  className={cn(
+                                    "px-4 py-2.5 text-right font-semibold",
+                                    r.noTasks
+                                      ? "text-amber-600 dark:text-amber-400"
+                                      : "text-subtle",
+                                  )}
+                                >
+                                  {r.noTasks}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+          />
         </DialogContent>
       </Dialog>
 
