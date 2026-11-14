@@ -152,6 +152,15 @@ class FakePool:
     async def list_groups(self, account_id, session):
         return [{"id": -1001, "title": "Ombor", "members": 5}]
 
+    async def history(self, account_id, session, chat_id, limit=50, before_id=None):
+        from app.accounts import SendFailed
+
+        if chat_id == -1:
+            raise SendFailed("peer_unknown")
+        return [{"id": 10, "text": "Salom", "date": 1700000000.0, "out": False,
+                 "sender": {"id": 5, "name": "Ali", "username": None},
+                 "media": None, "fileName": None, "replyTo": None, "limit": limit, "before": before_id}]
+
     async def resolve_phone(self, account_id, session, phone, name=None):
         if phone == "+998000000000":
             return None
@@ -196,3 +205,15 @@ def test_user_groups_lists_the_accounts_groups():
     assert c.post("/v1/user/groups", json=body).status_code == 401
     r = c.post("/v1/user/groups", json=body, headers={"x-tglive-secret": SECRET})
     assert r.status_code == 200 and r.json()["groups"][0]["title"] == "Ombor"
+
+
+def test_user_history_reads_a_groups_messages():
+    c = TestClient(create_app(FakeGateway(), SECRET, pool=FakePool(), sync_accounts=False))
+    h = {"x-tglive-secret": SECRET}
+    body = {"account_id": "acc-12345", "session": "s" * 12, "chat_id": -1001, "limit": 30, "before_id": 99}
+    assert c.post("/v1/user/history", json=body).status_code == 401
+    r = c.post("/v1/user/history", json=body, headers=h)
+    assert r.status_code == 200
+    m = r.json()["messages"][0]
+    assert m["text"] == "Salom" and m["limit"] == 30 and m["before"] == 99
+    assert c.post("/v1/user/history", json={**body, "chat_id": -1}, headers=h).status_code == 400

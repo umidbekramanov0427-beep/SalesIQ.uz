@@ -69,6 +69,28 @@ class FakeClient:
     async def get_dialogs(self, limit=100):
         return []
 
+    async def get_messages(self, target, limit=50, offset_id=None):
+        import datetime
+
+        class U:
+            first_name = "Ali"
+            last_name = "Valiyev"
+            username = "ali"
+
+        class M:
+            def __init__(self, i, action=None):
+                self.id = i
+                self.message = f"xabar {i}"
+                self.date = datetime.datetime(2026, 11, 14, tzinfo=datetime.timezone.utc)
+                self.out = i == 3
+                self.sender = U()
+                self.sender_id = 5
+                self.action = action
+                self.reply_to = None
+
+        self.history_args = (target, limit, offset_id)
+        return [M(3), M(2, action="joined"), M(1)]
+
     async def send_message(self, target, text):
         self.sent.append((target, text))
 
@@ -149,5 +171,17 @@ def test_sync_hands_each_account_its_groups(pool_and_posts):
         assert pool._entries["acc-1"].groups == {-1001, -1002}
         await pool.sync([{"id": "acc-1", "session": "s1", "groups": []}])
         assert pool._entries["acc-1"].groups == set()
+
+    asyncio.run(run())
+
+
+def test_history_reads_a_groups_messages_without_service_ones(pool_and_posts):
+    pool, _, clients = pool_and_posts
+
+    async def run():
+        msgs = await pool.history("acc-1", "s1", -1001, limit=500, before_id=40)
+        assert [m["id"] for m in msgs] == [3, 1]
+        assert msgs[0]["out"] is True and msgs[0]["sender"]["name"] == "Ali Valiyev"
+        assert clients["s1"].history_args == (-1001, 100, 40)
 
     asyncio.run(run())

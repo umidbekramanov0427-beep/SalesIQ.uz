@@ -1,6 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  ArrowLeft,
   BarChart3,
+  Check,
+  Columns2,
+  PanelLeft,
+  PanelTop,
   Cable,
   Grid3x3,
   Headphones,
@@ -14,7 +19,8 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
-import { PageHeader, StatusChip, type CardTone } from "@/components/layout/Primitives";
+import { IconTile, PageHeader, StatusChip, type CardTone } from "@/components/layout/Primitives";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CallAnalytics } from "@/components/phone/CallAnalytics";
 import { CallHistoryPanel } from "@/components/phone/PhoneProvider";
 import { usePhoneCenter } from "@/hooks/use-crm-data";
@@ -105,8 +111,86 @@ export function PhoneCenterPage({
   const withPeriod =
     section === "main" || section === "calls" || section === "operators" || section === "rating";
 
+  const [layout, setLayout] = usePcLayout();
+
+  const content = (
+    <div key={section} className="tab-enter min-w-0">
+      {section === "log" ? (
+        <CallHistoryPanel embedded onClose={() => {}} />
+      ) : section === "reports" ? (
+        <div className="surface-card overflow-hidden">
+          <CallAnalytics />
+        </div>
+      ) : section === "dial" ? (
+        <DialerSection data={data} />
+      ) : section === "auto" ? (
+        <AutoDialer connected={connected} />
+      ) : section === "voice" ? (
+        <VoiceMessage />
+      ) : section === "connect" ? (
+        <ConnectSection data={data} />
+      ) : section === "settings" ? (
+        <SettingsSection />
+      ) : section === "desktop" ? (
+        <DesktopSection />
+      ) : (
+        <PeriodSections
+          section={section}
+          data={data}
+          isLoading={isLoading}
+          error={error}
+          onSection={onSection}
+        />
+      )}
+    </div>
+  );
+
+  const badge = (s: PcSection) =>
+    s === "calls" && data && data.totals.missed > 0 ? (
+      <span className="rounded-full bg-rose-500/12 px-1.5 text-[11px] font-semibold tabular-nums text-rose-600 dark:text-rose-400">
+        {data.totals.missed}
+      </span>
+    ) : null;
+
+  // Tabs in the platform's track (the «Tablar» and «Terish paneli» layouts).
+  const tabRow = (list: readonly PcSection[]) => (
+    <div
+      role="tablist"
+      className="ctl-track flex shrink-0 items-center gap-1 overflow-x-auto rounded-2xl p-1 [scrollbar-width:none]"
+    >
+      {list.map((s) => {
+        const [Icon, tone] = ICON[s];
+        const on = s === section;
+        return (
+          <button
+            key={s}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            data-state={on ? "active" : "inactive"}
+            onClick={() => onSection(s)}
+            className="ctl-tab inline-flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold"
+          >
+            <Icon className={cn("h-4 w-4", !on && TONE_ICON[tone])} />
+            {t(`ptel.s.${s}`)}
+            {badge(s)}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // The page holds still: the header and the section list stay where they
+  // are; only the section's own content scrolls (no bounce dragging the
+  // menu along).
+  const scroll = (node: ReactNode) => (
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2 pr-1 phone:overflow-visible phone:pr-0">
+      {node}
+    </div>
+  );
+
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col gap-4 phone:h-auto">
       <PageHeader
         title={t("ptel.title")}
         description={t("ptel.subtitle")}
@@ -124,14 +208,14 @@ export function PhoneCenterPage({
               </StatusChip>
             )}
             {data?.myExtension && (
-              <span className="rounded-[6px] border border-border bg-card px-2.5 py-1 text-[12.5px] font-semibold tabular-nums text-foreground">
+              <span className="rounded-lg border border-border bg-card px-2.5 py-1 text-[12.5px] font-semibold tabular-nums text-foreground">
                 {t("ptel.ext", { n: data.myExtension })}
               </span>
             )}
             {withPeriod && (
               <div
                 role="tablist"
-                className="ctl-track inline-flex items-center gap-0.5 rounded-[6px] p-0.5"
+                className="ctl-track inline-flex items-center gap-0.5 rounded-xl p-0.5"
               >
                 {(["today", "week", "month"] as PcPeriodKey[]).map((k) => (
                   <button
@@ -141,81 +225,212 @@ export function PhoneCenterPage({
                     aria-selected={periodKey === k}
                     data-state={periodKey === k ? "active" : "inactive"}
                     onClick={() => setPeriodKey(k)}
-                    className="ctl-tab h-8 rounded-[4px] px-3 text-[12.5px] font-semibold"
+                    className="ctl-tab h-8 rounded-lg px-3 text-[12.5px] font-semibold"
                   >
                     {t(`ptel.period.${k}`)}
                   </button>
                 ))}
               </div>
             )}
+            <LayoutPicker value={layout} onChange={setLayout} />
           </div>
         }
       />
 
-      <div className="grid grid-cols-[220px_minmax(0,1fr)] items-start gap-4 phone:grid-cols-1">
-        <nav
-          aria-label={t("ptel.title")}
-          className="sticky top-2 rounded-[8px] border border-border bg-card p-1.5 phone:static phone:flex phone:gap-1 phone:overflow-x-auto phone:[scrollbar-width:none]"
-        >
-          {PC_SECTIONS.map((s) => {
-            const [Icon, tone] = ICON[s];
-            const on = s === section;
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => onSection(s)}
-                aria-current={on ? "page" : undefined}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-2 text-left text-[13.5px] font-medium transition-colors phone:w-auto phone:shrink-0 phone:whitespace-nowrap",
-                  on
-                    ? "bg-primary/[0.09] text-foreground"
-                    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-                )}
-              >
-                <Icon className={cn("h-4 w-4 shrink-0", TONE_ICON[tone])} />
-                <span className="min-w-0 flex-1 truncate">{t(`ptel.s.${s}`)}</span>
-                {s === "calls" && data && data.totals.missed > 0 && (
-                  <span className="rounded-full bg-rose-500/12 px-1.5 text-[11px] font-semibold tabular-nums text-rose-600 dark:text-rose-400">
-                    {data.totals.missed}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div key={section} className="tab-enter min-w-0">
-          {section === "log" ? (
-            <CallHistoryPanel embedded onClose={() => {}} />
-          ) : section === "reports" ? (
-            <div className="overflow-hidden rounded-[8px] border border-border bg-card">
-              <CallAnalytics />
-            </div>
-          ) : section === "dial" ? (
-            <DialerSection data={data} />
-          ) : section === "auto" ? (
-            <AutoDialer connected={connected} />
-          ) : section === "voice" ? (
-            <VoiceMessage />
-          ) : section === "connect" ? (
-            <ConnectSection data={data} />
-          ) : section === "settings" ? (
-            <SettingsSection />
-          ) : section === "desktop" ? (
-            <DesktopSection />
-          ) : (
-            <PeriodSections
-              section={section}
-              data={data}
-              isLoading={isLoading}
-              error={error}
-              onSection={onSection}
-            />
-          )}
+      {layout === "rail" && (
+        <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)] gap-4 phone:grid-cols-1">
+          <nav
+            aria-label={t("ptel.title")}
+            className="surface-card max-h-full self-start overflow-y-auto p-1.5 phone:flex phone:gap-1 phone:overflow-x-auto phone:[scrollbar-width:none]"
+          >
+            {PC_SECTIONS.map((s) => {
+              const [Icon, tone] = ICON[s];
+              const on = s === section;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => onSection(s)}
+                  aria-current={on ? "page" : undefined}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium transition-colors phone:w-auto phone:shrink-0 phone:whitespace-nowrap",
+                    on
+                      ? "bg-sidebar-active font-semibold text-sidebar-active-foreground"
+                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4 shrink-0", TONE_ICON[tone])} />
+                  <span className="min-w-0 flex-1 truncate">{t(`ptel.s.${s}`)}</span>
+                  {badge(s)}
+                </button>
+              );
+            })}
+          </nav>
+          {scroll(content)}
         </div>
-      </div>
+      )}
+
+      {layout === "tabs" && (
+        <>
+          {tabRow(PC_SECTIONS)}
+          {scroll(content)}
+        </>
+      )}
+
+      {layout === "hub" &&
+        (section === "main" ? (
+          scroll(
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 gap-3 phone:grid-cols-2">
+                {PC_SECTIONS.filter((s) => s !== "main").map((s) => {
+                  const [Icon, tone] = ICON[s];
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => onSection(s)}
+                      className="surface-card group flex items-start gap-3 p-4 text-left transition-colors hover:border-primary/40"
+                    >
+                      <IconTile icon={Icon} tone={tone} size="md" />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5 text-[14px] font-semibold text-foreground">
+                          {t(`ptel.s.${s}`)}
+                          {badge(s)}
+                        </span>
+                        <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
+                          {t(`ptel.d.${s}`)}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {content}
+            </div>,
+          )
+        ) : (
+          <>
+            <div className="flex shrink-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onSection("main")}
+                className="ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3.5 text-[13px] font-semibold"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t("ptel.allSections")}
+              </button>
+              <span className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
+                {(() => {
+                  const [Icon, tone] = ICON[section];
+                  return <IconTile icon={Icon} tone={tone} size="sm" />;
+                })()}
+                {t(`ptel.s.${section}`)}
+              </span>
+            </div>
+            {scroll(content)}
+          </>
+        ))}
+
+      {layout === "dock" && (
+        <div className="grid min-h-0 flex-1 grid-cols-[360px_minmax(0,1fr)] gap-4 phone:grid-cols-1">
+          <div className="min-h-0 overflow-y-auto overscroll-contain phone:overflow-visible">
+            <DialerSection data={data} compact />
+          </div>
+          <div className="flex min-h-0 flex-col gap-3">
+            {tabRow(PC_SECTIONS.filter((s) => s !== "dial"))}
+            {scroll(
+              section === "dial" ? (
+                <PeriodSections
+                  section="main"
+                  data={data}
+                  isLoading={isLoading}
+                  error={error}
+                  onSection={onSection}
+                />
+              ) : (
+                content
+              ),
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export type PcLayout = "rail" | "tabs" | "hub" | "dock";
+const LAYOUTS: { id: PcLayout; icon: LucideIcon }[] = [
+  { id: "rail", icon: PanelLeft },
+  { id: "tabs", icon: PanelTop },
+  { id: "hub", icon: LayoutGrid },
+  { id: "dock", icon: Columns2 },
+];
+const LAYOUT_STORE = "phone.layout.v1";
+
+/** The page's look, per person (this browser). */
+function usePcLayout(): [PcLayout, (v: PcLayout) => void] {
+  const [v, setV] = useState<PcLayout>("rail");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LAYOUT_STORE) as PcLayout | null;
+      if (saved && LAYOUTS.some((l) => l.id === saved)) setV(saved);
+    } catch {
+      /* private window */
+    }
+  }, []);
+  return [
+    v,
+    (next) => {
+      setV(next);
+      try {
+        localStorage.setItem(LAYOUT_STORE, next);
+      } catch {
+        /* private window */
+      }
+    },
+  ];
+}
+
+/** «Ko'rinish»: four ways to lay the page out. */
+function LayoutPicker({ value, onChange }: { value: PcLayout; onChange: (v: PcLayout) => void }) {
+  const { t } = useI18n();
+  const Current = LAYOUTS.find((l) => l.id === value)!.icon;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold"
+        >
+          <Current className="h-4 w-4" />
+          {t("ptel.layout")}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-2">
+        {LAYOUTS.map((l, k) => (
+          <button
+            key={l.id}
+            type="button"
+            onClick={() => onChange(l.id)}
+            className={cn(
+              "flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-accent/60",
+              value === l.id && "bg-primary/[0.08]",
+            )}
+          >
+            <l.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-semibold text-foreground">
+                {k + 1}. {t(`ptel.layout.${l.id}`)}
+              </span>
+              <span className="block text-[12px] leading-snug text-muted-foreground">
+                {t(`ptel.layout.${l.id}Desc`)}
+              </span>
+            </span>
+            {value === l.id && <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -235,7 +450,7 @@ function PeriodSections({
   const { t } = useI18n();
   if (!data) {
     return (
-      <p className="rounded-[8px] border border-border bg-card px-4 py-16 text-center text-[13px] text-muted-foreground">
+      <p className="surface-card px-4 py-16 text-center text-[13px] text-muted-foreground">
         {isLoading
           ? t("common.loading")
           : error instanceof Error

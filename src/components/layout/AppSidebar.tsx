@@ -23,7 +23,9 @@ import {
   UserCircle,
   Users,
   Megaphone,
+  Settings2,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
 import {
@@ -56,7 +58,7 @@ type Props = {
   collapsed: boolean;
   // The search button under the logo (and ⌘K) opens the search window;
   // the pencil in the avatar menu opens the profile window.
-  onOpenSearch?: () => void;
+  onOpenSearch?: (query?: string) => void;
   onEditProfile?: () => void;
   // Funnels and the lead card: a slim icon-only rail, so the board and the
   // lead get the screen.
@@ -83,7 +85,7 @@ function RailTip({
       <TooltipContent
         side="right"
         sideOffset={12}
-        className="rounded-xl border border-border bg-popover px-3 py-2 text-[13px] font-semibold text-popover-foreground shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+        className="rounded-[14px] border border-border bg-popover px-3 py-2 text-[13px] font-semibold text-popover-foreground shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
       >
         {label}
       </TooltipContent>
@@ -94,7 +96,8 @@ function RailTip({
 // The slim rail shows each icon with its name under it, as amoCRM's left
 // bar does: a clear 26px outline icon and a small two-line label.
 // Airier on tall screens, back to tight on short laptops so every item fits.
-export const RAIL_ITEM = "w-full flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center";
+export const RAIL_ITEM =
+  "w-full flex-col justify-center gap-1 rounded-[10px] px-1 py-1.5 text-center";
 // One fixed size: the rail does not tighten or loosen with the window's
 // height -- when it doesn't fit, its list scrolls instead.
 export const RAIL_STACK = "space-y-1.5";
@@ -102,7 +105,7 @@ export const RAIL_LABEL = "line-clamp-2 w-full break-words text-[9.5px] leading-
 // The rail's two key tiles -- search at the top, the person at the bottom --
 // share one look: a soft gradient card holding just the glyph.
 export const RAIL_TILE =
-  "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
+  "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-[18px] bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
 export function NotificationBell({
   rail = false,
   mobile = false,
@@ -127,7 +130,7 @@ export function NotificationBell({
         aria-label={t("shell.notifications")}
         title={rail ? t("shell.notifications") : undefined}
         className={cn(
-          "relative flex shrink-0 items-center justify-center rounded-xl transition-colors",
+          "relative flex shrink-0 items-center justify-center rounded-[14px] transition-colors",
           mobile
             ? cn(
                 "h-10 w-10 hover:bg-accent",
@@ -195,47 +198,6 @@ function ClassroomTile({ label, active }: { label: string; active: boolean }) {
   );
 }
 
-// Search sits right under the logo: a magnifier on the slim rail, a
-// search-field look on the full menu. Both open the search window (⌘K).
-function SearchButton({
-  collapsed,
-  onOpen,
-}: {
-  collapsed: boolean;
-  onOpen?: (() => void) | undefined;
-}) {
-  const { t } = useI18n();
-  if (collapsed) {
-    return (
-      <RailTip label={`${t("search.title")} · ⌘K`} show>
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-label={t("search.title")}
-          className={cn(RAIL_TILE, "mb-2")}
-        >
-          <RailGlyph icon={Search} className="transition-transform group-hover:scale-110" />
-        </button>
-      </RailTip>
-    );
-  }
-  return (
-    <div className="px-3 pb-2">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex h-10 w-full items-center gap-2 rounded-xl border border-sidebar-border bg-sidebar-group px-3 text-left text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground"
-      >
-        <Search className="h-4 w-4 shrink-0" />
-        <span className="flex-1 truncate">{t("search.title")}</span>
-        <kbd className="rounded-md border border-border bg-background px-1.5 text-[10px] font-semibold">
-          ⌘K
-        </kbd>
-      </button>
-    </div>
-  );
-}
-
 const ROLE_KEY: Record<string, string> = {
   super_admin: "admin.roleAdmin",
   platform_owner: "admin.roleAdmin",
@@ -289,7 +251,7 @@ export function UserMenu({
       </span>
     </button>
   ) : (
-    <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
+    <button className="mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-[14px] border border-sidebar-border bg-sidebar-group px-3 py-3 text-left shadow-soft transition-colors hover:bg-accent">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
         {user?.initials ?? "?"}
       </span>
@@ -306,7 +268,7 @@ export function UserMenu({
   );
 
   const item =
-    "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent";
+    "flex w-full items-center gap-2.5 rounded-[14px] px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent";
 
   return (
     <>
@@ -317,7 +279,7 @@ export function UserMenu({
           align="end"
           sideOffset={mobile ? 8 : 12}
           collisionPadding={8}
-          className="w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl p-0"
+          className="w-80 max-w-[calc(100vw-16px)] overflow-hidden rounded-[18px] p-0"
         >
           {/* Who's signed in */}
           <div className="flex items-center gap-3 border-b border-border p-4">
@@ -446,7 +408,7 @@ export function UserMenu({
                 <Link
                   to="/admin"
                   onClick={() => setOpen(false)}
-                  className="mt-1 flex w-full items-center gap-2.5 rounded-xl border border-amber-400/40 bg-amber-400/15 px-2.5 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
+                  className="mt-1 flex w-full items-center gap-2.5 rounded-[14px] border border-amber-400/40 bg-amber-400/15 px-2.5 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
                 >
                   <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />{" "}
                   {t("nav./admin")}
@@ -457,7 +419,7 @@ export function UserMenu({
           <div className="border-t border-border p-2">
             <button
               onClick={() => void onSignOut()}
-              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+              className="flex w-full items-center gap-2.5 rounded-[14px] px-2.5 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4" /> {t("userMenu.logout")}
             </button>
@@ -512,7 +474,7 @@ function FunnelsNavGroup({
     <div>
       <div
         className={cn(
-          "group flex w-full items-center gap-1 rounded-lg border-l-2 text-base font-bold transition-colors duration-150",
+          "group flex w-full items-center gap-1 rounded-[10px] border-l-2 text-base font-bold transition-colors duration-150",
           active
             ? "border-mint bg-sidebar-active text-sidebar-active-foreground shadow-soft"
             : "border-transparent text-sidebar-foreground",
@@ -521,7 +483,7 @@ function FunnelsNavGroup({
         <Link
           to={item.to}
           className={cn(
-            "flex flex-1 items-center gap-3 rounded-lg py-2 pl-[10px]",
+            "flex flex-1 items-center gap-3 rounded-[10px] py-2 pl-[10px]",
             !active && "hover:bg-accent",
           )}
         >
@@ -532,7 +494,7 @@ function FunnelsNavGroup({
           <button
             type="button"
             onClick={() => setExpanded((e) => !e)}
-            className="mr-1.5 rounded-lg p-1 text-current/70 hover:bg-black/5"
+            className="mr-1.5 rounded-[10px] p-1 text-current/70 hover:bg-black/5"
             aria-label={expanded ? t("nav.collapse") : t("nav.groupAnalytics")}
           >
             <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
@@ -549,7 +511,7 @@ function FunnelsNavGroup({
                 to="/funnels"
                 search={{ funnel: name }}
                 className={cn(
-                  "block truncate rounded-lg px-2 py-1.5 text-[13px] transition-colors",
+                  "block truncate rounded-[10px] px-2 py-1.5 text-[13px] transition-colors",
                   isActiveFunnel
                     ? "bg-mint font-semibold text-mint-foreground"
                     : "text-sidebar-muted hover:bg-accent hover:text-sidebar-foreground",
@@ -596,6 +558,7 @@ export function AppSidebar({
   // Sozlamalar → Umumiy: the company's own logo at the top, as in amoCRM.
   const { data: orgGeneral } = useOrgGeneralSettings();
   const companyLogo = orgGeneral?.company_logo_url ?? null;
+  const [logoPanel, setLogoPanel] = useState(false);
   const resolved = resolveSidebar(
     [...navItemsFor(role, crmEnabled), ...moduleItemsFor(role, crmEnabled)],
     sidebarConfig,
@@ -660,7 +623,7 @@ export function AppSidebar({
             collapsed
               ? cn(RAIL_ITEM, active ? "font-bold" : "font-semibold")
               : cn(
-                  "w-full gap-3 rounded-lg border-l-2 py-2 pl-[10px] pr-3 text-base font-bold",
+                  "w-full gap-3 rounded-[10px] border-l-2 py-2 pl-[10px] pr-3 text-base font-bold",
                   isCritical ? "border-transparent" : active ? "border-mint" : "border-transparent",
                 ),
           )}
@@ -692,7 +655,7 @@ export function AppSidebar({
               <span className="truncate">{t(`nav.${item.to}`)}</span>
               {locked && <Lock className="ml-auto h-3.5 w-3.5 shrink-0 text-sidebar-muted" />}
               {!locked && badge && badge !== "0" && (
-                <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                <span className="ml-auto rounded-[6px] bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
                   {badge}
                 </span>
               )}
@@ -718,7 +681,7 @@ export function AppSidebar({
         <div
           className={cn(
             collapsed ? RAIL_STACK : "space-y-0.5",
-            !collapsed && "rounded-2xl bg-sidebar-group p-1.5 dark:bg-transparent dark:p-0",
+            !collapsed && "rounded-[18px] bg-sidebar-group p-1.5 dark:bg-transparent dark:p-0",
           )}
         >
           {items.map((item) => (
@@ -780,7 +743,7 @@ export function AppSidebar({
               <Link
                 to="/platform/companies"
                 aria-label={t("app.name")}
-                className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="shrink-0 rounded-[14px] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <Logo className="h-9 w-9" />
               </Link>
@@ -818,22 +781,41 @@ export function AppSidebar({
               collapsed ? "h-14 justify-center px-0" : "h-16",
             )}
           >
-            <Link
-              to="/"
-              title={t("nav./")}
-              aria-label={t("nav./")}
-              className="shrink-0 rounded-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            {/* The logo opens the account panel (amoCRM / 5CRM): search,
+                theme, language, profile; a second click closes it. */}
+            <button
+              type="button"
+              onClick={() => setLogoPanel((v) => !v)}
+              title={t("logoPanel.open")}
+              aria-label={t("logoPanel.open")}
+              aria-expanded={logoPanel}
+              className="relative z-[71] shrink-0 rounded-[14px] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               {companyLogo ? (
                 <img
                   src={companyLogo}
                   alt=""
-                  className="h-9 w-9 rounded-xl bg-white object-contain p-0.5"
+                  className="h-9 w-9 rounded-[14px] bg-white object-contain p-0.5"
                 />
               ) : (
                 <Logo className="h-9 w-9" />
               )}
-            </Link>
+            </button>
+            <LogoPanel
+              open={logoPanel}
+              onClose={() => setLogoPanel(false)}
+              left={compact ? 88 : collapsed ? 140 : 272}
+              companyLogo={companyLogo}
+              isAdmin={isAdmin}
+              onSearch={(q) => {
+                setLogoPanel(false);
+                onOpenSearch?.(q);
+              }}
+              onEditProfile={() => {
+                setLogoPanel(false);
+                onEditProfile?.();
+              }}
+            />
             {!collapsed && (
               <>
                 <div className="min-w-0 flex-1">
@@ -846,13 +828,6 @@ export function AppSidebar({
 
           {/* The bell sits beside the name when the menu is open; on the rail
           it is a compact button under the person's tile (amoCRM's place). */}
-          {collapsed ? (
-            <div className={cn(RAIL_STACK, compact ? "px-1.5" : "px-3")}>
-              <SearchButton collapsed onOpen={onOpenSearch} />
-            </div>
-          ) : (
-            <SearchButton collapsed={false} onOpen={onOpenSearch} />
-          )}
           <nav
             data-tour="nav"
             className={cn(
@@ -881,16 +856,16 @@ export function AppSidebar({
                 onClick={onToggle}
                 aria-label={t("nav.expand")}
                 title={`${t("nav.expand")} · ⌘B`}
-                className="group mx-auto mt-1.5 flex h-8 w-[50px] items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+                className="group mx-auto mt-1.5 flex h-6 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
               >
-                <ChevronsLeft className="h-4 w-4 rotate-180 transition-transform group-hover:translate-x-0.5" />
+                <ChevronsLeft className="h-3.5 w-3.5 rotate-180 transition-transform group-hover:translate-x-0.5" />
               </button>
             )}
 
             <button
               onClick={onToggle}
               className={cn(
-                "mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground",
+                "mt-1 flex w-full items-center gap-2 rounded-[14px] px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground",
                 collapsed && "hidden",
               )}
             >
@@ -914,5 +889,198 @@ export function AppSidebar({
         outside the rail's counter-zoom, beside the rail's on-screen edge. */}
       <RailNotifications railWidth={(compact ? 80 : collapsed ? 132 : 264) / pageZoom} hideButton />
     </TooltipProvider>
+  );
+}
+
+/**
+ * The logo's panel (amoCRM / 5CRM): the company and the person, search over
+ * the whole platform, theme and language, the profile and settings -- over
+ * a dimmed, see-through backdrop. A click anywhere outside it (the logo
+ * included) or Esc closes it.
+ */
+function LogoPanel({
+  open,
+  onClose,
+  left,
+  companyLogo,
+  isAdmin,
+  onSearch,
+  onEditProfile,
+}: {
+  open: boolean;
+  onClose: () => void;
+  left: number;
+  companyLogo: string | null;
+  isAdmin: boolean;
+  onSearch: (query: string) => void;
+  onEditProfile: () => void;
+}) {
+  const { t, lang, setLang } = useI18n();
+  const { mode, setMode } = useTheme();
+  const { user, signOut } = useAuth();
+  const { data: org } = useMyOrganization();
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    if (!open) return;
+    setQ("");
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+  if (!open || typeof document === "undefined") return null;
+  const roleLabel = user?.role ? t(ROLE_KEY[user.role] ?? "") : "";
+  const item =
+    "flex w-full items-center gap-2.5 rounded-[12px] px-3 py-2 text-left text-[13.5px] font-medium text-foreground transition-colors hover:bg-accent";
+  return createPortal(
+    <div className="fixed inset-0 z-[70]" onMouseDown={onClose}>
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] animate-in fade-in-0 duration-150" />
+      <div
+        role="dialog"
+        aria-label={t("logoPanel.open")}
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ left, top: 8 }}
+        className="absolute max-h-[calc(100dvh-16px)] w-[360px] overflow-y-auto rounded-[18px] border border-border bg-popover text-popover-foreground shadow-[0_24px_60px_-12px_rgb(0_0_0/0.35)] animate-in fade-in-0 slide-in-from-left-2 duration-150"
+      >
+        <div className="flex items-center gap-3 border-b border-border p-4">
+          {companyLogo ? (
+            <img
+              src={companyLogo}
+              alt=""
+              className="h-11 w-11 shrink-0 rounded-[14px] bg-white object-contain p-0.5"
+            />
+          ) : (
+            <Logo className="h-11 w-11 shrink-0" />
+          )}
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-[15px] font-bold text-foreground">
+              {org?.name || t("app.name")}
+            </p>
+            <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+              {[user?.name, roleLabel].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+        </div>
+
+        <form
+          className="p-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSearch(q.trim());
+          }}
+        >
+          <label className="flex h-11 items-center gap-2 rounded-[14px] border border-border bg-background px-3 focus-within:border-primary">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("logoPanel.search")}
+              className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-subtle"
+            />
+            <kbd className="rounded-[6px] border border-border bg-card px-1.5 text-[10px] font-semibold text-muted-foreground">
+              ⌘K
+            </kbd>
+          </label>
+        </form>
+
+        <div className="space-y-3 px-3 pb-3">
+          <div>
+            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+              {t("userMenu.theme")}
+            </p>
+            <SegmentedControl<ThemeMode>
+              value={mode}
+              options={["system", "light", "dark"]}
+              render={(v) => (
+                <span className="inline-flex items-center gap-1.5">
+                  {v === "system" ? (
+                    <Laptop className="h-3.5 w-3.5" />
+                  ) : v === "light" ? (
+                    <Sun className="h-3.5 w-3.5" />
+                  ) : (
+                    <Moon className="h-3.5 w-3.5" />
+                  )}
+                  {v === "system"
+                    ? t("accountBar.themeAuto")
+                    : v === "light"
+                      ? t("accountBar.themeLight")
+                      : t("accountBar.themeDark")}
+                </span>
+              )}
+              onChange={setMode}
+              size="sm"
+              stretch
+            />
+          </div>
+          <div>
+            <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+              {t("userMenu.language")}
+            </p>
+            <SegmentedControl<Lang>
+              value={lang}
+              options={LANGS}
+              render={(l) => `${LANG_FLAGS[l]} ${LANG_SHORT[l]}`}
+              onChange={setLang}
+              size="sm"
+              stretch
+            />
+          </div>
+        </div>
+
+        <div className="space-y-0.5 border-t border-border p-2">
+          <button type="button" onClick={onEditProfile} className={item}>
+            <UserCircle className="h-4 w-4 text-primary" /> {t("userMenu.account")}
+          </button>
+          <Link to="/settings" onClick={onClose} className={item}>
+            <Settings2 className="h-4 w-4 text-muted-foreground" /> {t("nav./settings")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              window.dispatchEvent(new Event(OPEN_NOTIFICATIONS_EVENT));
+            }}
+            className={item}
+          >
+            <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            {t("userMenu.messages")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              window.dispatchEvent(new Event(OPEN_SUPPORT_EVENT));
+            }}
+            className={item}
+          >
+            <Headset className="h-4 w-4 text-muted-foreground" /> {t("support.menuItem")}
+          </button>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={onClose}
+              className="mt-1 flex w-full items-center gap-2.5 rounded-[12px] border border-amber-400/40 bg-amber-400/15 px-3 py-2 text-[13.5px] font-bold text-amber-700 transition-colors hover:bg-amber-400/25 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300"
+            >
+              <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              {t("nav./admin")}
+            </Link>
+          )}
+        </div>
+        <div className="border-t border-border p-2">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              void signOut().then(() => navigate({ to: "/login", replace: true }));
+            }}
+            className="flex w-full items-center gap-2.5 rounded-[12px] px-3 py-2 text-[13.5px] font-medium text-destructive transition-colors hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4" /> {t("userMenu.logout")}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }

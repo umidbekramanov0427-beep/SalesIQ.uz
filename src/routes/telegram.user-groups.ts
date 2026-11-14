@@ -3,6 +3,7 @@ import { requireOrgMember } from "@/lib/auth.server";
 import { tgLiveConfigured } from "@/lib/tg-live.server";
 import { workErrorText } from "@/lib/telegram-user/work-account";
 import {
+  loadGroupHistory,
   pickWorkGroups,
   sendGroupMessage,
   workGroupChoices,
@@ -10,7 +11,9 @@ import {
 
 // Ish guruhlari. GET -> the caller's Telegram groups, each marked whether it
 // comes into the CRM. POST { action: "pick", groups } saves the choice;
-// POST { action: "send", groupId, text } writes to a group from Inbox.
+// POST { action: "send", groupId, text } writes to a group from Inbox;
+// POST { action: "history", groupId, older? } brings the group's chat in as
+// Telegram shows it (the latest messages, or the ones before the oldest).
 export const Route = createFileRoute("/telegram/user-groups")({
   server: {
     handlers: {
@@ -60,6 +63,24 @@ export const Route = createFileRoute("/telegram/user-groups")({
               text,
             });
             return Response.json({ ok: true });
+          }
+          if (body["action"] === "history") {
+            const groupId = typeof body["groupId"] === "string" ? body["groupId"] : "";
+            if (!groupId) return Response.json({ error: "groupId is required" }, { status: 400 });
+            if (!tgLiveConfigured()) {
+              return Response.json(
+                { error: "Telegram xizmati serverda sozlanmagan." },
+                { status: 503 },
+              );
+            }
+            return Response.json(
+              await loadGroupHistory({
+                orgId: caller.organizationId,
+                groupId,
+                callerId: caller.id,
+                older: body["older"] === true,
+              }),
+            );
           }
           return Response.json({ error: "Unknown action" }, { status: 400 });
         } catch (e) {

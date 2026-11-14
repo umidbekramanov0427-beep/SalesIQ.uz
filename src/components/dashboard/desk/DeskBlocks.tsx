@@ -400,7 +400,7 @@ export function ManagersBlock({ d }: { d: DeskData }) {
         </label>
       }
     >
-      <div className="-mx-4 -my-4 overflow-x-auto">
+      <div className="-mx-4 -my-4 overflow-x-auto sm:-mx-5 sm:-my-5">
         <table className="w-full min-w-[980px] text-[13px]">
           <thead>
             <tr className="border-b border-border bg-surface text-left text-[12px] text-muted-foreground">

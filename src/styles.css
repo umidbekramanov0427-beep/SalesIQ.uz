@@ -124,7 +124,7 @@
   --primary-ink: var(--primary);
   /* Main buttons: a flat primary by day; the brand's blue -> violet
      gradient at night (.dark). Palettes and custom accents turn it off. */
-  --primary-gradient: none;
+  --primary-gradient: linear-gradient(90deg, #3570ee 0%, #5b55e6 100%);
   --primary-ondark: var(--primary);
   --primary-ondark-foreground: var(--primary-foreground);
 }
@@ -236,7 +236,7 @@
   --popover-foreground: #e7eaf0;
   --primary: #3570ee;
   --primary-foreground: #ffffff;
-  --primary-gradient: none;
+  --primary-gradient: linear-gradient(90deg, #3570ee 0%, #5b55e6 100%);
   --secondary: #1b1e24;
   --secondary-foreground: #e7eaf0;
   /* Chips, avatars, quiet fills: a step above the card. */
@@ -795,7 +795,7 @@ html.admin-console:not(.dark) {
 html.admin-console.dark:not([data-accent]) {
   --primary: #3b82f6;
   --ring: #3b82f6;
-  --primary-gradient: none;
+  --primary-gradient: linear-gradient(90deg, #3570ee 0%, #5b55e6 100%);
   --primary-ink: #6aa2ff;
 }
 html.admin-console:not(.dark):not([data-accent]) {
@@ -1726,7 +1726,7 @@ html.owner-skin.dark:not(.admin-console) {
   --input: #1b2639;
   --primary: #4f8cff;
   --ring: #4f8cff;
-  --primary-gradient: none;
+  --primary-gradient: linear-gradient(90deg, #3570ee 0%, #5b55e6 100%);
   --sidebar: #0b111d;
   --sidebar-foreground: #c3cbdc;
   --sidebar-active: #18233a;
@@ -1897,64 +1897,97 @@ html.owner-skin:not(.admin-console) .shadow-soft {
   /* Solid controls (amoCRM / 5CRM): a white button with a 1px edge, the
      main one flat brand colour; hover answers at once, nothing floats. */
   .ctl-soft {
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--primary) 16%, var(--card)) 0%,
+      color-mix(in oklab, #0ea5e9 10%, var(--card)) 55%,
+      color-mix(in oklab, #8b5cf6 17%, var(--card)) 100%
+    );
     background-color: var(--card);
-    background-image: none;
     color: var(--foreground);
     box-shadow:
-      inset 0 0 0 1px var(--border),
-      0 1px 1px rgb(16 24 40 / 0.05);
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 24%, transparent),
+      0 1px 2px rgb(16 24 40 / 0.06);
     transition:
-      box-shadow 0.08s,
-      background-color 0.08s,
-      color 0.08s;
+      box-shadow 0.18s,
+      transform 0.18s,
+      background-image 0.18s,
+      color 0.18s;
   }
   .ctl-soft:hover:not(:disabled) {
-    background-color: color-mix(in oklab, var(--primary) 5%, var(--card));
     box-shadow:
-      inset 0 0 0 1px color-mix(in oklab, var(--primary) 55%, var(--border)),
-      0 1px 1px rgb(16 24 40 / 0.05);
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 48%, transparent),
+      0 6px 16px -8px color-mix(in oklab, var(--primary) 55%, transparent);
+    transform: translateY(-1px);
   }
   .ctl-lit {
-    background-image: none;
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--primary) 82%, white) 0%,
+      var(--primary) 55%,
+      color-mix(in oklab, var(--primary) 88%, black) 100%
+    );
     background-color: var(--primary);
     color: var(--primary-foreground);
     box-shadow:
-      inset 0 0 0 1px color-mix(in oklab, var(--primary) 80%, black),
-      0 1px 1px rgb(16 24 40 / 0.1);
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, black),
+      0 8px 18px -8px color-mix(in oklab, var(--primary) 75%, transparent);
     transition:
-      background-color 0.08s,
-      box-shadow 0.08s;
+      box-shadow 0.18s,
+      transform 0.18s,
+      filter 0.18s;
   }
   .ctl-lit:hover:not(:disabled) {
-    background-color: color-mix(in oklab, var(--primary) 88%, black);
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, black),
+      0 12px 22px -10px color-mix(in oklab, var(--primary) 85%, transparent);
   }
-  /* A row of tabs: a solid grey track the segments sit in. */
+  /* A row of tabs: a tinted track the segments sit in. */
   .ctl-track {
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--border);
+    background: color-mix(in oklab, var(--primary) 6%, var(--card));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 16%, var(--border)),
+      inset 0 1px 2px rgb(16 24 40 / 0.04);
   }
-  /* A tab at rest inside a track: plain text, a white tile on hover. */
+  /* A tab at rest inside a track: the soft tile, a little quieter. */
   .ctl-tab {
-    background-image: none;
-    color: color-mix(in oklab, var(--foreground) 75%, transparent);
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--primary) 9%, var(--card)) 0%,
+      color-mix(in oklab, #0ea5e9 5%, var(--card)) 55%,
+      color-mix(in oklab, #8b5cf6 9%, var(--card)) 100%
+    );
+    color: color-mix(in oklab, var(--foreground) 72%, var(--primary));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 16%, transparent);
     transition:
-      background-color 0.08s,
-      color 0.08s,
-      box-shadow 0.08s;
+      box-shadow 0.18s,
+      color 0.18s,
+      transform 0.18s;
   }
   .ctl-tab:hover {
     color: var(--foreground);
-    background-color: color-mix(in oklab, var(--card) 70%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent);
   }
-  /* The chosen tab: the brand, flat. */
+  /* The chosen tab: lit like the main button. */
   .ctl-tab[aria-selected="true"],
   .ctl-tab[data-state="active"],
   .ctl-tab.is-on {
-    background-image: none;
-    background-color: var(--primary);
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--primary) 82%, white) 0%,
+      var(--primary) 55%,
+      color-mix(in oklab, var(--primary) 88%, black) 100%
+    );
     color: var(--primary-foreground);
     font-weight: 600;
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 80%, black);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.28),
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, black),
+      0 6px 14px -6px color-mix(in oklab, var(--primary) 75%, transparent);
   }
   @media (prefers-reduced-motion: reduce) {
     .ctl-soft:hover,
@@ -1978,4 +2011,27 @@ html.owner-skin:not(.admin-console) .shadow-soft {
 .card-gear:has([data-state="open"]),
 html.phone .card-gear {
   opacity: 1;
+}
+
+/* Inbox → Guruhlar: a Telegram-like chat wallpaper (soft colour wash with a
+   faint dotted pattern), its own in the dark too. */
+.tg-wallpaper {
+  background-color: #c9d8c0;
+  background-image:
+    radial-gradient(circle at 20% 15%, rgb(255 255 255 / 0.35) 0, transparent 45%),
+    radial-gradient(circle at 80% 85%, rgb(152 192 120 / 0.45) 0, transparent 50%),
+    radial-gradient(rgb(255 255 255 / 0.22) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    22px 22px;
+}
+.dark .tg-wallpaper {
+  background-color: #0e1621;
+  background-image:
+    radial-gradient(circle at 20% 15%, rgb(43 82 120 / 0.35) 0, transparent 45%),
+    radial-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    22px 22px;
 }

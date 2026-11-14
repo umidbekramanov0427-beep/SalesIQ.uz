@@ -652,18 +652,32 @@ function MiniChart({
   );
 }
 
+/** The six figure cards of the overview, in order (each is its own board widget). */
+export const KPI_IDS = [
+  "newLeads",
+  "revenue",
+  "firstContact",
+  "attempts",
+  "cycle",
+  "conversion",
+] as const;
+export type KpiId = (typeof KPI_IDS)[number];
+
 function KpiGrid({
   o,
   conversion,
   input,
   range,
   prevRange,
+  only,
 }: {
   o: Overview;
   conversion: Conversion;
   input: MetricInput;
   range: { from: Date; to: Date };
   prevRange: { from: Date; to: Date };
+  /** Just this card, without the row (a board widget of its own). */
+  only?: KpiId | undefined;
 }) {
   const { t } = useI18n();
   const defs: MetricDef[] = [
@@ -723,8 +737,13 @@ function KpiGrid({
       baseFoot: conversion.allTime ? t("home2.allTime") : undefined,
     },
   ];
+  if (only) {
+    const d = defs.find((x) => x.id === only);
+    return d ? <MetricCard def={d} input={input} range={range} prevRange={prevRange} /> : null;
+  }
+  // At most four in a row, so a card keeps room for its figure and chart.
   return (
-    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
       {defs.map((d) => (
         <MetricCard key={d.id} def={d} input={input} range={range} prevRange={prevRange} />
       ))}
@@ -1571,7 +1590,7 @@ export function HomeOverviewSection({
   if (isLoading || !overview || !conversion || !metricInput) {
     return (
       <div className="space-y-3.5">
-        <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-[178px] rounded-[var(--radius)]" />
           ))}
@@ -1601,7 +1620,7 @@ export function HomeOverviewSection({
   );
 }
 
-export type OverviewPart = "kpis" | "revenue" | "today" | "tasks" | "calls";
+export type OverviewPart = "kpis" | `kpi:${KpiId}` | "revenue" | "today" | "tasks" | "calls";
 
 /**
  * One block of the overview on its own, for the customisable Bosh sahifa
@@ -1630,8 +1649,10 @@ export function HomeOverviewPart({
   const conversion = useClassicConversion(funnel, statsScope, overview?.conversion.series ?? []);
   if (part === "today") return <TodayColumn />;
   if (isLoading || !overview || !conversion || !metricInput) {
+    if (part.startsWith("kpi:"))
+      return <Skeleton className="h-[178px] w-full rounded-[var(--radius)]" />;
     return part === "kpis" ? (
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <Skeleton key={i} className="h-[178px] rounded-[var(--radius)]" />
         ))}
@@ -1640,6 +1661,17 @@ export function HomeOverviewPart({
       <Skeleton className="h-[320px] w-full rounded-[var(--radius)]" />
     );
   }
+  if (part.startsWith("kpi:"))
+    return (
+      <KpiGrid
+        o={overview}
+        conversion={conversion}
+        input={metricInput}
+        range={range}
+        prevRange={prevRange}
+        only={part.slice(4) as KpiId}
+      />
+    );
   if (part === "kpis")
     return (
       <KpiGrid

@@ -172,7 +172,7 @@ export function OverviewSection({
             key={s}
             type="button"
             onClick={() => onSection(s)}
-            className="group flex items-center gap-3 rounded-[8px] border border-border bg-card p-3.5 text-left transition-colors hover:border-primary/40"
+            className="group flex items-center gap-3 surface-card p-3.5 text-left transition-colors hover:border-primary/40"
           >
             <span className="min-w-0 flex-1">
               <span className="block text-[13.5px] font-semibold text-foreground">
@@ -238,7 +238,14 @@ const KEYS: [string, string][] = [
   ["#", ""],
 ];
 
-export function DialerSection({ data }: { data: PhoneCenterData | undefined }) {
+export function DialerSection({
+  data,
+  compact = false,
+}: {
+  data: PhoneCenterData | undefined;
+  /** Only the keypad (the «Terish paneli» layout keeps it on the left). */
+  compact?: boolean;
+}) {
   const { t } = useI18n();
   const { call, live, enabled, calling } = usePhone();
   const [n, setN] = useState("");
@@ -278,100 +285,105 @@ export function DialerSection({ data }: { data: PhoneCenterData | undefined }) {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  const pad = (
+    <section className="surface-card p-5">
+      <div className="flex items-center justify-between gap-2">
+        <StatusChip state={connected ? "ok" : "warn"}>
+          {connected ? t("ptel.ready") : t("ptel.notConnected")}
+        </StatusChip>
+        {data?.myExtension ? (
+          <span className="text-[12.5px] font-semibold tabular-nums text-muted-foreground">
+            {t("ptel.ext", { n: data.myExtension })}
+          </span>
+        ) : (
+          <span className="text-[12px] text-muted-foreground">{t("ptel.noExt")}</span>
+        )}
+      </div>
+      <div className="mt-4 rounded-xl border border-border bg-surface px-4 py-4 text-center">
+        <input
+          value={n}
+          onChange={(e) => setN(e.target.value.replace(/[^\d+*#\s()-]/g, ""))}
+          onKeyDown={(e) => e.key === "Enter" && dial()}
+          inputMode="tel"
+          placeholder={t("ptel.dialHere")}
+          aria-label={t("ptel.dialHere")}
+          className="w-full bg-transparent text-center font-display text-[28px] font-semibold tabular-nums tracking-wide text-foreground outline-none placeholder:text-[20px] placeholder:font-medium placeholder:text-subtle phone:text-[24px]"
+        />
+        <p className="mt-1 h-5 truncate text-[13px] text-muted-foreground">
+          {match ? (
+            <Link
+              to="/crm/leads/$leadId"
+              params={{ leadId: match.leadId }}
+              className="font-semibold text-primary hover:underline"
+            >
+              {match.name || t("phone.unknown")}
+            </Link>
+          ) : n.replace(/\D/g, "").length >= 7 && !lookup.isFetching ? (
+            t("ptel.newNumber")
+          ) : null}
+        </p>
+      </div>
+      <div className="mx-auto mt-4 grid max-w-[300px] grid-cols-3 gap-3">
+        {KEYS.map(([k, sub]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setN((v) => v + k)}
+            onContextMenu={(e) => {
+              if (k === "0") {
+                e.preventDefault();
+                setN((v) => v + "+");
+              }
+            }}
+            className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-border bg-surface text-foreground transition-colors hover:border-primary/40 hover:bg-primary/[0.06] active:scale-95"
+          >
+            <span className="leading-none">
+              <span className="block text-[22px] font-semibold tabular-nums">{k}</span>
+              <span className="block h-3 text-[9.5px] font-semibold tracking-[0.12em] text-muted-foreground">
+                {sub}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="mx-auto mt-4 grid max-w-[300px] grid-cols-3 items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setN("")}
+          disabled={!n}
+          className="mx-auto text-[12.5px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-40"
+        >
+          {t("ptel.clear")}
+        </button>
+        <button
+          type="button"
+          onClick={dial}
+          disabled={!enabled || !n.trim() || !!live || calling}
+          aria-label={t("phone.call")}
+          className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-600 text-white shadow-[0_6px_16px_-6px_rgb(5_150_105/0.6)] transition-colors hover:bg-emerald-700 disabled:opacity-50"
+        >
+          <Phone className="h-6 w-6" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setN((v) => v.slice(0, -1))}
+          disabled={!n}
+          aria-label={t("phone.erase")}
+          className="mx-auto grid h-11 w-11 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40"
+        >
+          <Delete className="h-5 w-5" />
+        </button>
+      </div>
+      <p className="mt-4 text-center text-[12px] leading-snug text-muted-foreground">
+        {t("ptel.dialHint")}
+      </p>
+    </section>
+  );
+  if (compact) return pad;
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-      <section className="rounded-[8px] border border-border bg-card p-5">
-        <div className="flex items-center justify-between gap-2">
-          <StatusChip state={connected ? "ok" : "warn"}>
-            {connected ? t("ptel.ready") : t("ptel.notConnected")}
-          </StatusChip>
-          {data?.myExtension ? (
-            <span className="text-[12.5px] font-semibold tabular-nums text-muted-foreground">
-              {t("ptel.ext", { n: data.myExtension })}
-            </span>
-          ) : (
-            <span className="text-[12px] text-muted-foreground">{t("ptel.noExt")}</span>
-          )}
-        </div>
-        <div className="mt-4 rounded-[8px] border border-border bg-surface px-4 py-4 text-center">
-          <input
-            value={n}
-            onChange={(e) => setN(e.target.value.replace(/[^\d+*#\s()-]/g, ""))}
-            onKeyDown={(e) => e.key === "Enter" && dial()}
-            inputMode="tel"
-            placeholder={t("ptel.dialHere")}
-            aria-label={t("ptel.dialHere")}
-            className="w-full bg-transparent text-center font-display text-[28px] font-semibold tabular-nums tracking-wide text-foreground outline-none placeholder:text-[20px] placeholder:font-medium placeholder:text-subtle phone:text-[24px]"
-          />
-          <p className="mt-1 h-5 truncate text-[13px] text-muted-foreground">
-            {match ? (
-              <Link
-                to="/crm/leads/$leadId"
-                params={{ leadId: match.leadId }}
-                className="font-semibold text-primary hover:underline"
-              >
-                {match.name || t("phone.unknown")}
-              </Link>
-            ) : n.replace(/\D/g, "").length >= 7 && !lookup.isFetching ? (
-              t("ptel.newNumber")
-            ) : null}
-          </p>
-        </div>
-        <div className="mx-auto mt-4 grid max-w-[300px] grid-cols-3 gap-3">
-          {KEYS.map(([k, sub]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setN((v) => v + k)}
-              onContextMenu={(e) => {
-                if (k === "0") {
-                  e.preventDefault();
-                  setN((v) => v + "+");
-                }
-              }}
-              className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-border bg-surface text-foreground transition-colors hover:border-primary/40 hover:bg-primary/[0.06] active:scale-95"
-            >
-              <span className="leading-none">
-                <span className="block text-[22px] font-semibold tabular-nums">{k}</span>
-                <span className="block h-3 text-[9.5px] font-semibold tracking-[0.12em] text-muted-foreground">
-                  {sub}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="mx-auto mt-4 grid max-w-[300px] grid-cols-3 items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setN("")}
-            disabled={!n}
-            className="mx-auto text-[12.5px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-40"
-          >
-            {t("ptel.clear")}
-          </button>
-          <button
-            type="button"
-            onClick={dial}
-            disabled={!enabled || !n.trim() || !!live || calling}
-            aria-label={t("phone.call")}
-            className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-600 text-white shadow-[0_6px_16px_-6px_rgb(5_150_105/0.6)] transition-colors hover:bg-emerald-700 disabled:opacity-50"
-          >
-            <Phone className="h-6 w-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setN((v) => v.slice(0, -1))}
-            disabled={!n}
-            aria-label={t("phone.erase")}
-            className="mx-auto grid h-11 w-11 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40"
-          >
-            <Delete className="h-5 w-5" />
-          </button>
-        </div>
-        <p className="mt-4 text-center text-[12px] leading-snug text-muted-foreground">
-          {t("ptel.dialHint")}
-        </p>
-      </section>
+      {pad}
 
       <DeskBlock tipKey="ptel.b.recent" title={t("ptel.b.recent")} icon={Clock} tone="sky">
         {recent.length === 0 ? (
@@ -444,7 +456,7 @@ export function CallsSection({ data }: { data: PhoneCenterData }) {
     );
   });
   return (
-    <section className="overflow-hidden rounded-[8px] border border-border bg-card">
+    <section className="surface-card overflow-hidden">
       <header className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
         <div
           role="tablist"
@@ -648,7 +660,7 @@ export function OperatorsSection({ data }: { data: PhoneCenterData }) {
         ) : undefined
       }
     >
-      <div className="-mx-4 -my-4 overflow-x-auto">
+      <div className="-mx-4 -my-4 overflow-x-auto sm:-mx-5 sm:-my-5">
         <table className="w-full min-w-[980px] text-[13px]">
           <thead>
             <tr className="border-b border-border bg-surface text-left text-[12px] text-muted-foreground">
@@ -857,7 +869,7 @@ export function ConnectSection({ data }: { data: PhoneCenterData | undefined }) 
             <li
               key={p.id}
               className={cn(
-                "flex flex-col rounded-[8px] border p-4",
+                "flex flex-col rounded-xl border p-4",
                 on ? "border-emerald-500/40" : "border-border",
               )}
             >

@@ -25,6 +25,7 @@ import {
   useDesk,
   useDeskHistory,
   useMyOrganization,
+  useOrgGeneralSettings,
   useProfilesRaw,
   useSalesPlans,
   useSaveSalesPlan,
@@ -88,6 +89,9 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
   const { user: me } = useAuth();
   const { format } = useCurrency();
   const { data: org } = useMyOrganization();
+  // Sozlamalar → Umumiy: the company's own logo, as in the sidebar.
+  const { data: orgGeneral } = useOrgGeneralSettings();
+  const companyLogo = orgGeneral?.company_logo_url ?? null;
   const canPlan = me?.role === "super_admin" || me?.role === "rop" || me?.role === "platform_owner";
 
   const [preset, setPresetState] = useState<DeskPreset>("month");
@@ -224,38 +228,40 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
 
   const initial = (org?.name ?? "S").trim().slice(0, 1).toUpperCase();
   const btn =
-    "ctl-soft inline-flex h-9 items-center gap-2 rounded-[6px] px-3.5 text-[13px] font-semibold text-foreground disabled:opacity-50";
+    "ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-foreground disabled:opacity-50";
 
   return (
     <div className="space-y-4">
-      <header className="flex flex-col items-center gap-2 pb-1 pt-2 text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-[8px] border border-border bg-card text-[18px] font-bold text-primary">
-          {initial}
-        </span>
-        <h1 className="font-display text-[24px] font-bold tracking-tight text-foreground">
-          {org?.name ?? "—"}
-        </h1>
-        <p className="flex flex-wrap items-center justify-center gap-x-1.5 text-[13px] text-muted-foreground">
-          {t("desk.mainFigures")} · <span className="tabular-nums">{periodText}</span> ·
-          <span>{t("desk.funnelLabel")}</span>
-          <select
-            value={funnel ?? ""}
-            onChange={(e) => setFunnel(e.target.value || null)}
-            className="max-w-[220px] rounded-[4px] bg-transparent font-semibold text-foreground outline-none hover:text-primary"
-          >
-            <option value="">{t("desk.allFunnels")}</option>
-            {(d?.funnels ?? []).map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-          {isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-        </p>
-        <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+      {/* One row: the company (small, top left) and, on the right, the
+          desk's own controls -- they belong to this tab only; the page's
+          tabs come under this row. */}
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {companyLogo ? (
+            <img
+              src={companyLogo}
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-[10px] border border-border bg-card object-contain p-1"
+            />
+          ) : (
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-border bg-card text-[16px] font-bold text-primary">
+              {initial}
+            </span>
+          )}
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-[18px] font-bold leading-tight tracking-tight text-foreground">
+              {org?.name ?? "—"}
+            </h1>
+            <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+              {t("desk.mainFigures")} · <span className="tabular-nums">{periodText}</span>
+              {isFetching && <Loader2 className="h-3 w-3 animate-spin" />}
+            </p>
+          </div>
+        </div>
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <div
             role="tablist"
-            className="ctl-track inline-flex items-center gap-0.5 rounded-[6px] p-0.5"
+            className="ctl-track inline-flex items-center gap-0.5 rounded-xl p-0.5"
           >
             {PRESETS.map((p) =>
               p === "range" ? (
@@ -276,13 +282,26 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
                   aria-selected={preset === p}
                   data-state={preset === p ? "active" : "inactive"}
                   onClick={() => setPreset(p)}
-                  className="ctl-tab h-8 rounded-[4px] px-3.5 text-[13px] font-semibold"
+                  className="ctl-tab h-8 rounded-lg px-3 text-[13px] font-semibold"
                 >
                   {t(`desk.preset.${p}`)}
                 </button>
               ),
             )}
           </div>
+          <select
+            value={funnel ?? ""}
+            onChange={(e) => setFunnel(e.target.value || null)}
+            aria-label={t("desk.funnelLabel")}
+            className="ctl-soft h-9 max-w-[200px] rounded-xl px-3 text-[13px] font-semibold outline-none"
+          >
+            <option value="">{t("desk.allFunnels")}</option>
+            {(d?.funnels ?? []).map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
           <Popover>
             <PopoverTrigger asChild>
               <button type="button" className={btn}>
@@ -290,14 +309,14 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
                 {t("desk.addWidget")}
               </button>
             </PopoverTrigger>
-            <PopoverContent align="center" className="w-72 p-2">
+            <PopoverContent align="end" className="w-72 p-2">
               <p className="px-2 pb-1.5 pt-1 text-[12px] font-semibold text-muted-foreground">
                 {t("desk.widgetsHint")}
               </p>
               {WIDGETS.map((w) => (
                 <label
                   key={w}
-                  className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[13px] hover:bg-accent/60"
+                  className="flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1.5 text-[13px] hover:bg-accent/60"
                 >
                   {w === "revenue" ? revenueLabel : t(`desk.${w}`)}
                   <Switch checked={shown(w)} onCheckedChange={(v) => toggleWidget(w, v)} />
@@ -310,6 +329,7 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
             className={btn}
             onClick={sendTelegram}
             disabled={!d || send.isPending}
+            title={t("desk.tgHint")}
           >
             {send.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -332,7 +352,7 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
       {tabs}
 
       {error && !d ? (
-        <p className="rounded-[8px] border border-border bg-card px-4 py-10 text-center text-[13px] text-muted-foreground">
+        <p className="surface-card px-4 py-10 text-center text-[13px] text-muted-foreground">
           {describeError(error, t("desk.failed"))}
         </p>
       ) : isLoading || !d ? (
@@ -341,7 +361,7 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 phone:gap-2">
             {shown("today") && (
               <DeskKpi
                 tipKey="desk.today"
@@ -487,7 +507,7 @@ function RangePicker({
           role="tab"
           aria-selected={active}
           data-state={active ? "active" : "inactive"}
-          className="ctl-tab inline-flex h-8 items-center gap-1.5 rounded-[4px] px-3.5 text-[13px] font-semibold"
+          className="ctl-tab inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold"
         >
           <CalendarRange className="h-3.5 w-3.5" />
           {t("desk.preset.range")}
@@ -537,7 +557,8 @@ function PlanCard({ d, canEdit, onEdit }: { d: DeskData; canEdit: boolean; onEdi
       type="button"
       onClick={onEdit}
       aria-label={t("desk.planEdit")}
-      className="grid h-6 w-6 place-items-center rounded-[4px] text-muted-foreground hover:bg-accent hover:text-primary"
+      title={t("desk.planEdit")}
+      className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-primary"
     >
       <Pencil className="h-3.5 w-3.5" />
     </button>
@@ -550,12 +571,11 @@ function PlanCard({ d, canEdit, onEdit }: { d: DeskData; canEdit: boolean; onEdi
         icon={Target}
         tone="amber"
         titleExtra={pen}
-        value={<span className="text-[17px]">{t("desk.noPlan")}</span>}
+        value={t("desk.noPlan")}
         prevText={canEdit ? t("desk.noPlanHint") : undefined}
       />
     );
   }
-  const pct = p.pct ?? 0;
   return (
     <DeskKpi
       tipKey="desk.plan"
@@ -563,31 +583,14 @@ function PlanCard({ d, canEdit, onEdit }: { d: DeskData; canEdit: boolean; onEdi
       icon={Target}
       tone="amber"
       titleExtra={pen}
-      rawValue={pct}
-      value={
-        <span>
-          {pct}%{" "}
-          <span className="text-[14px] font-semibold text-muted-foreground">
-            · {format(d.plan.fact)}
-          </span>
-        </span>
-      }
+      rawValue={p.pct ?? 0}
+      value={`${p.pct ?? 0}%`}
       prevText={t("desk.planLine", {
-        plan: format(d.plan.team),
+        plan: `${format(d.plan.fact)} / ${format(d.plan.team)}`,
         forecast: format(p.forecast),
         day: format(p.perDayNeeded),
       })}
-    >
-      <span className="mt-2 block h-2 overflow-hidden rounded-full bg-muted">
-        <span
-          className={cn(
-            "block h-full rounded-full",
-            p.status === "behind" ? "bg-amber-500" : "bg-emerald-500",
-          )}
-          style={{ width: `${Math.min(100, pct)}%` }}
-        />
-      </span>
-    </DeskKpi>
+    />
   );
 }
 

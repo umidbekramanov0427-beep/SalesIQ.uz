@@ -211,6 +211,7 @@ export type WorkGroup = {
 export type WorkGroupMessage = {
   id: string;
   group_id: string;
+  sender_tg_id: number | null;
   sender_name: string | null;
   text: string;
   is_out: boolean;
@@ -263,17 +264,18 @@ export function useWorkGroups() {
 }
 
 /** A group's latest 300 messages, oldest first. */
-export function useWorkGroupMessages(groupId: string | null) {
+export function useWorkGroupMessages(groupId: string | null, limit = 300) {
   return useQuery({
-    queryKey: ["work_group_messages", groupId],
+    queryKey: ["work_group_messages", groupId, limit],
     enabled: !!groupId,
+    placeholderData: (prev) => prev,
     queryFn: async (): Promise<WorkGroupMessage[]> => {
       const { data, error } = await supabase
         .from("telegram_user_group_messages")
-        .select("id, group_id, sender_name, text, is_out, sent_by, created_at")
+        .select("id, group_id, sender_tg_id, sender_name, text, is_out, sent_by, created_at")
         .eq("group_id", groupId!)
         .order("created_at", { ascending: false })
-        .limit(300);
+        .limit(limit);
       if (error) return [];
       return (data ?? []).sort((a, b) => a.created_at.localeCompare(b.created_at));
     },
@@ -317,6 +319,36 @@ export function usePickWorkGroups() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["work_group_choices"] });
+      void qc.invalidateQueries({ queryKey: ["work_groups"] });
+    },
+  });
+}
+
+/**
+ * Brings a group's chat in as Telegram shows it: the latest messages, or
+ * (`older`) the ones before the oldest kept. Resolves with how many came and
+ * whether there are more.
+ */
+export function useLoadGroupHistory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      groupId,
+      older = false,
+    }: {
+      groupId: string;
+      older?: boolean;
+    }): Promise<{ added: number; more: boolean }> => {
+      const res = await apiFetch("/telegram/user-groups", {
+        method: "POST",
+        body: JSON.stringify({ action: "history", groupId, older }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Xatolik");
+      return json;
+    },
+    onSuccess: (_d, { groupId }) => {
+      void qc.invalidateQueries({ queryKey: ["work_group_messages", groupId] });
       void qc.invalidateQueries({ queryKey: ["work_groups"] });
     },
   });

@@ -811,3 +811,93 @@ export async function sendGroupMessage(input: {
     .update({ last_message_at: at, last_text: input.text.slice(0, 200) })
     .eq("id", group.id);
 }
+
+type HistoryMessage = {
+  id: number;
+  text: string;
+  date: number;
+  out: boolean;
+  sender: { id: number | null; name: string | null; username: string | null };
+  media: string | null;
+  fileName: string | null;
+};
+
+/**
+ * A group's chat as Telegram shows it: its latest messages (or, with
+ * `older`, the ones before the oldest kept here) read through the owner's
+ * account and kept with the rest, so the Inbox shows the whole screen, not
+ * only what came after the group was picked. The owner, admins and heads of
+ * sales may load it.
+ */
+export async function loadGroupHistory(input: {
+  orgId: string;
+  groupId: string;
+  callerId: string;
+  older: boolean;
+}): Promise<{ added: number; more: boolean }> {
+  const { data: group } = await supabaseAdmin
+    .from("telegram_user_groups")
+    .select("id, profile_id, chat_id, account_tg_user_id, last_message_at")
+    .eq("id", input.groupId)
+    .eq("organization_id", input.orgId)
+    .maybeSingle();
+  if (!group) throw new WorkError("Guruh topilmadi.");
+  if (group.profile_id !== input.callerId) {
+    const { data: me } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("id", input.callerId)
+      .eq("organization_id", input.orgId)
+      .maybeSingle();
+    if (me?.role !== "super_admin" && me?.role !== "rop") {
+      throw new WorkError("Guruhni faqat akkaunt egasi va rahbarlar ko'radi.");
+    }
+  }
+  const chatId = Number(group.chat_id);
+  let beforeId: number | null = null;
+  if (input.older) {
+    const { data: oldest } = await supabaseAdmin
+      .from("telegram_user_group_messages")
+      .select("ext_message_id")
+      .eq("group_id", group.id)
+      .like("ext_message_id", "tgg:%")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const id = Number(String(oldest?.ext_message_id ?? "").split(":")[3]);
+    beforeId = Number.isFinite(id) && id > 0 ? id : null;
+  }
+  const { account, session } = await ownAccount(input.orgId, group.profile_id);
+  const limit = 50;
+  const { messages } = await tgLivePost<{ messages: HistoryMessage[] }>("/v1/user/history", {
+    account_id: account.id,
+    session,
+    chat_id: chatId,
+    limit,
+    ...(beforeId ? { before_id: beforeId } : {}),
+  });
+  const rows = messages.map((m) => ({
+    organization_id: input.orgId,
+    group_id: group.id,
+    sender_tg_id: m.sender?.id ?? null,
+    sender_name: m.sender?.name || (m.sender?.username ? `@${m.sender.username}` : null),
+    text: inboundText(m.text, m.media, m.fileName),
+    is_out: !!m.out,
+    ext_message_id: groupExtId(account.tg_user_id, chatId, m.id),
+    created_at: new Date(m.date * 1000).toISOString(),
+  }));
+  if (rows.length) {
+    const { error } = await supabaseAdmin
+      .from("telegram_user_group_messages")
+      .upsert(rows, { onConflict: "ext_message_id", ignoreDuplicates: true });
+    if (error) throw error;
+    const newest = rows.reduce((a, r) => (r.created_at > a.created_at ? r : a), rows[0]!);
+    if (!group.last_message_at || newest.created_at > group.last_message_at) {
+      await supabaseAdmin
+        .from("telegram_user_groups")
+        .update({ last_message_at: newest.created_at, last_text: newest.text.slice(0, 200) })
+        .eq("id", group.id);
+    }
+  }
+  return { added: rows.length, more: messages.length >= limit };
+}

@@ -1,14 +1,24 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Search, Send, Users } from "lucide-react";
+import { CheckCheck, Loader2, RefreshCw, Search, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import {
+  useLoadGroupHistory,
   useProfilesRaw,
   useSendWorkGroupMessage,
   useWorkGroupMessages,
   useWorkGroups,
   type WorkGroup,
+  type WorkGroupMessage,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -179,6 +189,22 @@ function GroupRow({
   );
 }
 
+// Telegram's own colours for people in a group (by their id), so the same
+// person keeps the same colour as in Telegram.
+const PEER_COLORS = ["#e17076", "#7bc862", "#e5ca77", "#65aadd", "#a695e7", "#ee7aae", "#6ec9cb"];
+const peerColor = (id: number | null, name: string) => {
+  const n = id ?? [...name].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return PEER_COLORS[Math.abs(n) % PEER_COLORS.length]!;
+};
+const initials = (name: string) =>
+  name
+    .replace(/^@/, "")
+    .split(/\s+/)
+    .filter((w) => /^[\p{L}\p{N}]/u.test(w))
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("") || "?";
+
 function GroupChat({
   group,
   owner,
@@ -192,15 +218,56 @@ function GroupChat({
 }) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { data: messages = [], isLoading } = useWorkGroupMessages(group.id);
+  const [limit, setLimit] = useState(300);
+  const { data: messages = [], isLoading } = useWorkGroupMessages(group.id, limit);
   const send = useSendWorkGroupMessage();
+  const history = useLoadGroupHistory();
   const [text, setText] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const keepFromBottom = useRef<number | null>(null);
   const mine = user?.id === group.profile_id;
 
+  // On open: the group's latest messages from Telegram itself, so the chat
+  // reads as it does there -- not only what came after it was picked.
+  const loadRef = useRef(history.mutate);
+  loadRef.current = history.mutate;
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+    loadRef.current(
+      { groupId: group.id },
+      { onSuccess: (r) => setMore(r.more), onError: (e) => toast.error(e.message) },
+    );
+  }, [group.id]);
+
+  function loadOlder() {
+    if (history.isPending || !more) return;
+    const el = scrollRef.current;
+    keepFromBottom.current = el ? el.scrollHeight - el.scrollTop : null;
+    history.mutate(
+      { groupId: group.id, older: true },
+      {
+        onSuccess: (r) => {
+          setMore(r.more && r.added > 0);
+          setLimit((n) => n + r.added);
+        },
+        onError: (e) => toast.error(e.message),
+      },
+    );
+  }
+
+  // New messages at the bottom keep the view at the bottom; older ones added
+  // at the top keep the reader where they were.
+  const lastId = messages[messages.length - 1]?.id;
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (keepFromBottom.current !== null) {
+      el.scrollTop = el.scrollHeight - keepFromBottom.current;
+      keepFromBottom.current = null;
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [lastId, messages.length]);
 
   function submit() {
     const v = text.trim();
@@ -211,10 +278,18 @@ function GroupChat({
     );
   }
 
-  let lastDay = "";
+  const authorOf = (m: WorkGroupMessage) =>
+    m.is_out
+      ? m.sent_by
+        ? m.sent_by === user?.id
+          ? t("tgg.you")
+          : ownerName(m.sent_by)
+        : owner
+      : m.sender_name || "—";
+
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-3 border-b border-border bg-card px-5 py-3">
+      <header className="flex items-center gap-3 border-b border-border bg-card px-5 py-2.5">
         <button
           type="button"
           onClick={onBack}
@@ -222,83 +297,146 @@ function GroupChat({
         >
           ←
         </button>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-500 text-white">
-          <Users className="h-5 w-5" />
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-sky-600 text-[15px] font-bold text-white">
+          {initials(group.title || "?")}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-semibold text-foreground">{group.title || "—"}</p>
-          {owner && (
-            <p className="truncate text-[12.5px] text-muted-foreground">
-              {t("tgg.via", { name: owner })}
-            </p>
-          )}
+          <p className="truncate text-[12.5px] text-muted-foreground">
+            {owner ? t("tgg.via", { name: owner }) : ""}
+            {history.isPending && ` · ${t("tgg.syncing")}`}
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() =>
+            history.mutate({ groupId: group.id }, { onError: (e) => toast.error(e.message) })
+          }
+          disabled={history.isPending}
+          title={t("tgg.refresh")}
+          aria-label={t("tgg.refresh")}
+          className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+        >
+          <RefreshCw className={cn("h-4 w-4", history.isPending && "animate-spin")} />
+        </button>
       </header>
 
-      <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-5 py-4">
-        {isLoading ? (
+      {/* The chat's screen, Telegram-like: its wallpaper, people's colours
+          and avatars, bubbles with the time inside, day pills. */}
+      <div
+        ref={scrollRef}
+        onScroll={(e) => e.currentTarget.scrollTop < 60 && loadOlder()}
+        className="tg-wallpaper min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-8"
+      >
+        {more && messages.length > 0 && (
+          <div className="mb-2 flex justify-center">
+            <button
+              type="button"
+              onClick={loadOlder}
+              disabled={history.isPending}
+              className="rounded-full bg-black/25 px-3 py-1 text-[12px] font-medium text-white backdrop-blur-sm hover:bg-black/35 disabled:opacity-70"
+            >
+              {history.isPending ? t("tgg.loading") : t("tgg.older")}
+            </button>
+          </div>
+        )}
+        {isLoading || (history.isPending && messages.length === 0) ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2 className="h-5 w-5 animate-spin text-white/80" />
           </div>
         ) : messages.length === 0 ? (
-          <p className="py-16 text-center text-[13px] text-muted-foreground">
+          <p className="mx-auto mt-16 w-fit rounded-full bg-black/25 px-3 py-1 text-center text-[12.5px] text-white">
             {t("tgg.noMessages")}
           </p>
         ) : (
-          messages.map((m) => {
+          messages.map((m, k) => {
+            const prev = messages[k - 1];
+            const next = messages[k + 1];
             const day = dayLabel(m.created_at);
-            const showDay = day !== lastDay;
-            lastDay = day;
-            const author = m.is_out
-              ? m.sent_by
-                ? m.sent_by === user?.id
-                  ? t("tgg.you")
-                  : ownerName(m.sent_by)
-                : owner
-              : m.sender_name || "—";
+            const showDay = !prev || dayLabel(prev.created_at) !== day;
+            const same = (a?: WorkGroupMessage) =>
+              !!a &&
+              a.is_out === m.is_out &&
+              (a.sender_tg_id ?? a.sender_name) === (m.sender_tg_id ?? m.sender_name) &&
+              Math.abs(Date.parse(a.created_at) - Date.parse(m.created_at)) < 5 * 60_000 &&
+              dayLabel(a.created_at) === day;
+            const first = showDay || !same(prev);
+            const last = !same(next) || (!!next && dayLabel(next.created_at) !== day);
+            const author = authorOf(m);
+            const color = peerColor(m.sender_tg_id, author);
             return (
               <div key={m.id}>
                 {showDay && (
-                  <p className="my-3 text-center text-[11.5px] font-semibold text-muted-foreground">
-                    {day}
+                  <p className="my-3 flex justify-center">
+                    <span className="rounded-full bg-black/25 px-3 py-0.5 text-[12px] font-medium text-white backdrop-blur-sm">
+                      {day}
+                    </span>
                   </p>
                 )}
-                <div className={cn("flex", m.is_out ? "justify-end" : "justify-start")}>
+                <div
+                  className={cn(
+                    "flex items-end gap-2",
+                    m.is_out ? "justify-end" : "justify-start",
+                    last ? "mb-2" : "mb-0.5",
+                  )}
+                >
+                  {!m.is_out && (
+                    <span className="w-8 shrink-0">
+                      {last && (
+                        <span
+                          className="grid h-8 w-8 place-items-center rounded-full text-[12px] font-bold text-white"
+                          style={{ background: color }}
+                          title={author}
+                        >
+                          {initials(author)}
+                        </span>
+                      )}
+                    </span>
+                  )}
                   <div
                     className={cn(
-                      "max-w-[75%] rounded-2xl px-3.5 py-2 text-[13.5px] leading-snug shadow-sm",
+                      "relative max-w-[min(72%,520px)] rounded-[14px] px-3 pb-1.5 pt-1.5 text-[14px] leading-snug shadow-[0_1px_1px_rgb(0_0_0/0.13)]",
                       m.is_out
-                        ? "rounded-br-md bg-primary text-primary-foreground"
-                        : "rounded-bl-md border border-border bg-card text-foreground",
+                        ? "bg-[#effdde] text-[#0f1419] dark:bg-[#2b5278] dark:text-white"
+                        : "bg-white text-[#0f1419] dark:bg-[#182533] dark:text-white",
+                      last && (m.is_out ? "rounded-br-[4px]" : "rounded-bl-[4px]"),
                     )}
                   >
-                    <p
-                      className={cn(
-                        "mb-0.5 text-[11.5px] font-semibold",
-                        m.is_out ? "text-primary-foreground/80" : "text-sky-700 dark:text-sky-300",
-                      )}
-                    >
-                      {author}
+                    {first && !m.is_out && (
+                      <p className="mb-0.5 text-[13px] font-semibold" style={{ color }}>
+                        {author}
+                      </p>
+                    )}
+                    {first && m.is_out && m.sent_by && m.sent_by !== user?.id && (
+                      <p className="mb-0.5 text-[13px] font-semibold text-[#4fae4e] dark:text-[#8ec6ff]">
+                        {author}
+                      </p>
+                    )}
+                    <p className="whitespace-pre-wrap break-words">
+                      {m.text}
+                      {/* room for the time on the last line */}
+                      <span className="inline-block w-14" />
                     </p>
-                    <p className="whitespace-pre-wrap break-words">{m.text}</p>
-                    <p
+                    <span
                       className={cn(
-                        "mt-0.5 text-right text-[10.5px] tabular-nums",
-                        m.is_out ? "text-primary-foreground/70" : "text-muted-foreground",
+                        "absolute bottom-1 right-2 flex items-center gap-0.5 text-[11px] tabular-nums",
+                        m.is_out
+                          ? "text-[#5dbb5d] dark:text-[#7da8d3]"
+                          : "text-[#a0acb6] dark:text-[#6d7f8f]",
                       )}
                     >
                       {hm(m.created_at)}
-                    </p>
+                      {m.is_out && <CheckCheck className="h-3.5 w-3.5" />}
+                    </span>
                   </div>
                 </div>
               </div>
             );
           })
         )}
-        <div ref={endRef} />
       </div>
 
-      <footer className="border-t border-border bg-card py-3 pl-4 pr-[84px] phone:pr-4">
+      <footer className="border-t border-border bg-card py-2.5 pl-4 pr-[84px] phone:pr-4">
         {mine ? (
           <form
             onSubmit={(e) => {
@@ -318,19 +456,20 @@ function GroupChat({
               }}
               rows={1}
               placeholder={t("tgg.placeholder")}
-              className="max-h-40 min-h-10 min-w-0 flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-[14px] outline-none focus:border-primary phone:text-base"
+              className="max-h-40 min-h-10 min-w-0 flex-1 resize-none rounded-[20px] border border-border bg-background px-4 py-2.5 text-[14px] outline-none focus:border-primary phone:text-base"
             />
             <button
               type="submit"
               disabled={!text.trim() || send.isPending}
-              className="ctl-lit inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-4 text-[13px] font-semibold disabled:opacity-50"
+              aria-label={t("tgg.send")}
+              title={t("tgg.send")}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#3390ec] text-white transition-colors hover:bg-[#2a7fd4] disabled:opacity-50"
             >
               {send.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              {t("tgg.send")}
             </button>
           </form>
         ) : (

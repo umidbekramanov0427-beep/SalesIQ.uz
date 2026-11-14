@@ -70,6 +70,14 @@ class UserAccountIn(BaseModel):
     session: str = Field(min_length=10)
 
 
+class UserHistoryIn(BaseModel):
+    account_id: str = Field(min_length=8, max_length=64)
+    session: str = Field(min_length=10)
+    chat_id: int
+    limit: int = Field(default=50, ge=1, le=100)
+    before_id: int | None = None
+
+
 class UserResolveIn(BaseModel):
     account_id: str = Field(min_length=8, max_length=64)
     session: str = Field(min_length=10)
@@ -237,6 +245,16 @@ def create_app(
             return {"groups": await get_pool().list_groups(body.account_id, body.session)}
         except SendFailed as e:
             raise HTTPException(400, str(e)) from e
+
+    @app.post("/v1/user/history", dependencies=[Depends(auth)])
+    async def user_history(body: UserHistoryIn) -> dict:
+        try:
+            messages = await get_pool().history(
+                body.account_id, body.session, body.chat_id, body.limit, body.before_id
+            )
+        except SendFailed as e:
+            raise HTTPException(400, str(e)) from e
+        return {"messages": messages}
 
     @app.get("/v1/user/online", dependencies=[Depends(auth)])
     async def user_online() -> dict:

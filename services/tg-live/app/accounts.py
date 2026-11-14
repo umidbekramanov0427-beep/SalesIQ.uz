@@ -262,6 +262,64 @@ class AccountPool:
             })
         return out
 
+    async def history(
+        self,
+        account_id: str,
+        session: str,
+        chat_id: int,
+        limit: int = 50,
+        before_id: int | None = None,
+    ) -> list[dict]:
+        """A group's latest messages (older than `before_id` when given), newest
+        first -- what the group's screen in Telegram shows."""
+        entry = await self._ensure(account_id, session)
+        client = entry.client
+        try:
+            target = await client.get_input_entity(chat_id)
+        except (ValueError, TypeError):
+            try:
+                await client.get_dialogs(limit=300)
+                target = await client.get_input_entity(chat_id)
+            except (ValueError, TypeError):
+                raise SendFailed("peer_unknown") from None
+        kwargs: dict = {"limit": max(1, min(int(limit), 100))}
+        if before_id:
+            kwargs["offset_id"] = int(before_id)
+        try:
+            msgs = await client.get_messages(target, **kwargs)
+        except Exception as e:  # noqa: BLE001
+            raise SendFailed(str(e)[:200]) from e
+        out: list[dict] = []
+        for m in msgs or []:
+            if getattr(m, "action", None) is not None:
+                continue  # joins, pins, title changes
+            sender = getattr(m, "sender", None)
+            name = " ".join(
+                x
+                for x in (getattr(sender, "first_name", None), getattr(sender, "last_name", None))
+                if x
+            ) or getattr(sender, "title", None)
+            kind = media_kind(m)
+            file_name = None
+            if kind == "document" and getattr(m, "file", None) is not None:
+                file_name = getattr(m.file, "name", None)
+            reply = getattr(m, "reply_to", None)
+            out.append({
+                "id": m.id,
+                "text": getattr(m, "message", None) or "",
+                "date": m.date.timestamp() if getattr(m, "date", None) else time.time(),
+                "out": bool(getattr(m, "out", False)),
+                "sender": {
+                    "id": getattr(m, "sender_id", None),
+                    "name": name,
+                    "username": getattr(sender, "username", None),
+                },
+                "media": kind,
+                "fileName": file_name,
+                "replyTo": getattr(reply, "reply_to_msg_id", None) if reply else None,
+            })
+        return out
+
     async def _ensure(self, account_id: str, session: str) -> Entry:
         """The account's live client, connecting it if it isn't online."""
         entry = self._entries.get(account_id)

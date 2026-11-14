@@ -4,6 +4,10 @@ import { useAccessRules } from "@/hooks/use-crm-data";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
+  BookOpen,
+  ListChecks,
+  Users,
+  Workflow,
   CornerDownLeft,
   Search,
   Settings2,
@@ -17,9 +21,21 @@ import { useCrmEnabled } from "@/lib/use-org-access";
 import { SEARCH_CATALOG, catalogMatches } from "@/lib/search-catalog";
 import { cn } from "@/lib/utils";
 import { TONE_TILE, type CardTone } from "@/lib/tones";
-import { useGlobalLeadSearch } from "@/hooks/use-crm-data";
+import {
+  useFunnelNames,
+  useGlobalLeadSearch,
+  useProfilesRaw,
+  useTaskSearch,
+} from "@/hooks/use-crm-data";
+import {
+  cardDescKey,
+  cardTitleKey,
+  useAdminCatalog,
+  type CatalogItem,
+} from "@/components/admin/AdminCatalog";
 
-// Search across the platform -- pages, settings and leads -- in one card in
+// Search across the platform -- pages and their sections, settings, admin
+// cards, funnels, leads, tasks, people and the guides -- in one card in
 // the middle of the screen (the search button under the logo, or ⌘K). The
 // results live inside the same card as the field, so nothing hangs loose
 // below it. Who's signed in, the theme and the language are in the avatar
@@ -27,7 +43,8 @@ import { useGlobalLeadSearch } from "@/hooks/use-crm-data";
 
 type Result = {
   key: string;
-  group: "pages" | "settings" | "leads";
+  group:
+    "pages" | "sections" | "settings" | "admin" | "funnels" | "leads" | "tasks" | "people" | "help";
   icon: LucideIcon;
   /** Tile colour; pages use their sidebar colour. */
   tone?: CardTone | undefined;
@@ -36,7 +53,54 @@ type Result = {
   go: () => void;
 };
 
-export function SearchPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+type PaletteProps = {
+  open: boolean;
+  onClose: () => void;
+  /** What was typed before it opened (the logo panel's search field). */
+  initialQuery?: string;
+};
+
+// Mounted only while open, so its lists (admin cards, people, funnels) load
+// only when someone searches.
+export function SearchPalette(props: PaletteProps) {
+  return props.open ? <PaletteBody {...props} /> : null;
+}
+
+// Sub-pages anyone can jump to: Bosh sahifa's tabs, Telefon's sections,
+// Inbox's tabs (labels are their i18n keys).
+const HOME_TAB_KEYS = [
+  "desk",
+  "overview",
+  "rating",
+  "conversion",
+  "activity",
+  "ai",
+  "forecast",
+  "finance",
+];
+const PHONE_SECTION_KEYS = [
+  "dial",
+  "log",
+  "calls",
+  "reports",
+  "operators",
+  "auto",
+  "voice",
+  "rating",
+  "connect",
+  "settings",
+  "desktop",
+];
+
+function AdminCatalogFeed({ onItems }: { onItems: (items: CatalogItem[]) => void }) {
+  const groups = useAdminCatalog();
+  const flat = groups.flatMap((g) => g.items);
+  const sig = flat.map((i) => i.key).join(",");
+  useEffect(() => onItems(flat), [sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
+function PaletteBody({ open, onClose, initialQuery = "" }: PaletteProps) {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -48,10 +112,34 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const { data: leads = [], isFetching } = useGlobalLeadSearch(query, open);
+  const { data: tasks = [] } = useTaskSearch(query, open);
+  const { names: funnelNames } = useFunnelNames();
+  const { data: profiles = [] } = useProfilesRaw();
+  const [adminItems, setAdminItems] = useState<CatalogItem[]>([]);
+  const isAdmin = user?.role === "super_admin";
+  const seesPeople = isAdmin || user?.role === "rop";
+  const [articles, setArticles] = useState<{ slug: string; title: string; summary: string }[]>([]);
+  const { lang } = useI18n();
+  useEffect(() => {
+    let alive = true;
+    void import("@/lib/help/articles").then((m) => {
+      if (!alive) return;
+      setArticles(
+        m.HELP_ARTICLES.map((a) => ({
+          slug: a.slug,
+          title: m.pick(a.title, lang),
+          summary: m.pick(a.summary, lang),
+        })),
+      );
+    });
+    return () => {
+      alive = false;
+    };
+  }, [lang]);
 
   useEffect(() => {
     if (!open) return;
-    setQuery("");
+    setQuery(initialQuery);
     setActive(0);
     const id = window.setTimeout(() => inputRef.current?.focus(), 30);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -60,7 +148,7 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
       window.clearTimeout(id);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onClose]);
+  }, [open, onClose, initialQuery]);
 
   const go = (to: string, search?: Record<string, string>) => {
     onClose();
@@ -119,9 +207,139 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
         });
       },
     }));
-    return [...pageResults, ...settingResults, ...leadResults];
+    const pageName = (to: string) => t(`nav.${to}`);
+    const sectionResults: Result[] = isPlatformOwner
+      ? []
+      : [
+          ...(canOpenPath(role, "/", crmEnabled)
+            ? HOME_TAB_KEYS.map((k) => ({
+                key: `sec-home-${k}`,
+                to: "/",
+                search: { tab: k },
+                label: t(`home.tab.${k}`),
+                parent: pageName("/"),
+              }))
+            : []),
+          ...(canOpenPath(role, "/phone", crmEnabled)
+            ? PHONE_SECTION_KEYS.map((k) => ({
+                key: `sec-phone-${k}`,
+                to: "/phone",
+                search: { s: k },
+                label: t(`ptel.s.${k}`),
+                parent: pageName("/phone"),
+              }))
+            : []),
+        ]
+          .filter((x) => catalogMatches(`${x.label} ${x.parent}`, q))
+          .slice(0, 8)
+          .map((x) => ({
+            key: x.key,
+            group: "sections" as const,
+            icon: ArrowRight,
+            label: x.label,
+            hint: x.parent,
+            go: () => go(x.to, x.search),
+          }));
+    const adminResults: Result[] = adminItems
+      .filter((i) => catalogMatches(`${t(cardTitleKey(i))} ${t(cardDescKey(i))}`, q))
+      .slice(0, 8)
+      .map((i) => ({
+        key: `a-${i.key}`,
+        group: "admin",
+        icon: i.icon,
+        tone: i.tone,
+        label: t(cardTitleKey(i)),
+        hint: t(cardDescKey(i)),
+        go: () => go(i.to, i.search),
+      }));
+    const funnelResults: Result[] = crmEnabled
+      ? funnelNames
+          .filter((f) => catalogMatches(f, q))
+          .slice(0, 6)
+          .map((f) => ({
+            key: `f-${f}`,
+            group: "funnels",
+            icon: Workflow,
+            tone: "violet",
+            label: f,
+            hint: pageName("/funnels"),
+            go: () => go("/funnels", { funnel: f }),
+          }))
+      : [];
+    const peopleResults: Result[] = seesPeople
+      ? profiles
+          .filter(
+            (p) =>
+              p.role !== "platform_owner" &&
+              catalogMatches(`${p.full_name ?? ""} ${p.email ?? ""} ${p.phone ?? ""}`, q),
+          )
+          .slice(0, 6)
+          .map((p) => ({
+            key: `u-${p.id}`,
+            group: "people",
+            icon: Users,
+            tone: "sky",
+            label: p.full_name || p.email || "—",
+            hint: [p.email, p.phone].filter(Boolean).join(" · "),
+            go: () => go(isAdmin ? "/admin/employees" : "/attendance"),
+          }))
+      : [];
+    const taskResults: Result[] = tasks
+      .filter((x) => !!x.lead_id)
+      .map((x) => ({
+        key: `t-${x.id}`,
+        group: "tasks",
+        icon: ListChecks,
+        tone: "amber",
+        label: x.title,
+        hint: x.due_date ? new Date(x.due_date).toLocaleDateString() : undefined,
+        go: () => {
+          onClose();
+          void navigate({
+            to: "/crm/leads/$leadId",
+            params: { leadId: x.lead_id! },
+            search: { from: "funnels" },
+          });
+        },
+      }));
+    const helpResults: Result[] = articles
+      .filter((a) => catalogMatches(`${a.title} ${a.summary}`, q))
+      .slice(0, 5)
+      .map((a) => ({
+        key: `h-${a.slug}`,
+        group: "help",
+        icon: BookOpen,
+        tone: "emerald",
+        label: a.title,
+        hint: a.summary,
+        go: () => go(`/help/${a.slug}`),
+      }));
+    return [
+      ...pageResults,
+      ...sectionResults,
+      ...settingResults,
+      ...adminResults,
+      ...funnelResults,
+      ...leadResults,
+      ...taskResults,
+      ...peopleResults,
+      ...helpResults,
+    ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, leads, role, crmEnabled, isPlatformOwner, t, accessRules]);
+  }, [
+    query,
+    leads,
+    tasks,
+    adminItems,
+    funnelNames,
+    profiles,
+    articles,
+    role,
+    crmEnabled,
+    isPlatformOwner,
+    t,
+    accessRules,
+  ]);
 
   useEffect(() => setActive(0), [query]);
   useEffect(() => {
@@ -130,17 +348,22 @@ export function SearchPalette({ open, onClose }: { open: boolean; onClose: () =>
       ?.scrollIntoView({ block: "nearest" });
   }, [active]);
 
-  if (!open) return null;
-
   const groups: { key: Result["group"]; label: string }[] = [
     { key: "pages", label: query.trim() ? t("accountBar.pages") : t("accountBar.quick") },
+    { key: "sections", label: t("search.g.sections") },
     { key: "settings", label: t("accountBar.settings") },
+    { key: "admin", label: t("search.g.admin") },
+    { key: "funnels", label: t("search.g.funnels") },
     { key: "leads", label: t("accountBar.leads") },
+    { key: "tasks", label: t("search.g.tasks") },
+    { key: "people", label: t("search.g.people") },
+    { key: "help", label: t("search.g.help") },
   ];
   const searching = query.trim().length >= 2;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]">
+      {isAdmin && <AdminCatalogFeed onItems={setAdminItems} />}
       <div
         aria-hidden
         onClick={onClose}

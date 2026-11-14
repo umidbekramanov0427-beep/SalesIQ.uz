@@ -10,6 +10,11 @@ import { getRouteApi } from "@tanstack/react-router";
 import {
   Activity,
   AlertTriangle,
+  ArrowLeftRight,
+  ChartPie,
+  PhoneCall,
+  Timer,
+  Users,
   BriefcaseBusiness,
   CalendarCheck,
   ChartColumnBig,
@@ -32,9 +37,12 @@ import {
 import {
   GreetingHeader,
   HomeOverviewPart,
+  KPI_IDS,
+  type KpiId,
   PeriodSegment,
 } from "@/components/dashboard/HomeOverview";
 import { HomeBoard, type BoardLayout, type BoardWidget } from "@/components/dashboard/HomeBoard";
+import type { CardTone } from "@/lib/tones";
 import {
   DashboardFilterRow,
   type FilterSet,
@@ -120,11 +128,24 @@ const TAB_FILTERS: Record<Exclude<HomeTab, "rating" | "desk">, FilterSet> = {
 };
 
 // What the overview shows before anyone arranges it (the page as it was).
+const KPI_WIDGETS: { id: KpiId; label: string; icon: LucideIcon; tone: CardTone }[] = [
+  { id: "newLeads", label: "home2.kpiLeads", icon: Users, tone: "primary" },
+  { id: "revenue", label: "home2.kpiRevenue", icon: Wallet, tone: "emerald" },
+  { id: "firstContact", label: "home2.kpiFirstContact", icon: Timer, tone: "amber" },
+  { id: "attempts", label: "home2.kpiAttempts", icon: PhoneCall, tone: "sky" },
+  { id: "cycle", label: "home2.kpiCycle", icon: ArrowLeftRight, tone: "violet" },
+  { id: "conversion", label: "home2.kpiConversion", icon: ChartPie, tone: "rose" },
+];
+const KPI_WIDGET_IDS = KPI_IDS.map((id) => `kpi:${id}`);
+// The old single KPI row of a saved layout becomes the six cards in its place.
+const BOARD_ALIASES: Record<string, string[]> = { kpis: KPI_WIDGET_IDS };
+
 const BOARD_DEFAULTS: BoardLayout = {
   order: [
-    "kpis",
-    "revenue",
+    // Four cards a row; the second row's two cards share it with Bugun.
+    ...KPI_WIDGET_IDS,
     "today",
+    "revenue",
     "tasks",
     "calls",
     "dailyWork",
@@ -133,7 +154,13 @@ const BOARD_DEFAULTS: BoardLayout = {
     "attention",
     "trend",
   ],
-  size: { revenue: 8, today: 4, tasks: 6, calls: 6 },
+  size: {
+    ...Object.fromEntries(KPI_WIDGET_IDS.map((id) => [id, 3 as const])),
+    today: 6,
+    revenue: 12,
+    tasks: 6,
+    calls: 6,
+  },
 };
 
 const homeRoute = getRouteApi("/");
@@ -329,20 +356,22 @@ export function HomePage() {
     statsScope,
   };
   const boardWidgets: BoardWidget[] = [
-    {
-      id: "kpis",
-      title: t("board.w.kpis"),
-      icon: Gauge,
-      tone: "primary",
-      sizes: [12],
-      node: <HomeOverviewPart part="kpis" {...overviewProps} />,
-    },
+    // The six figure cards, each its own widget: any width from a quarter
+    // of the row (four in a row, the default) to the whole row.
+    ...KPI_WIDGETS.map((k): BoardWidget => ({
+      id: `kpi:${k.id}`,
+      title: t(k.label),
+      icon: k.icon,
+      tone: k.tone,
+      sizes: [3, 4, 6, 12],
+      node: <HomeOverviewPart part={`kpi:${k.id}`} {...overviewProps} />,
+    })),
     {
       id: "revenue",
       title: t("board.w.revenue"),
       icon: TrendingUp,
       tone: "emerald",
-      sizes: [6, 8, 12],
+      sizes: [4, 6, 8, 12],
       node: <HomeOverviewPart part="revenue" {...overviewProps} />,
     },
     {
@@ -350,7 +379,7 @@ export function HomePage() {
       title: t("board.w.today"),
       icon: CalendarCheck,
       tone: "sky",
-      sizes: [4, 6, 12],
+      sizes: [3, 4, 6, 8, 12],
       node: <HomeOverviewPart part="today" {...overviewProps} />,
     },
     {
@@ -374,7 +403,7 @@ export function HomePage() {
       title: t("board.w.dailyWork"),
       icon: ClipboardList,
       tone: "amber",
-      sizes: [6, 8, 12],
+      sizes: [4, 6, 8, 12],
       node: <DailyWorkCard />,
     },
     {
@@ -382,7 +411,7 @@ export function HomePage() {
       title: t("board.w.payments"),
       icon: Wallet,
       tone: "emerald",
-      sizes: [6, 8, 12],
+      sizes: [4, 6, 8, 12],
       node: <CollectedPaymentsCard funnel={funnel} dateRange={dateRange} />,
     },
     {
@@ -390,7 +419,7 @@ export function HomePage() {
       title: t("board.w.kpiCards"),
       icon: LayoutGrid,
       tone: "sky",
-      sizes: [12],
+      sizes: [6, 8, 12],
       node: <DashboardKpiCards funnel={funnel} scope={statsScope} />,
     },
     {
@@ -398,7 +427,7 @@ export function HomePage() {
       title: t("board.w.attention"),
       icon: AlertTriangle,
       tone: "amber",
-      sizes: [12],
+      sizes: [6, 8, 12],
       node: <PeriodAttentionRow stats={periodStats} funnel={funnel} />,
     },
     {
@@ -406,7 +435,7 @@ export function HomePage() {
       title: t("board.w.trend"),
       icon: ChartSpline,
       tone: "primary",
-      sizes: [6, 8, 12],
+      sizes: [4, 6, 8, 12],
       node: (
         <Suspense fallback={<ChartSkeleton />}>
           <Charts.MonthlyRevenueTrendChart funnel={funnel} />
@@ -418,7 +447,7 @@ export function HomePage() {
       title: t("board.w.conversionMetrics"),
       icon: Target,
       tone: "violet",
-      sizes: [12],
+      sizes: [6, 8, 12],
       node: <ConversionMetricsCards funnel={funnel} scope={statsScope} />,
     },
     {
@@ -426,7 +455,7 @@ export function HomePage() {
       title: t("board.w.conversionChart"),
       icon: ChartColumnBig,
       tone: "violet",
-      sizes: [6, 8, 12],
+      sizes: [4, 6, 8, 12],
       node: (
         <Suspense fallback={<ChartSkeleton height={340} />}>
           <Charts.ConversionQualityChart funnel={funnel} />
@@ -438,7 +467,7 @@ export function HomePage() {
       title: t("board.w.leadTasks"),
       icon: ListChecks,
       tone: "sky",
-      sizes: [6, 12],
+      sizes: [4, 6, 8, 12],
       node: <LeadTasksWidget funnel={funnel} />,
     },
     {
@@ -446,7 +475,7 @@ export function HomePage() {
       title: t("board.w.activity"),
       icon: Activity,
       tone: "amber",
-      sizes: [6, 12],
+      sizes: [4, 6, 8, 12],
       node: <ActivityWidget funnel={funnel} />,
     },
     {
@@ -454,7 +483,7 @@ export function HomePage() {
       title: t("board.w.aiInsights"),
       icon: Sparkles,
       tone: "violet",
-      sizes: [6, 12],
+      sizes: [4, 6, 8, 12],
       node: <AiInsightsWidget funnel={funnel} dateRange={dateRange} />,
     },
     {
@@ -462,7 +491,7 @@ export function HomePage() {
       title: t("board.w.salesInsights"),
       icon: Lightbulb,
       tone: "amber",
-      sizes: [12],
+      sizes: [6, 8, 12],
       node: <SalesInsightsCards funnel={funnel} dateRange={dateRange} />,
     },
   ];
@@ -582,6 +611,7 @@ export function HomePage() {
                   defaults={BOARD_DEFAULTS}
                   editing={editingBoard}
                   onEditingChange={setEditingBoard}
+                  aliases={BOARD_ALIASES}
                 />
               </>
             )}

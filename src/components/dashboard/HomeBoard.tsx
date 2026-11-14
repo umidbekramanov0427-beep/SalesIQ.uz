@@ -92,14 +92,27 @@ function useSavedLayout(key: string | null): BoardLayout | null {
   );
 }
 
-/** A saved layout cleaned against today's widgets: unknown ids dropped, sizes snapped. */
-function clean(layout: BoardLayout, byId: Map<string, BoardWidget>): BoardLayout {
-  const order = [...new Set(layout.order)].filter((id) => byId.has(id));
+/**
+ * A saved layout cleaned against today's widgets: a widget that was split
+ * into several (`aliases`, e.g. the old KPI row into one card each) is
+ * replaced in place by its parts, unknown ids are dropped, and sizes are
+ * snapped (a missing one takes the default's, else the widest).
+ */
+export function cleanLayout(
+  layout: BoardLayout,
+  byId: Map<string, { sizes: Span[] }>,
+  defaults?: BoardLayout,
+  aliases: Record<string, string[]> = {},
+): BoardLayout {
+  const expanded = layout.order.flatMap((id) => aliases[id] ?? [id]);
+  const order = [...new Set(expanded)].filter((id) => byId.has(id));
   const size: Record<string, Span> = {};
   for (const id of order) {
     const w = byId.get(id)!;
     const s = layout.size[id];
-    size[id] = s && w.sizes.includes(s) ? s : w.sizes[w.sizes.length - 1]!;
+    const d = defaults?.size[id];
+    size[id] =
+      s && w.sizes.includes(s) ? s : d && w.sizes.includes(d) ? d : w.sizes[w.sizes.length - 1]!;
   }
   return { order, size };
 }
@@ -122,23 +135,31 @@ type Drag = {
   fromLibrary: boolean;
 };
 
+const NO_ALIASES: Record<string, string[]> = {};
+
 export function HomeBoard({
   widgets,
   defaults,
   editing,
   onEditingChange,
+  aliases = NO_ALIASES,
 }: {
   widgets: BoardWidget[];
   defaults: BoardLayout;
   editing: boolean;
   onEditingChange: (v: boolean) => void;
+  /** Old widget ids that are now several widgets (old saved layouts keep their place). */
+  aliases?: Record<string, string[]>;
 }) {
   const { t } = useI18n();
   const { user } = useAuth();
   const storeKey = user ? `salesiq.home.board.v1.${user.id}` : null;
   const byId = useMemo(() => new Map(widgets.map((w) => [w.id, w])), [widgets]);
   const saved = useSavedLayout(storeKey);
-  const base = useMemo(() => clean(saved ?? defaults, byId), [saved, defaults, byId]);
+  const base = useMemo(
+    () => cleanLayout(saved ?? defaults, byId, defaults, aliases),
+    [saved, defaults, byId, aliases],
+  );
   const [draft, setDraft] = useState<BoardLayout | null>(null);
   const layout = editing && draft ? draft : base;
 
@@ -321,7 +342,7 @@ export function HomeBoard({
     if (storeKey && draft) writeLayout(storeKey, draft);
     onEditingChange(false);
   };
-  const reset = () => setDraft(clean(defaults, byId));
+  const reset = () => setDraft(cleanLayout(defaults, byId, defaults, aliases));
   const hidden = widgets.filter((w) => !layout.order.includes(w.id));
   const dragged = drag ? byId.get(drag.id) : null;
 

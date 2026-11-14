@@ -1867,3 +1867,27 @@ export function useGlobalLeadSearch(term: string, enabled = true) {
     },
   });
 }
+
+/** Tasks whose title matches (the search window), newest first. */
+export function useTaskSearch(term: string, enabled = true) {
+  const { user } = useAuth();
+  const q = term
+    .trim()
+    .replace(/[%,()]/g, " ")
+    .trim();
+  return useQuery({
+    queryKey: ["tasks", "global_search", user?.organizationId, q],
+    enabled: enabled && !!user?.organizationId && q.length >= 2,
+    staleTime: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("id, title, lead_id, due_date, status")
+        .ilike("title", `%${q}%`)
+        .order("created_at", { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}

@@ -51,6 +51,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   // The search window (the button under the logo, or ⌘K) and the profile
   // window behind the pencil in the avatar menu.
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const openSearch = (q?: string) => {
+    setSearchQuery(q ?? "");
+    setSearchOpen(true);
+  };
   const [profileOpen, setProfileOpen] = useState(false);
   const { t } = useI18n();
   const { user } = useAuth();
@@ -123,6 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        setSearchQuery("");
         setSearchOpen((o) => !o);
         return;
       }
@@ -164,7 +170,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             collapsed={!peek}
             compact={!peek}
             onToggle={() => setPeek((p) => !p)}
-            onOpenSearch={() => setSearchOpen(true)}
+            onOpenSearch={openSearch}
             onEditProfile={() => setProfileOpen(true)}
             isAdmin={isAdmin}
             isPlatformOwner={isPlatformOwner}
@@ -258,12 +264,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           <AnnouncementBanners />
           <OwnerMfaReminder />
           <TelegramLinkReminder />
-          <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
+          <SearchPalette
+            open={searchOpen}
+            initialQuery={searchQuery}
+            onClose={() => setSearchOpen(false)}
+          />
           {/* Phones: the app bar (MobileNav.tsx, drawn first, above the
             reminders). Narrow computer windows: the header below. */}
           <MobileTopBar
             isAdmin={isAdmin}
-            onOpenSearch={() => setSearchOpen(true)}
+            onOpenSearch={openSearch}
             onEditProfile={() => setProfileOpen(true)}
           />
           <header className="sticky top-0 z-20 hidden h-14 items-center gap-2 border-b border-border bg-background px-4">
@@ -280,7 +290,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               aria-label={t("search.title")}
-              onClick={() => setSearchOpen(true)}
+              onClick={() => openSearch()}
               className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface text-muted-foreground"
             >
               <Search className="h-4 w-4" />

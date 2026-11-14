@@ -257,7 +257,7 @@ export function AutoDialer({ connected }: { connected: boolean }) {
         )}
       </DeskBlock>
 
-      <section className="overflow-hidden rounded-[8px] border border-border bg-card">
+      <section className="surface-card overflow-hidden">
         <header className="flex items-center justify-between border-b border-border px-4 py-3 text-[14px] font-semibold">
           {t("ptel.auto.queue")}
           {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}

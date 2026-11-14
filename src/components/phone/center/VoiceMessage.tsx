@@ -252,7 +252,7 @@ export function VoiceMessage() {
         <p className="text-[13px] leading-relaxed text-muted-foreground">{t("ptel.voice.what")}</p>
         <div className="mt-4">
           {recording ? (
-            <div className="rounded-[8px] border border-border bg-surface">
+            <div className="rounded-xl border border-border bg-surface">
               <VoiceRecorder
                 onSend={onSend}
                 onClose={() => setRecording(false)}
