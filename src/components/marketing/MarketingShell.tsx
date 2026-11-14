@@ -29,6 +29,7 @@ import { useMyOrganization } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { RAIL_ITEM, RAIL_LABEL, RAIL_STACK, RAIL_TILE } from "@/components/layout/AppSidebar";
+import { railLabel } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
 import { useBrowserZoom } from "@/lib/browser-zoom";
 import { useTheme, type ThemeMode } from "@/lib/theme";
@@ -218,7 +219,7 @@ function Rail() {
           )}
         >
           <RailGlyph icon={it.icon} active={active} className={it.tone} />
-          <span className={RAIL_LABEL}>{t(`mkt.nav.${it.key}`)}</span>
+          <span className={RAIL_LABEL}>{railLabel(t, `mkt.${it.key}`, `mkt.nav.${it.key}`)}</span>
         </Link>
       </div>
     );

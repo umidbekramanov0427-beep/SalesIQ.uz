@@ -45,7 +45,7 @@ import { businessInitials, type BusinessItem } from "@/lib/businesses";
 
 import { createPortal } from "react-dom";
 import { SearchResultList, useSearchResults } from "@/components/layout/SearchPalette";
-import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
+import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor, railLabel } from "@/lib/nav";
 import { RailGlyph } from "@/components/layout/RailGlyph";
 import {
   OPEN_NOTIFICATIONS_EVENT,
@@ -116,14 +116,15 @@ function RailTip({
 }
 
 // The slim rail shows each icon with its name under it, as amoCRM's left
-// bar does: a clear 26px outline icon and a small two-line label.
+// bar does: a clear 26px outline icon and a one-line label (railLabel
+// gives the long names a short form that fits, bold included).
 // Airier on tall screens, back to tight on short laptops so every item fits.
 export const RAIL_ITEM =
-  "w-full flex-col justify-center gap-1 rounded-[10px] px-1 py-1.5 text-center";
+  "w-full flex-col justify-center gap-1 rounded-[10px] px-0.5 py-1.5 text-center";
 // One fixed size: the rail does not tighten or loosen with the window's
 // height -- when it doesn't fit, its list scrolls instead.
 export const RAIL_STACK = "space-y-1.5";
-export const RAIL_LABEL = "line-clamp-2 w-full break-words text-[9.5px] leading-[12px]";
+export const RAIL_LABEL = "block w-full truncate whitespace-nowrap text-[9.5px] leading-[12px]";
 // The rail's two key tiles -- search at the top, the person at the bottom --
 // share one look: a soft gradient card holding just the glyph.
 export const RAIL_TILE =
@@ -485,7 +486,7 @@ function FunnelsNavGroup({
         >
           <RailGlyph icon={item.icon} active={active} className={TONE_TEXT[item.tone]} />
           <span className={cn(RAIL_LABEL, active ? "font-bold" : "font-semibold")}>
-            {t(`nav.${item.to}`)}
+            {railLabel(t, item.to)}
           </span>
         </Link>
       </RailTip>
@@ -666,7 +667,7 @@ export function AppSidebar({
           )}
           {collapsed ? (
             <span className={cn("relative", RAIL_LABEL)}>
-              {t(`nav.${item.to}`)}
+              {railLabel(t, item.to)}
               {locked && (
                 <Lock className="absolute -right-0.5 -top-0.5 h-3 w-3 shrink-0 text-sidebar-muted" />
               )}
@@ -710,7 +711,7 @@ export function AppSidebar({
               {item.to === "/content-library" && collapsed ? (
                 <ClassroomTile
                   key={item.to}
-                  label={t(`nav.${item.to}`)}
+                  label={railLabel(t, item.to)}
                   active={pathname.startsWith(item.to)}
                 />
               ) : item.to === "/funnels" ? (

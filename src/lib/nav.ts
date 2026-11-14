@@ -363,3 +363,18 @@ export const NAV_LABEL_PATHS: string[] = [
   "/content-library",
   "/",
 ];
+
+/**
+ * An item's name on the slim rail: one line of 9.5px under the icon, so the
+ * long names have a short form (`rail.<path>`, in every dictionary); the
+ * rest use their menu name.
+ */
+export function railLabel(
+  t: (key: string) => string,
+  path: string,
+  fallbackKey = `nav.${path}`,
+): string {
+  const key = `rail.${path}`;
+  const v = t(key);
+  return v === key ? t(fallbackKey) : v;
+}
