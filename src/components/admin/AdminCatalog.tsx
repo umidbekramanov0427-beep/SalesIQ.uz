@@ -52,7 +52,6 @@ import {
   useAmoConnectionStatus,
   useDidoxStatus,
   useInstagramAccount,
-  useWorkTelegramTeam,
   usePaymentMerchant,
   useFollowupSettings,
   useBitrix24ConnectionStatus,
@@ -159,7 +158,6 @@ export function useAdminCatalog(): CatalogGroup[] {
   const sidebar = useSidebarConfig();
   const didox = useDidoxStatus();
   const instagram = useInstagramAccount(crmEnabled);
-  const workTelegram = useWorkTelegramTeam(crmEnabled);
   const payments = usePaymentMerchant(crmEnabled);
   const followups = useFollowupSettings();
 
@@ -338,21 +336,6 @@ export function useAdminCatalog(): CatalogGroup[] {
         tone: "rose",
         logo: { domain: "instagram.com" },
         status: connected(instagram.isFetched, !!instagram.data?.account),
-      },
-      {
-        key: "telegramAccounts",
-        to: "/integrations/telegram-accounts",
-        icon: MessageSquareText,
-        tone: "sky",
-        logo: { src: "/brand/telegram.svg" },
-        status: workTelegram.data
-          ? (() => {
-              const n = workTelegram.data.team.filter((p) => p.account).length;
-              return n > 0
-                ? { ok: true, label: t("hub.status.count", { count: n }), connection: true }
-                : { ok: false, label: t("hub.status.notConnected"), connection: true };
-            })()
-          : undefined,
       },
       {
         key: "sms",

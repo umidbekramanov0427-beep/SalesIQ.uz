@@ -142,10 +142,10 @@ const BOARD_ALIASES: Record<string, string[]> = { kpis: KPI_WIDGET_IDS };
 
 const BOARD_DEFAULTS: BoardLayout = {
   order: [
-    // Four cards a row; the second row's two cards share it with Bugun.
+    // Three cards a row (two rows), then Bugun beside the revenue chart.
     ...KPI_WIDGET_IDS,
-    "today",
     "revenue",
+    "today",
     "tasks",
     "calls",
     "dailyWork",
@@ -155,9 +155,9 @@ const BOARD_DEFAULTS: BoardLayout = {
     "trend",
   ],
   size: {
-    ...Object.fromEntries(KPI_WIDGET_IDS.map((id) => [id, 3 as const])),
-    today: 6,
-    revenue: 12,
+    ...Object.fromEntries(KPI_WIDGET_IDS.map((id) => [id, 4 as const])),
+    revenue: 8,
+    today: 4,
     tasks: 6,
     calls: 6,
   },
@@ -357,7 +357,7 @@ export function HomePage() {
   };
   const boardWidgets: BoardWidget[] = [
     // The six figure cards, each its own widget: any width from a quarter
-    // of the row (four in a row, the default) to the whole row.
+    // of the row to the whole row (three in a row by default).
     ...KPI_WIDGETS.map((k): BoardWidget => ({
       id: `kpi:${k.id}`,
       title: t(k.label),

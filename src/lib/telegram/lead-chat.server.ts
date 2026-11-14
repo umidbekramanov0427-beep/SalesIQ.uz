@@ -73,10 +73,8 @@ export type LeadChatRow = {
   file_kind?: string | null;
   file_id?: string | null;
   file_name?: string | null;
-  /** "telegram" (default, the company bot), "instagram", or "telegram_user" (a salesperson's work account). */
-  channel?: "telegram" | "instagram" | "telegram_user";
-  /** The salesperson whose work Telegram account carried the message. */
-  via_profile_id?: string | null;
+  /** "telegram" (default) or "instagram". */
+  channel?: "telegram" | "instagram";
   /** The platform's own message id (Instagram mid), for de-duplication. */
   ext_message_id?: string | null;
 };

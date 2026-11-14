@@ -10,6 +10,7 @@ import {
   MonitorSmartphone,
   Smartphone,
   UserRound,
+  Camera,
   type LucideIcon,
   BadgeCheck,
 } from "lucide-react";
@@ -19,11 +20,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
+import { shrinkLogo } from "@/lib/shrink-logo";
 import {
   currentDeviceId,
   useMyActivity,
   useMyLoginEvents,
   useMyOrganization,
+  useOrgGeneralSettings,
+  useUpdateOrgGeneralSettings,
   type AuditLogRow,
   type LoginEventRow,
 } from "@/hooks/use-crm-data";
@@ -60,6 +64,93 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-[12px] font-semibold text-muted-foreground">{label}</span>
       {children}
     </label>
+  );
+}
+
+/**
+ * The tile at the top of Profil ma'lumotlari: the company's logo (the one
+ * shown in the sidebar and the logo bar). Admins click it to upload or
+ * change it; without a logo it shows the person's initials.
+ */
+function CompanyLogoTile({ initials }: { initials: string }) {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const { data: general } = useOrgGeneralSettings();
+  const update = useUpdateOrgGeneralSettings();
+  const logo = general?.company_logo_url ?? null;
+  const canEdit = user?.role === "super_admin" || user?.role === "platform_owner";
+
+  async function save(value: string | null) {
+    try {
+      await update.mutateAsync({ company_logo_url: value });
+      toast.success(value ? t("profileWin.logoSaved") : t("profileWin.logoRemoved"));
+    } catch (err) {
+      toast.error(describeError(err, t("profileWin.saveFailed")));
+    }
+  }
+
+  const face = logo ? (
+    <img src={logo} alt="" className="h-full w-full bg-white object-contain p-1.5" />
+  ) : (
+    <span className="text-xl font-bold text-primary">{initials}</span>
+  );
+
+  if (!canEdit) {
+    return (
+      <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/15">
+        {face}
+      </span>
+    );
+  }
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-1">
+      <label
+        title={logo ? t("profileWin.logoChange") : t("profileWin.logoUpload")}
+        className={cn(
+          "group relative grid h-16 w-16 cursor-pointer place-items-center overflow-hidden rounded-2xl bg-primary/15 ring-offset-2 ring-offset-background focus-within:ring-2 focus-within:ring-primary",
+          update.isPending && "pointer-events-none opacity-60",
+        )}
+      >
+        {face}
+        <span className="absolute inset-0 grid place-items-center bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100">
+          {update.isPending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Camera className="h-5 w-5" />
+          )}
+        </span>
+        <span className="absolute bottom-1 right-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground shadow group-hover:opacity-0">
+          <Camera className="h-3 w-3" />
+        </span>
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="sr-only"
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (!f) return;
+            let value: string;
+            try {
+              value = await shrinkLogo(f);
+            } catch {
+              toast.error(t("profileWin.logoBad"));
+              return;
+            }
+            await save(value);
+          }}
+        />
+      </label>
+      {logo && (
+        <button
+          type="button"
+          onClick={() => void save(null)}
+          className="text-[11px] font-medium text-muted-foreground hover:text-destructive"
+        >
+          {t("profileWin.logoRemove")}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -135,9 +226,7 @@ function ProfileTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 rounded-2xl border border-border bg-muted/30 p-4">
-        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary/15 text-xl font-bold text-primary">
-          {user?.initials ?? "?"}
-        </span>
+        <CompanyLogoTile initials={user?.initials ?? "?"} />
         <div className="min-w-0">
           <p className="truncate text-lg font-bold text-foreground">{user?.name}</p>
           <p className="truncate text-[13px] text-muted-foreground">

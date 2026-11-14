@@ -2012,26 +2012,3 @@ html.owner-skin:not(.admin-console) .shadow-soft {
 html.phone .card-gear {
   opacity: 1;
 }
-
-/* Inbox → Guruhlar: a Telegram-like chat wallpaper (soft colour wash with a
-   faint dotted pattern), its own in the dark too. */
-.tg-wallpaper {
-  background-color: #c9d8c0;
-  background-image:
-    radial-gradient(circle at 20% 15%, rgb(255 255 255 / 0.35) 0, transparent 45%),
-    radial-gradient(circle at 80% 85%, rgb(152 192 120 / 0.45) 0, transparent 50%),
-    radial-gradient(rgb(255 255 255 / 0.22) 1px, transparent 1px);
-  background-size:
-    100% 100%,
-    100% 100%,
-    22px 22px;
-}
-.dark .tg-wallpaper {
-  background-color: #0e1621;
-  background-image:
-    radial-gradient(circle at 20% 15%, rgb(43 82 120 / 0.35) 0, transparent 45%),
-    radial-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px);
-  background-size:
-    100% 100%,
-    22px 22px;
-}

@@ -361,7 +361,7 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 phone:gap-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 phone:gap-2">
             {shown("today") && (
               <DeskKpi
                 tipKey="desk.today"
@@ -557,8 +557,7 @@ function PlanCard({ d, canEdit, onEdit }: { d: DeskData; canEdit: boolean; onEdi
       type="button"
       onClick={onEdit}
       aria-label={t("desk.planEdit")}
-      title={t("desk.planEdit")}
-      className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-primary"
+      className="grid h-6 w-6 place-items-center rounded-[4px] text-muted-foreground hover:bg-accent hover:text-primary"
     >
       <Pencil className="h-3.5 w-3.5" />
     </button>
@@ -571,11 +570,12 @@ function PlanCard({ d, canEdit, onEdit }: { d: DeskData; canEdit: boolean; onEdi
         icon={Target}
         tone="amber"
         titleExtra={pen}
-        value={t("desk.noPlan")}
+        value={<span className="text-[17px]">{t("desk.noPlan")}</span>}
         prevText={canEdit ? t("desk.noPlanHint") : undefined}
       />
     );
   }
+  const pct = p.pct ?? 0;
   return (
     <DeskKpi
       tipKey="desk.plan"
@@ -583,14 +583,31 @@ function PlanCard({ d, canEdit, onEdit }: { d: DeskData; canEdit: boolean; onEdi
       icon={Target}
       tone="amber"
       titleExtra={pen}
-      rawValue={p.pct ?? 0}
-      value={`${p.pct ?? 0}%`}
+      rawValue={pct}
+      value={
+        <span>
+          {pct}%{" "}
+          <span className="text-[14px] font-semibold text-muted-foreground">
+            · {format(d.plan.fact)}
+          </span>
+        </span>
+      }
       prevText={t("desk.planLine", {
-        plan: `${format(d.plan.fact)} / ${format(d.plan.team)}`,
+        plan: format(d.plan.team),
         forecast: format(p.forecast),
         day: format(p.perDayNeeded),
       })}
-    />
+    >
+      <span className="mt-2 block h-2 overflow-hidden rounded-full bg-muted">
+        <span
+          className={cn(
+            "block h-full rounded-full",
+            p.status === "behind" ? "bg-amber-500" : "bg-emerald-500",
+          )}
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </span>
+    </DeskKpi>
   );
 }
 

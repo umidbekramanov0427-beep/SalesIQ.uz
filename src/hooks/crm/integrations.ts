@@ -1897,7 +1897,7 @@ export type InboxConversation = {
   ownerId: string | null;
   funnel: string;
   stageId: string | null;
-  channel: "telegram" | "instagram" | "telegram_user";
+  channel: "telegram" | "instagram";
   /** @username, or the chat's first name. */
   handle: string | null;
   hasPhoto: boolean;
@@ -1923,7 +1923,7 @@ export function useInboxConversations() {
     refetchInterval: 10_000,
     staleTime: 5_000,
     queryFn: async (): Promise<InboxConversation[]> => {
-      const [tg, ig, work] = await Promise.all([
+      const [tg, ig] = await Promise.all([
         supabase
           .from("lead_telegram_links")
           .select("lead_id, chat_first_name, chat_username, photo_file_id, linked_at")
@@ -1933,12 +1933,6 @@ export function useInboxConversations() {
         supabase
           .from("lead_instagram_links")
           .select("lead_id, username, name, photo_url, linked_at")
-          .order("linked_at", { ascending: false })
-          .limit(INBOX_LIMIT),
-        // Salespeople's work Telegram accounts (missing until migration 20270116000000).
-        supabase
-          .from("lead_telegram_user_links")
-          .select("lead_id, username, name, linked_at")
           .order("linked_at", { ascending: false })
           .limit(INBOX_LIMIT),
       ]);
@@ -1954,15 +1948,6 @@ export function useInboxConversations() {
           channel: "instagram",
           handle: l.username ? `@${l.username}` : (l.name ?? null),
           hasPhoto: !!l.photo_url,
-          since: l.linked_at,
-        });
-      }
-      for (const l of work.data ?? []) {
-        links.set(l.lead_id, {
-          leadId: l.lead_id,
-          channel: "telegram_user",
-          handle: l.username ? `@${l.username}` : (l.name ?? null),
-          hasPhoto: false,
           since: l.linked_at,
         });
       }

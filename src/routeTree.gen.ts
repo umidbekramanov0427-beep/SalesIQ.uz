@@ -16,6 +16,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AudioAnalyticsRouteImport } from './routes/audio-analytics'
 import { Route as BillingRouteImport } from './routes/billing'
+import { Route as BusinessesRouteImport } from './routes/businesses'
 import { Route as CoachingRouteImport } from './routes/coaching'
 import { Route as ContentLibraryRouteImport } from './routes/content-library'
 import { Route as CrmStagesRouteImport } from './routes/crm-stages'
@@ -249,12 +250,6 @@ import { Route as TelegramSendDailyReportRouteImport } from './routes/telegram.s
 import { Route as TelegramSendLeadMessageRouteImport } from './routes/telegram.send-lead-message'
 import { Route as TelegramSendTestRouteImport } from './routes/telegram.send-test'
 import { Route as TelegramUnlinkManagerRouteImport } from './routes/telegram.unlink-manager'
-import { Route as TelegramUserAccountRouteImport } from './routes/telegram.user-account'
-import { Route as TelegramUserAccountsRouteImport } from './routes/telegram.user-accounts'
-import { Route as TelegramUserGroupsRouteImport } from './routes/telegram.user-groups'
-import { Route as TelegramUserLinkRouteImport } from './routes/telegram.user-link'
-import { Route as TelegramUserSendRouteImport } from './routes/telegram.user-send'
-import { Route as TelegramUserWebhookRouteImport } from './routes/telegram.user-webhook'
 import { Route as TelegramWebhookRouteImport } from './routes/telegram.webhook'
 import { Route as TmaAppRouteImport } from './routes/tma.app'
 import { Route as TmaLeadRouteImport } from './routes/tma.lead'
@@ -322,7 +317,6 @@ import { Route as PlatformUsageOrgIdRouteImport } from './routes/platform.usage.
 import { Route as PlatformVisitSessionIdRouteImport } from './routes/platform.visit.$sessionId'
 import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
 import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
-import { Route as TelegramUserAccountsActiveRouteImport } from './routes/telegram.user-accounts.active'
 import { Route as ApiV1LeadsLeadIdRouteImport } from './routes/api.v1.leads.$leadId'
 import { Route as ApiV1LeadsLeadIdNotesRouteImport } from './routes/api.v1.leads.$leadId.notes'
 
@@ -359,6 +353,11 @@ const AudioAnalyticsRoute = AudioAnalyticsRouteImport.update({
 const BillingRoute = BillingRouteImport.update({
   id: '/billing',
   path: '/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessesRoute = BusinessesRouteImport.update({
+  id: '/businesses',
+  path: '/businesses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoachingRoute = CoachingRouteImport.update({
@@ -1555,36 +1554,6 @@ const TelegramUnlinkManagerRoute = TelegramUnlinkManagerRouteImport.update({
   path: '/telegram/unlink-manager',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TelegramUserAccountRoute = TelegramUserAccountRouteImport.update({
-  id: '/telegram/user-account',
-  path: '/telegram/user-account',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TelegramUserAccountsRoute = TelegramUserAccountsRouteImport.update({
-  id: '/telegram/user-accounts',
-  path: '/telegram/user-accounts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TelegramUserGroupsRoute = TelegramUserGroupsRouteImport.update({
-  id: '/telegram/user-groups',
-  path: '/telegram/user-groups',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TelegramUserLinkRoute = TelegramUserLinkRouteImport.update({
-  id: '/telegram/user-link',
-  path: '/telegram/user-link',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TelegramUserSendRoute = TelegramUserSendRouteImport.update({
-  id: '/telegram/user-send',
-  path: '/telegram/user-send',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TelegramUserWebhookRoute = TelegramUserWebhookRouteImport.update({
-  id: '/telegram/user-webhook',
-  path: '/telegram/user-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TelegramWebhookRoute = TelegramWebhookRouteImport.update({
   id: '/telegram/webhook',
   path: '/telegram/webhook',
@@ -1957,12 +1926,6 @@ const SubscriptionPaymentsPaymeWebhookRoute =
     path: '/subscription-payments/payme/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const TelegramUserAccountsActiveRoute =
-  TelegramUserAccountsActiveRouteImport.update({
-    id: '/active',
-    path: '/active',
-    getParentRoute: () => TelegramUserAccountsRoute,
-  } as any)
 const ApiV1LeadsLeadIdRoute = ApiV1LeadsLeadIdRouteImport.update({
   id: '/$leadId',
   path: '/$leadId',
@@ -1982,6 +1945,7 @@ export interface FileRoutesByFullPath {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/businesses': typeof BusinessesRoute
   '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
@@ -2212,12 +2176,6 @@ export interface FileRoutesByFullPath {
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
-  '/telegram/user-account': typeof TelegramUserAccountRoute
-  '/telegram/user-accounts': typeof TelegramUserAccountsRouteWithChildren
-  '/telegram/user-groups': typeof TelegramUserGroupsRoute
-  '/telegram/user-link': typeof TelegramUserLinkRoute
-  '/telegram/user-send': typeof TelegramUserSendRoute
-  '/telegram/user-webhook': typeof TelegramUserWebhookRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
   '/tma/app': typeof TmaAppRoute
   '/tma/lead': typeof TmaLeadRoute
@@ -2285,7 +2243,6 @@ export interface FileRoutesByFullPath {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
-  '/telegram/user-accounts/active': typeof TelegramUserAccountsActiveRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
   '/marketing/channels/': typeof MarketingChannelsIndexRoute
   '/marketing/webinars/': typeof MarketingWebinarsIndexRoute
@@ -2300,6 +2257,7 @@ export interface FileRoutesByTo {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/businesses': typeof BusinessesRoute
   '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
@@ -2530,12 +2488,6 @@ export interface FileRoutesByTo {
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
-  '/telegram/user-account': typeof TelegramUserAccountRoute
-  '/telegram/user-accounts': typeof TelegramUserAccountsRouteWithChildren
-  '/telegram/user-groups': typeof TelegramUserGroupsRoute
-  '/telegram/user-link': typeof TelegramUserLinkRoute
-  '/telegram/user-send': typeof TelegramUserSendRoute
-  '/telegram/user-webhook': typeof TelegramUserWebhookRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
   '/tma/app': typeof TmaAppRoute
   '/tma/lead': typeof TmaLeadRoute
@@ -2603,7 +2555,6 @@ export interface FileRoutesByTo {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
-  '/telegram/user-accounts/active': typeof TelegramUserAccountsActiveRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
   '/marketing/channels': typeof MarketingChannelsIndexRoute
   '/marketing/webinars': typeof MarketingWebinarsIndexRoute
@@ -2619,6 +2570,7 @@ export interface FileRoutesById {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/businesses': typeof BusinessesRoute
   '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
   '/crm-stages': typeof CrmStagesRoute
@@ -2849,12 +2801,6 @@ export interface FileRoutesById {
   '/telegram/send-lead-message': typeof TelegramSendLeadMessageRoute
   '/telegram/send-test': typeof TelegramSendTestRoute
   '/telegram/unlink-manager': typeof TelegramUnlinkManagerRoute
-  '/telegram/user-account': typeof TelegramUserAccountRoute
-  '/telegram/user-accounts': typeof TelegramUserAccountsRouteWithChildren
-  '/telegram/user-groups': typeof TelegramUserGroupsRoute
-  '/telegram/user-link': typeof TelegramUserLinkRoute
-  '/telegram/user-send': typeof TelegramUserSendRoute
-  '/telegram/user-webhook': typeof TelegramUserWebhookRoute
   '/telegram/webhook': typeof TelegramWebhookRoute
   '/tma/app': typeof TmaAppRoute
   '/tma/lead': typeof TmaLeadRoute
@@ -2922,7 +2868,6 @@ export interface FileRoutesById {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
-  '/telegram/user-accounts/active': typeof TelegramUserAccountsActiveRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
   '/marketing/channels/': typeof MarketingChannelsIndexRoute
   '/marketing/webinars/': typeof MarketingWebinarsIndexRoute
@@ -2939,6 +2884,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/businesses'
     | '/coaching'
     | '/content-library'
     | '/crm-stages'
@@ -3169,12 +3115,6 @@ export interface FileRouteTypes {
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
     | '/telegram/unlink-manager'
-    | '/telegram/user-account'
-    | '/telegram/user-accounts'
-    | '/telegram/user-groups'
-    | '/telegram/user-link'
-    | '/telegram/user-send'
-    | '/telegram/user-webhook'
     | '/telegram/webhook'
     | '/tma/app'
     | '/tma/lead'
@@ -3242,7 +3182,6 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
-    | '/telegram/user-accounts/active'
     | '/crm/leads/'
     | '/marketing/channels/'
     | '/marketing/webinars/'
@@ -3257,6 +3196,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/businesses'
     | '/coaching'
     | '/content-library'
     | '/crm-stages'
@@ -3487,12 +3427,6 @@ export interface FileRouteTypes {
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
     | '/telegram/unlink-manager'
-    | '/telegram/user-account'
-    | '/telegram/user-accounts'
-    | '/telegram/user-groups'
-    | '/telegram/user-link'
-    | '/telegram/user-send'
-    | '/telegram/user-webhook'
     | '/telegram/webhook'
     | '/tma/app'
     | '/tma/lead'
@@ -3560,7 +3494,6 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
-    | '/telegram/user-accounts/active'
     | '/crm/leads'
     | '/marketing/channels'
     | '/marketing/webinars'
@@ -3575,6 +3508,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/businesses'
     | '/coaching'
     | '/content-library'
     | '/crm-stages'
@@ -3805,12 +3739,6 @@ export interface FileRouteTypes {
     | '/telegram/send-lead-message'
     | '/telegram/send-test'
     | '/telegram/unlink-manager'
-    | '/telegram/user-account'
-    | '/telegram/user-accounts'
-    | '/telegram/user-groups'
-    | '/telegram/user-link'
-    | '/telegram/user-send'
-    | '/telegram/user-webhook'
     | '/telegram/webhook'
     | '/tma/app'
     | '/tma/lead'
@@ -3878,7 +3806,6 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
-    | '/telegram/user-accounts/active'
     | '/crm/leads/'
     | '/marketing/channels/'
     | '/marketing/webinars/'
@@ -3894,6 +3821,7 @@ export interface RootRouteChildren {
   AttendanceRoute: typeof AttendanceRoute
   AudioAnalyticsRoute: typeof AudioAnalyticsRouteWithChildren
   BillingRoute: typeof BillingRouteWithChildren
+  BusinessesRoute: typeof BusinessesRoute
   CoachingRoute: typeof CoachingRoute
   ContentLibraryRoute: typeof ContentLibraryRoute
   CrmStagesRoute: typeof CrmStagesRoute
@@ -4054,12 +3982,6 @@ export interface RootRouteChildren {
   TelegramSendLeadMessageRoute: typeof TelegramSendLeadMessageRoute
   TelegramSendTestRoute: typeof TelegramSendTestRoute
   TelegramUnlinkManagerRoute: typeof TelegramUnlinkManagerRoute
-  TelegramUserAccountRoute: typeof TelegramUserAccountRoute
-  TelegramUserAccountsRoute: typeof TelegramUserAccountsRouteWithChildren
-  TelegramUserGroupsRoute: typeof TelegramUserGroupsRoute
-  TelegramUserLinkRoute: typeof TelegramUserLinkRoute
-  TelegramUserSendRoute: typeof TelegramUserSendRoute
-  TelegramUserWebhookRoute: typeof TelegramUserWebhookRoute
   TelegramWebhookRoute: typeof TelegramWebhookRoute
   TmaAppRoute: typeof TmaAppRoute
   TmaLeadRoute: typeof TmaLeadRoute
@@ -4142,6 +4064,13 @@ declare module '@tanstack/react-router' {
       path: '/billing'
       fullPath: '/billing'
       preLoaderRoute: typeof BillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/businesses': {
+      id: '/businesses'
+      path: '/businesses'
+      fullPath: '/businesses'
+      preLoaderRoute: typeof BusinessesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coaching': {
@@ -5775,48 +5704,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TelegramUnlinkManagerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/telegram/user-account': {
-      id: '/telegram/user-account'
-      path: '/telegram/user-account'
-      fullPath: '/telegram/user-account'
-      preLoaderRoute: typeof TelegramUserAccountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/telegram/user-accounts': {
-      id: '/telegram/user-accounts'
-      path: '/telegram/user-accounts'
-      fullPath: '/telegram/user-accounts'
-      preLoaderRoute: typeof TelegramUserAccountsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/telegram/user-groups': {
-      id: '/telegram/user-groups'
-      path: '/telegram/user-groups'
-      fullPath: '/telegram/user-groups'
-      preLoaderRoute: typeof TelegramUserGroupsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/telegram/user-link': {
-      id: '/telegram/user-link'
-      path: '/telegram/user-link'
-      fullPath: '/telegram/user-link'
-      preLoaderRoute: typeof TelegramUserLinkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/telegram/user-send': {
-      id: '/telegram/user-send'
-      path: '/telegram/user-send'
-      fullPath: '/telegram/user-send'
-      preLoaderRoute: typeof TelegramUserSendRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/telegram/user-webhook': {
-      id: '/telegram/user-webhook'
-      path: '/telegram/user-webhook'
-      fullPath: '/telegram/user-webhook'
-      preLoaderRoute: typeof TelegramUserWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/telegram/webhook': {
       id: '/telegram/webhook'
       path: '/telegram/webhook'
@@ -6286,13 +6173,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscriptionPaymentsPaymeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/telegram/user-accounts/active': {
-      id: '/telegram/user-accounts/active'
-      path: '/active'
-      fullPath: '/telegram/user-accounts/active'
-      preLoaderRoute: typeof TelegramUserAccountsActiveRouteImport
-      parentRoute: typeof TelegramUserAccountsRoute
-    }
     '/api/v1/leads/$leadId': {
       id: '/api/v1/leads/$leadId'
       path: '/$leadId'
@@ -6712,17 +6592,6 @@ const PlatformIntegrationsRouteChildren: PlatformIntegrationsRouteChildren = {
 const PlatformIntegrationsRouteWithChildren =
   PlatformIntegrationsRoute._addFileChildren(PlatformIntegrationsRouteChildren)
 
-interface TelegramUserAccountsRouteChildren {
-  TelegramUserAccountsActiveRoute: typeof TelegramUserAccountsActiveRoute
-}
-
-const TelegramUserAccountsRouteChildren: TelegramUserAccountsRouteChildren = {
-  TelegramUserAccountsActiveRoute: TelegramUserAccountsActiveRoute,
-}
-
-const TelegramUserAccountsRouteWithChildren =
-  TelegramUserAccountsRoute._addFileChildren(TelegramUserAccountsRouteChildren)
-
 interface ApiV1LeadsLeadIdRouteChildren {
   ApiV1LeadsLeadIdNotesRoute: typeof ApiV1LeadsLeadIdNotesRoute
 }
@@ -6754,6 +6623,7 @@ const rootRouteChildren: RootRouteChildren = {
   AttendanceRoute: AttendanceRoute,
   AudioAnalyticsRoute: AudioAnalyticsRouteWithChildren,
   BillingRoute: BillingRouteWithChildren,
+  BusinessesRoute: BusinessesRoute,
   CoachingRoute: CoachingRoute,
   ContentLibraryRoute: ContentLibraryRoute,
   CrmStagesRoute: CrmStagesRoute,
@@ -6915,12 +6785,6 @@ const rootRouteChildren: RootRouteChildren = {
   TelegramSendLeadMessageRoute: TelegramSendLeadMessageRoute,
   TelegramSendTestRoute: TelegramSendTestRoute,
   TelegramUnlinkManagerRoute: TelegramUnlinkManagerRoute,
-  TelegramUserAccountRoute: TelegramUserAccountRoute,
-  TelegramUserAccountsRoute: TelegramUserAccountsRouteWithChildren,
-  TelegramUserGroupsRoute: TelegramUserGroupsRoute,
-  TelegramUserLinkRoute: TelegramUserLinkRoute,
-  TelegramUserSendRoute: TelegramUserSendRoute,
-  TelegramUserWebhookRoute: TelegramUserWebhookRoute,
   TelegramWebhookRoute: TelegramWebhookRoute,
   TmaAppRoute: TmaAppRoute,
   TmaLeadRoute: TmaLeadRoute,

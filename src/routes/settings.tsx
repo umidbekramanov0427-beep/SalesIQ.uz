@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { shrinkLogo } from "@/lib/shrink-logo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsMutating } from "@tanstack/react-query";
 import {
@@ -69,14 +70,12 @@ import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { MfaCard } from "@/components/settings/MfaCard";
-import { WorkTelegramCard } from "@/components/settings/WorkTelegramCard";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 
 type SectionKey =
   | "profile"
   | "personalization"
   | "notifications"
-  | "tgAccount"
   | "messages"
   | "business"
   | "general"
@@ -89,7 +88,6 @@ const SECTION_KEYS: SectionKey[] = [
   "profile",
   "personalization",
   "notifications",
-  "tgAccount",
   "messages",
   "business",
   "general",
@@ -1186,28 +1184,6 @@ const BUSINESS_LANG_KEY: Record<string, string> = {
   en: "settings.general.langEn",
 };
 
-/** A picked image, shrunk to fit 128×128 in the browser, as a data URL. */
-async function shrinkLogo(file: File): Promise<string> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("image"));
-      i.src = url;
-    });
-    const scale = Math.min(1, 128 / Math.max(img.width, img.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(img.width * scale));
-    canvas.height = Math.max(1, Math.round(img.height * scale));
-    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const png = canvas.toDataURL("image/png");
-    return png.length <= 150_000 ? png : canvas.toDataURL("image/jpeg", 0.85);
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
-
 function CompanyLogoPicker({
   value,
   onChange,
@@ -1586,7 +1562,6 @@ const SECTION_WORDS: Partial<Record<SectionKey, string>> = {
   personalization:
     "til language язык shrift font rang color accent sana date valyuta currency ko'rinish тема",
   notifications: "bildirishnoma notification push uvedomlenie уведомления telegram bot ovoz sound",
-  tgAccount: "telegram akkaunt qr kod ish raqami guruh group аккаунт",
   business: "biznes kompaniya company rekvizit logotip subdomen domen бизнес",
   general: "umumiy general valyuta vaqt mintaqa timezone dublikat duplicate лид",
   billing: "obuna tarif to'lov billing подписка оплата",
@@ -1656,12 +1631,6 @@ function SettingsPage() {
       icon: Bell,
       label: t("settings.nav.notifications"),
     },
-    // A salesperson's own work Telegram account (not the platform owner's).
-    ...(user?.role !== "platform_owner"
-      ? ([
-          { type: "section", key: "tgAccount", icon: Send, label: t("tgu.title") },
-        ] satisfies NavItem[])
-      : []),
   ];
   const generalItems: NavItem[] = [
     ...profileItems,
@@ -1936,7 +1905,6 @@ function SettingsPage() {
                 <TelegramLinkCard />
               </div>
             )}
-            {section === "tgAccount" && <WorkTelegramCard />}
             {section === "business" && <BusinessProfileSection />}
             {section === "general" && <GeneralSection />}
             {/* Each lives in one place: working hours are the shifts in

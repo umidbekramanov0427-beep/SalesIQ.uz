@@ -1,7 +1,14 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { SectionCard, StatCard, type CardTone } from "@/components/layout/Primitives";
+import {
+  CardTools,
+  HiddenCard,
+  cardStateClass,
+  useCardChrome,
+  valueStateClass,
+} from "@/components/layout/CardTools";
+import { IconTile, SectionCard, type CardTone } from "@/components/layout/Primitives";
 import { cn } from "@/lib/utils";
 
 // Ish stoli's and Telefon's building blocks, on the platform's own
@@ -25,40 +32,68 @@ export function Change({ value }: { value: number | null }) {
   );
 }
 
+// The big figure card (icon tile on top, the name, a large figure, its
+// change and the period before) -- the owner's pick for Ish stoli.
 export function DeskKpi({
   tipKey,
   label,
   icon,
   tone,
   value,
+  rawValue,
   change,
   prevText,
   titleExtra,
+  children,
 }: {
   tipKey: string;
   label: string;
   icon: LucideIcon;
   tone: CardTone;
-  value: string | number;
-  /** Kept for callers; the card's state follows its own value. */
+  value: ReactNode;
   rawValue?: number;
   change?: number | null;
   prevText?: string | undefined;
   titleExtra?: ReactNode;
+  children?: ReactNode;
 }) {
-  // The platform's own figure card (StatCard): icon, name, "!" and ⚙,
-  // the figure, its change against the period before and the hint.
+  const chrome = useCardChrome({ tipKey, label, value: rawValue });
+  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
-    <StatCard
-      label={label}
-      value={String(value)}
-      icon={icon}
-      iconTone={tone}
-      tipKey={tipKey}
-      {...(change !== undefined && change !== null ? { delta: change } : {})}
-      {...(prevText ? { hint: prevText } : {})}
-      {...(titleExtra ? { extraTools: titleExtra } : {})}
-    />
+    <div
+      className={cn(
+        "stat-card flex min-w-0 flex-col surface-card p-4",
+        cardStateClass(chrome.state),
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <IconTile icon={icon} tone={tone} size="md" />
+        <CardTools chrome={chrome} label={label} />
+      </div>
+      <p className="mt-3 flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground">
+        <span className="min-w-0 truncate">{label}</span>
+        {titleExtra}
+      </p>
+      <div
+        className={cn(
+          "mt-1.5 font-display text-[26px] font-bold leading-tight tracking-tight tabular-nums text-foreground phone:text-[19px]",
+          valueStateClass(chrome.state),
+        )}
+      >
+        {value}
+      </div>
+      {children}
+      {change !== undefined && (
+        <p className="mt-1 text-[12.5px]">
+          <Change value={change} />
+        </p>
+      )}
+      {prevText && (
+        <p className="mt-0.5 line-clamp-2 text-[12px] tabular-nums text-muted-foreground">
+          {prevText}
+        </p>
+      )}
+    </div>
   );
 }
 

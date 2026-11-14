@@ -741,9 +741,9 @@ function KpiGrid({
     const d = defs.find((x) => x.id === only);
     return d ? <MetricCard def={d} input={input} range={range} prevRange={prevRange} /> : null;
   }
-  // At most four in a row, so a card keeps room for its figure and chart.
+  // Three in a row, so a card keeps room for its figure and chart.
   return (
-    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3">
       {defs.map((d) => (
         <MetricCard key={d.id} def={d} input={input} range={range} prevRange={prevRange} />
       ))}
@@ -1590,7 +1590,7 @@ export function HomeOverviewSection({
   if (isLoading || !overview || !conversion || !metricInput) {
     return (
       <div className="space-y-3.5">
-        <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-[178px] rounded-[var(--radius)]" />
           ))}
@@ -1652,7 +1652,7 @@ export function HomeOverviewPart({
     if (part.startsWith("kpi:"))
       return <Skeleton className="h-[178px] w-full rounded-[var(--radius)]" />;
     return part === "kpis" ? (
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-3">
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <Skeleton key={i} className="h-[178px] rounded-[var(--radius)]" />
         ))}

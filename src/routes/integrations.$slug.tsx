@@ -27,7 +27,6 @@ import {
 } from "@/components/integrations/IntegrationCards";
 import { InstagramCard } from "@/components/integrations/InstagramCard";
 import { PaymentsCard } from "@/components/integrations/PaymentsCard";
-import { WorkTelegramTeamCard } from "@/components/integrations/WorkTelegramTeamCard";
 import { usePermission } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 
@@ -127,12 +126,6 @@ const PAGES: Record<string, Page> = {
     manageOnly: true,
     render: () => <PaymentsCard />,
   },
-  "telegram-accounts": {
-    icon: Send,
-    tone: "sky",
-    crmOnly: true,
-    render: () => <WorkTelegramTeamCard />,
-  },
   "telegram-app": {
     icon: Send,
     tone: "sky",
@@ -149,7 +142,6 @@ const ITEM_KEY: Record<string, string> = {
   email: "email",
   webhook: "webhook",
   "telegram-app": "telegramApp",
-  "telegram-accounts": "telegramAccounts",
   instagram: "instagram",
   payments: "payments",
 };

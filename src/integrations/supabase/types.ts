@@ -3930,6 +3930,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      business_memberships: {
+        Row: {
+          created_at: string;
+          organization_id: string;
+          profile_id: string;
+          role: Database["public"]["Enums"]["app_role"];
+        };
+        Insert: {
+          created_at?: string;
+          organization_id: string;
+          profile_id: string;
+          role?: Database["public"]["Enums"]["app_role"];
+        };
+        Update: {
+          created_at?: string;
+          organization_id?: string;
+          profile_id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "business_memberships_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "business_memberships_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       automation_pending_runs: {
         Row: {
           created_at: string;

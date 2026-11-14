@@ -27,9 +27,14 @@ import {
   Pencil,
   Power,
   SunMoon,
+  Plus,
+  Check,
+  Loader2,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { copyText } from "@/lib/clipboard";
+import { businessInitials, type BusinessItem } from "@/lib/businesses";
 
 import { createPortal } from "react-dom";
 import { NAV_ITEMS, appRoleOf, moduleItemsFor, navItemsFor } from "@/lib/nav";
@@ -53,9 +58,9 @@ import {
   useCrmFunnelNames,
   useMarkNotificationRead,
   useSidebarConfig,
-  useClockIn,
-  useClockOut,
-  useMyOpenSession,
+  useBusinesses,
+  useCreateBusiness,
+  useSwitchBusiness,
   useMyOrganization,
   useNotificationsView,
 } from "@/hooks/use-crm-data";
@@ -814,7 +819,6 @@ export function AppSidebar({
               open={logoPanel}
               onClose={() => setLogoPanel(false)}
               left={compact ? 88 : collapsed ? 140 : 272}
-              companyLogo={companyLogo}
               isAdmin={isAdmin}
               onSearch={(q) => {
                 setLogoPanel(false);
@@ -903,8 +907,8 @@ export function AppSidebar({
 
 /**
  * The logo's account bar (as in 5CRM): across the top of the screen -- the
- * account, who is signed in and the company's client number, the work
- * status (start / end the day), Profil and Chiqish, search over the whole
+ * person signed in and the company's client number, «Biznes» (switch
+ * between my businesses or add one), Profil and Chiqish, search over the whole
  * platform, and on the right the language and the theme (auto / light /
  * dark). Under it the page dims; a click there, on the logo again or Esc
  * closes it.
@@ -913,14 +917,12 @@ function LogoPanel({
   open,
   onClose,
   left,
-  companyLogo,
   onSearch,
   onEditProfile,
 }: {
   open: boolean;
   onClose: () => void;
   left: number;
-  companyLogo: string | null;
   isAdmin: boolean;
   onSearch: (query: string) => void;
   onEditProfile: () => void;
@@ -951,20 +953,6 @@ function LogoPanel({
         style={{ left }}
         className="absolute right-0 top-0 flex h-16 items-stretch border-b border-border bg-popover text-popover-foreground shadow-[0_12px_32px_-12px_rgb(0_0_0/0.35)] animate-in fade-in-0 slide-in-from-top-2 duration-150"
       >
-        {/* The account (the logo it was opened from). */}
-        <div className="flex shrink-0 flex-col items-center justify-center gap-0.5 bg-primary/[0.08] px-4">
-          {companyLogo ? (
-            <img
-              src={companyLogo}
-              alt=""
-              className="h-7 w-7 rounded-[8px] bg-white object-contain p-0.5"
-            />
-          ) : (
-            <Logo className="h-7 w-7" />
-          )}
-          <span className="text-[12px] font-bold text-foreground">{t("logoPanel.account")}</span>
-        </div>
-
         {/* Who is signed in, their role and the company's client number. */}
         <div className="flex min-w-0 shrink flex-col justify-center border-r border-border px-5">
           <p className="max-w-[300px] truncate text-[14.5px] font-bold text-foreground">
@@ -974,7 +962,7 @@ function LogoPanel({
         </div>
 
         <div className="flex shrink-0 items-center px-4">
-          <WorkStatus />
+          <BusinessSwitcher />
         </div>
 
         <button type="button" onClick={onEditProfile} className={cn(cell, "hover:bg-accent")}>
@@ -1119,64 +1107,196 @@ export function clientNumber(orgId: string | null | undefined): string | null {
   return Number.isFinite(n) ? String(10000 + (n % 90000)) : null;
 }
 
-/** «● Ishda»: the person's workday -- start it or end it from here (Nazorat). */
-function WorkStatus() {
+/** A business's face: its logo, else two letters. */
+function BusinessFace({ item, size }: { item: Pick<BusinessItem, "name" | "logo">; size: number }) {
+  return item.logo ? (
+    <img
+      src={item.logo}
+      alt=""
+      style={{ width: size, height: size }}
+      className="shrink-0 rounded-[7px] bg-white object-contain p-0.5"
+    />
+  ) : (
+    <span
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
+      className="grid shrink-0 place-items-center rounded-[7px] bg-primary/15 font-bold text-primary"
+    >
+      {businessInitials(item.name)}
+    </span>
+  );
+}
+
+/**
+ * «Biznes»: the business this sign-in is working in. One company may run
+ * several businesses (another branch, another direction) -- each with its
+ * own funnels, leads and team; switch between them or add one from here.
+ */
+function BusinessSwitcher() {
   const { t } = useI18n();
-  const { session } = useMyOpenSession();
-  const clockIn = useClockIn();
-  const clockOut = useClockOut();
-  const busy = clockIn.isPending || clockOut.isPending;
-  const since = session?.clock_in
-    ? new Date(session.clock_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    : null;
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  const { data, isLoading } = useBusinesses(true);
+  const { data: org } = useMyOrganization();
+  const switcher = useSwitchBusiness();
+  const create = useCreateBusiness();
+  const busy = switcher.isPending || create.isPending;
+  const items = data?.items ?? [];
+  const current = items.find((b) => b.id === data?.currentId) ?? {
+    name: org?.name ?? "—",
+    logo: null,
+  };
+  const canAdd = !!data?.canAdd && data.ready && items.length < data.max;
+  const roleLabel = (r: string) => t(ROLE_KEY[r] ?? "admin.roleRep");
+
   return (
-    <Popover>
+    <Popover
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) {
+          setAdding(false);
+          setName("");
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13.5px] font-semibold text-foreground hover:border-primary/50"
+          className="inline-flex h-10 max-w-[280px] items-center gap-2 rounded-full border border-border bg-card pl-1.5 pr-3.5 text-[13.5px] font-semibold text-foreground hover:border-primary/50"
         >
-          <span
-            className={cn(
-              "h-2.5 w-2.5 rounded-full",
-              session ? "bg-emerald-500" : "bg-muted-foreground/50",
-            )}
-          />
-          {session ? t("logoPanel.atWork") : t("logoPanel.offWork")}
-          {since && <span className="font-normal text-muted-foreground">{since}</span>}
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          <BusinessFace item={current} size={28} />
+          <span className="flex min-w-0 flex-col items-start leading-tight">
+            <span className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+              {t("biz.label")}
+            </span>
+            <span className="max-w-[190px] truncate">{current.name}</span>
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="z-[80] w-56 p-1">
-        <button
-          type="button"
-          disabled={busy || !!session}
-          onClick={() =>
-            clockIn.mutate(undefined, {
-              onSuccess: () => toast.success(t("logoPanel.started")),
-              onError: (e) => toast.error(describeError(e, t("common.saveFailed"))),
-            })
-          }
-          className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-accent disabled:opacity-50"
-        >
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-          {t("logoPanel.start")}
-        </button>
-        <button
-          type="button"
-          disabled={busy || !session}
-          onClick={() =>
-            session &&
-            clockOut.mutate(session.id, {
-              onSuccess: () => toast.success(t("logoPanel.ended")),
-              onError: (e) => toast.error(describeError(e, t("common.saveFailed"))),
-            })
-          }
-          className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-accent disabled:opacity-50"
-        >
-          <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50" />
-          {t("logoPanel.end")}
-        </button>
+      <PopoverContent align="start" className="z-[80] w-[320px] p-0">
+        <div className="flex items-center justify-between border-b border-border px-3.5 py-2.5">
+          <p className="text-[13px] font-bold text-foreground">{t("biz.title")}</p>
+          {data && data.items.length > 0 && (
+            <span className="text-[11.5px] tabular-nums text-muted-foreground">
+              {data.items.length} / {data.max}
+            </span>
+          )}
+        </div>
+        <ul className="max-h-[300px] overflow-y-auto p-1.5">
+          {isLoading && (
+            <li className="flex items-center justify-center py-5 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </li>
+          )}
+          {items.map((b) => {
+            const on = b.id === data?.currentId;
+            const pending = switcher.isPending && switcher.variables === b.id;
+            return (
+              <li key={b.id}>
+                <button
+                  type="button"
+                  disabled={busy || on}
+                  onClick={() =>
+                    switcher.mutate(b.id, {
+                      onError: (e) => toast.error(describeError(e, t("biz.switchFailed"))),
+                    })
+                  }
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-[8px] px-2 py-2 text-left hover:bg-accent disabled:cursor-default",
+                    on && "bg-primary/[0.08] hover:bg-primary/[0.08]",
+                  )}
+                >
+                  <BusinessFace item={b} size={32} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13.5px] font-semibold text-foreground">
+                      {b.name}
+                    </span>
+                    <span className="block truncate text-[11.5px] text-muted-foreground">
+                      {roleLabel(b.role)}
+                      {b.subdomain ? ` · ${b.subdomain}` : ""}
+                    </span>
+                  </span>
+                  {pending ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : on ? (
+                    <Check className="h-4 w-4 text-primary" />
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {data && !data.ready && (
+          <p className="border-t border-border px-3.5 py-2.5 text-[12px] text-muted-foreground">
+            {t("biz.notReady")}
+          </p>
+        )}
+        {canAdd && user?.role === "super_admin" && (
+          <div className="border-t border-border p-1.5">
+            {adding ? (
+              <form
+                className="space-y-2 p-1.5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (name.trim().length < 2) return;
+                  create.mutate(name.trim(), {
+                    onSuccess: () => toast.success(t("biz.created")),
+                    onError: (err) => toast.error(describeError(err, t("biz.createFailed"))),
+                  });
+                }}
+              >
+                <input
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={120}
+                  placeholder={t("biz.namePh")}
+                  className="h-9 w-full rounded-[8px] border border-border bg-background px-2.5 text-[13px] outline-none focus:border-primary"
+                />
+                <p className="text-[11.5px] leading-snug text-muted-foreground">
+                  {t("biz.addHint")}
+                </p>
+                <div className="flex justify-end gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setAdding(false)}
+                    className="ctl-soft h-8 rounded-[8px] px-3 text-[12.5px] font-semibold"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={busy || name.trim().length < 2}
+                    className="ctl-lit inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] font-semibold disabled:opacity-50"
+                  >
+                    {create.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {t("biz.create")}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAdding(true)}
+                className="flex w-full items-center gap-2.5 rounded-[8px] px-2 py-2 text-[13px] font-semibold text-primary hover:bg-primary/[0.08]"
+              >
+                <span className="grid h-8 w-8 place-items-center rounded-[7px] border border-dashed border-primary/50">
+                  <Plus className="h-4 w-4" />
+                </span>
+                {t("biz.add")}
+              </button>
+            )}
+          </div>
+        )}
+        {!data?.canAdd && data?.ready && items.length <= 1 && (
+          <p className="flex items-start gap-2 border-t border-border px-3.5 py-2.5 text-[12px] text-muted-foreground">
+            <Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            {t("biz.askAdmin")}
+          </p>
+        )}
       </PopoverContent>
     </Popover>
   );

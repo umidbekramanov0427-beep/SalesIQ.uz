@@ -58,8 +58,6 @@ import {
   useSendLeadTelegramMessage,
   useSendLeadInstagramMessage,
   useLeadInstagramLink,
-  useLeadWorkTelegramLink,
-  useSendWorkTelegramMessage,
   uploadBulkFile,
   type BulkFileInput,
   type SendAs,
@@ -429,8 +427,6 @@ function useTemplates(orgId: string | null | undefined) {
 type ChatTarget =
   | { kind: "telegram" }
   | { kind: "instagram" }
-  /** The salesperson's work Telegram account the client wrote to. */
-  | { kind: "telegram_user" }
   | { kind: "bot"; id: string; name: string }
   | { kind: "team"; id: string | null; name: string };
 
@@ -445,7 +441,7 @@ export function Composer({
   lead: CrmLeadView;
   mode: ComposeMode;
   setMode: (m: ComposeMode) => void;
-  channel: "telegram" | "instagram" | "telegram_user";
+  channel: "telegram" | "instagram";
   focusKey: number;
   onOpenTelegramLink: () => void;
 }) {
@@ -463,8 +459,6 @@ export function Composer({
   const sendTg = useSendLeadTelegramMessage();
   const sendIg = useSendLeadInstagramMessage();
   const { data: igLink } = useLeadInstagramLink(lead.id);
-  const sendWork = useSendWorkTelegramMessage();
-  const { data: workLink } = useLeadWorkTelegramLink(lead.id);
   const upload = useUploadLeadFile();
   const templates = useTemplates(user?.organizationId);
 
@@ -505,17 +499,13 @@ export function Composer({
     createTask.isPending ||
     sendTg.isPending ||
     sendIg.isPending ||
-    sendWork.isPending ||
     startBot.isPending ||
     uploading;
   // In a chat with the client, files go to them; elsewhere they are
   // attached to the lead (Fayllar).
-  const toClient =
-    target.kind === "telegram" || target.kind === "instagram" || target.kind === "telegram_user";
-  // Files through a work account come later; there it is text only.
-  const chatFiles = effectiveMode === "chat" && toClient && target.kind !== "telegram_user";
-  const sendToClient =
-    target.kind === "instagram" ? sendIg : target.kind === "telegram_user" ? sendWork : sendTg;
+  const toClient = target.kind === "telegram" || target.kind === "instagram";
+  const chatFiles = effectiveMode === "chat" && toClient;
+  const sendToClient = target.kind === "instagram" ? sendIg : sendTg;
 
   function addFiles(list: File[]) {
     const ok: File[] = [];
@@ -725,15 +715,8 @@ export function Composer({
   ];
 
   const igName = igLink?.username ? `@${igLink.username}` : contactName;
-  const workName = workLink?.name || (workLink?.username ? `@${workLink.username}` : contactName);
   const targetLabel =
-    target.kind === "telegram"
-      ? contactName
-      : target.kind === "instagram"
-        ? igName
-        : target.kind === "telegram_user"
-          ? workName
-          : target.name;
+    target.kind === "telegram" ? contactName : target.kind === "instagram" ? igName : target.name;
 
   const submitLabel =
     effectiveMode === "task"
@@ -919,9 +902,7 @@ export function Composer({
                     onClick={(e) => e.stopPropagation()}
                     className="inline-flex max-w-[260px] items-center gap-1 text-primary"
                   >
-                    {(target.kind === "telegram" || target.kind === "telegram_user") && (
-                      <Send className="h-3.5 w-3.5 text-sky-500" />
-                    )}
+                    {target.kind === "telegram" && <Send className="h-3.5 w-3.5 text-sky-500" />}
                     {target.kind === "instagram" && (
                       <Instagram className="h-3.5 w-3.5 text-pink-500" />
                     )}
@@ -949,19 +930,6 @@ export function Composer({
                       focusArea();
                     }}
                   />
-                  {workLink && (
-                    <TargetRow
-                      icon={<Send className="h-3.5 w-3.5 text-sky-600" />}
-                      label={workName}
-                      sub={t("tgu.target")}
-                      active={target.kind === "telegram_user"}
-                      onClick={() => {
-                        setTarget({ kind: "telegram_user" });
-                        setTargetOpen(false);
-                        focusArea();
-                      }}
-                    />
-                  )}
                   {igLink && (
                     <TargetRow
                       icon={<Instagram className="h-3.5 w-3.5 text-pink-500" />}

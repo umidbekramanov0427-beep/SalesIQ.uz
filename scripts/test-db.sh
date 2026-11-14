@@ -95,12 +95,8 @@ MIGRATIONS=(
   20270114000000_push_keys # twice
   20270115000000_attendance_notes
   20270115000000_attendance_notes # twice
-  20270116000000_telegram_user_accounts
-  20270116000000_telegram_user_accounts # twice
   20270117000000_automation_release_detect_phone
   20270117000000_automation_release_detect_phone # twice
-  20270118000000_telegram_user_groups
-  20270118000000_telegram_user_groups # twice
   20270119000000_phone_key_country
   20270119000000_phone_key_country # twice
   20270120000000_automation_previous_owner

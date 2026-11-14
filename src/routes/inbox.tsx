@@ -17,7 +17,6 @@ import {
   SlidersHorizontal,
   Star,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,7 +24,6 @@ import { AmoLeadCard } from "@/components/lead/AmoLeadCard";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
 import { UploadCallDialog } from "@/components/audio/UploadCallDialog";
 import { PageLoader } from "@/components/layout/Primitives";
-import { WorkGroupsInbox } from "@/components/inbox/WorkGroupsInbox";
 import { InboxDistributeDialog } from "@/components/inbox/InboxDistributeDialog";
 import { BackIconButton } from "@/components/layout/BackButton";
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
@@ -67,12 +65,8 @@ import { cn, describeError, stageColorProps } from "@/lib/utils";
 // that use the CRM. Filter rules: src/lib/inbox-filter.ts.
 
 export const Route = createFileRoute("/inbox")({
-  validateSearch: (
-    s: Record<string, unknown>,
-  ): { lead?: string | undefined; tab?: "groups" | undefined; group?: string | undefined } => ({
+  validateSearch: (s: Record<string, unknown>): { lead?: string | undefined } => ({
     lead: typeof s["lead"] === "string" ? s["lead"] : undefined,
-    tab: s["tab"] === "groups" ? "groups" : undefined,
-    group: typeof s["group"] === "string" ? s["group"] : undefined,
   }),
   head: () => ({ meta: [{ title: "Inbox — SalesIQ" }] }),
   component: InboxPage,
@@ -133,7 +127,7 @@ function InboxPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const crmEnabled = useCrmEnabled();
-  const { lead: openId, tab, group: groupId } = Route.useSearch();
+  const { lead: openId } = Route.useSearch();
   const navigate = useNavigate();
   const { data: chats = [], isLoading } = useInboxConversations();
   const { data: stages = [] } = usePipelineStagesRaw();
@@ -207,65 +201,6 @@ function InboxPage() {
   if (!crmEnabled) return null;
   if (isLoading) return <PageLoader />;
 
-  // Clients (the bot, Instagram and work-account chats) or the work groups.
-  const modeSwitch = (
-    <div
-      role="tablist"
-      aria-label={t("chats.title")}
-      className="ctl-track mt-3 grid grid-cols-2 gap-1 rounded-xl p-1"
-    >
-      {(
-        [
-          [undefined, MessagesSquare, t("tgg.tabClients")],
-          ["groups", Users, t("tgg.tabGroups")],
-        ] as const
-      ).map(([key, Icon, label]) => (
-        <button
-          key={label}
-          type="button"
-          role="tab"
-          aria-selected={tab === key}
-          onClick={() =>
-            void navigate({ to: "/inbox", search: key ? { tab: key } : {}, replace: true })
-          }
-          className="ctl-tab inline-flex h-8 items-center justify-center gap-1.5 rounded-lg text-[13px] font-semibold"
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-  if (tab === "groups") {
-    return (
-      <WorkGroupsInbox
-        openId={groupId}
-        onOpen={(id) =>
-          void navigate({
-            to: "/inbox",
-            search: id ? { tab: "groups", group: id } : { tab: "groups" },
-            replace: true,
-          })
-        }
-        header={
-          <>
-            <div className="flex items-center gap-2.5">
-              <BackIconButton className="phone:hidden" />
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-500/12 text-sky-600 dark:text-sky-400">
-                <Inbox className="h-[18px] w-[18px]" />
-              </span>
-              <h1 className="flex min-w-0 flex-1 items-center gap-2 text-[17px] font-bold leading-tight text-foreground">
-                {t("chats.title")}
-                <PageTools size="sm" title={t("chats.title")} description={t("page.inbox.desc")} />
-              </h1>
-            </div>
-            {modeSwitch}
-          </>
-        }
-      />
-    );
-  }
-
   const pick = (id: string | undefined) =>
     void navigate({ to: "/inbox", search: id ? { lead: id } : {}, replace: true });
   // Under the search only "O'qilmagan" / "O'qilgan"; the rest is in Filtrlar.
@@ -307,7 +242,6 @@ function InboxPage() {
               </p>
             </div>
           </div>
-          {modeSwitch}
           <div className="mt-3 flex gap-2">
             <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 focus-within:border-primary">
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -603,12 +537,10 @@ function InboxLeadCard({
 }
 
 function ChannelIcon({ channel, className }: { channel: string; className?: string }) {
-  if (channel === "instagram") return <Instagram className={cn("text-pink-500", className)} />;
-  // A salesperson's work account: the same plane, a deeper blue.
-  return (
-    <Send
-      className={cn(channel === "telegram_user" ? "text-sky-700" : "text-sky-500", className)}
-    />
+  return channel === "instagram" ? (
+    <Instagram className={cn("text-pink-500", className)} />
+  ) : (
+    <Send className={cn("text-sky-500", className)} />
   );
 }
 
@@ -1113,13 +1045,8 @@ function InboxFilterPanel({
             {choice(
               t("inbox.f.channel"),
               draft.channels.length === 1 ? draft.channels[0]! : "",
-              ["", "telegram", "telegram_user", "instagram"] as const,
-              (v) =>
-                v === "telegram"
-                  ? t("tgu.channelBot")
-                  : v === "telegram_user"
-                    ? t("tgu.channelWork")
-                    : "Instagram",
+              ["", "telegram", "instagram"] as const,
+              (v) => (v === "telegram" ? "Telegram" : "Instagram"),
               (v) => set({ channels: v ? [v] : [] }),
             )}
             <label
