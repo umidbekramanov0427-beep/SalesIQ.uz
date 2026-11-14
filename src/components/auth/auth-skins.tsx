@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import {
   AudioWaveform,
   BarChart3,
@@ -28,6 +29,7 @@ export const AUTH_SKINS = [
   "aurora",
   "bento",
   "editorial",
+  "card",
 ] as const;
 export type AuthSkinId = (typeof AUTH_SKINS)[number];
 export const DEFAULT_AUTH_SKIN: AuthSkinId = "glass";
@@ -117,7 +119,32 @@ const LIGHT: SkinStyle = {
   badge: "bg-[#2563eb]/10 text-[#1d4ed8]",
 };
 
+// "card": a calm dark card (after Uiverse's "ammarsaa" form) -- #1a1a1a with
+// a #333 edge, 20px corners, filled fields with floating labels (AuthGlass
+// draws those for this skin), a pulsing brand dot before the title and the
+// brand's own blue button that lights up on hover.
+const CARD: SkinStyle = {
+  ...GLASS,
+  head: "mb-5",
+  h1: "auth-card-title text-[28px] font-semibold leading-tight tracking-[-0.03em] text-[var(--auth-ink)]",
+  accent: "text-[var(--auth-ink)]",
+  sub: "mt-2 text-[14.5px] leading-snug text-white/70",
+  submit:
+    "h-12 rounded-[10px] bg-primary text-[15.5px] font-semibold text-white shadow-[0_10px_26px_-12px_var(--primary)] hover:brightness-[1.12]",
+  errorBox: "rounded-[10px] border border-red-400/30 bg-red-500/10 text-red-300",
+  divider: "text-white/45",
+  dividerLine: "bg-[#333]",
+  google:
+    "h-12 rounded-[10px] border border-[rgba(105,105,105,.4)] bg-[#262626] text-white hover:bg-[#2e2e2e]",
+  link: "text-[var(--auth-ink)]",
+  muted: "text-white/70 hover:text-white",
+  chip: "border-[#333] bg-[#262626] text-white/80",
+  badge: "bg-primary/15 text-[var(--auth-ink)]",
+  err: "text-red-300",
+};
+
 const STYLES: Record<AuthSkinId, SkinStyle> = {
+  card: CARD,
   glass: GLASS,
   classic: {
     ...GLASS,
@@ -281,7 +308,22 @@ export function SkinnedAuthPage({ children, glass }: { children: ReactNode; glas
 /** The card the form sits in (each skin has its own, or none). */
 export function SkinCard({ children, leaving }: { children: ReactNode; leaving?: boolean }) {
   const { id } = useAuthSkin();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
   const flip = leaving ? "auth-flip-out" : "auth-flip-in";
+  if (id === "card")
+    return (
+      <div
+        className={cn(
+          "w-full",
+          pathname.startsWith("/signup") ? "max-w-[460px]" : "max-w-[420px]",
+          flip,
+        )}
+      >
+        <div className="rounded-[20px] border border-[#333] bg-[#1a1a1a] p-8 text-white shadow-[0_30px_80px_-30px_rgba(0,0,0,.8)] phone:rounded-[18px] phone:p-6">
+          {children}
+        </div>
+      </div>
+    );
   if (id === "clean")
     return (
       <div className={cn("w-full max-w-[400px]", flip)}>
@@ -339,13 +381,22 @@ function LangSwitch({ dark }: { dark: boolean }) {
   );
 }
 
-function Wordmark({ dark, className }: { dark: boolean; className?: string }) {
+function Wordmark({
+  dark,
+  small,
+  className,
+}: {
+  dark: boolean;
+  small?: boolean;
+  className?: string;
+}) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <Logo className="h-8 w-8" />
+      <Logo className={small ? "h-7 w-7" : "h-8 w-8"} />
       <span
         className={cn(
-          "text-[18px] font-bold tracking-tight",
+          "font-bold tracking-tight",
+          small ? "text-[16px]" : "text-[18px]",
           dark ? "text-white" : "text-[#0f172a]",
         )}
       >
@@ -400,6 +451,29 @@ function SkinFrame({ id, children }: { id: AuthSkinId; children: ReactNode }) {
             </div>
           </section>
         </div>
+      </main>
+    );
+  }
+
+  if (id === "card") {
+    // A calm dark page: one faint blue light behind the card, a barely
+    // visible dot grid, the logo and languages on top, a line below.
+    return (
+      <main className="auth-surface auth-card-skin always-dark relative flex min-h-dvh w-full flex-col overflow-x-hidden bg-[#0f1115] text-white">
+        <div aria-hidden className="pointer-events-none fixed inset-0">
+          <span className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,.045)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
+          <span className="absolute left-1/2 top-1/2 h-[620px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/[0.13] blur-[140px] phone:h-[380px] phone:w-[380px]" />
+        </div>
+        <header className="relative z-10 flex items-center justify-between gap-3 px-8 py-6 phone:px-4 phone:py-4">
+          <Wordmark dark small />
+          <LangSwitch dark />
+        </header>
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 pb-10 pt-4 phone:px-3">
+          {children}
+        </div>
+        <p className="relative z-10 pb-6 text-center text-[12.5px] text-white/35 phone:px-4">
+          {t("authv.footer")}
+        </p>
       </main>
     );
   }
@@ -621,6 +695,7 @@ const SKIN_NAME: Record<AuthSkinId, string> = {
   aurora: "authv.name.aurora",
   bento: "authv.name.bento",
   editorial: "authv.name.editorial",
+  card: "authv.name.card",
 };
 
 /** Only with ?variants: try every look before one is chosen. */

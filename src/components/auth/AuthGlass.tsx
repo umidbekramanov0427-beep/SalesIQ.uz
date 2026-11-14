@@ -178,10 +178,11 @@ export function GlassHeading({
   accent?: string;
   sub?: ReactNode;
 }) {
-  const { s } = useAuthSkin();
+  const { id, s } = useAuthSkin();
   return (
     <div className={s.head}>
       <h1 className={s.h1}>
+        {id === "card" && <span aria-hidden className="auth-card-dot" />}
         {title} {accent && <span className={s.accent}>{accent}</span>}
       </h1>
       {sub && <p className={s.sub}>{sub}</p>}
@@ -204,7 +205,42 @@ export function GlassField({
 } & InputHTMLAttributes<HTMLInputElement>) {
   const [shown, setShown] = useState(false);
   const isPassword = type === "password";
-  const { s } = useAuthSkin();
+  const { id, s } = useAuthSkin();
+  if (id === "card") {
+    // A filled field whose name sits inside it and moves up once there is
+    // something in it (or it is focused) -- see .auth-float in styles.css.
+    // The placeholder is a blank so :placeholder-shown means "empty".
+    return (
+      <div className={cn("block", className)}>
+        <label className={cn("auth-float", error && "auth-float-err", isPassword && "pr-11")}>
+          <input
+            {...input}
+            placeholder=" "
+            type={isPassword && shown ? "text" : type}
+            aria-invalid={!!error}
+            className="auth-float-input"
+          />
+          <span className="auth-float-label">{label}</span>
+          {isPassword && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShown((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/45 transition-colors hover:text-white"
+              aria-label={shown ? "Hide" : "Show"}
+            >
+              {shown ? (
+                <EyeOff className="h-[18px] w-[18px]" />
+              ) : (
+                <Eye className="h-[18px] w-[18px]" />
+              )}
+            </button>
+          )}
+        </label>
+        {error && <span className={cn("mt-1.5 block text-xs", s.err)}>{error}</span>}
+      </div>
+    );
+  }
   return (
     <label className={cn("block", className)}>
       <span className={s.label}>{label}</span>

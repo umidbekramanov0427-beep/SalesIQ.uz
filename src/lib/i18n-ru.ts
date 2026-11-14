@@ -6107,6 +6107,7 @@ const ru: Record<string, string> = {
   "authv.footer": "© 2026 SalesIQ · Для отделов продаж Узбекистана",
   "authv.picker": "Вариант дизайна",
   "authv.name.glass": "Стекло (текущий)",
+  "authv.name.card": "Карточка",
   "authv.name.classic": "Классика (старый)",
   "authv.name.clean": "Белый минимал",
   "authv.name.split": "Две панели",

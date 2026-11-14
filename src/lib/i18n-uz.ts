@@ -6215,6 +6215,7 @@ const uz: Record<string, string> = {
   "authv.footer": "© 2026 SalesIQ · O'zbekiston sotuv jamoalari uchun",
   "authv.picker": "Dizayn varianti",
   "authv.name.glass": "Shisha (hozirgi)",
+  "authv.name.card": "Karta",
   "authv.name.classic": "Klassik (eski)",
   "authv.name.clean": "Oq minimal",
   "authv.name.split": "Ikki panel",

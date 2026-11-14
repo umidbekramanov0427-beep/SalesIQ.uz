@@ -1679,6 +1679,117 @@ html.phone .report-skin .rp-pill {
   }
 }
 
+/* ---- Sign-in / sign-up "card" skin (auth-skins.tsx, AuthGlass.tsx) ---- */
+/* The brand blue as text on the dark card: lifted toward white so the
+   title, links and raised field names read clearly (buttons and the dot
+   keep the brand blue itself). */
+.auth-card-skin {
+  --auth-ink: color-mix(in oklab, var(--primary) 68%, white);
+}
+.auth-card-title {
+  position: relative;
+  padding-left: 30px;
+}
+/* The brand dot before the title, with a ring pulsing out of it. */
+.auth-card-dot,
+.auth-card-dot::after {
+  position: absolute;
+  left: 2px;
+  /* The middle of the title's first line (line-height 1.25). */
+  top: 0.625em;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.auth-card-dot::after {
+  content: "";
+  left: 0;
+  margin-top: 0;
+  top: 0;
+  animation: auth-card-pulse 1.2s linear infinite;
+}
+@keyframes auth-card-pulse {
+  from {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.auth-float {
+  position: relative;
+  display: block;
+  border-radius: 10px;
+  border: 1px solid rgba(105, 105, 105, 0.4);
+  background: #2a2a2a;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.auth-float:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
+}
+.auth-float.auth-float-err {
+  border-color: rgb(248 113 113 / 0.65);
+}
+.auth-float-input {
+  display: block;
+  width: 100%;
+  height: 56px;
+  padding: 22px 14px 6px;
+  border: 0;
+  outline: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font-size: 15.5px;
+  caret-color: #fff;
+}
+/* The name: up top, small and blue once the field holds something or is
+   focused; inside it, grey, while it is empty. Tied to "not empty", not to
+   :valid, so a wrong e-mail never has its name lying over the text. */
+.auth-float-label {
+  position: absolute;
+  left: 14px;
+  top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--auth-ink, var(--primary));
+  pointer-events: none;
+  transition:
+    top 0.2s ease,
+    font-size 0.2s ease,
+    color 0.2s ease;
+}
+.auth-float-input:placeholder-shown:not(:focus):not(:-webkit-autofill) + .auth-float-label {
+  top: 20px;
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+}
+/* Chrome's autofill keeps the dark field (no white or yellow fill). */
+.auth-float-input:-webkit-autofill,
+.auth-float-input:-webkit-autofill:hover,
+.auth-float-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #2a2a2a inset;
+  box-shadow: 0 0 0 1000px #2a2a2a inset;
+  caret-color: #fff;
+  transition: background-color 9999s ease-out 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-card-dot::after {
+    animation: none;
+    display: none;
+  }
+}
+
 /* The lead card's "AI dan so'rang" panel sits at the right edge, where the
    floating call and assistant buttons would cover its input. */
 html.lead-ai-open [data-fab] {

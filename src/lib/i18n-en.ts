@@ -6074,6 +6074,7 @@ export const en: Record<string, string> = {
   "authv.footer": "© 2026 SalesIQ · For Uzbekistan's sales teams",
   "authv.picker": "Design variant",
   "authv.name.glass": "Glass (current)",
+  "authv.name.card": "Card",
   "authv.name.classic": "Classic (old)",
   "authv.name.clean": "Clean white",
   "authv.name.split": "Two panels",
