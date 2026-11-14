@@ -23,9 +23,6 @@ export type ManagerReportData = {
   sales_today: number;
   /** The whole funnel's sales today (every manager); absent before the 2nd migration run. */
   sales_today_all?: number;
-  work_start: string | null;
-  work_end: string | null;
-  working_now: boolean;
   /** "HH:MM" -- when the work day ends, and when it's taken as finished. */
   work_day_end?: string;
   auto_close?: string;

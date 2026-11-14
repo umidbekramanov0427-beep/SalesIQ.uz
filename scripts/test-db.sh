@@ -101,6 +101,10 @@ MIGRATIONS=(
   20270119000000_phone_key_country # twice
   20270120000000_automation_previous_owner
   20270120000000_automation_previous_owner # twice
+  20270123000000_drop_attendance_payroll
+  20270123000000_drop_attendance_payroll # twice
+  20270124000000_nazorat_settings
+  20270124000000_nazorat_settings # twice
 )
 
 cleanup() { :; }

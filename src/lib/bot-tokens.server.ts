@@ -2,7 +2,7 @@
 // message:
 //   client -- talks to leads and clients (salesbots, lead chats, payment
 //             links, receipts to clients). TELEGRAM_BOT_TOKEN.
-//   staff  -- talks to the companies' people (attendance, tasks, reminders,
+//   staff  -- talks to the companies' people (tasks, reminders,
 //             reports, sign-in codes). STAFF_TELEGRAM_BOT_TOKEN or the token
 //             saved in Platforma -> Botlar (sealed in platform_private, server-only).
 //   ops    -- talks to the platform owner (monitoring, alerts, backups).

@@ -39,7 +39,7 @@ import {
   Workflow,
   Zap,
   type LucideIcon,
-  UserCheck,
+  CalendarClock,
 } from "lucide-react";
 import { TONE_TILE } from "@/lib/tones";
 import { InfoTip, type CardTone } from "@/components/layout/Primitives";
@@ -251,9 +251,9 @@ export function useAdminCatalog(): CatalogGroup[] {
           tone: "emerald",
         },
         {
-          key: "attendanceRules",
-          to: "/admin/attendance",
-          icon: UserCheck,
+          key: "workHours",
+          to: "/admin/work-hours",
+          icon: CalendarClock,
           tone: "sky",
         },
         { key: "files", to: "/admin/files", icon: HardDrive, tone: "slate" },

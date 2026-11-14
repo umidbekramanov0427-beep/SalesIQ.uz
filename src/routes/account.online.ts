@@ -8,8 +8,7 @@ import { presenceOf } from "@/lib/presence";
 // now. Online = a tab sent its once-a-minute heartbeat in the last ~2.5 min
 // (user_login_events.last_seen_at); active vs idle and the page from their
 // newest session events; ringing / on a call from the phone system
-// (pbx_calls); started work from Davomat (work_sessions). The platform owner
-// is never listed. Service role -- always this company only.
+// (pbx_calls). The platform owner is never listed. Service role -- always this company only.
 export const Route = createFileRoute("/account/online")({
   server: {
     handlers: {
@@ -19,42 +18,32 @@ export const Route = createFileRoute("/account/online")({
         const org = me.organizationId;
         const now = Date.now();
         const weekAgo = new Date(now - 7 * 86_400_000).toISOString();
-        const dayStart = new Date(now + 5 * 3_600_000);
-        dayStart.setUTCHours(0, 0, 0, 0);
-        const todayIso = new Date(dayStart.getTime() - 5 * 3_600_000).toISOString();
 
-        const [{ data: people }, { data: sessions }, { data: calls }, { data: work }] =
-          await Promise.all([
-            supabaseAdmin
-              .from("profiles")
-              .select("id, full_name, email, role, avatar_url")
-              .eq("organization_id", org),
-            supabaseAdmin
-              .from("user_login_events")
-              .select("id, user_id, created_at, last_seen_at, revoked_at")
-              .eq("organization_id", org)
-              .eq("kind", "session")
-              .gte("last_seen_at", weekAgo)
-              .order("last_seen_at", { ascending: false })
-              .limit(600),
-            supabaseAdmin
-              .from("pbx_calls")
-              .select(
-                "initiated_by, status, updated_at, created_at, from_number, to_number, direction",
-              )
-              .eq("organization_id", org)
-              .in("status", ["ringing", "answered"])
-              .gte("updated_at", new Date(now - 60 * 60_000).toISOString())
-              .not("initiated_by", "is", null)
-              .order("updated_at", { ascending: false })
-              .limit(100),
-            supabaseAdmin
-              .from("work_sessions")
-              .select("profile_id, clock_in")
-              .eq("organization_id", org)
-              .is("clock_out", null)
-              .gte("clock_in", todayIso),
-          ]);
+        const [{ data: people }, { data: sessions }, { data: calls }] = await Promise.all([
+          supabaseAdmin
+            .from("profiles")
+            .select("id, full_name, email, role, avatar_url")
+            .eq("organization_id", org),
+          supabaseAdmin
+            .from("user_login_events")
+            .select("id, user_id, created_at, last_seen_at, revoked_at")
+            .eq("organization_id", org)
+            .eq("kind", "session")
+            .gte("last_seen_at", weekAgo)
+            .order("last_seen_at", { ascending: false })
+            .limit(600),
+          supabaseAdmin
+            .from("pbx_calls")
+            .select(
+              "initiated_by, status, updated_at, created_at, from_number, to_number, direction",
+            )
+            .eq("organization_id", org)
+            .in("status", ["ringing", "answered"])
+            .gte("updated_at", new Date(now - 60 * 60_000).toISOString())
+            .not("initiated_by", "is", null)
+            .order("updated_at", { ascending: false })
+            .limit(100),
+        ]);
 
         type S = {
           id: string;
@@ -102,7 +91,6 @@ export const Route = createFileRoute("/account/online")({
             number: (c.direction === "inbound" ? c.from_number : c.to_number) ?? null,
           });
         }
-        const clockIn = new Map((work ?? []).map((w) => [w.profile_id, w.clock_in]));
 
         const list = (people ?? [])
           .filter((p) => p.role !== "platform_owner")
@@ -142,7 +130,6 @@ export const Route = createFileRoute("/account/online")({
               lastActive: lastEventAt ?? lastSeen,
               lastSeen,
               call: call ? { since: call.since, number: call.number } : null,
-              clockIn: clockIn.get(p.id) ?? null,
             };
           });
         return Response.json({ people: list }, { status: 200 });

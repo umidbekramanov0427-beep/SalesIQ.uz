@@ -7,11 +7,6 @@ import {
   withBot,
 } from "@/lib/bot-tokens.server";
 import { handleChatMemberUpdate, type ChatMemberUpdate } from "@/lib/channel-events.server";
-import {
-  handleAttendanceCallback,
-  handleAttendanceTelegram,
-  sendStaffStart,
-} from "@/lib/attendance.server";
 import crypto from "node:crypto";
 import { copyChatFile } from "@/lib/files-housekeeping.server";
 import { autoReplyToClient } from "@/lib/auto-reply.server";
@@ -645,6 +640,16 @@ async function handleSalesbotStart(
   }
 }
 
+/**
+ * The staff bot's greeting for a linked person. It also takes away the
+ * reply keyboard older versions put under the chat.
+ */
+async function sendStaffStart(chatId: number, name: string | null): Promise<void> {
+  await sendTelegramMessageWithMarkup(chatId, staffStartReply({ name }), {
+    remove_keyboard: true,
+  });
+}
+
 export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
@@ -707,17 +712,6 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
       })
     )
       return Response.json({ ok: true });
-    const cqChat = cq.message?.chat;
-    if (cqChat?.id && cqChat.type === "private") {
-      const { data: who } = await supabaseAdmin
-        .from("profiles")
-        .select("id, organization_id")
-        .eq("telegram_chat_id", cqChat.id)
-        .maybeSingle();
-      await handleAttendanceCallback(cqChat.id, who ?? null, cq).catch((err) =>
-        console.error("[telegram] callback", err),
-      );
-    }
     return Response.json({ ok: true });
   }
   // Platforma -> Zaxira: "/zaxira CODE" posted in a channel (or a group)
@@ -846,8 +840,7 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     .eq("telegram_chat_id", chatId)
     .maybeSingle();
   // The staff bot's own link: it is for a company's people, never a
-  // client's salesbot -- say how to link, or greet a linked person and
-  // offer the attendance button.
+  // client's salesbot -- say how to link, or greet a linked person.
   if (bot === "staff" && PLAIN_START.test(rawText) && update.message) {
     let name: string | null = null;
     if (linkedProfile) {
@@ -859,7 +852,7 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
       name = (p as { full_name?: string | null } | null)?.full_name ?? null;
     }
     try {
-      if (linkedProfile) await sendStaffStart(chatId, linkedProfile, name);
+      if (linkedProfile) await sendStaffStart(chatId, name);
       else await sendTelegramMessage(chatId, staffStartReply(null));
     } catch (err) {
       console.error("[telegram] staff /start", err);
@@ -878,17 +871,6 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
       await handleSalesbotStart(chatId, defaultBotId, update.message);
       return Response.json({ ok: true });
     }
-  }
-
-  // Davomat: "✅ Keldim" / "🏁 Ketdim" with the location, "📝 Izoh yozish",
-  // "📊 Davomatim" and a waited-for comment -- before the questionnaires
-  // below, so a button press is never taken as an answer to them.
-  if (
-    linkedProfile &&
-    update.message &&
-    (await handleAttendanceTelegram(chatId, linkedProfile, update.message))
-  ) {
-    return Response.json({ ok: true });
   }
 
   // The business questionnaire needs a company: an account without one
@@ -937,7 +919,7 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     return Response.json({ ok: true });
   }
   // Already linked: any other text is not a link code -- show what the bot
-  // does (on the staff bot, with the attendance buttons) instead.
+  // does instead.
   if (linkedProfile && !match) {
     try {
       if (bot === "staff") {
@@ -948,7 +930,6 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
           .maybeSingle();
         await sendStaffStart(
           chatId,
-          linkedProfile,
           (p as { full_name?: string | null } | null)?.full_name ?? null,
         );
       } else {

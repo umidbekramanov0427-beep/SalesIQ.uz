@@ -1,11 +1,11 @@
 // AI assistant history, notification preferences, business profile, general/work-schedule/security settings, amoCRM import settings, tags.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
+import { parseControlSettings, type ControlSettings } from "@/lib/control-settings";
 import { parseFieldLimits, type FieldLimits } from "@/lib/field-visibility";
 import { parseCompanyBackup, type CompanyBackupRules } from "@/lib/telegram-backup";
 import { parsePhoneRules, type PhoneRules } from "@/lib/phone-rules";
 import { isRequirableKey } from "@/lib/required-fields";
 import { parseReplyRules, type ReplyRules } from "@/lib/reply-rules";
-import { parseAttendanceRules, type AttendanceRules } from "@/lib/attendance-rules";
 import { parseRefundRules, type RefundRules } from "@/lib/refunds";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -879,7 +879,7 @@ export function useUpdateOrgGeneralSettings() {
           | "phone_rules"
           | "reply_rules"
           | "file_rules"
-          | "attendance_rules"
+          | "control_settings"
           | "refund_rules"
           | "backup_rules"
         >
@@ -901,6 +901,23 @@ export function useUpdateOrgGeneralSettings() {
   });
 }
 
+/** Nazorat → Sozlash (Normativ, Jarimalar, KPI, Reja va fakt, tabriklar); defaults until saved. */
+export function useControlSettings(): ControlSettings {
+  const { data } = useOrgGeneralSettings();
+  const raw = (data as { control_settings?: unknown } | null | undefined)?.control_settings;
+  return useMemo(() => parseControlSettings(raw), [raw]);
+}
+
+/** Saves the whole Nazorat settings object (parsed, so only valid values are stored). */
+export function useSaveControlSettings() {
+  const update = useUpdateOrgGeneralSettings();
+  return {
+    ...update,
+    save: (next: ControlSettings) =>
+      update.mutateAsync({ control_settings: parseControlSettings(next) as unknown as Json }),
+  };
+}
+
 /** The company's reply limits and card check (Admin → Javob qoidalari); 5 / 15 min until set. */
 export function useReplyRules(): ReplyRules {
   const { data } = useOrgGeneralSettings();
@@ -920,13 +937,6 @@ export function useCompanyBackupRules(): CompanyBackupRules {
   const { data } = useOrgGeneralSettings();
   const raw = (data as { backup_rules?: unknown } | null | undefined)?.backup_rules;
   return useMemo(() => parseCompanyBackup(raw), [raw]);
-}
-
-/** The company's attendance rules (Admin → Davomat qoidalari); 09:00-18:00 Mon-Fri until set. */
-export function useAttendanceRules(): AttendanceRules {
-  const { data } = useOrgGeneralSettings();
-  const raw = (data as { attendance_rules?: unknown } | null | undefined)?.attendance_rules;
-  return useMemo(() => parseAttendanceRules(raw), [raw]);
 }
 
 /** The company's phone rules (Admin → Telefon raqamlari formati); Uzbekistan until set. */

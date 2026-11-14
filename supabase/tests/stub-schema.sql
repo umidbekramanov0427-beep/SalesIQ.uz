@@ -106,3 +106,7 @@ create table if not exists work_sessions (
   clock_out timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Nazorat celebrations (20270124000000_nazorat_settings).
+alter table pipeline_stages add column if not exists counts_as_won_override boolean not null default false;
+alter table org_general_settings add column if not exists timezone text;

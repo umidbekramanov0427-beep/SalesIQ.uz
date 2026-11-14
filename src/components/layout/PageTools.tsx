@@ -42,7 +42,7 @@ const MODULE_SETTINGS: [string, string][] = [
   ["/platform", "/platform/settings"],
   ["/marketing", "/marketing/settings"],
   ["/funnels", "/funnels/settings"],
-  ["/attendance", "/admin/attendance"],
+  ["/attendance", "/admin/work-hours"],
   ["/daily-report", "/daily-report-settings"],
   ["/admin", "/admin"],
   ["/integrations", "/integrations"],

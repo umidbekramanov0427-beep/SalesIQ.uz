@@ -19,13 +19,16 @@ import {
   type BoostTexts,
 } from "@/components/team/TeamMoments";
 import {
+  useControlSettings,
   useOrgGeneralSettings,
+  useSaveControlSettings,
   useUpdateOrgGeneralSettings,
   useUpdatePipeline,
   type PipelineRow,
   type StageRow,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
+import { CELEBRATION_STYLES } from "@/lib/control-settings";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { AmoToggle } from "./AmoControls";
@@ -90,6 +93,8 @@ export function CelebrateCard({
   const { t } = useI18n();
   const { user } = useAuth();
   const update = useUpdatePipeline();
+  const control = useControlSettings();
+  const saveControl = useSaveControlSettings();
   const on = !!pipeline.celebrate_stage_id;
   function set(stageId: string | null) {
     update.mutate(
@@ -133,10 +138,49 @@ export function CelebrateCard({
           </select>
         </label>
       )}
+      <div className="mt-2.5">
+        <p className="mb-1.5 text-[12px] text-muted-foreground">{t("xs.celebrateStyle")}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {CELEBRATION_STYLES.map((st) => (
+            <button
+              key={st}
+              type="button"
+              disabled={!canManage || saveControl.isPending}
+              aria-pressed={control.celebrations.sale.style === st}
+              onClick={() => {
+                void saveControl
+                  .save({
+                    ...control,
+                    celebrations: { ...control.celebrations, sale: { style: st } },
+                  })
+                  .then(() =>
+                    celebrate({
+                      kind: "sale",
+                      style: st,
+                      seller: user?.name ?? "",
+                      lead: t("xs.previewLead"),
+                    }),
+                  )
+                  .catch((e: unknown) =>
+                    toast.error(describeError(e, t("fs.saveFailedMigration"))),
+                  );
+              }}
+              className={cn(
+                "h-8 rounded-[6px] px-2.5 text-[12px] font-semibold",
+                control.celebrations.sale.style === st ? "ctl-lit" : "ctl-soft",
+              )}
+            >
+              {t(`cel.style.${st}`)}
+            </button>
+          ))}
+        </div>
+      </div>
       <button
         type="button"
         className={cn(ghostBtn, "mt-2.5")}
-        onClick={() => celebrate({ seller: user?.name ?? "", lead: t("xs.previewLead") })}
+        onClick={() =>
+          celebrate({ kind: "sale", seller: user?.name ?? "", lead: t("xs.previewLead") })
+        }
       >
         <Eye className="h-3.5 w-3.5" /> {t("xs.preview")}
       </button>

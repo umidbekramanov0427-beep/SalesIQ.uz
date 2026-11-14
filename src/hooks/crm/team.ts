@@ -1,4 +1,4 @@
-// Attendance, call pickup, quotas, fines, KPIs, Telegram report bot, office location, error logs, auto-responders, AI agents, funnel names and stats.
+// Call pickup, quotas, fines, KPIs, Telegram report bot, office location, error logs, auto-responders, AI agents, funnel names and stats.
 // Split out of src/hooks/use-crm-data.ts, which re-exports everything here.
 import { useMemo } from "react";
 import { funnelOpen } from "@/lib/access-rules";
@@ -6,19 +6,13 @@ import { useAccessRules } from "./access";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { apiFetch } from "@/lib/api";
-import { DEFAULT_REPORT_HOURS, zonedDayTime } from "@/lib/manager-report";
 import { useAuth } from "@/lib/auth";
 import { initialsOf } from "@/lib/utils";
+import { kpiScore, paceStatus } from "@/lib/control-settings";
+import { useControlSettings } from "./settings";
 import { RESOURCE_PAGE_SIZE, fetchAllPages, makeResource, useLeadsRaw } from "./core";
 import type { LeadRow, Tables } from "./core";
-import {
-  useCreateCallLog,
-  useCreateWorkSession,
-  usePipelineStagesRaw,
-  useProfilesRaw,
-  useUpdateWorkSession,
-  useWorkSessionsRaw,
-} from "./config";
+import { usePipelineStagesRaw, useProfilesRaw } from "./config";
 import { byId, profileName, useVisibleOwnerIds } from "./crm-views";
 import {
   BROWSER_TZ,
@@ -28,380 +22,7 @@ import {
   useRowsBetween,
 } from "./dashboard";
 import type { PbxCallRow } from "./integrations";
-import { useOrgGeneralSettings } from "./settings";
 import { startOfDay } from "./lead-analytics";
-import {
-  dayStart as ruleDayStart,
-  firstContact,
-  isWorkday,
-  lateMinutes,
-  localClock,
-  parseAttendanceRules,
-  shiftFor,
-  workedMinutes,
-} from "@/lib/attendance-rules";
-
-/* ------------------------------------------------------------------ */
-/* Attendance — manual clock-in/out and call logging, aggregated into  */
-/* a per-employee daily roster. A future telephony integration can     */
-/* insert into call_logs the same way and this keeps working as-is.    */
-/* ------------------------------------------------------------------ */
-
-export type WorkSessionRow = Tables["work_sessions"]["Row"];
-
-export type CallLogRow = Tables["call_logs"]["Row"];
-
-function isSameDay(iso: string, ref: Date): boolean {
-  const d = new Date(iso);
-  return (
-    d.getFullYear() === ref.getFullYear() &&
-    d.getMonth() === ref.getMonth() &&
-    d.getDate() === ref.getDate()
-  );
-}
-
-function isToday(iso: string): boolean {
-  return isSameDay(iso, new Date());
-}
-
-export function useMyOpenSession() {
-  const { user } = useAuth();
-  const { data: sessions, ...rest } = useWorkSessionsRaw({ enabled: !!user });
-  const open = (sessions ?? []).find(
-    (s) => s.profile_id === user?.id && !s.clock_out && isToday(s.clock_in),
-  );
-  return { session: open ?? null, ...rest };
-}
-
-export function useClockIn() {
-  const create = useCreateWorkSession();
-  const { user } = useAuth();
-  return useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error("Not signed in");
-      return create.mutateAsync({ profile_id: user.id });
-    },
-  });
-}
-
-export function useClockOut() {
-  const update = useUpdateWorkSession();
-  return useMutation({
-    mutationFn: async (sessionId: string) =>
-      update.mutateAsync({ id: sessionId, patch: { clock_out: new Date().toISOString() } }),
-  });
-}
-
-export function useLogCall() {
-  const create = useCreateCallLog();
-  const { user } = useAuth();
-  return useMutation({
-    mutationFn: async (input: {
-      leadId?: string | null;
-      contactId?: string | null;
-      phone?: string;
-      connected: boolean;
-      durationSeconds: number;
-    }) => {
-      if (!user) throw new Error("Not signed in");
-      return create.mutateAsync({
-        profile_id: user.id,
-        lead_id: input.leadId ?? null,
-        contact_id: input.contactId ?? null,
-        phone: input.phone ?? null,
-        connected: input.connected,
-        duration_seconds: input.durationSeconds,
-      });
-    },
-  });
-}
-
-export type AttendanceRow = {
-  profileId: string;
-  managerId: string | null;
-  name: string;
-  initials: string;
-  position: string;
-  clockIn: string | null;
-  clockOut: string | null;
-  sessionMinutes: number;
-  callsMade: number;
-  callsConnected: number;
-  totalCallMinutes: number;
-  /** How the day was started: site button, Telegram with location, or the first call. */
-  method: "web" | "telegram" | "calls" | "messages" | null;
-  /** Metres from the office at a Telegram check-in. */
-  distanceM: number | null;
-  /** Minutes past the shift start and grace (Davomat qoidalari). */
-  lateMin: number;
-  /** A workday, the shift has started and nobody checked in. */
-  absent: boolean;
-  shiftName: string;
-};
-
-// A call gap wider than this ends a continuous work stretch -- "Ish vaqti"
-// means time actually spent working the phone (AmoCRM or this platform's
-// own telephony), not the raw span from first call to last, which would
-// count a long lunch/meeting gap as "work".
-const AMO_CONTINUOUS_WORK_GAP_MS = 60 * 60 * 1000;
-
-type WorkCallEvent = { occurredAt: string; durationSeconds: number };
-
-// Sums the duration of continuous call-activity stretches for one rep's day
-// (events must already be sorted ascending by occurredAt). A stretch keeps
-// extending across calls less than the gap threshold apart; a bigger gap
-// starts a new stretch. On today's date, a stretch still within the gap
-// threshold of now is extended to now (they're still actively on a call
-// streak), so "Ish vaqti" keeps counting up live during the day.
-function continuousAmoWorkMinutes(calls: WorkCallEvent[], isToday: boolean): number {
-  if (calls.length === 0) return 0;
-  let total = 0;
-  let segStart = new Date(calls[0]!.occurredAt).getTime();
-  let segEnd = segStart + calls[0]!.durationSeconds * 1000;
-  for (let i = 1; i < calls.length; i++) {
-    const start = new Date(calls[i]!.occurredAt).getTime();
-    const end = start + calls[i]!.durationSeconds * 1000;
-    if (start - segEnd > AMO_CONTINUOUS_WORK_GAP_MS) {
-      total += segEnd - segStart;
-      segStart = start;
-      segEnd = end;
-    } else {
-      segEnd = Math.max(segEnd, end);
-    }
-  }
-  if (isToday && Date.now() - segEnd <= AMO_CONTINUOUS_WORK_GAP_MS) {
-    segEnd = Date.now();
-  }
-  total += segEnd - segStart;
-  return total / 60000;
-}
-
-// pbx_calls has no boolean "connected" column (unlike amocrm_calls/call_logs)
-// -- these are the statuses telephony-data.server.ts ever writes for a call
-// that was actually answered.
-const PBX_CONNECTED_STATUSES = new Set(["answered", "completed"]);
-
-export function useAttendanceView(asOf?: Date | null) {
-  const profiles = useProfilesRaw();
-  const { data: orgSettings } = useOrgGeneralSettings();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- asOf?.getTime() is the stable key
-  const refDate = useMemo(() => asOf ?? new Date(), [asOf?.getTime()]);
-  const today = isSameDay(new Date().toISOString(), refDate);
-  // Only the selected day's sessions and calls -- not the org's whole history.
-  const dayStartMs = startOfDay(refDate).getTime();
-  const { dayStart, dayEnd } = useMemo(() => {
-    const start = new Date(dayStartMs);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    return { dayStart: start, dayEnd: end };
-  }, [dayStartMs]);
-  const sessionsQ = useRowsBetween<WorkSessionRow>({
-    table: "work_sessions",
-    column: "clock_in",
-    columns: "*",
-    from: dayStart,
-    to: dayEnd,
-    exclusiveTo: true,
-  });
-  const callsQ = useRowsBetween<CallLogRow>({
-    table: "call_logs",
-    column: "created_at",
-    columns: "id, profile_id, created_at, connected, duration_seconds",
-    from: dayStart,
-    to: dayEnd,
-    exclusiveTo: true,
-  });
-  const pbxQ = useRowsBetween<
-    Pick<PbxCallRow, "id" | "initiated_by" | "created_at" | "duration_seconds" | "status">
-  >({
-    table: "pbx_calls",
-    column: "created_at",
-    columns: "id, initiated_by, created_at, duration_seconds, status",
-    from: dayStart,
-    to: dayEnd,
-    exclusiveTo: true,
-  });
-  const amoQ = useCallsWithLead(dayStart, dayEnd);
-  const sessions = sessionsQ.data;
-  const calls = callsQ.data;
-  const attRaw = (orgSettings as { attendance_rules?: unknown } | null | undefined)
-    ?.attendance_rules;
-  const attRules = useMemo(() => parseAttendanceRules(attRaw), [attRaw]);
-  const tz = orgSettings?.timezone || "Asia/Tashkent";
-  // Messages to clients count as the first contact too (Davomat qoidalari).
-  const msgQ = useRowsBetween<{ id: string; sent_by: string | null; created_at: string }>({
-    table: "lead_telegram_messages",
-    column: "created_at",
-    columns: "id, sent_by, created_at",
-    from: dayStart,
-    to: dayEnd,
-    exclusiveTo: true,
-    eq: { direction: "out" },
-    enabled: attRules.startMode !== "button" && attRules.contact.messages,
-  });
-
-  const hours = (orgSettings?.manager_report_hours ?? null) as { auto_close?: string } | null;
-  const autoCloseAt = useMemo(
-    () =>
-      zonedDayTime(
-        refDate,
-        hours?.auto_close || DEFAULT_REPORT_HOURS.autoClose,
-        orgSettings?.timezone || "Asia/Tashkent",
-      ),
-    [refDate, hours?.auto_close, orgSettings?.timezone],
-  );
-
-  const rows = useMemo<AttendanceRow[]>(() => {
-    return (profiles.data ?? []).map((p): AttendanceRow => {
-      const mySessions = (sessions ?? []).filter(
-        (s) => s.profile_id === p.id && isSameDay(s.clock_in, refDate),
-      );
-      const manualClockIn = mySessions[0]?.clock_in ?? null;
-      const manualClockOut = mySessions[0]?.clock_out ?? null;
-
-      // A rep rarely presses "Ishni boshlash" -- the real signal that
-      // they've arrived and started working is their first call of the
-      // day, whether that call was synced from AmoCRM or placed through
-      // this platform's own telephony (pbx_calls -- OnlinePBX/Sipuni/
-      // MoiZvonki click-to-call). Take whichever of manual clock-in /
-      // first call happened earliest, so the manual button still counts
-      // when someone actually uses it.
-      const myAmoCalls = (amoQ.data ?? []).filter(
-        (c) => c.lead?.owner_id === p.id && isSameDay(c.occurred_at, refDate),
-      );
-      const myPbxCalls = (pbxQ.data ?? []).filter(
-        (c) => c.initiated_by === p.id && isSameDay(c.created_at, refDate),
-      );
-      const myCallEvents: WorkCallEvent[] = [
-        ...myAmoCalls.map((c) => ({
-          occurredAt: c.occurred_at,
-          durationSeconds: c.duration_seconds,
-        })),
-        ...myPbxCalls.map((c) => ({
-          occurredAt: c.created_at,
-          durationSeconds: c.duration_seconds,
-        })),
-      ].sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime());
-      const firstCallAt = myCallEvents[0]?.occurredAt ?? null;
-      const lastCallAt = myCallEvents.length
-        ? myCallEvents[myCallEvents.length - 1]!.occurredAt
-        : null;
-
-      // When the day started, under the company's rule (Davomat qoidalari):
-      // the "Ishni boshlash" check-in, the first contact with a client (a
-      // call and/or a message), or whichever came first.
-      const firstMessageAt =
-        (msgQ.data ?? [])
-          .filter((m) => m.sent_by === p.id && isSameDay(m.created_at, refDate))
-          .map((m) => m.created_at)
-          .sort()[0] ?? null;
-      const contact = firstContact(attRules, firstCallAt, firstMessageAt);
-      const start = ruleDayStart(attRules, manualClockIn, contact?.at ?? null);
-      const clockIn = start.at;
-      // No manual clock-out: once the company's auto-close time has passed
-      // (e.g. 20:00 for a 19:00 work day, set in the daily report window)
-      // the work day counts as finished at exactly that time. Before then
-      // today it's still ongoing; a day with only late (after auto-close)
-      // activity falls back to its last call.
-      const autoCloseOk = !!clockIn && Date.now() >= autoCloseAt.getTime();
-      const clockOut =
-        manualClockOut ??
-        (autoCloseOk && new Date(clockIn).getTime() < autoCloseAt.getTime()
-          ? autoCloseAt.toISOString()
-          : today
-            ? null
-            : lastCallAt);
-
-      // "Ish vaqti" is about real call activity, not office arrival -- once
-      // there's any call data for the day (AmoCRM or this platform's own
-      // telephony), it wins over the manual clock session entirely
-      // (continuous stretches, gaps excluded). The manual clock-in/out span
-      // is only a fallback for a day with no calls at all.
-      const sessionMinutes =
-        myCallEvents.length > 0
-          ? continuousAmoWorkMinutes(myCallEvents, today)
-          : clockIn
-            ? workedMinutes(new Date(clockIn), clockOut ? new Date(clockOut) : null, attRules)
-            : 0;
-
-      const myManualCalls = (calls ?? []).filter(
-        (c) => c.profile_id === p.id && isSameDay(c.created_at, refDate),
-      );
-      const callsMade = myManualCalls.length + myAmoCalls.length + myPbxCalls.length;
-      const callsConnected =
-        myManualCalls.filter((c) => c.connected).length +
-        myAmoCalls.filter((c) => c.connected).length +
-        myPbxCalls.filter((c) => PBX_CONNECTED_STATUSES.has(c.status)).length;
-      const totalCallMinutes = Math.round(
-        (myManualCalls.reduce((s, c) => s + c.duration_seconds, 0) +
-          myAmoCalls.reduce((s, c) => s + c.duration_seconds, 0) +
-          myPbxCalls.reduce((s, c) => s + c.duration_seconds, 0)) /
-          60,
-      );
-
-      const shift = shiftFor(attRules, p.id);
-      const firstSession = mySessions[0] ?? null;
-      const method: AttendanceRow["method"] = !clockIn
-        ? null
-        : start.by === "checkin"
-          ? firstSession?.method === "telegram"
-            ? "telegram"
-            : "web"
-          : contact?.kind === "message"
-            ? "messages"
-            : "calls";
-      const lateMin = clockIn ? lateMinutes(new Date(clockIn), shift, attRules.graceMin, tz) : 0;
-      const shiftStarted = (() => {
-        if (!isWorkday(shift, refDate, tz)) return false;
-        if (!today) return true;
-        const now = localClock(new Date(), tz).minutes;
-        const start = Number(shift.start.slice(0, 2)) * 60 + Number(shift.start.slice(3, 5));
-        return now > start + attRules.graceMin;
-      })();
-
-      return {
-        method,
-        distanceM: firstSession?.distance_m ?? null,
-        lateMin,
-        absent: !clockIn && shiftStarted,
-        shiftName: shift.name,
-        profileId: p.id,
-        managerId: p.manager_id,
-        name: profileName(p),
-        initials: initialsOf(p.full_name || p.email),
-        position: p.position,
-        clockIn,
-        clockOut,
-        sessionMinutes: Math.round(sessionMinutes),
-        callsMade,
-        callsConnected,
-        totalCallMinutes,
-      };
-    });
-  }, [
-    profiles.data,
-    sessions,
-    calls,
-    amoQ.data,
-    pbxQ.data,
-    msgQ.data,
-    refDate,
-    today,
-    autoCloseAt,
-    attRules,
-    tz,
-  ]);
-
-  return {
-    rows,
-    isLoading:
-      profiles.isLoading ||
-      sessionsQ.isLoading ||
-      callsQ.isLoading ||
-      amoQ.isLoading ||
-      pbxQ.isLoading,
-  };
-}
 
 /* ------------------------------------------------------------------ */
 /* Call pickup by hour — when do customers actually answer, and what    */
@@ -521,6 +142,8 @@ export type NormativeRow = {
 
 export function useNormativesView() {
   const { user } = useAuth();
+  // Nazorat → Normativ → Sozlash: the limits, revenue or deals, funnels, interns.
+  const control = useControlSettings().normativ;
   const { data: profiles, isLoading: profilesLoading } = useProfilesRaw();
   // Revenue used to come from the `deals` table — but this AmoCRM-synced
   // setup never populates deals (leads carry the real revenue), so every
@@ -550,8 +173,11 @@ export function useNormativesView() {
     const stagesById = byId(stages);
     const wonLeads = (leads ?? []).filter((l) => {
       const stage = l.stage_id ? stagesById.get(l.stage_id) : undefined;
-      return stage?.is_won ?? false;
+      if (!(stage?.is_won ?? false)) return false;
+      return !control.pipelineIds.length || control.pipelineIds.includes(stage?.pipeline_id ?? "");
     });
+    const amountOf = (l: { expected_revenue: number | null }) =>
+      control.basis === "deals" ? 1 : Number(l.expected_revenue);
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const startOfMonth = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1);
@@ -566,6 +192,7 @@ export function useNormativesView() {
     // full company.
     const roster = (profiles ?? []).filter((p) => {
       if (p.role === "super_admin" || p.role === "platform_owner") return false;
+      if (control.excludeInterns && p.is_intern) return false;
       if (!user || user.role === "super_admin" || user.role === "platform_owner") return true;
       if (user.role === "rop") return p.manager_id === user.id;
       return p.manager_id === user.managerId;
@@ -575,10 +202,10 @@ export function useNormativesView() {
       const won = wonLeads.filter((l) => l.owner_id === p.id);
       const revenueToday = won
         .filter((l) => new Date(l.updated_at) >= startOfToday)
-        .reduce((s, l) => s + Number(l.expected_revenue), 0);
+        .reduce((s, l) => s + amountOf(l), 0);
       const revenueMonth = won
         .filter((l) => new Date(l.updated_at) >= startOfMonth)
-        .reduce((s, l) => s + Number(l.expected_revenue), 0);
+        .reduce((s, l) => s + amountOf(l), 0);
       const monthlyTarget = p.monthly_target;
       const monthlyPct =
         monthlyTarget && monthlyTarget > 0
@@ -587,8 +214,7 @@ export function useNormativesView() {
       const expectedByNow = monthlyTarget ? monthlyTarget * expectedPaceFraction : 0;
       const pacePct =
         expectedByNow > 0 ? Math.round((revenueMonth / expectedByNow) * 1000) / 10 : 0;
-      const status: NormativeStatus =
-        pacePct >= 90 ? "onTrack" : pacePct >= 60 ? "atRisk" : "behind";
+      const status: NormativeStatus = paceStatus(pacePct, control);
       return {
         profileId: p.id,
         name: profileName(p),
@@ -603,7 +229,7 @@ export function useNormativesView() {
         status,
       };
     });
-  }, [profiles, leads, stages, user]);
+  }, [profiles, leads, stages, user, control]);
 
   return { rows, isLoading: profilesLoading || leadsLoading || stagesLoading };
 }
@@ -758,9 +384,11 @@ export type KpiRow = {
   revenue: number;
   conversionPct: number;
   meetingsCount: number;
+  /** Weighted result against the KPI targets (Nazorat → KPI → Sozlash); null without targets. */
+  score: number | null;
 };
 
-const MEETING_TAG_HINTS = ["uchrashuv", "ofis", "meeting"];
+const PBX_TALKED = new Set(["answered", "completed"]);
 
 function isInRange(iso: string | null, range: { from: Date | null; to: Date | null }): boolean {
   if (!iso) return false;
@@ -772,6 +400,14 @@ function isInRange(iso: string | null, range: { from: Date | null; to: Date | nu
 
 export function useKpiView(range: { from: Date | null; to: Date | null }) {
   const { roster, isLoading: rosterLoading } = useRosterScope();
+  const kpi = useControlSettings().kpi;
+  // How much of a month the chosen period is (no end: up to now).
+  const periodShare = useMemo(() => {
+    if (!range.from) return 1;
+    const to = range.to ?? new Date();
+    const days = Math.max(1, (to.getTime() - range.from.getTime()) / 86_400_000);
+    return Math.min(12, days / 30);
+  }, [range.from, range.to]);
   // Leads updated / calls logged inside the range only.
   const { data: leads, isLoading: leadsLoading } = useRowsBetween<
     Pick<LeadRow, "id" | "owner_id" | "stage_id" | "updated_at" | "expected_revenue" | "tags">
@@ -783,15 +419,36 @@ export function useKpiView(range: { from: Date | null; to: Date | null }) {
     to: range.to,
   });
   const { data: stages, isLoading: stagesLoading } = usePipelineStagesRaw();
-  const { data: calls, isLoading: callsLoading } = useRowsBetween<
-    Pick<CallLogRow, "id" | "profile_id" | "created_at" | "connected" | "duration_seconds">
+  // Calls come from the telephony itself: the platform's own PBX calls the
+  // rep placed or answered, plus amoCRM calls on the rep's leads.
+  const { data: pbx, isLoading: pbxLoading } = useRowsBetween<
+    Pick<PbxCallRow, "id" | "initiated_by" | "created_at" | "duration_seconds" | "status">
   >({
-    table: "call_logs",
+    table: "pbx_calls",
     column: "created_at",
-    columns: "id, profile_id, created_at, connected, duration_seconds",
+    columns: "id, initiated_by, created_at, duration_seconds, status",
     from: range.from,
     to: range.to,
   });
+  const { data: amo, isLoading: amoLoading } = useCallsWithLead(range.from, range.to);
+  const callsLoading = pbxLoading || amoLoading;
+  const calls = useMemo(
+    () => [
+      ...(pbx ?? []).map((c) => ({
+        profile_id: c.initiated_by,
+        created_at: c.created_at,
+        duration_seconds: c.duration_seconds ?? 0,
+        connected: PBX_TALKED.has(c.status ?? "") || (c.duration_seconds ?? 0) > 0,
+      })),
+      ...(amo ?? []).map((c) => ({
+        profile_id: c.lead?.owner_id ?? null,
+        created_at: c.occurred_at,
+        duration_seconds: c.duration_seconds ?? 0,
+        connected: (c.duration_seconds ?? 0) > 0,
+      })),
+    ],
+    [pbx, amo],
+  );
 
   const rows = useMemo<KpiRow[]>(() => {
     const stagesById = byId(stages);
@@ -805,16 +462,13 @@ export function useKpiView(range: { from: Date | null; to: Date | null }) {
       });
       const meetingsCount = myLeads.filter((l) =>
         (l.tags ?? []).some((tag) =>
-          MEETING_TAG_HINTS.some((hint) => tag.toLowerCase().includes(hint)),
+          kpi.meetingTags.some((hint) => tag.toLowerCase().includes(hint)),
         ),
       ).length;
       const myCalls = (calls ?? []).filter(
         (c) => c.profile_id === p.id && isInRange(c.created_at, range),
       );
-      return {
-        profileId: p.id,
-        name: profileName(p),
-        initials: initialsOf(p.full_name || p.email),
+      const values = {
         callsMade: myCalls.length,
         callsConnected: myCalls.filter((c) => c.connected).length,
         totalCallMinutes: Math.round(myCalls.reduce((s, c) => s + c.duration_seconds, 0) / 60),
@@ -825,8 +479,23 @@ export function useKpiView(range: { from: Date | null; to: Date | null }) {
           myLeads.length > 0 ? Math.round((won.length / myLeads.length) * 1000) / 10 : 0,
         meetingsCount,
       };
+      // The targets are a month's; a shorter or longer period scales them
+      // (the conversion % stays as it is).
+      const scaled = Object.fromEntries(
+        Object.entries(kpi.targets).map(([k, v]) => [
+          k,
+          k === "conversionPct" ? v : v * periodShare,
+        ]),
+      ) as typeof kpi.targets;
+      return {
+        profileId: p.id,
+        name: profileName(p),
+        initials: initialsOf(p.full_name || p.email),
+        ...values,
+        score: kpiScore(values, { ...kpi, targets: scaled }),
+      };
     });
-  }, [roster, leads, stages, calls, range]);
+  }, [roster, leads, stages, calls, range, kpi, periodShare]);
 
   return {
     rows,
@@ -1415,7 +1084,6 @@ export type OnlinePerson = {
   lastActive: string | null;
   lastSeen: string | null;
   call: { since: string; number: string | null } | null;
-  clockIn: string | null;
 };
 
 /** The company's people and what each is doing now (Jamoa holati); refreshed every minute, every 20 s while `fast`. */

@@ -4,7 +4,7 @@ import { webhookBase } from "@/lib/bot-tokens-url";
 describe("staff bot /start", () => {
   it("recognises a bare /start only", () => {
     expect(PLAIN_START.test("/start")).toBe(true);
-    expect(PLAIN_START.test("/start@davomat_bot ")).toBe(true);
+    expect(PLAIN_START.test("/start@salesiq_staff_bot ")).toBe(true);
     expect(PLAIN_START.test("/start ABCD1234")).toBe(false);
   });
 
@@ -12,11 +12,8 @@ describe("staff bot /start", () => {
     expect(staffStartReply(null)).toContain("Sozlamalar → Telegram");
     const linked = staffStartReply({ name: "Umidbek Ramanov" });
     expect(linked).toContain("Umidbek");
-    expect(linked).toContain("✅ Keldim");
-    expect(linked).toContain("📝 Izoh yozish");
-    const owner = staffStartReply({ name: "Umidbek", attendance: false });
-    expect(owner).toContain("davomat tugmalari sizda chiqmaydi");
-    expect(owner).not.toContain("Pastdagi tugmalar");
+    expect(linked).toContain("Vazifalar");
+    expect(linked).not.toMatch(/Keldim|davomat/i);
   });
 });
 

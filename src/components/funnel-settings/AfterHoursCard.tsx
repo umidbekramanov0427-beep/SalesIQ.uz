@@ -9,7 +9,6 @@ import {
   useOrgWorkSchedule,
   useUpdateOrgGeneralSettings,
 } from "@/hooks/use-crm-data";
-import { companyWorkHours } from "@/lib/auto-reply";
 import { useI18n } from "@/lib/i18n";
 import { describeError } from "@/lib/utils";
 
@@ -34,11 +33,8 @@ export function AfterHoursCard() {
     setLoaded(true);
   }, [general, loaded, t]);
 
-  // The working hours are the main shift in Admin -> Davomat (the one place they are set).
-  const work = companyWorkHours(
-    (general as { attendance_rules?: unknown } | null | undefined)?.attendance_rules,
-    schedule ?? null,
-  );
+  // The working hours are set in Admin -> Ish vaqti.
+  const work = schedule ?? null;
   const days = work
     ? work.work_days.map((d) => t(`settings.schedule.day${DAY_KEYS[d]}`)).join(", ")
     : "—";
@@ -75,7 +71,7 @@ export function AfterHoursCard() {
           <b className="tabular-nums text-foreground">{hours}</b>
         </span>
         <Link
-          to="/admin/attendance"
+          to="/admin/work-hours"
           className="ml-auto text-[13px] font-semibold text-[var(--primary-ink)] hover:underline"
         >
           {t("afterHours.editSchedule")}

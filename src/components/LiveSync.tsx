@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 
 // Live updates without refreshing: the browser listens (Supabase Realtime,
 // RLS still decides which rows reach whom) to the company's tables the
-// pages show -- leads, tasks, payments, refunds, reminders, attendance,
+// pages show -- leads, tasks, payments, refunds, reminders,
 // fines, finance, calls, banners, the marketing panel's channels and
 // webinars -- and on any change redraws whatever is on screen: every card,
 // counter, list and chart refetches its numbers. Bursts are merged (one
@@ -19,10 +19,8 @@ const LIVE_TABLES = [
   "lead_refunds",
   "lead_payments",
   "reminders",
-  "work_sessions",
   "fines",
   "finance_entries",
-  "call_logs",
   "amocrm_calls",
   "pbx_calls",
   "announcements",

@@ -464,39 +464,6 @@ export type Database = {
           },
         ];
       };
-      attendance_notes: {
-        Row: {
-          body: string;
-          created_at: string;
-          day: string;
-          id: string;
-          kind: string;
-          organization_id: string;
-          profile_id: string;
-          source: string;
-        };
-        Insert: {
-          body: string;
-          created_at?: string;
-          day: string;
-          id?: string;
-          kind?: string;
-          organization_id: string;
-          profile_id: string;
-          source?: string;
-        };
-        Update: {
-          body?: string;
-          created_at?: string;
-          day?: string;
-          id?: string;
-          kind?: string;
-          organization_id?: string;
-          profile_id?: string;
-          source?: string;
-        };
-        Relationships: [];
-      };
       audit_logs: {
         Row: {
           action: string;
@@ -923,6 +890,7 @@ export type Database = {
       };
       fine_types: {
         Row: {
+          auto: boolean;
           color: string;
           created_at: string;
           default_amount: number | null;
@@ -931,9 +899,11 @@ export type Database = {
           name: string;
           organization_id: string;
           position: number;
+          rule_key: string | null;
           target_positions: string[] | null;
         };
         Insert: {
+          auto?: boolean;
           color?: string;
           created_at?: string;
           default_amount?: number | null;
@@ -942,9 +912,11 @@ export type Database = {
           name: string;
           organization_id: string;
           position?: number;
+          rule_key?: string | null;
           target_positions?: string[] | null;
         };
         Update: {
+          auto?: boolean;
           color?: string;
           created_at?: string;
           default_amount?: number | null;
@@ -953,6 +925,7 @@ export type Database = {
           name?: string;
           organization_id?: string;
           position?: number;
+          rule_key?: string | null;
           target_positions?: string[] | null;
         };
         Relationships: [
@@ -1816,31 +1789,70 @@ export type Database = {
           id: string;
           month: string;
           organization_id: string;
+          parts: number;
+          pipeline_id: string | null;
           profile_id: string | null;
           target_amount: number;
           target_deals: number;
           updated_at: string;
           updated_by: string | null;
+          work_days: number | null;
         };
         Insert: {
           id?: string;
           month: string;
           organization_id: string;
+          parts?: number;
+          pipeline_id?: string | null;
           profile_id?: string | null;
           target_amount?: number;
           target_deals?: number;
           updated_at?: string;
           updated_by?: string | null;
+          work_days?: number | null;
         };
         Update: {
           id?: string;
           month?: string;
           organization_id?: string;
+          parts?: number;
+          pipeline_id?: string | null;
           profile_id?: string | null;
           target_amount?: number;
           target_deals?: number;
           updated_at?: string;
           updated_by?: string | null;
+          work_days?: number | null;
+        };
+        Relationships: [];
+      };
+      plan_milestones: {
+        Row: {
+          fact: number;
+          id: string;
+          organization_id: string;
+          part: number;
+          parts: number;
+          plan_id: string;
+          reached_at: string;
+        };
+        Insert: {
+          fact?: number;
+          id?: string;
+          organization_id: string;
+          part: number;
+          parts: number;
+          plan_id: string;
+          reached_at?: string;
+        };
+        Update: {
+          fact?: number;
+          id?: string;
+          organization_id?: string;
+          part?: number;
+          parts?: number;
+          plan_id?: string;
+          reached_at?: string;
         };
         Relationships: [];
       };
@@ -2618,71 +2630,6 @@ export type Database = {
             columns: ["recommended_lesson_id"];
             isOneToOne: false;
             referencedRelation: "lessons";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      call_logs: {
-        Row: {
-          connected: boolean;
-          contact_id: string | null;
-          created_at: string;
-          duration_seconds: number;
-          id: string;
-          lead_id: string | null;
-          organization_id: string | null;
-          phone: string | null;
-          profile_id: string;
-        };
-        Insert: {
-          connected?: boolean;
-          contact_id?: string | null;
-          created_at?: string;
-          duration_seconds?: number;
-          id?: string;
-          lead_id?: string | null;
-          organization_id?: string | null;
-          phone?: string | null;
-          profile_id: string;
-        };
-        Update: {
-          connected?: boolean;
-          contact_id?: string | null;
-          created_at?: string;
-          duration_seconds?: number;
-          id?: string;
-          lead_id?: string | null;
-          organization_id?: string | null;
-          phone?: string | null;
-          profile_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "call_logs_contact_id_fkey";
-            columns: ["contact_id"];
-            isOneToOne: false;
-            referencedRelation: "contacts";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "call_logs_lead_id_fkey";
-            columns: ["lead_id"];
-            isOneToOne: false;
-            referencedRelation: "leads";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "call_logs_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "call_logs_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -3595,30 +3542,6 @@ export type Database = {
           actor_id?: string | null;
           snapshot?: Json;
           created_at?: string;
-        };
-        Relationships: [];
-      };
-      payroll_schemes: {
-        Row: {
-          organization_id: string;
-          scope: string;
-          scheme: Json;
-          updated_by: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          organization_id: string;
-          scope: string;
-          scheme?: Json;
-          updated_by?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          organization_id?: string;
-          scope?: string;
-          scheme?: Json;
-          updated_by?: string | null;
-          updated_at?: string;
         };
         Relationships: [];
       };
@@ -6625,12 +6548,11 @@ export type Database = {
           dedupe_match_phone: boolean;
           phone_rules: Json;
           reply_rules: Json;
-          attendance_rules: Json;
+          control_settings: Json;
           refund_rules: Json;
           marketing_rules: Json;
           backup_rules: Json;
           ui_settings: Json;
-          attendance_report_sent_on: string | null;
           file_rules: Json;
           industry: string;
           kanban_card_fields: Json | null;
@@ -6672,12 +6594,11 @@ export type Database = {
           dedupe_match_phone?: boolean;
           phone_rules?: Json;
           reply_rules?: Json;
-          attendance_rules?: Json;
+          control_settings?: Json;
           refund_rules?: Json;
           marketing_rules?: Json;
           backup_rules?: Json;
           ui_settings?: Json;
-          attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
           kanban_card_fields?: Json | null;
@@ -6719,12 +6640,11 @@ export type Database = {
           dedupe_match_phone?: boolean;
           phone_rules?: Json;
           reply_rules?: Json;
-          attendance_rules?: Json;
+          control_settings?: Json;
           refund_rules?: Json;
           marketing_rules?: Json;
           backup_rules?: Json;
           ui_settings?: Json;
-          attendance_report_sent_on?: string | null;
           file_rules?: Json;
           industry?: string;
           kanban_card_fields?: Json | null;
@@ -8551,63 +8471,6 @@ export type Database = {
           },
         ];
       };
-      work_sessions: {
-        Row: {
-          clock_in: string;
-          clock_out: string | null;
-          created_at: string;
-          id: string;
-          organization_id: string | null;
-          profile_id: string;
-          method: string;
-          out_method: string | null;
-          lat: number | null;
-          lng: number | null;
-          distance_m: number | null;
-        };
-        Insert: {
-          clock_in?: string;
-          clock_out?: string | null;
-          created_at?: string;
-          id?: string;
-          organization_id?: string | null;
-          profile_id: string;
-          method?: string;
-          out_method?: string | null;
-          lat?: number | null;
-          lng?: number | null;
-          distance_m?: number | null;
-        };
-        Update: {
-          clock_in?: string;
-          clock_out?: string | null;
-          created_at?: string;
-          id?: string;
-          organization_id?: string | null;
-          profile_id?: string;
-          method?: string;
-          out_method?: string | null;
-          lat?: number | null;
-          lng?: number | null;
-          distance_m?: number | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "work_sessions_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "work_sessions_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
     };
     Views: {
       missed_call_stats: {
@@ -8642,6 +8505,19 @@ export type Database = {
       sales_plan_facts: {
         Args: { p_from: string; p_to: string };
         Returns: { owner_id: string | null; deals: number; revenue: number }[];
+      };
+      sales_plan_facts_by_funnel: {
+        Args: { p_from: string; p_to: string };
+        Returns: {
+          owner_id: string | null;
+          pipeline_id: string | null;
+          deals: number;
+          revenue: number;
+        }[];
+      };
+      short_money: {
+        Args: { p: number };
+        Returns: string;
       };
       leads_to_score: {
         Args: { p_limit?: number };

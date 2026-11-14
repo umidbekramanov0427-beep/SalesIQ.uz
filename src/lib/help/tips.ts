@@ -90,19 +90,19 @@ export const TIPS: Record<string, Tip> = {
   },
   "nav:/attendance": {
     what: {
-      uz: "Nazorat — jamoa intizomi: davomat (keldi/ketdi), normativlar, eslatmalar, jarimalar va KPI.",
-      ru: "Контроль — дисциплина команды: посещаемость, нормативы, напоминания, штрафы и KPI.",
-      en: "Control — team discipline: attendance, targets, reminders, fines and KPI.",
+      uz: "Nazorat — jamoaning natijasi: normativlar, jarimalar, KPI, reja va fakt, eslatmalar.",
+      ru: "Контроль — результаты команды: нормативы, штрафы, KPI, план и факт, напоминания.",
+      en: "Control — the team's results: targets, fines, KPI, plan vs fact, reminders.",
     },
     calc: {
-      uz: "Ish boshlanishi tugma, birinchi qo'ng'iroq yoki xabar bo'yicha belgilanadi (Admin → Davomat sozlamasi).",
-      ru: "Начало дня отмечается кнопкой, первым звонком или сообщением (Админ → Посещаемость).",
-      en: "The work start is marked by a button, the first call or message (Admin → Attendance).",
+      uz: "Har bir tabda «Sozlash»: normalar va chegaralar, jarima qoidalari, KPI maqsadlari, reja bo'laklari va tabriklar.",
+      ru: "В каждой вкладке «Настройка»: нормы и границы, правила штрафов, цели KPI, части плана и поздравления.",
+      en: "Each tab has «Settings»: norms and limits, fine rules, KPI targets, plan parts and celebrations.",
     },
     act: {
-      uz: "Tablarni almashtiring, kechikkanlarni ko'ring, normativ va jarima qoidalarini ⚙️ orqali sozlang.",
-      ru: "Переключайте вкладки, смотрите опоздавших, правила нормативов и штрафов — через ⚙️.",
-      en: "Switch tabs, see who is late, set targets and fine rules from ⚙️.",
+      uz: "Rejani bo'laklarga bo'ling — har bo'lak bajarilganda jamoa ekranida tabrik chiqadi.",
+      ru: "Разбейте план на части — за каждую часть команда увидит поздравление.",
+      en: "Cut the plan into parts — each part reached greets the team on screen.",
     },
   },
   "nav:/content-library": {
@@ -1481,44 +1481,6 @@ export const TIPS: Record<string, Tip> = {
       uz: "Sotuvlar ÷ lidlar × 100%.",
       ru: "Продажи ÷ лиды × 100%.",
       en: "Sales ÷ leads × 100%.",
-    },
-  },
-  "attendance.fig.came": {
-    what: {
-      uz: "Bugun ishga kelgan xodimlar, ko'rinadigan jamoadan.",
-      ru: "Сотрудники, пришедшие сегодня на работу, из видимой команды.",
-      en: "People who started work today, out of the team you can see.",
-    },
-    calc: {
-      uz: "Bugun ish boshlagani (tugma, Telegram joylashuvi, birinchi qo'ng'iroq yoki xabar) belgilanganlar / jami xodimlar.",
-      ru: "Отметившие начало дня (кнопка, геолокация в Telegram, первый звонок или сообщение) / все сотрудники.",
-      en: "Those with a start today (button, Telegram location, first call or message) / all people.",
-    },
-  },
-  "attendance.fig.late": {
-    what: {
-      uz: "Bugun smena boshlanishidan kech kelganlar.",
-      ru: "Пришедшие сегодня позже начала смены.",
-      en: "People who started after their shift began today.",
-    },
-    act: {
-      uz: "Kechikkanning sababi \"Izoh\" ustunida — so'rang yoki jarima qo'ying.",
-      ru: "Причина опоздания — в столбце «Комментарий»: уточните или назначьте штраф.",
-      en: "The reason is in the Comment column — ask, or add a fine.",
-    },
-  },
-  "attendance.fig.absent": {
-    what: {
-      uz: "Bugun ish kuni bo'lsa ham hali kelmaganlar.",
-      ru: "Не пришедшие сегодня, хотя день рабочий.",
-      en: "People who have not started although today is a working day.",
-    },
-  },
-  "attendance.fig.telegram": {
-    what: {
-      uz: "Kelganini Telegram botga joylashuv yuborib belgilaganlar.",
-      ru: "Отметившие приход геолокацией в Telegram-боте.",
-      en: "People who checked in by sending their location to the Telegram bot.",
     },
   },
   "normatives.onTrack": {

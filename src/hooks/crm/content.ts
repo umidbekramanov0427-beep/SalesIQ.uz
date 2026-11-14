@@ -33,8 +33,6 @@ export const AUDIT_ENTITY_TYPES = [
   "pipeline_stages",
   "profiles",
   "amocrm_calls",
-  "work_sessions",
-  "call_logs",
 ] as const;
 
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];

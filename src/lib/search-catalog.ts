@@ -33,7 +33,7 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     minRole: "rop",
   },
   {
-    to: "/admin/attendance",
+    to: "/admin/work-hours",
     labelKey: "settings.nav.workSchedule",
     keywords: "ish vaqti jadval smena schedule shift график работы смена",
     minRole: "super_admin",

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
-  Clock3,
   MapPin,
   MessagesSquare,
   Moon,
@@ -332,15 +331,6 @@ function PersonCard({ p, now }: { p: OnlinePerson; now: number }) {
           )}
         </div>
       </div>
-      {p.clockIn ? (
-        <span className="flex shrink-0 flex-col items-end text-right" title={t("team.workedSince")}>
-          <span className="inline-flex items-center gap-1 rounded-md bg-sky-500/10 px-1.5 py-0.5 text-[11.5px] font-semibold text-sky-700 dark:text-sky-300">
-            <Clock3 className="h-3 w-3" />
-            {clock(p.clockIn)}
-          </span>
-          <span className="mt-0.5 text-[11px] text-subtle">{t("team.atWork")}</span>
-        </span>
-      ) : null}
     </li>
   );
 }

@@ -60,3 +60,35 @@ export function planProgress(
   const status: PlanStatus = fact >= target ? "done" : forecastPct >= 100 ? "on_track" : "behind";
   return { pct, forecast, forecastPct, perDayNeeded, daysLeft, status };
 }
+
+const UZ_MONTHS = [
+  "Yanvar",
+  "Fevral",
+  "Mart",
+  "Aprel",
+  "May",
+  "Iyun",
+  "Iyul",
+  "Avgust",
+  "Sentabr",
+  "Oktabr",
+  "Noyabr",
+  "Dekabr",
+];
+
+/** "Noyabr 2026" -- written out for Uzbek, where browsers have no month names. */
+export function monthTitle(month: string, lang: string): string {
+  const d = new Date(`${month}T00:00:00`);
+  if (lang === "uz") return `${UZ_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  return d.toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** dd.mm.yyyy */
+export function dayText(iso: string): string {
+  const d = new Date(iso);
+  const two = (n: number) => String(n).padStart(2, "0");
+  return `${two(d.getDate())}.${two(d.getMonth() + 1)}.${d.getFullYear()}`;
+}

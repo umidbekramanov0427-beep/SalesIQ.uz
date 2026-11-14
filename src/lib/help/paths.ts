@@ -22,7 +22,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/admin/backup", "permissions"],
   ["/admin/phone-format", "phone-format"],
   ["/admin/reply-rules", "reply-rules"],
-  ["/admin/attendance", "attendance"],
+  ["/admin/work-hours", "attendance"],
   ["/reminders", "reminders"],
   ["/refunds", "refunds"],
   ["/marketing", "marketing"],

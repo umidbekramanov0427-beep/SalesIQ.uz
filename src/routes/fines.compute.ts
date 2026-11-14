@@ -32,6 +32,7 @@
 //     the LOST rule -- only the "no reason at all" half is checked here.
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { parseControlSettings } from "@/lib/control-settings";
 
 function tashkentToday(): { dateStr: string; startIso: string; endIso: string } {
   const now = new Date();
@@ -45,6 +46,8 @@ function tashkentToday(): { dateStr: string; startIso: string; endIso: string } 
 type FineTypeRow = {
   id: string;
   name: string;
+  rule_key?: string | null;
+  auto?: boolean | null;
   default_amount: number | null;
   target_positions: string[] | null;
 };
@@ -93,6 +96,21 @@ async function insertIfNew(
     .eq("source", "ai")
     .maybeSingle();
   if (existing) return false;
+  const rules = orgFineRules.get(organizationId) ?? parseControlSettings(null).fines;
+  // Nazorat → Jarimalar → Sozlash: at most this much per person per month.
+  if (rules.monthlyCap) {
+    const monthStart = `${dateStr.slice(0, 7)}-01`;
+    const { data: month } = await supabaseAdmin
+      .from("fines")
+      .select("amount")
+      .eq("organization_id", organizationId)
+      .eq("profile_id", profileId)
+      .gte("occurred_on", monthStart)
+      .lte("occurred_on", dateStr);
+    const sum = (month ?? []).reduce((a, r) => a + Number(r.amount), 0);
+    if (sum >= rules.monthlyCap) return false;
+    amount = Math.min(amount, rules.monthlyCap - sum);
+  }
   const { error } = await supabaseAdmin.from("fines").insert({
     organization_id: organizationId,
     profile_id: profileId,
@@ -102,8 +120,27 @@ async function insertIfNew(
     reason,
     source: "ai",
   });
+  if (!error && rules.notifyPerson) {
+    await supabaseAdmin
+      .from("notifications")
+      .insert({
+        organization_id: organizationId,
+        user_id: profileId,
+        type: "Fine",
+        title: "Jarima yozildi",
+        body: reason,
+        link: "/attendance?tab=jarimalar",
+      })
+      .then(
+        () => undefined,
+        () => undefined,
+      );
+  }
   return !error;
 }
+
+/** Each company's fine rules for this run (Nazorat → Jarimalar → Sozlash). */
+const orgFineRules = new Map<string, ReturnType<typeof parseControlSettings>["fines"]>();
 
 async function checkUnworkedNewLeads(
   organizationId: string,
@@ -318,17 +355,34 @@ export const Route = createFileRoute("/fines/compute")({
 
         const { dateStr, startIso, endIso } = tashkentToday();
 
+        // select("*"): before the Nazorat settings update there is no
+        // rule_key / auto yet -- then the type's name is its rule.
         const { data: fineTypes } = await supabaseAdmin
           .from("fine_types")
-          .select("id, organization_id, name, default_amount, target_positions")
+          .select("*")
           .not("default_amount", "is", null)
           .returns<(FineTypeRow & { organization_id: string })[]>();
+
+        const orgIds = [...new Set((fineTypes ?? []).map((f) => f.organization_id))];
+        orgFineRules.clear();
+        if (orgIds.length) {
+          const { data: settings } = await supabaseAdmin
+            .from("org_general_settings")
+            .select("*")
+            .in("organization_id", orgIds);
+          for (const row of settings ?? []) {
+            const raw = (row as { control_settings?: unknown }).control_settings;
+            orgFineRules.set(row.organization_id, parseControlSettings(raw).fines);
+          }
+        }
 
         let typesChecked = 0;
         let finesCreated = 0;
 
         for (const fineType of fineTypes ?? []) {
-          const check = RULE_CHECKS[fineType.name];
+          if (orgFineRules.get(fineType.organization_id)?.auto === false) continue;
+          if (fineType.auto === false) continue;
+          const check = RULE_CHECKS[fineType.rule_key ?? fineType.name];
           if (!check) continue;
           try {
             let eligibleProfileIds: Set<string> | null = null;

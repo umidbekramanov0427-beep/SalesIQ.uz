@@ -136,7 +136,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: MANAGERS,
   },
   {
-    label: "Attendance & Quotas",
+    label: "Control",
     to: "/attendance",
     tone: "sky",
     icon: Gauge,

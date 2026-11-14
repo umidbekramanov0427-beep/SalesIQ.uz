@@ -7,9 +7,8 @@ import type { Json } from "@/integrations/supabase/types";
 import { phoneKey } from "@/lib/phone-key";
 
 // Every table with a plain `lead_id` column that should follow the merged
-// lead rather than vanish with it. call_logs/deals aren't wired into any UI
-// yet, but repointing them too costs nothing and keeps this list correct if
-// they ever are.
+// lead rather than vanish with it. deals isn't wired into any UI yet, but
+// repointing it too costs nothing and keeps this list correct if it ever is.
 const LEAD_ID_TABLES = [
   "lead_activities",
   "tasks",
@@ -17,7 +16,6 @@ const LEAD_ID_TABLES = [
   "sms_log",
   "amocrm_calls",
   "training_recommendations",
-  "call_logs",
   "deals",
 ] as const;
 

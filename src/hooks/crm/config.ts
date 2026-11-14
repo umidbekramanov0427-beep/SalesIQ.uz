@@ -11,7 +11,6 @@ import {
   RESOURCE_PAGE_SIZE,
   amocrmCallsResource,
   callCategoriesResource,
-  callLogsResource,
   callSkillsResource,
   callStageStepsResource,
   callStagesResource,
@@ -33,7 +32,6 @@ import {
   settingListsResource,
   stageRulesResource,
   stagesResource,
-  workSessionsResource,
 } from "./core";
 import type {
   AmoCrmCallRow,
@@ -542,17 +540,6 @@ export function useSetManagerReportTemplate() {
   });
 }
 
-export const useWorkSessionsRaw = (opts?: Parameters<typeof workSessionsResource.useList>[0]) =>
-  workSessionsResource.useList({ orderBy: "clock_in", ascending: false, ...opts });
-
-export const useCreateWorkSession = workSessionsResource.useCreate;
-
-export const useUpdateWorkSession = workSessionsResource.useUpdate;
-
-export const useCallLogsRaw = (opts?: Parameters<typeof callLogsResource.useList>[0]) =>
-  callLogsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
-
-export const useCreateCallLog = callLogsResource.useCreate;
 
 // Every call in the org, WITHOUT transcript / analysis / intake answers:
 // dashboards and reports only count and group calls, and those three columns
@@ -601,9 +588,7 @@ export function useLeadAmoCalls(leadId: string | null | undefined) {
 }
 
 // Org-wide, unlike usePbxCalls below (which is scoped to one lead/contact)
-// -- needed so useAttendanceView can find each rep's own calls across every
-// lead/contact they've called, the same way it already does for
-// amocrm_calls.
+// -- each rep's own calls across every lead/contact they've called.
 export const usePbxCallsRaw = (opts?: Parameters<typeof pbxCallsResource.useList>[0]) =>
   pbxCallsResource.useList({ orderBy: "created_at", ascending: false, ...opts });
 

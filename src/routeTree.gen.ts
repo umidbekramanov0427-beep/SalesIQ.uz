@@ -66,7 +66,6 @@ import { Route as AdminAmocrmImportSettingsRouteImport } from './routes/admin.am
 import { Route as AdminAmocrmWriteBackRouteImport } from './routes/admin.amocrm-write-back'
 import { Route as AdminApiRouteImport } from './routes/admin.api'
 import { Route as AdminApiKeysRouteImport } from './routes/admin.api-keys'
-import { Route as AdminAttendanceRouteImport } from './routes/admin.attendance'
 import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-responders'
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminBackupRouteImport } from './routes/admin.backup'
@@ -104,6 +103,7 @@ import { Route as AdminTaskControlRouteImport } from './routes/admin.task-contro
 import { Route as AdminTelephonyRouteImport } from './routes/admin.telephony'
 import { Route as AdminTrashRouteImport } from './routes/admin.trash'
 import { Route as AdminWebFormsRouteImport } from './routes/admin.web-forms'
+import { Route as AdminWorkHoursRouteImport } from './routes/admin.work-hours'
 import { Route as AiAssistantChatRouteImport } from './routes/ai-assistant.chat'
 import { Route as AnalyticsDataRouteImport } from './routes/analytics.data'
 import { Route as AnalyticsEventsRouteImport } from './routes/analytics.events'
@@ -612,11 +612,6 @@ const AdminApiKeysRoute = AdminApiKeysRouteImport.update({
   path: '/api-keys',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminAutoRespondersRoute = AdminAutoRespondersRouteImport.update({
   id: '/auto-responders',
   path: '/auto-responders',
@@ -802,6 +797,11 @@ const AdminTrashRoute = AdminTrashRouteImport.update({
 const AdminWebFormsRoute = AdminWebFormsRouteImport.update({
   id: '/web-forms',
   path: '/web-forms',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminWorkHoursRoute = AdminWorkHoursRouteImport.update({
+  id: '/work-hours',
+  path: '/work-hours',
   getParentRoute: () => AdminRoute,
 } as any)
 const AiAssistantChatRoute = AiAssistantChatRouteImport.update({
@@ -2019,7 +2019,6 @@ export interface FileRoutesByFullPath {
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/api-keys': typeof AdminApiKeysRoute
-  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/backup': typeof AdminBackupRoute
@@ -2057,6 +2056,7 @@ export interface FileRoutesByFullPath {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
+  '/admin/work-hours': typeof AdminWorkHoursRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/analytics/data': typeof AnalyticsDataRoute
   '/analytics/events': typeof AnalyticsEventsRoute
@@ -2335,7 +2335,6 @@ export interface FileRoutesByTo {
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/api-keys': typeof AdminApiKeysRoute
-  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/backup': typeof AdminBackupRoute
@@ -2373,6 +2372,7 @@ export interface FileRoutesByTo {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
+  '/admin/work-hours': typeof AdminWorkHoursRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/analytics/data': typeof AnalyticsDataRoute
   '/analytics/events': typeof AnalyticsEventsRoute
@@ -2652,7 +2652,6 @@ export interface FileRoutesById {
   '/admin/amocrm-write-back': typeof AdminAmocrmWriteBackRoute
   '/admin/api': typeof AdminApiRoute
   '/admin/api-keys': typeof AdminApiKeysRoute
-  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/auto-responders': typeof AdminAutoRespondersRoute
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/backup': typeof AdminBackupRoute
@@ -2690,6 +2689,7 @@ export interface FileRoutesById {
   '/admin/telephony': typeof AdminTelephonyRoute
   '/admin/trash': typeof AdminTrashRoute
   '/admin/web-forms': typeof AdminWebFormsRoute
+  '/admin/work-hours': typeof AdminWorkHoursRoute
   '/ai-assistant/chat': typeof AiAssistantChatRoute
   '/analytics/data': typeof AnalyticsDataRoute
   '/analytics/events': typeof AnalyticsEventsRoute
@@ -2970,7 +2970,6 @@ export interface FileRouteTypes {
     | '/admin/amocrm-write-back'
     | '/admin/api'
     | '/admin/api-keys'
-    | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/backup'
@@ -3008,6 +3007,7 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/trash'
     | '/admin/web-forms'
+    | '/admin/work-hours'
     | '/ai-assistant/chat'
     | '/analytics/data'
     | '/analytics/events'
@@ -3286,7 +3286,6 @@ export interface FileRouteTypes {
     | '/admin/amocrm-write-back'
     | '/admin/api'
     | '/admin/api-keys'
-    | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/backup'
@@ -3324,6 +3323,7 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/trash'
     | '/admin/web-forms'
+    | '/admin/work-hours'
     | '/ai-assistant/chat'
     | '/analytics/data'
     | '/analytics/events'
@@ -3602,7 +3602,6 @@ export interface FileRouteTypes {
     | '/admin/amocrm-write-back'
     | '/admin/api'
     | '/admin/api-keys'
-    | '/admin/attendance'
     | '/admin/auto-responders'
     | '/admin/automations'
     | '/admin/backup'
@@ -3640,6 +3639,7 @@ export interface FileRouteTypes {
     | '/admin/telephony'
     | '/admin/trash'
     | '/admin/web-forms'
+    | '/admin/work-hours'
     | '/ai-assistant/chat'
     | '/analytics/data'
     | '/analytics/events'
@@ -4467,13 +4467,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApiKeysRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/attendance': {
-      id: '/admin/attendance'
-      path: '/attendance'
-      fullPath: '/admin/attendance'
-      preLoaderRoute: typeof AdminAttendanceRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/auto-responders': {
       id: '/admin/auto-responders'
       path: '/auto-responders'
@@ -4731,6 +4724,13 @@ declare module '@tanstack/react-router' {
       path: '/web-forms'
       fullPath: '/admin/web-forms'
       preLoaderRoute: typeof AdminWebFormsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/work-hours': {
+      id: '/admin/work-hours'
+      path: '/work-hours'
+      fullPath: '/admin/work-hours'
+      preLoaderRoute: typeof AdminWorkHoursRouteImport
       parentRoute: typeof AdminRoute
     }
     '/ai-assistant/chat': {
@@ -6291,7 +6291,6 @@ interface AdminRouteChildren {
   AdminAmocrmWriteBackRoute: typeof AdminAmocrmWriteBackRoute
   AdminApiRoute: typeof AdminApiRoute
   AdminApiKeysRoute: typeof AdminApiKeysRoute
-  AdminAttendanceRoute: typeof AdminAttendanceRoute
   AdminAutoRespondersRoute: typeof AdminAutoRespondersRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminBackupRoute: typeof AdminBackupRoute
@@ -6329,6 +6328,7 @@ interface AdminRouteChildren {
   AdminTelephonyRoute: typeof AdminTelephonyRoute
   AdminTrashRoute: typeof AdminTrashRoute
   AdminWebFormsRoute: typeof AdminWebFormsRoute
+  AdminWorkHoursRoute: typeof AdminWorkHoursRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -6341,7 +6341,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAmocrmWriteBackRoute: AdminAmocrmWriteBackRoute,
   AdminApiRoute: AdminApiRoute,
   AdminApiKeysRoute: AdminApiKeysRoute,
-  AdminAttendanceRoute: AdminAttendanceRoute,
   AdminAutoRespondersRoute: AdminAutoRespondersRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminBackupRoute: AdminBackupRoute,
@@ -6379,6 +6378,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTelephonyRoute: AdminTelephonyRoute,
   AdminTrashRoute: AdminTrashRoute,
   AdminWebFormsRoute: AdminWebFormsRoute,
+  AdminWorkHoursRoute: AdminWorkHoursRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

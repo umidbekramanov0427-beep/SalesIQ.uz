@@ -248,10 +248,6 @@ export const notificationsResource = makeResource("notifications", ["notificatio
 
 export const leadActivitiesResource = makeResource("lead_activities", ["lead_activities"]);
 
-export const workSessionsResource = makeResource("work_sessions", ["work_sessions"]);
-
-export const callLogsResource = makeResource("call_logs", ["call_logs"]);
-
 export const amocrmCallsResource = makeResource("amocrm_calls", ["amocrm_calls"]);
 
 export const pbxCallsResource = makeResource("pbx_calls", ["pbx_calls"]);

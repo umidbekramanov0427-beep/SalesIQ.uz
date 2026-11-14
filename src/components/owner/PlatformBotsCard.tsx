@@ -43,7 +43,7 @@ const META: Record<Kind, { icon: LucideIcon; tile: string; roles: string[] }> = 
   staff: {
     icon: Briefcase,
     tile: "bg-violet-500/12 text-violet-700 dark:text-violet-300",
-    roles: ["attendance", "tasks", "reports", "codes"],
+    roles: ["tasks", "reports", "codes"],
   },
   ops: {
     icon: ShieldCheck,

@@ -1909,7 +1909,7 @@ function SettingsPage() {
             {section === "general" && <GeneralSection />}
             {/* Each lives in one place: working hours are the shifts in
                 Admin -> Davomat, the subscription is the Billing page. */}
-            {sectionParam === "workSchedule" && <Navigate to="/admin/attendance" replace />}
+            {sectionParam === "workSchedule" && <Navigate to="/admin/work-hours" replace />}
             {section === "billing" && <Navigate to="/billing" replace />}
             {/* AI -> amoCRM moved to the amoCRM integration page. */}
             {section === "amocrm" && (

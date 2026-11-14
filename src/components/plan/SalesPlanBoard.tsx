@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight, Loader2, Pencil, Target, TrendingUp } from "
 import { toast } from "sonner";
 import { SectionCard } from "@/components/layout/Primitives";
 import { StagePlanGrid } from "@/components/plan/StagePlanGrid";
+import { useFunnelPlanRows } from "@/components/control/PlanSettings";
+import { partsReached } from "@/lib/control-settings";
 import {
   useProfilesRaw,
   useSalesPlanFacts,
@@ -50,8 +52,10 @@ export function SalesPlanBoard() {
         .map((p) => ({ id: p.id, name: p.full_name || p.email || "—" })),
     [profiles],
   );
+  // The company's and each manager's plans (a funnel's own plans are below).
   const planOf = (id: string | null) =>
-    (plans.data ?? []).find((p) => (p.profile_id ?? null) === id) ?? null;
+    (plans.data ?? []).find((p) => (p.profile_id ?? null) === id && !p.pipeline_id) ?? null;
+  const funnelPlans = useFunnelPlanRows(month);
   const factOf = (id: string) =>
     (facts.data ?? []).find((f) => f.ownerId === id) ?? { deals: 0, revenue: 0 };
 
@@ -163,8 +167,42 @@ export function SalesPlanBoard() {
               <p className="text-sm text-muted-foreground">
                 {t("plan.deals", { fact: teamFact.deals, plan: teamDeals || "—" })}
               </p>
+              {teamTarget > 0 && (
+                <PartsTrack
+                  parts={teamPlan?.parts ?? 4}
+                  reached={partsReached(teamFact.revenue, teamTarget, teamPlan?.parts ?? 4)}
+                  pct={teamTarget ? (teamFact.revenue / teamTarget) * 100 : 0}
+                />
+              )}
             </div>
           </section>
+
+          {funnelPlans.length > 0 && (
+            <SectionCard
+              icon={Target}
+              tone="violet"
+              title={t("ctl.plan.funnelPlans")}
+              description={t("ctl.plan.funnelPlansDesc")}
+            >
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {funnelPlans.map((f) => (
+                  <div key={f.plan.id} className="rounded-2xl border border-border bg-card p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-[14px] font-semibold text-foreground">{f.name}</p>
+                      <span className="text-[13px] font-bold tabular-nums text-foreground">
+                        {String(f.pct).replace(".", ",")}%
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[12.5px] tabular-nums text-muted-foreground">
+                      {f.byAmount ? format(f.done) : f.done} /{" "}
+                      {f.byAmount ? format(f.target) : f.target}
+                    </p>
+                    <PartsTrack parts={f.plan.parts ?? 4} reached={f.reached} pct={f.pct} />
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          )}
 
           <StagePlanGrid month={month} canEdit={canEdit} />
 
@@ -455,5 +493,33 @@ function PlanEditor({
         {t("common.cancel")}
       </button>
     </span>
+  );
+}
+
+/** The plan cut into parts: a bar with a mark at each checkpoint, reached ones lit. */
+function PartsTrack({ parts, reached, pct }: { parts: number; reached: number; pct: number }) {
+  const { t } = useI18n();
+  return (
+    <div className="mt-3">
+      <div className="relative h-2.5 rounded-full bg-muted">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-500 to-emerald-500 transition-[width] duration-700"
+          style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+        />
+        {Array.from({ length: parts }, (_, i) => (
+          <span
+            key={i}
+            className={cn(
+              "absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2",
+              i < reached ? "border-emerald-500 bg-emerald-500" : "border-border bg-card",
+            )}
+            style={{ left: `${((i + 1) / parts) * 100}%` }}
+          />
+        ))}
+      </div>
+      <p className="mt-2 text-[12px] text-muted-foreground">
+        {t("ctl.plan.partsDone", { n: reached, of: parts })}
+      </p>
+    </div>
   );
 }

@@ -1,23 +1,45 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { PartyPopper, Rocket, X } from "lucide-react";
+import { PartyPopper, Rocket, Sparkles, Trophy, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useOrgGeneralSettings } from "@/hooks/use-crm-data";
+import { useControlSettings, useOrgGeneralSettings } from "@/hooks/use-crm-data";
+import type { CelebrationStyle } from "@/lib/control-settings";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { sceneFor, type BoostTexts } from "@/lib/morning-boost";
 
-// Two team moments from Voronka sozlamalari → Qo'shimcha sozlamalar:
-//  - Sotuv bayrami: a lead reaching the funnel's celebration stage for the
-//    first time puts confetti and the seller's name on everyone's screen
-//    (~5 s). The database writes a 'SaleCelebrate' notification per person;
-//    LiveNotifications turns it into the "salesiq:celebrate" event.
+// Team moments:
+//  - Celebrations: a lead reaching the funnel's celebration stage
+//    («Sotuv bayrami», Voronka sozlamalari), a part of a plan reached, the
+//    whole plan, a personal plan and the day's first sale (Nazorat → Reja va
+//    fakt → Sozlash) put an effect -- confetti, fireworks, a rocket, a
+//    trophy or balloons -- and the words on everyone's screen. The database
+//    writes 'SaleCelebrate' / 'TeamCelebrate' notifications per person;
+//    LiveNotifications turns them into the "salesiq:celebrate" event.
 //  - Ertalabki zaryad: once a day, the first time a manager or head opens
 //    the app, a motivation screen -- a greeting by name, why the work
 //    matters, yesterday's result and today's goal.
 
 export const CELEBRATE_EVENT = "salesiq:celebrate";
-export type CelebrateDetail = { seller: string; lead: string };
+
+/**
+ * One celebration on everyone's screen. `kind`: a sale (the funnel's
+ * «Sotuv bayrami»), a part of a plan, the whole plan, a personal plan, the
+ * day's first sale, or a preview from the settings. `style` falls back to
+ * the company's choice for that kind.
+ */
+export type CelebrateDetail = {
+  kind?: "sale" | "part" | "done" | "personal" | "first" | "preview";
+  style?: CelebrationStyle | null;
+  /** The big line: the seller's name, or the celebration text. */
+  seller: string;
+  /** The line under it: the lead, or the plan's figures. */
+  lead: string;
+  /** How much of the plan is done (draws the ring). */
+  pct?: number | null;
+  /** Shows the effect even when a preview of another style is wanted. */
+  seconds?: number;
+};
 
 export function celebrate(detail: CelebrateDetail) {
   window.dispatchEvent(new CustomEvent<CelebrateDetail>(CELEBRATE_EVENT, { detail }));
@@ -64,7 +86,229 @@ function Confetti({ count = 90 }: { count?: number }) {
   );
 }
 
-export function SaleCelebrationOverlay({
+/** Firework bursts: rings of sparks opening one after another. */
+function Fireworks() {
+  const bursts = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => ({
+        x: 12 + Math.random() * 76,
+        y: 12 + Math.random() * 45,
+        size: 160 + Math.random() * 140,
+        delay: i * 0.38,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length]!,
+      })),
+    [],
+  );
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {bursts.map((b, i) => (
+        <span
+          key={i}
+          className="cel-burst absolute block rounded-full"
+          style={{
+            left: `${b.x}%`,
+            top: `${b.y}%`,
+            width: b.size,
+            height: b.size,
+            animationDelay: `${b.delay}s`,
+            background: `radial-gradient(circle, transparent 38%, ${b.color} 40%, transparent 42%), repeating-conic-gradient(${b.color} 0deg 3deg, transparent 3deg 18deg)`,
+            WebkitMaskImage:
+              "radial-gradient(circle, transparent 30%, #000 31%, #000 50%, transparent 51%)",
+            maskImage:
+              "radial-gradient(circle, transparent 30%, #000 31%, #000 50%, transparent 51%)",
+          }}
+        />
+      ))}
+      <Confetti count={40} />
+    </div>
+  );
+}
+
+/** A rocket taking off through the stars. */
+function RocketLaunch() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {Array.from({ length: 50 }, (_, i) => (
+        <span
+          key={i}
+          className="cel-twinkle absolute h-[3px] w-[3px] rounded-full bg-white"
+          style={{
+            left: `${(i * 37) % 100}%`,
+            top: `${(i * 53) % 100}%`,
+            animationDelay: `${(i % 9) * 0.2}s`,
+          }}
+        />
+      ))}
+      <div className="cel-rocket absolute bottom-[-90px] left-1/2">
+        <Rocket className="h-24 w-24 text-white drop-shadow-[0_0_24px_rgba(255,190,90,0.9)]" />
+        <span className="cel-trail absolute left-2 top-16 block h-8 w-8 rounded-full bg-[radial-gradient(circle,#fff3b0,#ff9a3c_55%,transparent_70%)]" />
+      </div>
+    </div>
+  );
+}
+
+/** A big trophy in a turning crown of light, with sparkles. */
+function TrophyGlow() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <span
+        className="cel-rays absolute left-1/2 top-1/2 block h-[150vmax] w-[150vmax] opacity-40"
+        style={{
+          background:
+            "repeating-conic-gradient(rgba(255,214,102,0.35) 0deg 6deg, transparent 6deg 18deg)",
+        }}
+      />
+      {Array.from({ length: 26 }, (_, i) => (
+        <Sparkles
+          key={i}
+          className="cel-twinkle absolute h-5 w-5 text-amber-200"
+          style={{
+            left: `${(i * 41) % 100}%`,
+            top: `${(i * 29) % 100}%`,
+            animationDelay: `${(i % 7) * 0.25}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+const BALLOON_COLORS = ["#3b82f6", "#f43f5e", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899"];
+
+/** Balloons floating up from the bottom of the screen. */
+function Balloons() {
+  const list = useMemo(
+    () =>
+      Array.from({ length: 22 }, (_, i) => ({
+        left: Math.random() * 96,
+        delay: Math.random() * 1.6,
+        duration: 4.5 + Math.random() * 2.5,
+        size: 46 + Math.random() * 30,
+        sway: (Math.random() - 0.5) * 80,
+        color: BALLOON_COLORS[i % BALLOON_COLORS.length]!,
+      })),
+    [],
+  );
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {list.map((b, i) => (
+        <span
+          key={i}
+          className="cel-balloon absolute bottom-[-140px] block"
+          style={
+            {
+              left: `${b.left}%`,
+              animationDelay: `${b.delay}s`,
+              animationDuration: `${b.duration}s`,
+              "--sway": `${b.sway}px`,
+            } as CSSProperties
+          }
+        >
+          <span
+            className="block rounded-[50%]"
+            style={{
+              width: b.size,
+              height: b.size * 1.2,
+              background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.65), ${b.color} 38%)`,
+            }}
+          />
+          <span className="mx-auto block h-14 w-px bg-white/50" />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Effect({ style }: { style: CelebrationStyle }) {
+  if (style === "fireworks") return <Fireworks />;
+  if (style === "rocket") return <RocketLaunch />;
+  if (style === "trophy") return <TrophyGlow />;
+  if (style === "balloons") return <Balloons />;
+  return <Confetti />;
+}
+
+const STYLE_ICON: Record<CelebrationStyle, typeof PartyPopper> = {
+  confetti: PartyPopper,
+  fireworks: Sparkles,
+  rocket: Rocket,
+  trophy: Trophy,
+  balloons: PartyPopper,
+};
+
+/** A short rising chime (Web Audio, no file). */
+function playChime() {
+  try {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.value = f;
+      const at = ctx.currentTime + i * 0.12;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(0.18, at + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+      o.connect(g).connect(ctx.destination);
+      o.start(at);
+      o.stop(at + 0.55);
+    });
+    window.setTimeout(() => void ctx.close(), 1500);
+  } catch {
+    // no sound is fine
+  }
+}
+
+/** The plan ring: fills from 0 to `pct`. */
+function PctRing({ pct }: { pct: number }) {
+  const r = 46;
+  const c = 2 * Math.PI * r;
+  const shown = Math.min(100, Math.max(0, pct));
+  return (
+    <div className="relative mx-auto grid h-[116px] w-[116px] place-items-center">
+      <svg viewBox="0 0 110 110" className="absolute inset-0 -rotate-90">
+        <circle cx="55" cy="55" r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="9" />
+        <circle
+          cx="55"
+          cy="55"
+          r={r}
+          fill="none"
+          stroke="url(#cel-ring-grad)"
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          className="cel-ring"
+          style={
+            {
+              strokeDashoffset: c - (c * shown) / 100,
+              "--ring-from": `${c}`,
+              "--ring-to": `${c - (c * shown) / 100}`,
+            } as CSSProperties
+          }
+        />
+        <defs>
+          <linearGradient id="cel-ring-grad" x1="0" x2="1">
+            <stop offset="0" stopColor="#fde68a" />
+            <stop offset="1" stopColor="#34d399" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <span
+        className={cn(
+          "font-display font-bold tabular-nums",
+          shown >= 100 ? "text-[24px]" : "text-[30px]",
+        )}
+      >
+        {Number.isInteger(shown) ? shown : shown.toFixed(1).replace(".", ",")}%
+      </span>
+    </div>
+  );
+}
+
+export function CelebrationOverlay({
   detail,
   onDone,
 }: {
@@ -72,24 +316,76 @@ export function SaleCelebrationOverlay({
   onDone: () => void;
 }) {
   const { t } = useI18n();
+  const settings = useControlSettings().celebrations;
+  const kind = detail.kind ?? "sale";
+  const style: CelebrationStyle =
+    detail.style ??
+    (kind === "sale"
+      ? settings.sale.style
+      : kind === "personal"
+        ? settings.personal.style
+        : kind === "first"
+          ? settings.firstSale.style
+          : settings.team.style);
+  const seconds = detail.seconds ?? settings.seconds;
+  const Icon = kind === "done" ? Trophy : STYLE_ICON[style];
   useEffect(() => {
-    const id = setTimeout(onDone, 5200);
+    if (settings.sound) playChime();
+    const id = setTimeout(onDone, seconds * 1000);
     return () => clearTimeout(id);
-  }, [onDone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per celebration
+  }, []);
+  const eyebrow =
+    kind === "sale"
+      ? t("moment.saleTitle")
+      : kind === "first"
+        ? t("moment.firstTitle")
+        : kind === "personal"
+          ? t("moment.personalTitle")
+          : kind === "done"
+            ? t("moment.doneTitle")
+            : kind === "preview"
+              ? t("moment.previewTitle")
+              : t("moment.partTitle");
+  const sceneBg =
+    style === "rocket" ? "bg-[#060b1f]/80" : style === "trophy" ? "bg-[#1a1203]/70" : "bg-black/40";
   return (
     <div
       role="status"
       onClick={onDone}
-      className="fixed inset-0 z-[200] grid place-items-center bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-300"
+      className={cn(
+        "fixed inset-0 z-[200] grid place-items-center backdrop-blur-[3px] animate-in fade-in duration-300",
+        sceneBg,
+      )}
     >
-      <Confetti />
-      <div className="celebrate-pop relative mx-4 max-w-md rounded-[20px] border border-white/15 bg-[#0e2330]/90 px-8 py-7 text-center text-white shadow-2xl">
-        <PartyPopper className="mx-auto h-12 w-12 text-amber-300" />
-        <p className="mt-3 text-[13px] font-semibold uppercase tracking-[0.14em] text-white/70">
-          {t("moment.saleTitle")}
+      <Effect style={style} />
+      <div className="celebrate-pop relative mx-4 w-full max-w-md overflow-hidden rounded-[24px] border border-white/15 bg-gradient-to-b from-[#13263a]/95 to-[#0b1724]/95 px-8 pb-6 pt-7 text-center text-white shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]">
+        <span
+          aria-hidden
+          className="cel-shine pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+        />
+        {detail.pct != null ? (
+          <PctRing pct={detail.pct} />
+        ) : (
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 shadow-[0_10px_30px_-8px_rgba(251,146,60,0.8)]">
+            <Icon className="h-9 w-9 text-white" />
+          </span>
+        )}
+        <p className="mt-4 text-[12.5px] font-semibold uppercase tracking-[0.16em] text-amber-200/90">
+          {eyebrow}
         </p>
-        <p className="mt-1 text-[28px] font-extrabold leading-tight">{detail.seller}</p>
-        {detail.lead && <p className="mt-1 truncate text-[14px] text-white/75">{detail.lead}</p>}
+        <p className="mt-1.5 text-balance text-[24px] font-extrabold leading-tight">
+          {detail.seller}
+        </p>
+        {detail.lead && (
+          <p className="mt-2 text-[14px] leading-snug text-white/75">{detail.lead}</p>
+        )}
+        <span className="mt-5 block h-1 overflow-hidden rounded-full bg-white/10">
+          <span
+            className="cel-drain block h-full rounded-full bg-gradient-to-r from-amber-300 to-emerald-400"
+            style={{ "--cel-seconds": `${seconds}s` } as CSSProperties}
+          />
+        </span>
       </div>
     </div>
   );
@@ -97,14 +393,22 @@ export function SaleCelebrationOverlay({
 
 /** Mounted once in AppShell: shows the celebration whenever the event fires. */
 export function SaleCelebrationHost() {
-  const [current, setCurrent] = useState<CelebrateDetail | null>(null);
+  const [queue, setQueue] = useState<CelebrateDetail[]>([]);
   useEffect(() => {
-    const on = (e: Event) => setCurrent((e as CustomEvent<CelebrateDetail>).detail);
+    const on = (e: Event) =>
+      setQueue((q) => [...q, (e as CustomEvent<CelebrateDetail>).detail].slice(-4));
     window.addEventListener(CELEBRATE_EVENT, on);
     return () => window.removeEventListener(CELEBRATE_EVENT, on);
   }, []);
+  const current = queue[0];
   if (!current) return null;
-  return <SaleCelebrationOverlay detail={current} onDone={() => setCurrent(null)} />;
+  return (
+    <CelebrationOverlay
+      key={`${current.kind}-${current.seller}-${queue.length}`}
+      detail={current}
+      onDone={() => setQueue((q) => q.slice(1))}
+    />
+  );
 }
 
 /* ------------------------------------------------------- morning boost */

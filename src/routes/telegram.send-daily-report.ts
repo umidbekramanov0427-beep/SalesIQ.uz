@@ -14,7 +14,6 @@ import { runLeadScoring } from "@/lib/lead-scoring.server";
 import { runRecurringPayments } from "@/lib/lead-payments/recurring.server";
 import { sendWeeklyOwnerReports } from "@/lib/weekly-report.server";
 import { runTrialNudges } from "@/lib/trial-nudges.server";
-import { sendAttendanceReminders, sendAttendanceReports } from "@/lib/attendance.server";
 import { refreshChannels } from "@/lib/marketing-live.server";
 import { runRefundReminders } from "@/lib/refunds.server";
 import { runCompanyBackupsDue, runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
@@ -68,14 +67,6 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // Monday 09:00: last week's numbers to each company's owners.
         await sendWeeklyOwnerReports().catch((err) =>
           console.error("[weekly-report] tick failed", err),
-        );
-        // Davomat: each company's evening attendance report (Admin -> Davomat qoidalari).
-        await sendAttendanceReports().catch((err) =>
-          console.error("[attendance] report tick failed", err),
-        );
-        // Davomat eslatmalari: before / while late / at the end of each shift.
-        await sendAttendanceReminders().catch((err) =>
-          console.error("[attendance] reminders tick failed", err),
         );
         // Pul qaytarish: deadline reminders to the manager and the admins.
         await runRefundReminders().catch((err) => console.error("[refunds] reminders failed", err));

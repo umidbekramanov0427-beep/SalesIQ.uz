@@ -6,43 +6,31 @@ import {
   AlertTriangle,
   Award,
   Bell,
+  BellRing,
   CheckCircle2,
   Clock,
   Coins,
+  Gauge,
   Loader2,
   Megaphone,
-  Phone,
-  PhoneOff,
-  PlayCircle,
   Plus,
   Sparkles,
-  StopCircle,
   Target,
   Trash2,
-  UserCheck,
-  UserX,
-  MapPin,
-  Send,
-  Globe,
-  Wallet,
-  PhoneCall,
-  ClipboardList,
-  Users,
   TrendingDown,
   TrendingUp,
-  BellRing,
-  MessageSquare,
-  MessageSquareText,
-  X,
+  Users,
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
 import { CardBoard, CardPlaceholder, type CardBoardItem } from "@/components/dashboard/HomeBoard";
 import { SalesPlanBoard } from "@/components/plan/SalesPlanBoard";
-import { PayrollBoard } from "@/components/payroll/PayrollBoard";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { PaneSwitch, type PaneMode } from "@/components/control/SettingsKit";
+import { NormativSettings } from "@/components/control/NormativSettings";
+import { FinesSettings } from "@/components/control/FinesSettings";
+import { KpiSettings, KPI_LABEL } from "@/components/control/KpiSettings";
+import { PlanSettings } from "@/components/control/PlanSettings";
+import { KPI_METRICS, type KpiMetric } from "@/lib/control-settings";
 import { DateRangeFilter, type DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
 import {
   Dialog,
@@ -58,45 +46,28 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/segmented";
 import {
-  useAddAttendanceNote,
   useAiAssistantChat,
-  useAttendanceNotes,
-  useAttendanceRules,
-  useDeleteAttendanceNote,
-  useAttendanceView,
-  useClockIn,
-  useClockOut,
   useCreateFine,
   useCreateFineType,
   useCreateNotification,
   useDeleteFineType,
   useFinesMatrix,
   useKpiView,
-  useLogCall,
-  useMyOpenSession,
   useNormativesView,
+  useControlSettings,
   usePublishFines,
-  type AttendanceNote,
-  type AttendanceRow,
   type FineTypeRow,
   type NormativeRow,
 } from "@/hooks/use-crm-data";
-import { hoursText } from "@/lib/attendance-rules";
-import { NOTE_KINDS, NOTE_MAX, type NoteKind } from "@/lib/attendance-notes";
 
-const TAB_KEYS = [
-  "davomat",
-  "normativ",
-  "jarimalar",
-  "kpi",
-  "oylik",
-  "reja",
-  "eslatmalar",
-] as const;
+const TAB_KEYS = ["normativ", "jarimalar", "kpi", "reja", "eslatmalar"] as const;
 
 export const Route = createFileRoute("/attendance")({
-  validateSearch: (search: Record<string, unknown>): { tab?: AttTab | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { tab?: AttTab | undefined; pane?: "settings" | undefined } => ({
     tab: TAB_KEYS.includes(search["tab"] as AttTab) ? (search["tab"] as AttTab) : undefined,
+    pane: search["pane"] === "settings" ? "settings" : undefined,
   }),
   head: () => ({
     meta: [
@@ -162,670 +133,11 @@ function fineHeaderClass(color: string): string {
   return FINE_COLOR_HEADER[isFineColorName(color) ? color : "slate"];
 }
 
-function formatTime(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
 const statusTone: Record<NormativeRow["status"], "success" | "warning" | "danger"> = {
   onTrack: "success",
   atRisk: "warning",
   behind: "danger",
 };
-
-function MyStatusCard() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const { session, isLoading } = useMyOpenSession();
-  const { rows: attRows } = useAttendanceView();
-  const clockIn = useClockIn();
-  const clockOut = useClockOut();
-  const attRules = useAttendanceRules();
-  const webOff = !attRules.methods.web;
-
-  // The platform detects "started work" itself the moment a rep's first
-  // call of the day comes in -- AmoCRM-synced or placed through this
-  // platform's own telephony (OnlinePBX/Sipuni/MoiZvonki) -- same signal
-  // useAttendanceView's roster already uses, so this card doesn't wait for
-  // anyone to press "Ishni boshlash". The manual button stays only as a
-  // fallback for a day with zero calls yet.
-  const autoClockIn = !session
-    ? (attRows.find((r) => r.profileId === user?.id)?.clockIn ?? null)
-    : null;
-  const started = !!session || !!autoClockIn;
-  const displayClockIn = session?.clock_in ?? autoClockIn;
-
-  async function onClockIn() {
-    try {
-      await clockIn.mutateAsync();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("attendance.clockInFailed"));
-    }
-  }
-
-  async function onClockOut() {
-    if (!session) return;
-    try {
-      await clockOut.mutateAsync(session.id);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("attendance.clockOutFailed"));
-    }
-  }
-
-  const busy = clockIn.isPending || clockOut.isPending || isLoading;
-
-  return (
-    <SectionCard
-      icon={UserCheck}
-      tone="emerald"
-      title={t("attendance.myStatus")}
-      info={t("attendance.myStatusInfo")}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-xl",
-              started ? "bg-success/15 text-success" : "bg-muted text-muted-foreground",
-            )}
-          >
-            {started ? <CheckCircle2 className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              {started ? t("attendance.sessionActive") : t("attendance.notStartedYet")}
-            </p>
-            {started && displayClockIn && (
-              <p className="text-xs text-subtle">
-                {t("attendance.clockIn")}: {formatTime(displayClockIn)}
-                {!session && (
-                  <span className="ml-1.5 text-primary">· {t("attendance.autoDetected")}</span>
-                )}
-              </p>
-            )}
-          </div>
-        </div>
-        {session ? (
-          <button
-            onClick={onClockOut}
-            disabled={busy}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-destructive px-4 text-sm font-semibold text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {clockOut.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <StopCircle className="h-4 w-4" />
-            )}
-            {t("attendance.clockOutAction")}
-          </button>
-        ) : autoClockIn ? (
-          <span className="inline-flex items-center gap-1.5 rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            {t("attendance.autoTracked")}
-          </span>
-        ) : webOff ? (
-          <span className="inline-flex max-w-[320px] items-center gap-2 rounded-xl bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-800 dark:text-sky-200">
-            <Send className="h-3.5 w-3.5 shrink-0" />
-            {t("attendance.useTelegram")}
-          </span>
-        ) : (
-          <button
-            onClick={onClockIn}
-            disabled={busy}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {clockIn.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <PlayCircle className="h-4 w-4" />
-            )}
-            {t("attendance.clockInAction")}
-          </button>
-        )}
-      </div>
-      <MyNoteBox lateMin={attRows.find((r) => r.profileId === user?.id)?.lateMin ?? 0} />
-    </SectionCard>
-  );
-}
-
-const KIND_STYLE: Record<NoteKind, string> = {
-  late: "bg-amber-500/12 text-amber-800 dark:text-amber-200",
-  absent: "bg-red-500/10 text-red-700 dark:text-red-300",
-  leave: "bg-violet-500/10 text-violet-800 dark:text-violet-200",
-  other: "bg-sky-500/10 text-sky-800 dark:text-sky-200",
-};
-
-function KindChip({ kind }: { kind: NoteKind }) {
-  const { t } = useI18n();
-  return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-md px-1.5 py-px text-[10.5px] font-bold uppercase tracking-wide",
-        KIND_STYLE[kind] ?? KIND_STYLE.other,
-      )}
-    >
-      {t(`attNote.kind.${kind}`)}
-    </span>
-  );
-}
-
-/** One comment: kind, text, where and when it was written. */
-function NoteLine({ note, onDelete }: { note: AttendanceNote; onDelete?: () => void }) {
-  const { t } = useI18n();
-  return (
-    <li className="flex items-start gap-2.5 py-2">
-      <span
-        className={cn(
-          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
-          note.source === "telegram"
-            ? "bg-sky-500/12 text-sky-700 dark:text-sky-300"
-            : "bg-violet-500/12 text-violet-700 dark:text-violet-300",
-        )}
-        title={t(note.source === "telegram" ? "attNote.fromTelegram" : "attNote.fromWeb")}
-      >
-        {note.source === "telegram" ? (
-          <Send className="h-3.5 w-3.5" />
-        ) : (
-          <Globe className="h-3.5 w-3.5" />
-        )}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <KindChip kind={note.kind} />
-          <span className="font-mono text-[11px] tabular-nums text-subtle">
-            {formatTime(note.created_at)} ·{" "}
-            {t(note.source === "telegram" ? "attNote.fromTelegram" : "attNote.fromWeb")}
-          </span>
-        </div>
-        <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-snug text-foreground">
-          {note.body}
-        </p>
-      </div>
-      {onDelete && (
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label={t("attNote.delete")}
-          className="mt-0.5 rounded-md p-1 text-subtle transition-colors hover:bg-destructive/10 hover:text-destructive"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      )}
-    </li>
-  );
-}
-
-/** "Izoh qoldirish": the person's own comment on today (also from the Telegram bot). */
-function MyNoteBox({ lateMin }: { lateMin: number }) {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const notes = useAttendanceNotes();
-  const add = useAddAttendanceNote();
-  const del = useDeleteAttendanceNote();
-  const [body, setBody] = useState("");
-  const [kind, setKind] = useState<NoteKind | null>(null);
-  if (notes.data === null || !user) return null; // database update not run yet
-  const mine = notes.data?.get(user.id) ?? [];
-  const chosen: NoteKind = kind ?? (lateMin > 0 ? "late" : "other");
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const text = body.trim();
-    if (!text) return;
-    try {
-      await add.mutateAsync({ body: text.slice(0, NOTE_MAX), kind: chosen });
-      setBody("");
-      setKind(null);
-      toast.success(t("attNote.saved"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("attNote.failed"));
-    }
-  }
-
-  return (
-    <div className="mt-5 border-t border-border/70 pt-4">
-      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
-          <MessageSquareText className="h-4 w-4 text-primary" />
-          {t("attNote.myTitle")}
-        </p>
-        <p className="flex items-center gap-1.5 text-[11.5px] text-subtle">
-          <Send className="h-3 w-3" />
-          {t("attNote.tgHint")}
-        </p>
-      </div>
-      <form onSubmit={onSubmit} className="space-y-2.5">
-        <div
-          role="tablist"
-          className="ctl-track inline-flex max-w-full gap-1 overflow-x-auto rounded-xl p-1"
-        >
-          {NOTE_KINDS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={chosen === k}
-              onClick={() => setKind(k)}
-              className="ctl-tab h-7 shrink-0 whitespace-nowrap rounded-lg px-2.5 text-[12px] font-semibold"
-            >
-              {t(`attNote.kind.${k}`)}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-end gap-2 phone:flex-col phone:items-stretch">
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            maxLength={NOTE_MAX}
-            rows={2}
-            placeholder={t(`attNote.placeholder.${chosen}`)}
-            className="min-h-[44px] flex-1 resize-none rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary/40"
-          />
-          <button
-            type="submit"
-            disabled={add.isPending || !body.trim()}
-            className="ctl-lit inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold disabled:opacity-50"
-          >
-            {add.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            {t("attNote.send")}
-          </button>
-        </div>
-      </form>
-      {mine.length > 0 && (
-        <ul className="mt-2 divide-y divide-border/60">
-          {mine.map((n) => (
-            <NoteLine key={n.id} note={n} onDelete={() => del.mutate(n.id)} />
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-/** The roster's "Izoh" cell: the latest comment, all of them on click. */
-function NoteCell({
-  notes,
-  row,
-  ready,
-}: {
-  notes: AttendanceNote[];
-  row: AttendanceRow;
-  ready: boolean;
-}) {
-  const { t } = useI18n();
-  if (!ready) return <span className="text-subtle">—</span>;
-  if (!notes.length) {
-    return row.lateMin > 0 || row.absent ? (
-      <span className="whitespace-nowrap text-[12px] italic text-subtle">
-        {t("attNote.noReason")}
-      </span>
-    ) : (
-      <span className="text-subtle">—</span>
-    );
-  }
-  const last = notes[notes.length - 1]!;
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="group -mx-2 flex w-[250px] items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
-        >
-          <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <span className="min-w-0">
-            <span className="line-clamp-2 text-[12.5px] leading-snug text-foreground">
-              {last.body}
-            </span>
-            <span className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-[11px] text-subtle">
-              <KindChip kind={last.kind} />
-              {last.source === "telegram" ? (
-                <Send className="h-3 w-3" />
-              ) : (
-                <Globe className="h-3 w-3" />
-              )}
-              {formatTime(last.created_at)}
-              {notes.length > 1 && (
-                <span className="font-semibold text-primary">+{notes.length - 1}</span>
-              )}
-            </span>
-          </span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-[340px] p-3">
-        <p className="text-[13px] font-semibold text-foreground">
-          {t("attNote.popTitle", { name: row.name })}
-        </p>
-        <ul className="mt-1 divide-y divide-border/60">
-          {notes.map((n) => (
-            <NoteLine key={n.id} note={n} />
-          ))}
-        </ul>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function LogCallCard() {
-  const { t } = useI18n();
-  const logCall = useLogCall();
-  const [phone, setPhone] = useState("");
-  const [minutes, setMinutes] = useState("2");
-  const [connected, setConnected] = useState(true);
-  const [busy, setBusy] = useState(false);
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      await logCall.mutateAsync({
-        phone: phone.trim(),
-        connected,
-        durationSeconds: Math.max(0, Math.round(Number(minutes) * 60)) || 0,
-      });
-      toast.success(t("attendance.callLogged"));
-      setPhone("");
-      setMinutes("2");
-      setConnected(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("attendance.callLogFailed"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <SectionCard icon={PhoneCall} tone="sky" title={t("attendance.logCall")}>
-      <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-[1fr_120px_auto_auto]">
-        <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder={t("attendance.phoneOptional")}
-          className="h-10 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
-        />
-        <input
-          type="number"
-          min={0}
-          value={minutes}
-          onChange={(e) => setMinutes(e.target.value)}
-          className="h-10 rounded-xl border border-border bg-surface px-3 text-sm outline-none focus:border-primary/40"
-        />
-        <button
-          type="button"
-          onClick={() => setConnected((c) => !c)}
-          className={cn(
-            "inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors",
-            connected
-              ? "border-success/30 bg-success/10 text-success"
-              : "border-border text-muted-foreground hover:bg-accent",
-          )}
-        >
-          {connected ? <Phone className="h-4 w-4" /> : <PhoneOff className="h-4 w-4" />}
-          {connected ? t("attendance.callConnected") : t("attendance.callNotConnected")}
-        </button>
-        <button
-          type="submit"
-          disabled={busy}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {t("attendance.logButton")}
-        </button>
-      </form>
-    </SectionCard>
-  );
-}
-
-function AttendanceSection() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const canManage =
-    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
-  const { rows, isLoading } = useAttendanceView();
-  const notes = useAttendanceNotes();
-
-  const visible =
-    user?.role === "super_admin" || user?.role === "platform_owner"
-      ? rows
-      : user?.role === "rop"
-        ? rows.filter((r) => r.managerId === user.id)
-        : rows.filter((r) => r.profileId === user?.id);
-  const phoneSystem = useHasPhoneSystem();
-  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
-
-  // Davomat as a board (CardBoard): my day, the day's four roster figures
-  // and the roster itself are cards each person arranges.
-  const items: CardBoardItem[] = [
-    {
-      id: "myStatus",
-      title: t("attendance.myStatus"),
-      icon: Clock,
-      tone: "sky",
-      span: phoneSystem ? 12 : 6,
-      sizes: [6, 8, 12],
-      node: <MyStatusCard />,
-    },
-    // Calls arrive on their own once telephony is connected; logging them
-    // by hand is only for a company without it.
-    ...(phoneSystem
-      ? []
-      : [
-          {
-            id: "logCall",
-            title: t("attendance.logCall"),
-            icon: PhoneCall,
-            tone: "sky",
-            span: 6,
-            sizes: [6, 8, 12],
-            node: <LogCallCard />,
-          } satisfies CardBoardItem,
-        ]),
-    ...rosterFigures(visible, isLoading, t),
-    {
-      id: "roster",
-      title: t("attendance.roster"),
-      icon: ClipboardList,
-      tone: "amber",
-      span: 12,
-      sizes: [8, 12],
-      node: (
-        <SectionCard
-          icon={ClipboardList}
-          tone="amber"
-          title={t("attendance.roster")}
-          description={t("attendance.rosterDesc")}
-        >
-          {isLoading && (
-            <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-            </div>
-          )}
-          <CollapsibleTable minWidth={1080} className="text-sm -m-4">
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
-                <th className="px-6 py-3 font-medium">{t("attendance.colEmployee")}</th>
-                <th className="px-6 py-3 font-medium">{t("attendance.colClockIn")}</th>
-                <th className="px-4 py-3 font-medium">{t("attendance.colMethod")}</th>
-                <th className="px-4 py-3 font-medium">{t("attNote.col")}</th>
-                <th className="px-6 py-3 font-medium">{t("attendance.colClockOut")}</th>
-                <th className="px-6 py-3 font-medium">{t("attendance.colSession")}</th>
-                <th className="px-6 py-3 font-medium">{t("attendance.colCalls")}</th>
-                <th className="px-6 py-3 font-medium">{t("attendance.colConnected")}</th>
-                <th className="px-6 py-3 font-medium">{t("attendance.colCallTime")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((r) => (
-                <tr
-                  key={r.profileId}
-                  className="border-b border-border last:border-0 transition-colors hover:bg-surface"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint text-xs font-semibold text-mint-foreground">
-                        {r.initials}
-                      </span>
-                      <div>
-                        <p className="font-medium text-foreground">{r.name}</p>
-                        <p className="text-xs text-subtle">{r.position}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {r.absent ? (
-                      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-red-500/10 px-2 py-0.5 text-[12px] font-semibold text-red-700 dark:text-red-300">
-                        <UserX className="h-3.5 w-3.5" />
-                        {t("attendance.absent")}
-                      </span>
-                    ) : (
-                      <span className="flex flex-col">
-                        <span className="tabular-nums text-foreground">
-                          {formatTime(r.clockIn)}
-                        </span>
-                        {r.lateMin > 0 && (
-                          <span className="whitespace-nowrap text-[11.5px] font-semibold text-amber-700 dark:text-amber-300">
-                            {t("attendance.lateBy", { min: r.lateMin })}
-                          </span>
-                        )}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4">
-                    <MethodChip method={r.method} distanceM={r.distanceM} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <NoteCell
-                      notes={notes.data?.get(r.profileId) ?? []}
-                      row={r}
-                      ready={notes.data != null}
-                    />
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">{formatTime(r.clockOut)}</td>
-                  <td className="whitespace-nowrap px-6 py-4 text-muted-foreground">
-                    {hoursText(r.sessionMinutes)}
-                    <span className="block text-[11px] text-subtle">{r.shiftName}</span>
-                  </td>
-                  <td className="px-6 py-4 font-medium">{r.callsMade}</td>
-                  <td className="px-6 py-4 font-medium">{r.callsConnected}</td>
-                  <td className="px-6 py-4 font-medium">
-                    {r.totalCallMinutes} {t("attendance.minutesShort")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </CollapsibleTable>
-          {!isLoading && visible.length === 0 && (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              {t("attendance.noSession")}
-            </p>
-          )}
-        </SectionCard>
-      ),
-    },
-  ];
-  return <CardBoard boardKey="attendance.davomat" items={items} />;
-}
-
-const METHOD_STYLE = {
-  telegram: {
-    icon: MapPin,
-    cls: "bg-sky-500/10 text-sky-800 dark:text-sky-200",
-    key: "attendance.methodTelegram",
-  },
-  web: {
-    icon: Globe,
-    cls: "bg-violet-500/10 text-violet-800 dark:text-violet-200",
-    key: "attendance.methodWeb",
-  },
-  calls: {
-    icon: PhoneCall,
-    cls: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
-    key: "attendance.methodCalls",
-  },
-  messages: {
-    icon: MessageSquare,
-    cls: "bg-amber-500/10 text-amber-800 dark:text-amber-200",
-    key: "attendance.methodMessages",
-  },
-} as const;
-
-function MethodChip({
-  method,
-  distanceM,
-}: {
-  method: AttendanceRow["method"];
-  distanceM: number | null;
-}) {
-  const { t } = useI18n();
-  if (!method) return <span className="text-subtle">—</span>;
-  const m = METHOD_STYLE[method];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[12px] font-semibold",
-        m.cls,
-      )}
-      title={distanceM != null ? t("attendance.distance", { m: distanceM }) : undefined}
-    >
-      <m.icon className="h-3.5 w-3.5" />
-      {t(m.key)}
-      {method === "telegram" && distanceM != null && (
-        <span className="font-mono font-medium opacity-75">· {distanceM} m</span>
-      )}
-    </span>
-  );
-}
-
-// Who is in, who was late, who hasn't come, at a glance above the roster.
-// The day's roster in four figures: came, late, absent, marked via Telegram.
-function rosterFigures(
-  rows: AttendanceRow[],
-  loading: boolean,
-  t: ReturnType<typeof useI18n>["t"],
-): CardBoardItem[] {
-  const came = rows.filter((r) => r.clockIn).length;
-  const figures = [
-    {
-      id: "came",
-      icon: UserCheck,
-      tone: "emerald",
-      value: `${came}/${rows.length}`,
-    },
-    {
-      id: "late",
-      icon: Clock,
-      tone: "amber",
-      value: String(rows.filter((r) => r.lateMin > 0).length),
-    },
-    { id: "absent", icon: UserX, tone: "rose", value: String(rows.filter((r) => r.absent).length) },
-    {
-      id: "telegram",
-      icon: MapPin,
-      tone: "sky",
-      value: String(rows.filter((r) => r.method === "telegram").length),
-    },
-  ] as const;
-  return figures.map((f) => ({
-    id: `fig:${f.id}`,
-    title: t(`attendance.fig.${f.id}`),
-    icon: f.icon,
-    tone: f.tone,
-    node: loading ? (
-      <CardPlaceholder stat />
-    ) : (
-      <StatCard
-        icon={f.icon}
-        iconTone={f.tone}
-        label={t(`attendance.fig.${f.id}`)}
-        tipKey={`attendance.fig.${f.id}`}
-        value={f.value}
-      />
-    ),
-  }));
-}
 
 function CoachButton({ row }: { row: NormativeRow }) {
   const { t } = useI18n();
@@ -918,6 +230,9 @@ function NormativesSection() {
   const canManage =
     user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
   const { rows, isLoading } = useNormativesView();
+  // Revenue, or the number of sales (Nazorat → Normativ → Sozlash).
+  const byDeals = useControlSettings().normativ.basis === "deals";
+  const fmt = (v: number) => (byDeals ? `${v} ${t("ctl.norm.unitDeals")}` : format(v));
 
   const onTrack = rows.filter((r) => r.status === "onTrack").length;
   const atRisk = rows.filter((r) => r.status === "atRisk").length;
@@ -1032,12 +347,12 @@ function NormativesSection() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
-                    {format(r.revenueToday)} /{" "}
-                    {r.dailyTarget != null ? format(r.dailyTarget) : t("widget.noTarget")}
+                    {fmt(r.revenueToday)} /{" "}
+                    {r.dailyTarget != null ? fmt(r.dailyTarget) : t("widget.noTarget")}
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
-                    {format(r.revenueMonth)} /{" "}
-                    {r.monthlyTarget != null ? format(r.monthlyTarget) : t("widget.noTarget")}
+                    {fmt(r.revenueMonth)} /{" "}
+                    {r.monthlyTarget != null ? fmt(r.monthlyTarget) : t("widget.noTarget")}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -1538,11 +853,22 @@ function JarimalarSection() {
 function KpiSection() {
   const { t } = useI18n();
   const { format } = useCurrency();
+  const kpi = useControlSettings().kpi;
   const [range, setRange] = useState<DateFilterValue>(() => ({
     ...todayRange(),
     label: t("lb.presetToday"),
   }));
   const { rows, isLoading } = useKpiView(range);
+  const shown = KPI_METRICS.filter((m) => kpi.metrics[m]);
+  const hasScore = rows.some((r) => r.score != null);
+  const cell = (m: KpiMetric, v: number) =>
+    m === "revenue"
+      ? format(v)
+      : m === "conversionPct"
+        ? `${v}%`
+        : m === "totalCallMinutes"
+          ? `${v} ${t("attendance.minutesShort")}`
+          : String(v);
 
   return (
     <section className="surface-card p-6 sm:p-8">
@@ -1576,17 +902,19 @@ function KpiSection() {
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-subtle">
                 <th className="px-6 py-3 font-medium">{t("fines.colEmployee")}</th>
-                <th className="px-4 py-3 text-center font-medium">{t("kpi.colConversion")}</th>
-                <th className="px-4 py-3 text-center font-medium">{t("kpi.colSales")}</th>
-                <th className="px-4 py-3 text-center font-medium">{t("kpi.colRevenue")}</th>
-                <th className="px-4 py-3 text-center font-medium">{t("kpi.colCalls")}</th>
-                <th className="px-4 py-3 text-center font-medium">{t("kpi.colCallTime")}</th>
-                <th className="px-4 py-3 text-center font-medium">{t("kpi.colMeetings")}</th>
+                {hasScore && (
+                  <th className="px-4 py-3 text-center font-medium">{t("ctl.kpi.scoreCol")}</th>
+                )}
+                {shown.map((m) => (
+                  <th key={m} className="px-4 py-3 text-center font-medium">
+                    {t(KPI_LABEL[m])}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {[...rows]
-                .sort((a, b) => b.revenue - a.revenue)
+                .sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || b.revenue - a.revenue)
                 .map((r) => (
                   <tr
                     key={r.profileId}
@@ -1600,24 +928,48 @@ function KpiSection() {
                         <p className="font-medium text-foreground">{r.name}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-center font-semibold tabular-nums">
-                      {r.conversionPct}%
-                    </td>
-                    <td className="px-4 py-4 text-center font-semibold tabular-nums">
-                      {r.salesCount}
-                    </td>
-                    <td className="px-4 py-4 text-center tabular-nums text-muted-foreground">
-                      {format(r.revenue)}
-                    </td>
-                    <td className="px-4 py-4 text-center tabular-nums text-muted-foreground">
-                      {r.callsMade} ({r.callsConnected})
-                    </td>
-                    <td className="px-4 py-4 text-center tabular-nums text-muted-foreground">
-                      {r.totalCallMinutes} {t("attendance.minutesShort")}
-                    </td>
-                    <td className="px-4 py-4 text-center font-semibold tabular-nums">
-                      {r.meetingsCount}
-                    </td>
+                    {hasScore && (
+                      <td className="px-4 py-4 text-center">
+                        <span
+                          className={cn(
+                            "inline-flex min-w-[52px] justify-center rounded-lg px-2 py-1 text-[13px] font-bold tabular-nums",
+                            r.score == null
+                              ? "bg-muted text-muted-foreground"
+                              : r.score >= 100
+                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                                : r.score >= 70
+                                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                                  : "bg-rose-500/12 text-rose-700 dark:text-rose-300",
+                          )}
+                        >
+                          {r.score ?? "—"}
+                        </span>
+                      </td>
+                    )}
+                    {shown.map((m) => {
+                      const target = kpi.targets[m];
+                      const pct = target > 0 ? Math.round((r[m] / target) * 100) : null;
+                      return (
+                        <td key={m} className="px-4 py-4 text-center tabular-nums">
+                          <span className="font-semibold text-foreground">{cell(m, r[m])}</span>
+                          {pct != null && (
+                            <span className="mx-auto mt-1.5 block h-1 w-16 overflow-hidden rounded-full bg-muted">
+                              <span
+                                className={cn(
+                                  "block h-full rounded-full",
+                                  pct >= 100
+                                    ? "bg-emerald-500"
+                                    : pct >= 70
+                                      ? "bg-amber-500"
+                                      : "bg-rose-500",
+                                )}
+                                style={{ width: `${Math.min(100, pct)}%` }}
+                              />
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
             </tbody>
@@ -1635,46 +987,37 @@ function KpiSection() {
 
 type AttTab = (typeof TAB_KEYS)[number];
 
-const ATT_TABS: { key: AttTab; icon: typeof Clock; labelKey: string }[] = [
-  { key: "davomat", icon: Clock, labelKey: "attendance.tabDavomat" },
+const ATT_TABS: { key: AttTab; icon: typeof Gauge; labelKey: string }[] = [
   { key: "normativ", icon: Target, labelKey: "attendance.tabNormativ" },
   { key: "jarimalar", icon: Coins, labelKey: "attendance.tabJarimalar" },
   { key: "kpi", icon: Award, labelKey: "attendance.tabKpi" },
-  { key: "oylik", icon: Wallet, labelKey: "attendance.tabOylik" },
   { key: "reja", icon: TrendingUp, labelKey: "attendance.tabReja" },
   { key: "eslatmalar", icon: BellRing, labelKey: "rem.title" },
 ];
 
-// Whether the company's calls come in automatically: telephony is
-// connected, or call events have already arrived from it.
-function useHasPhoneSystem(): boolean {
-  const { user } = useAuth();
-  const { data } = useQuery({
-    queryKey: ["pbx_calls", "any", user?.organizationId],
-    enabled: !!user?.organizationId,
-    staleTime: 10 * 60_000,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("pbx_calls")
-        .select("id", { count: "exact", head: true })
-        .limit(1);
-      return (count ?? 0) > 0;
-    },
-  });
-  return data === true;
-}
-
 function AttendanceAndNormativesPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const tab: AttTab = search.tab ?? "davomat";
+  const tab: AttTab = search.tab ?? "normativ";
+  const canManage =
+    user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
+  // Normativ, Jarimalar, KPI and Reja va fakt each have «Sozlash» (heads only).
+  const hasSettings = tab !== "eslatmalar";
+  const pane: PaneMode =
+    canManage && hasSettings && search.pane === "settings" ? "settings" : "view";
   const setTab = (next: AttTab) =>
-    void navigate({ search: { tab: next === "davomat" ? undefined : next }, replace: true });
+    void navigate({ search: { tab: next === "normativ" ? undefined : next }, replace: true });
+  const setPane = (next: PaneMode) =>
+    void navigate({
+      search: (s) => ({ ...s, pane: next === "settings" ? "settings" : undefined }),
+      replace: true,
+    });
   return (
     <>
       <PageHeader
-        icon={Clock}
+        icon={Gauge}
         tone="sky"
         title={t("nav./attendance")}
         description={t("attendance.pageDesc")}
@@ -1686,13 +1029,12 @@ function AttendanceAndNormativesPage() {
         onChange={setTab}
         options={ATT_TABS.map((tb) => ({ value: tb.key, label: t(tb.labelKey), icon: tb.icon }))}
       />
+      {hasSettings && <PaneSwitch mode={pane} onChange={setPane} canManage={canManage} />}
 
-      {tab === "davomat" && <AttendanceSection />}
-      {tab === "normativ" && <NormativesSection />}
-      {tab === "jarimalar" && <JarimalarSection />}
-      {tab === "kpi" && <KpiSection />}
-      {tab === "oylik" && <PayrollBoard />}
-      {tab === "reja" && <SalesPlanBoard />}
+      {tab === "normativ" && (pane === "settings" ? <NormativSettings /> : <NormativesSection />)}
+      {tab === "jarimalar" && (pane === "settings" ? <FinesSettings /> : <JarimalarSection />)}
+      {tab === "kpi" && (pane === "settings" ? <KpiSettings /> : <KpiSection />)}
+      {tab === "reja" && (pane === "settings" ? <PlanSettings /> : <SalesPlanBoard />)}
       {tab === "eslatmalar" && <RemindersBoard />}
     </>
   );

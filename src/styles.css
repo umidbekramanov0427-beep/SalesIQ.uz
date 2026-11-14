@@ -1930,8 +1930,125 @@ html.owner-skin:not(.admin-console) .shadow-soft {
 .boost-line {
   animation: boost-line 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+/* Team celebrations (CelebrationOverlay): fireworks, a rocket, balloons,
+   the trophy's light and the plan ring filling up. */
+@keyframes cel-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+.cel-burst {
+  animation: cel-burst 1.4s cubic-bezier(0.15, 0.7, 0.3, 1) infinite both;
+}
+@keyframes cel-rocket {
+  0% {
+    transform: translate(-50%, 0) rotate(-45deg);
+  }
+  100% {
+    transform: translate(-50%, -130vh) rotate(-45deg);
+  }
+}
+.cel-rocket {
+  animation: cel-rocket 2.6s cubic-bezier(0.55, 0, 0.25, 1) 0.2s forwards;
+}
+@keyframes cel-trail {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(60px) scale(0.2);
+    opacity: 0;
+  }
+}
+.cel-trail {
+  animation: cel-trail 0.9s ease-out infinite;
+}
+@keyframes cel-balloon {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-4deg);
+  }
+  50% {
+    transform: translate3d(var(--sway, 12px), -60vh, 0) rotate(4deg);
+  }
+  100% {
+    transform: translate3d(0, -125vh, 0) rotate(-4deg);
+  }
+}
+.cel-balloon {
+  animation: cel-balloon 6s cubic-bezier(0.35, 0.1, 0.45, 1) forwards;
+}
+@keyframes cel-rays {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+.cel-rays {
+  animation: cel-rays 14s linear infinite;
+}
+@keyframes cel-twinkle {
+  0%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.cel-twinkle {
+  animation: cel-twinkle 1.8s ease-in-out infinite both;
+}
+@keyframes cel-ring {
+  from {
+    stroke-dashoffset: var(--ring-from);
+  }
+  to {
+    stroke-dashoffset: var(--ring-to);
+  }
+}
+.cel-ring {
+  animation: cel-ring 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s both;
+}
+@keyframes cel-shine {
+  from {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(320%) skewX(-20deg);
+  }
+}
+.cel-shine {
+  animation: cel-shine 2.4s ease-in-out 0.6s infinite;
+}
+@keyframes cel-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.cel-drain {
+  transform-origin: left;
+  animation: cel-drain var(--cel-seconds, 6s) linear forwards;
+}
 @media (prefers-reduced-motion: reduce) {
   .confetti-piece,
+  .cel-burst,
+  .cel-rocket,
+  .cel-trail,
+  .cel-balloon,
+  .cel-twinkle,
   .boost-rocket,
   .boost-wave {
     animation: none;
@@ -1940,7 +2057,11 @@ html.owner-skin:not(.admin-console) .shadow-soft {
   .boost-sun,
   .boost-rise,
   .boost-line,
-  .celebrate-pop {
+  .celebrate-pop,
+  .cel-rays,
+  .cel-ring,
+  .cel-shine,
+  .cel-drain {
     animation: none;
   }
 }

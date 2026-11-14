@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { celebrate } from "@/components/team/TeamMoments";
+import { parseCelebrationLink } from "@/lib/control-settings";
 import { useLocation } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlarmClock, AlarmClockOff, BellRing, ClipboardList, MessageCircle, X } from "lucide-react";
@@ -96,11 +97,25 @@ export function LiveNotifications({ enabled }: { enabled: boolean }) {
     function hear(row: LiveRow | undefined) {
       if (!row?.id || stopped) return;
       invalidateSoon(["notifications"]);
-      // Sotuv bayrami: confetti for everyone, not a card.
-      if (row.type === "SaleCelebrate") {
+      // Sotuv bayrami and the team's celebrations (a part of the plan, the
+      // whole plan, a personal plan, the day's first sale): an effect on
+      // everyone's screen, not a card.
+      if (row.type === "SaleCelebrate" || row.type === "TeamCelebrate") {
         if (!row.read && Date.parse(row.created_at) >= since && !shown.current.has(row.id)) {
           shown.current.set(row.id, row.created_at);
-          celebrate({ seller: row.title, lead: row.body ?? "" });
+          if (row.type === "SaleCelebrate") {
+            celebrate({ kind: "sale", seller: row.title, lead: row.body ?? "" });
+          } else {
+            const c = parseCelebrationLink(row.link);
+            const kind = (["part", "done", "personal", "first"] as const).find((k) => k === c.kind);
+            celebrate({
+              kind: kind ?? "part",
+              style: c.style,
+              seller: row.title,
+              lead: row.body ?? "",
+              pct: kind === "first" ? null : c.pct,
+            });
+          }
           void markRead({ id: row.id });
         }
         return;
