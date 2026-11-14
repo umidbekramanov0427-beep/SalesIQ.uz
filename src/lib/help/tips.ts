@@ -1483,6 +1483,44 @@ export const TIPS: Record<string, Tip> = {
       en: "Sales ÷ leads × 100%.",
     },
   },
+  "attendance.fig.came": {
+    what: {
+      uz: "Bugun ishga kelgan xodimlar, ko'rinadigan jamoadan.",
+      ru: "Сотрудники, пришедшие сегодня на работу, из видимой команды.",
+      en: "People who started work today, out of the team you can see.",
+    },
+    calc: {
+      uz: "Bugun ish boshlagani (tugma, Telegram joylashuvi, birinchi qo'ng'iroq yoki xabar) belgilanganlar / jami xodimlar.",
+      ru: "Отметившие начало дня (кнопка, геолокация в Telegram, первый звонок или сообщение) / все сотрудники.",
+      en: "Those with a start today (button, Telegram location, first call or message) / all people.",
+    },
+  },
+  "attendance.fig.late": {
+    what: {
+      uz: "Bugun smena boshlanishidan kech kelganlar.",
+      ru: "Пришедшие сегодня позже начала смены.",
+      en: "People who started after their shift began today.",
+    },
+    act: {
+      uz: "Kechikkanning sababi \"Izoh\" ustunida — so'rang yoki jarima qo'ying.",
+      ru: "Причина опоздания — в столбце «Комментарий»: уточните или назначьте штраф.",
+      en: "The reason is in the Comment column — ask, or add a fine.",
+    },
+  },
+  "attendance.fig.absent": {
+    what: {
+      uz: "Bugun ish kuni bo'lsa ham hali kelmaganlar.",
+      ru: "Не пришедшие сегодня, хотя день рабочий.",
+      en: "People who have not started although today is a working day.",
+    },
+  },
+  "attendance.fig.telegram": {
+    what: {
+      uz: "Kelganini Telegram botga joylashuv yuborib belgilaganlar.",
+      ru: "Отметившие приход геолокацией в Telegram-боте.",
+      en: "People who checked in by sending their location to the Telegram bot.",
+    },
+  },
   "normatives.onTrack": {
     what: {
       uz: "Normativni bajarayotgan xodimlar.",

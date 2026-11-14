@@ -3,6 +3,7 @@ import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
+  AlertTriangle,
   Award,
   Bell,
   CheckCircle2,
@@ -27,6 +28,7 @@ import {
   PhoneCall,
   ClipboardList,
   Users,
+  TrendingDown,
   TrendingUp,
   BellRing,
   MessageSquare,
@@ -36,6 +38,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard, Pill } from "@/components/layout/Primitives";
+import { CardBoard, CardPlaceholder, type CardBoardItem } from "@/components/dashboard/HomeBoard";
 import { SalesPlanBoard } from "@/components/plan/SalesPlanBoard";
 import { PayrollBoard } from "@/components/payroll/PayrollBoard";
 import { supabase } from "@/integrations/supabase/client";
@@ -593,23 +596,48 @@ function AttendanceSection() {
   const phoneSystem = useHasPhoneSystem();
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
 
-  return (
-    <section className="surface-card p-6 sm:p-8">
-      <div className={cn("grid gap-5", !phoneSystem && "xl:grid-cols-2")}>
-        <MyStatusCard />
-        {/* Calls arrive on their own once telephony is connected; logging
-            them by hand is only for a company without it. */}
-        {!phoneSystem && <LogCallCard />}
-      </div>
-
-      <div className="mt-6">
+  // Davomat as a board (CardBoard): my day, the day's four roster figures
+  // and the roster itself are cards each person arranges.
+  const items: CardBoardItem[] = [
+    {
+      id: "myStatus",
+      title: t("attendance.myStatus"),
+      icon: Clock,
+      tone: "sky",
+      span: phoneSystem ? 12 : 6,
+      sizes: [6, 8, 12],
+      node: <MyStatusCard />,
+    },
+    // Calls arrive on their own once telephony is connected; logging them
+    // by hand is only for a company without it.
+    ...(phoneSystem
+      ? []
+      : [
+          {
+            id: "logCall",
+            title: t("attendance.logCall"),
+            icon: PhoneCall,
+            tone: "sky",
+            span: 6,
+            sizes: [6, 8, 12],
+            node: <LogCallCard />,
+          } satisfies CardBoardItem,
+        ]),
+    ...rosterFigures(visible, isLoading, t),
+    {
+      id: "roster",
+      title: t("attendance.roster"),
+      icon: ClipboardList,
+      tone: "amber",
+      span: 12,
+      sizes: [8, 12],
+      node: (
         <SectionCard
           icon={ClipboardList}
           tone="amber"
           title={t("attendance.roster")}
           description={t("attendance.rosterDesc")}
         >
-          <RosterSummary rows={visible} />
           {isLoading && (
             <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
@@ -695,9 +723,10 @@ function AttendanceSection() {
             </p>
           )}
         </SectionCard>
-      </div>
-    </section>
-  );
+      ),
+    },
+  ];
+  return <CardBoard boardKey="attendance.davomat" items={items} />;
 }
 
 const METHOD_STYLE = {
@@ -751,54 +780,51 @@ function MethodChip({
 }
 
 // Who is in, who was late, who hasn't come, at a glance above the roster.
-function RosterSummary({ rows }: { rows: AttendanceRow[] }) {
-  const { t } = useI18n();
-  if (rows.length === 0) return null;
+// The day's roster in four figures: came, late, absent, marked via Telegram.
+function rosterFigures(
+  rows: AttendanceRow[],
+  loading: boolean,
+  t: ReturnType<typeof useI18n>["t"],
+): CardBoardItem[] {
   const came = rows.filter((r) => r.clockIn).length;
-  const late = rows.filter((r) => r.lateMin > 0).length;
-  const absent = rows.filter((r) => r.absent).length;
-  const viaTg = rows.filter((r) => r.method === "telegram").length;
-  const cells = [
+  const figures = [
     {
-      label: t("attendance.sumCame"),
-      value: `${came}/${rows.length}`,
-      cls: "text-emerald-700 dark:text-emerald-300",
+      id: "came",
       icon: UserCheck,
+      tone: "emerald",
+      value: `${came}/${rows.length}`,
     },
     {
-      label: t("attendance.sumLate"),
-      value: late,
-      cls: "text-amber-700 dark:text-amber-300",
+      id: "late",
       icon: Clock,
+      tone: "amber",
+      value: String(rows.filter((r) => r.lateMin > 0).length),
     },
+    { id: "absent", icon: UserX, tone: "rose", value: String(rows.filter((r) => r.absent).length) },
     {
-      label: t("attendance.sumAbsent"),
-      value: absent,
-      cls: "text-red-700 dark:text-red-300",
-      icon: UserX,
-    },
-    {
-      label: t("attendance.sumTelegram"),
-      value: viaTg,
-      cls: "text-sky-700 dark:text-sky-300",
+      id: "telegram",
       icon: MapPin,
+      tone: "sky",
+      value: String(rows.filter((r) => r.method === "telegram").length),
     },
-  ];
-  return (
-    <div className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-      {cells.map((c) => (
-        <div key={c.label} className="flex items-center gap-3 bg-card px-4 py-3">
-          <c.icon className={cn("h-5 w-5 shrink-0", c.cls)} />
-          <div>
-            <p className={cn("font-mono text-[20px] font-bold leading-none tabular-nums", c.cls)}>
-              {c.value}
-            </p>
-            <p className="mt-1 text-[12px] text-muted-foreground">{c.label}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  ] as const;
+  return figures.map((f) => ({
+    id: `fig:${f.id}`,
+    title: t(`attendance.fig.${f.id}`),
+    icon: f.icon,
+    tone: f.tone,
+    node: loading ? (
+      <CardPlaceholder stat />
+    ) : (
+      <StatCard
+        icon={f.icon}
+        iconTone={f.tone}
+        label={t(`attendance.fig.${f.id}`)}
+        tipKey={`attendance.fig.${f.id}`}
+        value={f.value}
+      />
+    ),
+  }));
 }
 
 function CoachButton({ row }: { row: NormativeRow }) {
@@ -897,46 +923,75 @@ function NormativesSection() {
   const atRisk = rows.filter((r) => r.status === "atRisk").length;
   const behind = rows.filter((r) => r.status === "behind").length;
 
-  return (
-    <section className="surface-card p-6 sm:p-8">
-      <div className="mb-6 flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600">
-          <Target className="h-5 w-5" />
-        </span>
-        <div>
-          <h2 className="text-lg font-bold text-foreground">{t("normatives.title")}</h2>
-        </div>
-      </div>
-
-      {isLoading && (
-        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-        </div>
-      )}
-
-      <div className="grid gap-5 sm:grid-cols-3">
+  // Normativlar as a board (CardBoard): the three status counts and the
+  // roster are cards each person arranges.
+  const items: CardBoardItem[] = [
+    {
+      id: "onTrack",
+      title: t("normatives.onTrack"),
+      icon: CheckCircle2,
+      tone: "emerald",
+      span: 4,
+      node: isLoading ? (
+        <CardPlaceholder stat />
+      ) : (
         <StatCard
+          icon={CheckCircle2}
+          iconTone="emerald"
           label={t("normatives.onTrack")}
           tipKey="normatives.onTrack"
           value={String(onTrack)}
           info={t("normatives.onTrackInfo")}
           tone="mint"
         />
+      ),
+    },
+    {
+      id: "atRisk",
+      title: t("normatives.atRisk"),
+      icon: AlertTriangle,
+      tone: "amber",
+      span: 4,
+      node: isLoading ? (
+        <CardPlaceholder stat />
+      ) : (
         <StatCard
+          icon={AlertTriangle}
+          iconTone="amber"
           label={t("normatives.atRisk")}
           tipKey="normatives.atRisk"
           value={String(atRisk)}
           info={t("normatives.atRiskInfo")}
         />
+      ),
+    },
+    {
+      id: "behind",
+      title: t("normatives.behind"),
+      icon: TrendingDown,
+      tone: "rose",
+      span: 4,
+      node: isLoading ? (
+        <CardPlaceholder stat />
+      ) : (
         <StatCard
+          icon={TrendingDown}
+          iconTone="rose"
           label={t("normatives.behind")}
           tipKey="normatives.behind"
           value={String(behind)}
           info={t("normatives.behindInfo")}
         />
-      </div>
-
-      <div className="mt-6">
+      ),
+    },
+    {
+      id: "roster",
+      title: t("normatives.roster"),
+      icon: Target,
+      tone: "violet",
+      span: 12,
+      sizes: [8, 12],
+      node: (
         <SectionCard
           icon={Target}
           tone="violet"
@@ -1023,9 +1078,10 @@ function NormativesSection() {
             </p>
           )}
         </SectionCard>
-      </div>
-    </section>
-  );
+      ),
+    },
+  ];
+  return <CardBoard boardKey="attendance.normativ" items={items} />;
 }
 
 function NewFineTypeDialog({ position }: { position: number }) {
