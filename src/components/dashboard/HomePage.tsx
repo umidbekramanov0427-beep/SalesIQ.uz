@@ -48,6 +48,7 @@ import {
 import {
   BoardCustomizeButton,
   CardBoard,
+  CardPlaceholder,
   HomeBoard,
   type CardBoardItem,
   type BoardLayout,
@@ -550,6 +551,29 @@ export function HomePage() {
     ...(analyticsOpen ? [...salesReport.items, ...winLossReport.items] : []),
   ];
 
+  // Prognoz as a board: the month-end projection, then the forecast
+  // report's cards one by one.
+  const forecastReport = useReportItems("forecast", reportRange, funnel, tab === "forecast");
+  const forecastItems: CardBoardItem[] = [
+    ...(canFinance ? [monthForecastItem()] : []),
+    ...forecastReport.items,
+  ];
+  function monthForecastItem(): CardBoardItem {
+    return {
+      id: "forecast:month",
+      title: t("fin.monthTitle"),
+      icon: TrendingUp,
+      tone: "sky",
+      span: 12,
+      sizes: [8, 12],
+      node: finance.data ? (
+        <MonthForecastCard forecast={finance.data.forecast} months={finance.data.months} />
+      ) : (
+        <CardPlaceholder error={finance.isError ? t("an.loadError") : null} />
+      ),
+    };
+  }
+
   // Moliya as a board: the P&L figures and blocks one card each.
   const pnl = usePnlItems(finance.data, finance.isError ? t("an.loadError") : null);
 
@@ -683,14 +707,9 @@ export function HomePage() {
             )}
 
             {tab === "forecast" && (
-              <div className="mt-6 space-y-6">
-                {finance.data && (
-                  <MonthForecastCard
-                    forecast={finance.data.forecast}
-                    months={finance.data.months}
-                  />
-                )}
-                <AnalyticsReport report="forecast" period={reportRange} funnel={funnel} />
+              <div className="mt-5">
+                {forecastReport.notice}
+                <CardBoard boardKey="home.forecast" items={forecastItems} />
               </div>
             )}
 
