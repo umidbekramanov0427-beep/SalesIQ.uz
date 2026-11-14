@@ -111,6 +111,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
+        uz: "**Ish stoli** — birinchi tab: tepada **Bugun / Hafta / Oy / Yil / Oraliq** davrini tanlang; kartalar (bugungi va davr sotuvi, sotuvlar soni, o'rtacha chek, yangi mijozlar, qayta sotuv, konversiya) o'tgan davr bilan solishtiriladi. **Plan / Fakt** kartasidagi ✏️ — oylik sotuv plani (jamoa va har bir menejer). Pastda kanallar, lid manbasi, sotuv dinamikasi (Soat/Kun), voronka (nomini bossangiz bosqichlari) va menejerlar jadvali.",
+        ru: "**Рабочий стол** — первая вкладка: выберите период **Сегодня / Неделя / Месяц / Год / Период**; карточки (продажи сегодня и за период, количество, средний чек, новые клиенты, повторные, конверсия) сравниваются с прошлым периодом. ✏️ на карточке **План / Факт** — месячный план (команды и каждого менеджера). Ниже — каналы, источники лидов, динамика (Час/День), воронка (клик по названию — этапы) и таблица менеджеров.",
+        en: "**Desk** is the first tab: pick **Today / Week / Month / Year / Range** at the top; the cards (today's and the period's sales, count, average check, new clients, repeat sales, conversion) are compared with the period before. ✏️ on **Plan / Actual** sets the monthly sales plan (team and each manager). Below: channels, lead sources, sales dynamics (Hour/Day), the funnel (click a name for its stages) and the managers table.",
+      },
+      {
+        uz: "Ish stolidagi tugmalar: **Vidjet qo'shish** — qaysi bloklar sizga ko'rinsin; **Telegram** — ko'rsatkichlarni o'z Telegramingizga yuboradi; **Tarix** — oxirgi 12 oy; **Eksport** — Excel fayl.",
+        ru: "Кнопки рабочего стола: **Добавить виджет** — какие блоки вам видны; **Telegram** — отправляет показатели в ваш Telegram; **История** — последние 12 месяцев; **Экспорт** — файл Excel.",
+        en: "Desk buttons: **Add widget** picks which blocks you see; **Telegram** sends the figures to your Telegram; **History** shows the last 12 months; **Export** writes an Excel file.",
+      },
+      {
         uz: "**Panelni sozlash** tugmasi Umumiy tabni o'zingizga moslaydi: vidjetni ushlab boshqa joyga qo'ying (qolganlari surilib joy beradi), kengligini burchagidan torting, o'ngdagi **Vidjetlar** ro'yxatidan qo'shing yoki × bilan olib tashlang. **Joylashuvni saqlash** — keyingi safar ham shunday ochiladi, **Tiklash** — asl ko'rinishga qaytaradi.",
         ru: "Кнопка **Настроить панель** подстраивает вкладку «Общее» под вас: перетащите виджет на новое место (остальные раздвинутся), потяните за угол, чтобы изменить ширину, добавьте из списка **Виджеты** справа или уберите ×. **Сохранить** — так откроется и в следующий раз, **Сбросить** — вернёт исходный вид.",
         en: "**Customize** fits the Overview tab to you: pick a widget up and drop it elsewhere (the others make room), drag its corner to change the width, add widgets from the **Widgets** list on the right or remove them with ×. **Save layout** keeps it for next time; **Reset** brings back the original view.",

@@ -128,6 +128,7 @@ import { Route as DailyReportSettingsHistoryRouteImport } from './routes/daily-r
 import { Route as DailyReportSettingsPreviewRouteImport } from './routes/daily-report-settings.preview'
 import { Route as DailyReportSettingsSectionsRouteImport } from './routes/daily-report-settings.sections'
 import { Route as DashboardAmocrmTasksRouteImport } from './routes/dashboard.amocrm-tasks'
+import { Route as DashboardDeskRouteImport } from './routes/dashboard.desk'
 import { Route as ErrorsLogRouteImport } from './routes/errors.log'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as FinesComputeRouteImport } from './routes/fines.compute'
@@ -927,6 +928,11 @@ const DailyReportSettingsSectionsRoute =
 const DashboardAmocrmTasksRoute = DashboardAmocrmTasksRouteImport.update({
   id: '/amocrm-tasks',
   path: '/amocrm-tasks',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardDeskRoute = DashboardDeskRouteImport.update({
+  id: '/desk',
+  path: '/desk',
   getParentRoute: () => DashboardRoute,
 } as any)
 const ErrorsLogRoute = ErrorsLogRouteImport.update({
@@ -2076,6 +2082,7 @@ export interface FileRoutesByFullPath {
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
+  '/dashboard/desk': typeof DashboardDeskRoute
   '/errors/log': typeof ErrorsLogRoute
   '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
@@ -2391,6 +2398,7 @@ export interface FileRoutesByTo {
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
+  '/dashboard/desk': typeof DashboardDeskRoute
   '/errors/log': typeof ErrorsLogRoute
   '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
@@ -2707,6 +2715,7 @@ export interface FileRoutesById {
   '/daily-report-settings/preview': typeof DailyReportSettingsPreviewRoute
   '/daily-report-settings/sections': typeof DailyReportSettingsSectionsRoute
   '/dashboard/amocrm-tasks': typeof DashboardAmocrmTasksRoute
+  '/dashboard/desk': typeof DashboardDeskRoute
   '/errors/log': typeof ErrorsLogRoute
   '/f/$slug': typeof FSlugRoute
   '/fines/compute': typeof FinesComputeRoute
@@ -3024,6 +3033,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings/preview'
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
+    | '/dashboard/desk'
     | '/errors/log'
     | '/f/$slug'
     | '/fines/compute'
@@ -3339,6 +3349,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings/preview'
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
+    | '/dashboard/desk'
     | '/errors/log'
     | '/f/$slug'
     | '/fines/compute'
@@ -3654,6 +3665,7 @@ export interface FileRouteTypes {
     | '/daily-report-settings/preview'
     | '/daily-report-settings/sections'
     | '/dashboard/amocrm-tasks'
+    | '/dashboard/desk'
     | '/errors/log'
     | '/f/$slug'
     | '/fines/compute'
@@ -4889,6 +4901,13 @@ declare module '@tanstack/react-router' {
       path: '/amocrm-tasks'
       fullPath: '/dashboard/amocrm-tasks'
       preLoaderRoute: typeof DashboardAmocrmTasksRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/desk': {
+      id: '/dashboard/desk'
+      path: '/desk'
+      fullPath: '/dashboard/desk'
+      preLoaderRoute: typeof DashboardDeskRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/errors/log': {
@@ -6440,10 +6459,12 @@ const DailyReportSettingsRouteWithChildren =
 
 interface DashboardRouteChildren {
   DashboardAmocrmTasksRoute: typeof DashboardAmocrmTasksRoute
+  DashboardDeskRoute: typeof DashboardDeskRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAmocrmTasksRoute: DashboardAmocrmTasksRoute,
+  DashboardDeskRoute: DashboardDeskRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

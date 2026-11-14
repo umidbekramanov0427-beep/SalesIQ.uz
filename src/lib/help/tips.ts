@@ -20,9 +20,9 @@ export const TIPS: Record<string, Tip> = {
       en: "Figures come from the CRM's leads, deals and calls for the chosen period and funnel; a rep sees only their own.",
     },
     act: {
-      uz: "Tablar: Umumiy, Konversiya, Reyting, Faollik, Prognoz, Moliya. Har bir kartaning ⚙️ belgisidan maqsad va ko'rinishni sozlang.",
-      ru: "Вкладки: Общее, Конверсия, Рейтинг, Активность, Прогноз, Финансы. Цель и вид карточки — через её ⚙️.",
-      en: "Tabs: Overview, Conversion, Rating, Activity, Forecast, Finance. Set a card's goal and view from its ⚙️.",
+      uz: "Tablar: Ish stoli (asosiy ko'rsatkichlar, plan/fakt, kanallar, menejerlar), Umumiy, Konversiya, Reyting, Faollik, Prognoz, Moliya. Har bir kartaning ⚙️ belgisidan maqsad va ko'rinishni sozlang.",
+      ru: "Вкладки: Рабочий стол (основные показатели, план/факт, каналы, менеджеры), Общее, Конверсия, Рейтинг, Активность, Прогноз, Финансы. Цель и вид карточки — через её ⚙️.",
+      en: "Tabs: Desk (main figures, plan vs actual, channels, managers), Overview, Conversion, Rating, Activity, Forecast, Finance. Set a card's goal and view from its ⚙️.",
     },
   },
   "nav:/funnels": {
@@ -1809,6 +1809,162 @@ export const TIPS: Record<string, Tip> = {
       uz: "Oxirgi bosqichlardagi o'rtacha bitim.",
       ru: "Средняя сделка на последних этапах.",
       en: "The average deal in the last stages.",
+    },
+  },
+  "desk.today": {
+    what: {
+      uz: "Bugun hozirgacha yutilgan bitimlar summasi.",
+      ru: "Сумма сделок, выигранных сегодня до текущего момента.",
+      en: "The amount of deals won today so far.",
+    },
+    calc: {
+      uz: "Bugun «Sotildi» bosqichiga o'tgan lidlarning summasi (kutilgan daromad, bo'lmasa byudjet). Kechagi shu vaqtgacha bo'lgan sotuv bilan solishtiriladi.",
+      ru: "Сумма лидов, перешедших сегодня в этап «Продано» (ожидаемый доход, иначе бюджет). Сравнивается со вчера до того же времени.",
+      en: "Leads moved to a won stage today (expected revenue, else budget), against yesterday up to the same time.",
+    },
+  },
+  "desk.revenue": {
+    what: {
+      uz: "Tanlangan davrdagi sotuvlar summasi.",
+      ru: "Сумма продаж за выбранный период.",
+      en: "The sales amount for the chosen period.",
+    },
+    calc: {
+      uz: "Davr ichida yutilgan bitimlar summasi. «Oy»da o'tgan oyning ayni kunlari bilan, boshqalarida oldingi shunday davr bilan solishtiriladi.",
+      ru: "Сумма сделок, выигранных за период. Для «Месяца» сравнивается с теми же днями прошлого месяца, иначе — с предыдущим таким же периодом.",
+      en: "Deals won in the period. Month compares with the same days of last month; the others with the period just before.",
+    },
+  },
+  "desk.count": {
+    what: {
+      uz: "Davrda nechta bitim yutildi.",
+      ru: "Сколько сделок выиграно за период.",
+      en: "How many deals were won in the period.",
+    },
+    calc: {
+      uz: "«Sotildi» bosqichiga o'tgan lidlar soni.",
+      ru: "Число лидов, перешедших в этап «Продано».",
+      en: "The number of leads moved to a won stage.",
+    },
+  },
+  "desk.avgCheck": {
+    what: {
+      uz: "Bir sotuvning o'rtacha summasi.",
+      ru: "Средняя сумма одной продажи.",
+      en: "The average amount of one sale.",
+    },
+    calc: {
+      uz: "Sotuv summasi ÷ sotuvlar soni.",
+      ru: "Сумма продаж ÷ количество продаж.",
+      en: "Sales amount ÷ number of sales.",
+    },
+  },
+  "desk.newClients": {
+    what: {
+      uz: "Birinchi marta xarid qilgan mijozlar.",
+      ru: "Клиенты, купившие впервые.",
+      en: "Clients buying for the first time.",
+    },
+    calc: {
+      uz: "Davrdagi sotuv mijozning (kontakt) birinchi yutilgan bitimi bo'lsa — yangi mijoz.",
+      ru: "Продажа считается новым клиентом, если это первая выигранная сделка контакта.",
+      en: "A sale counts as a new client when it is the contact's first won deal.",
+    },
+  },
+  "desk.repeat": {
+    what: {
+      uz: "Avval xarid qilgan mijozlarga qayta sotuvlar.",
+      ru: "Повторные продажи клиентам, которые уже покупали.",
+      en: "Sales to clients who bought before.",
+    },
+    calc: {
+      uz: "Mijozning avvalroq yutilgan bitimi bo'lsa, bu sotuv qayta sotuv hisoblanadi.",
+      ru: "Если у клиента уже была выигранная сделка, продажа — повторная.",
+      en: "When the client already had a won deal, the sale is a repeat sale.",
+    },
+  },
+  "desk.conversion": {
+    what: {
+      uz: "Davrda kelgan lidlardan qanchasi sotuvga aylandi.",
+      ru: "Какая доля лидов периода стала продажей.",
+      en: "How many of the period's leads became sales.",
+    },
+    calc: {
+      uz: "Davrda yaratilgan lidlardan hozir «Sotildi» bosqichidagilar ÷ shu lidlar soni × 100.",
+      ru: "Лиды периода, сейчас находящиеся в «Продано» ÷ все лиды периода × 100.",
+      en: "The period's leads now in a won stage ÷ all the period's leads × 100.",
+    },
+  },
+  "desk.plan": {
+    what: {
+      uz: "Oylik sotuv plani va uning bajarilishi.",
+      ru: "Месячный план продаж и его выполнение.",
+      en: "The monthly sales plan and how much is done.",
+    },
+    calc: {
+      uz: "Davr tugaydigan oy uchun jamoa plani (yo'q bo'lsa menejerlar planlari yig'indisi) va shu oydagi sotuv. Prognoz — hozirgi sur'atda oy oxirida qancha bo'lishi.",
+      ru: "План команды на месяц окончания периода (или сумма планов менеджеров) и продажи этого месяца. Прогноз — сколько будет к концу месяца при текущем темпе.",
+      en: "The team plan of the month the period ends in (or the managers' plans added up) and that month's sales. Forecast: the month's end at the current pace.",
+    },
+  },
+  "desk.channels": {
+    what: {
+      uz: "Sotuvlar qaysi kanaldan kelgani.",
+      ru: "Из каких каналов пришли продажи.",
+      en: "Which channels the sales came from.",
+    },
+    calc: {
+      uz: "Davrdagi sotuvlar lidning manbasi bo'yicha guruhlanadi; foiz — umumiy sotuv summasidagi ulush.",
+      ru: "Продажи периода по источнику лида; процент — доля от общей суммы.",
+      en: "The period's sales grouped by the lead's source; the percent is the share of the total.",
+    },
+  },
+  "desk.sources": {
+    what: {
+      uz: "Davrdagi lidlar qayerdan kelgani.",
+      ru: "Откуда пришли лиды периода.",
+      en: "Where the period's leads came from.",
+    },
+    calc: {
+      uz: "Davrda yaratilgan lidlar manba bo'yicha; 6 tadan ko'p bo'lsa qolganlari «Boshqa».",
+      ru: "Лиды периода по источнику; свыше 6 — в «Другое».",
+      en: "The period's leads by source; beyond six they fold into Other.",
+    },
+  },
+  "desk.dynamics": {
+    what: {
+      uz: "Sotuvlar davr ichida qanday taqsimlangani.",
+      ru: "Как продажи распределились внутри периода.",
+      en: "How the sales spread over the period.",
+    },
+    calc: {
+      uz: "«Kun» — davrning har kuni oldingi davrning mos kuni bilan; «Soat» — kun soatlari bo'yicha yig'indi.",
+      ru: "«День» — каждый день периода против соответствующего дня прошлого; «Час» — сумма по часам суток.",
+      en: "Day: each day of the period against the matching day before; Hour: totals by hour of day.",
+    },
+  },
+  "desk.funnel": {
+    what: {
+      uz: "Davrdagi lidlar voronka bo'ylab qayergacha yetgani.",
+      ru: "Как далеко по воронке дошли лиды периода.",
+      en: "How far the period's leads got in the funnel.",
+    },
+    calc: {
+      uz: "Voronka tanlanganda har bosqichda — shu bosqichga yoki undan keyingisiga yetgan lidlar soni (bosqichlar tarixi bo'yicha).",
+      ru: "При выбранной воронке у каждого этапа — число лидов, дошедших до него или дальше (по истории этапов).",
+      en: "With a funnel picked, each stage shows the leads that reached it or a later one (from the stage history).",
+    },
+  },
+  "desk.managers": {
+    what: {
+      uz: "Har bir menejerning davrdagi natijasi.",
+      ru: "Результаты каждого менеджера за период.",
+      en: "Each manager's results for the period.",
+    },
+    calc: {
+      uz: "Lid — davrda kelgan lidlari; Ishlangan — birinchi bosqichdan siljiganlari; Suhbat — javob berilgan qo'ng'iroqlar; Eng uzun — eng uzun qo'ng'iroq. Kichik raqam — o'tgan davr («O'sish» yoqilsa — o'zgarish %).",
+      ru: "Лиды — пришедшие за период; Обработано — сдвинутые с первого этапа; Разговоры — состоявшиеся звонки; Самый долгий — длительность самого долгого. Маленькая цифра — прошлый период (с «Рост» — изменение %).",
+      en: "Leads: received in the period; Worked: moved past the first stage; Talks: answered calls; Longest: the longest call. The small figure is the previous period (with Growth on, the change %).",
     },
   },
 };

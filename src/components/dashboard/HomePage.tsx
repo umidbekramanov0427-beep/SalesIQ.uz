@@ -10,6 +10,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import {
   Activity,
   AlertTriangle,
+  BriefcaseBusiness,
   CalendarCheck,
   ChartColumnBig,
   ChartSpline,
@@ -79,7 +80,13 @@ const Charts = {
   ),
 };
 
+// Ish stoli carries the charts library; it loads on its own.
+const DeskTab = lazy(() =>
+  import("@/components/dashboard/desk/DeskTab").then((m) => ({ default: m.DeskTab })),
+);
+
 export const HOME_TABS = [
+  "desk",
   "overview",
   "rating",
   "conversion",
@@ -91,6 +98,7 @@ export const HOME_TABS = [
 export type HomeTab = (typeof HOME_TABS)[number];
 
 const TAB_ICONS: Record<HomeTab, LucideIcon> = {
+  desk: BriefcaseBusiness,
   overview: LayoutDashboard,
   rating: Trophy,
   conversion: Workflow,
@@ -102,7 +110,7 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
 
 // The filters each tab's numbers actually follow -- a tab shows only those
 // (funnel always), so no filter sits there doing nothing.
-const TAB_FILTERS: Record<Exclude<HomeTab, "rating">, FilterSet> = {
+const TAB_FILTERS: Record<Exclude<HomeTab, "rating" | "desk">, FilterSet> = {
   overview: { team: true, operator: true, date: true },
   conversion: { team: true, operator: true, date: true },
   activity: {},
@@ -169,7 +177,7 @@ export function HomePage() {
           : true,
   );
   const tab: HomeTab =
-    search.tab && tabs.includes(search.tab as HomeTab) ? (search.tab as HomeTab) : "overview";
+    search.tab && tabs.includes(search.tab as HomeTab) ? (search.tab as HomeTab) : "desk";
   function setTab(next: HomeTab) {
     void navigate({ search: (prev) => ({ ...prev, tab: next }), replace: true });
   }
@@ -459,6 +467,43 @@ export function HomePage() {
     },
   ];
 
+  const tabsNode = (
+    <Segmented
+      sticky
+      centered
+      className="mb-5"
+      value={tab}
+      onChange={setTab}
+      options={tabs.map((key) => ({
+        value: key,
+        label: t(`home.tab.${key}`),
+        icon: TAB_ICONS[key],
+      }))}
+    />
+  );
+
+  // Ish stoli brings its own head (company, period buttons, Telegram,
+  // Tarix, Eksport) with the tabs under it.
+  if (tab === "desk") {
+    return (
+      <>
+        <FirstStepsCard />
+        <div key={tab} className="tab-enter">
+          <Suspense
+            fallback={
+              <>
+                {tabsNode}
+                <Loading />
+              </>
+            }
+          >
+            <DeskTab tabs={tabsNode} />
+          </Suspense>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <GreetingHeader
@@ -482,18 +527,7 @@ export function HomePage() {
 
       <FirstStepsCard />
 
-      <Segmented
-        sticky
-        centered
-        className="mb-5"
-        value={tab}
-        onChange={setTab}
-        options={tabs.map((key) => ({
-          value: key,
-          label: t(`home.tab.${key}`),
-          icon: TAB_ICONS[key],
-        }))}
-      />
+      {tabsNode}
 
       {/* Keyed by tab so switching tabs plays .tab-enter (styles.css). */}
       <div key={tab} className="tab-enter">
