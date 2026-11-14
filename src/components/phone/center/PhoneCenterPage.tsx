@@ -29,7 +29,8 @@ import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AutoDialer } from "./AutoDialer";
-import { CallsSection, DialerSection, OperatorsSection, RatingSection } from "./Sections";
+import { DialerSection, OperatorsSection, RatingSection } from "./Sections";
+import { CallsSection } from "./Calls";
 import { OverviewSection } from "./Overview";
 import { JournalSection } from "./Journal";
 import { VoiceMessage } from "./VoiceMessage";
@@ -485,7 +486,7 @@ function PeriodSections({
     );
   }
   if (section === "log") return <JournalSection data={data} period={period} onPeriod={onPeriod} />;
-  if (section === "calls") return <CallsSection data={data} />;
+  if (section === "calls") return <CallsSection data={data} period={period} onPeriod={onPeriod} />;
   if (section === "operators") return <OperatorsSection data={data} />;
   if (section === "rating") return <RatingSection data={data} />;
   return <OverviewSection data={data} period={period} onPeriod={onPeriod} onSection={onSection} />;

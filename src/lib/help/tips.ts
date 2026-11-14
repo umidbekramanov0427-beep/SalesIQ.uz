@@ -2140,6 +2140,20 @@ export const TIPS: Record<string, Tip> = {
       en: "Per client number: the last call, operator, recording, AI analysis and call back.",
     },
   },
+  "ptel.b.byManager": {
+    what: {
+      uz: "Har bir menejerning qo'ng'iroqlari soni yoki suhbat vaqti, kiruvchi va chiquvchi alohida.",
+      ru: "Звонки или время разговоров каждого менеджера, входящие и исходящие отдельно.",
+      en: "Each manager's calls or talk time, incoming and outgoing apart.",
+    },
+  },
+  "ptel.b.recentCalls": {
+    what: {
+      uz: "Filtrga mos barcha qo'ng'iroqlar: sana, hodisa, natija va davomiylik.",
+      ru: "Все звонки по фильтру: дата, событие, результат и длительность.",
+      en: "Every call matching the filter: date, event, result and length.",
+    },
+  },
   "ptel.k.total": {
     what: {
       uz: "Davrdagi barcha qo'ng'iroqlar.",
