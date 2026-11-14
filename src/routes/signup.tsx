@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuthSkin } from "@/components/auth/auth-skins";
+import { cn } from "@/lib/utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Building2, Gift, Loader2, Lock, Mail, User } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +43,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function SignupPage() {
   const { signIn } = useAuth();
   const { t } = useI18n();
+  const { s: skin } = useAuthSkin();
   const navigate = useNavigate();
   const { leaving, flipTo } = useCardFlip();
   const search = Route.useSearch();
@@ -134,7 +137,12 @@ function SignupPage() {
           sub={t("auth.signupSub", { n: SELF_SIGNUP_TRIAL_DAYS })}
         />
         <div className="-mt-3 mb-5 flex flex-wrap gap-2">
-          <span className="inline-flex items-center rounded-full bg-[#4d86ff]/15 px-3 py-1 text-xs font-semibold text-[#8fb2ff]">
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+              skin.badge,
+            )}
+          >
             {t("signup.selectedPlan", { plan: PLAN_LABELS[plan] })}
           </span>
           {invite && (
@@ -204,12 +212,12 @@ function SignupPage() {
           </GlassSubmit>
         </form>
 
-        <p className="mt-5 text-center text-[13.5px] text-[#9aa6bd]">
+        <p className={cn("mt-5 text-center text-[13.5px]", skin.muted)}>
           {t("signup.haveAccount")}{" "}
           <button
             type="button"
             onClick={() => flipTo("/login")}
-            className="font-bold text-[#6f9bff] hover:underline"
+            className={cn("font-bold hover:underline", skin.link)}
           >
             {t("signup.signIn")}
           </button>

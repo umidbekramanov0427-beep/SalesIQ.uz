@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuthSkin } from "@/components/auth/auth-skins";
+import { cn } from "@/lib/utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
@@ -80,6 +82,7 @@ function LoginPage() {
     updatePassword,
   } = useAuth();
   const { t } = useI18n();
+  const { s: skin } = useAuthSkin();
   const navigate = useNavigate();
   const { leaving, flipTo } = useCardFlip();
   const { redirect } = Route.useSearch();
@@ -241,7 +244,7 @@ function LoginPage() {
         setForgotSent(false);
         setForgotError("");
       }}
-      className="text-[13px] font-semibold text-[#6f9bff] hover:underline"
+      className={cn("text-[13px] font-semibold hover:underline", skin.link)}
     >
       {t("login.forgotPassword")}
     </button>
@@ -251,7 +254,12 @@ function LoginPage() {
     <AuthBackdrop>
       <GlassCard leaving={leaving}>
         {subdomain && (company.name || company.missing) && (
-          <p className="-mt-2 mb-4 inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80">
+          <p
+            className={cn(
+              "-mt-2 mb-4 inline-flex max-w-full items-center rounded-full border px-3 py-1 text-sm",
+              skin.chip,
+            )}
+          >
             <span className="truncate">
               {company.name
                 ? t("subdomain.loginFor", { name: company.name })
@@ -319,7 +327,7 @@ function LoginPage() {
                 setForgotSent(false);
                 setForgotError("");
               }}
-              className="block w-full text-center text-sm font-medium text-[#9aa6bd] hover:text-white"
+              className={cn("block w-full text-center text-sm font-medium", skin.muted)}
             >
               {t("login.backToSignIn")}
             </button>
@@ -332,7 +340,7 @@ function LoginPage() {
               sub={t("auth.welcomeSub")}
             />
             {linkExpiredNotice && (
-              <div className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2.5 text-sm text-amber-200">
+              <div className={cn("mb-5 rounded-xl border px-3 py-2.5 text-sm", skin.notice)}>
                 <p>{t("login.recoveryLinkExpired")}</p>
                 <span className="mt-1.5 inline-block">{forgotLink}</span>
               </div>
@@ -373,7 +381,10 @@ function LoginPage() {
               type="button"
               onClick={() => void onGoogleSignIn()}
               disabled={googleBusy}
-              className="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-xl border border-[rgba(120,160,230,.2)] bg-white/[0.03] text-sm font-semibold transition-colors hover:bg-white/[0.07] disabled:opacity-60"
+              className={cn(
+                "flex w-full items-center justify-center gap-2.5 text-sm font-semibold transition-colors disabled:opacity-60",
+                skin.google,
+              )}
             >
               {googleBusy ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -400,12 +411,12 @@ function LoginPage() {
               {t("login.continueWithGoogle")}
             </button>
 
-            <p className="mt-5 text-center text-[13.5px] text-[#9aa6bd]">
+            <p className={cn("mt-5 text-center text-[13.5px]", skin.muted)}>
               {t("login.noAccount")}{" "}
               <button
                 type="button"
                 onClick={() => flipTo("/signup")}
-                className="font-bold text-[#6f9bff] hover:underline"
+                className={cn("font-bold hover:underline", skin.link)}
               >
                 {t("auth.signUpLink")}
               </button>

@@ -4,6 +4,7 @@ import { Eye, EyeOff, Globe, type LucideIcon } from "lucide-react";
 import { useI18n, LANGS, LANG_SHORT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
+import { SkinCard, SkinnedAuthPage, useAuthSkin } from "@/components/auth/auth-skins";
 
 // The sign-in and sign-up pages share one look: a dark page with soft blue
 // light waves (drawn here, no image), and a frosted glass card with two cut
@@ -12,6 +13,13 @@ import { Logo } from "@/components/Logo";
 // card with two sides.
 
 export function AuthBackdrop({ children }: { children: ReactNode }) {
+  // The page's look (auth-skins.tsx); the glass one is drawn here.
+  return (
+    <SkinnedAuthPage glass={<GlassBackdrop>{children}</GlassBackdrop>}>{children}</SkinnedAuthPage>
+  );
+}
+
+function GlassBackdrop({ children }: { children: ReactNode }) {
   const { lang, setLang } = useI18n();
   return (
     <main className="always-dark relative min-h-dvh w-full overflow-x-hidden bg-[#05070c] text-white">
@@ -123,6 +131,8 @@ export function AuthBackdrop({ children }: { children: ReactNode }) {
 
 /** The glass card; `leaving` plays the turn-over before the page changes. */
 export function GlassCard({ children, leaving }: { children: ReactNode; leaving?: boolean }) {
+  const { id } = useAuthSkin();
+  if (id !== "glass") return <SkinCard {...(leaving ? { leaving } : {})}>{children}</SkinCard>;
   return (
     <div
       className={cn(
@@ -168,12 +178,13 @@ export function GlassHeading({
   accent?: string;
   sub?: ReactNode;
 }) {
+  const { s } = useAuthSkin();
   return (
-    <div className="mb-6">
-      <h1 className="text-[28px] font-bold leading-tight tracking-tight">
-        {title} {accent && <span className="text-[#5b8cff]">{accent}</span>}
+    <div className={s.head}>
+      <h1 className={s.h1}>
+        {title} {accent && <span className={s.accent}>{accent}</span>}
       </h1>
-      {sub && <p className="mt-1.5 text-sm text-[#9aa6bd]">{sub}</p>}
+      {sub && <p className={s.sub}>{sub}</p>}
     </div>
   );
 }
@@ -193,28 +204,24 @@ export function GlassField({
 } & InputHTMLAttributes<HTMLInputElement>) {
   const [shown, setShown] = useState(false);
   const isPassword = type === "password";
+  const { s } = useAuthSkin();
   return (
     <label className={cn("block", className)}>
-      <span className="mb-[7px] block text-[13px] font-semibold text-[#c9d2e3]">{label}</span>
-      <span
-        className={cn(
-          "flex h-[46px] items-center gap-2.5 rounded-xl border bg-[rgba(6,10,20,.55)] px-3.5 transition-[border-color,box-shadow] focus-within:border-[#4d86ff] focus-within:shadow-[0_0_0_3px_rgba(77,134,255,.18)]",
-          error ? "border-red-400/60" : "border-[rgba(120,160,230,.18)]",
-        )}
-      >
-        <Icon className="h-[18px] w-[18px] shrink-0 text-[#7f8aa3]" />
+      <span className={s.label}>{label}</span>
+      <span className={cn(s.field, error ? s.fieldErr : s.fieldOk)}>
+        <Icon className={cn("h-[18px] w-[18px] shrink-0", s.icon)} />
         <input
           {...input}
           type={isPassword && shown ? "text" : type}
           aria-invalid={!!error}
-          className="h-full min-w-0 flex-1 bg-transparent text-[14.5px] text-[#e7ecf6] outline-none placeholder:text-[#6b768c]"
+          className={cn("h-full min-w-0 flex-1 bg-transparent outline-none", s.input)}
         />
         {isPassword && (
           <button
             type="button"
             tabIndex={-1}
             onClick={() => setShown((v) => !v)}
-            className="text-[#7f8aa3] transition-colors hover:text-white"
+            className={cn("transition-colors", s.eye)}
             aria-label={shown ? "Hide" : "Show"}
           >
             {shown ? (
@@ -225,7 +232,7 @@ export function GlassField({
           </button>
         )}
       </span>
-      {error && <span className="mt-1.5 block text-xs text-red-300">{error}</span>}
+      {error && <span className={cn("mt-1.5 block text-xs", s.err)}>{error}</span>}
     </label>
   );
 }
@@ -239,11 +246,15 @@ export function GlassSubmit({
   busy?: boolean;
   disabled?: boolean;
 }) {
+  const { s } = useAuthSkin();
   return (
     <button
       type="submit"
       disabled={busy || disabled}
-      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(90deg,#2f7bff,#5b55e6)] text-[15px] font-bold text-white shadow-[0_12px_30px_-10px_rgba(47,123,255,.7)] transition-[filter,transform] hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
+      className={cn(
+        "flex w-full items-center justify-center gap-2 transition-[filter,transform,background-color] active:scale-[0.99] disabled:opacity-60",
+        s.submit,
+      )}
     >
       {children}
     </button>
@@ -251,22 +262,21 @@ export function GlassSubmit({
 }
 
 export function GlassError({ children }: { children: ReactNode }) {
+  const { s } = useAuthSkin();
   return (
-    <p
-      role="alert"
-      className="rounded-xl border border-red-400/30 bg-red-500/15 px-3 py-2 text-sm font-medium text-red-300"
-    >
+    <p role="alert" className={cn("px-3 py-2 text-sm font-medium", s.errorBox)}>
       {children}
     </p>
   );
 }
 
 export function GlassDivider({ label }: { label: string }) {
+  const { s } = useAuthSkin();
   return (
-    <div className="my-[18px] flex items-center gap-3 text-xs text-[#6b768c]">
-      <span className="h-px flex-1 bg-[rgba(120,160,230,.15)]" />
+    <div className={cn("my-[18px] flex items-center gap-3 text-xs", s.divider)}>
+      <span className={cn("h-px flex-1", s.dividerLine)} />
       {label}
-      <span className="h-px flex-1 bg-[rgba(120,160,230,.15)]" />
+      <span className={cn("h-px flex-1", s.dividerLine)} />
     </div>
   );
 }
