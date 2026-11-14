@@ -1967,4 +1967,220 @@ export const TIPS: Record<string, Tip> = {
       en: "Leads: received in the period; Worked: moved past the first stage; Talks: answered calls; Longest: the longest call. The small figure is the previous period (with Growth on, the change %).",
     },
   },
+  "nav:/phone": {
+    what: {
+      uz: "Telefon — qo'ng'iroqlar markazi: raqam terish, jurnal, barcha qo'ng'iroqlar, hisobotlar, operatorlar, avto-qo'ng'iroq, ovozli xabar va AI baholash.",
+      ru: "Телефон — центр звонков: набор, журнал, все звонки, отчёты, операторы, автообзвон, голосовые и AI-оценка.",
+      en: "Phone — the call centre: dialing, log, all calls, reports, operators, autodialer, voice messages and AI scoring.",
+    },
+    calc: {
+      uz: "Qo'ng'iroqlar kompaniya ATS'idan (OnlinePBX, Sipuni, Moi Zvonki) olinadi; menejer faqat o'zinikini ko'radi.",
+      ru: "Звонки берутся из АТС компании (OnlinePBX, Sipuni, Мои Звонки); менеджер видит только свои.",
+      en: "Calls come from the company's PBX (OnlinePBX, Sipuni, Moi Zvonki); a rep sees only their own.",
+    },
+  },
+  "ptel.k.total": {
+    what: {
+      uz: "Davrdagi barcha qo'ng'iroqlar.",
+      ru: "Все звонки за период.",
+      en: "All calls in the period.",
+    },
+    calc: {
+      uz: "ATS'dagi kiruvchi va chiquvchi qo'ng'iroqlar soni.",
+      ru: "Входящие и исходящие звонки из АТС.",
+      en: "Incoming and outgoing calls from the PBX.",
+    },
+  },
+  "ptel.k.missed": {
+    what: {
+      uz: "Hech kim javob bermagan kiruvchi qo'ng'iroqlar.",
+      ru: "Входящие, на которые никто не ответил.",
+      en: "Incoming calls nobody answered.",
+    },
+    calc: {
+      uz: "Kiruvchi va javobsiz qo'ng'iroqlar; ular uchun avtomatik «qayta qo'ng'iroq» vazifasi qo'yiladi.",
+      ru: "Входящие без ответа; на них автоматически ставится задача «перезвонить».",
+      en: "Incoming calls without an answer; a call-back task is set for them automatically.",
+    },
+  },
+  "ptel.k.rate": {
+    what: {
+      uz: "Qo'ng'iroqlarning qanchasida suhbat bo'ldi.",
+      ru: "В какой доле звонков был разговор.",
+      en: "How many calls had a conversation.",
+    },
+    calc: {
+      uz: "Suhbat bo'lgan qo'ng'iroqlar ÷ jami × 100.",
+      ru: "Звонки с разговором ÷ все × 100.",
+      en: "Answered calls ÷ all calls × 100.",
+    },
+  },
+  "ptel.k.talk": {
+    what: {
+      uz: "Suhbatlarning umumiy davomiyligi.",
+      ru: "Общая длительность разговоров.",
+      en: "The total length of the conversations.",
+    },
+    calc: {
+      uz: "Suhbat bo'lgan qo'ng'iroqlar davomiyligi yig'indisi; o'rtachasi — bitta suhbatga.",
+      ru: "Сумма длительностей разговоров; среднее — на один разговор.",
+      en: "The answered calls' durations added up; the average is per conversation.",
+    },
+  },
+  "ptel.b.quick": {
+    what: {
+      uz: "Raqamni yozib darhol qo'ng'iroq qilish.",
+      ru: "Набрать номер и сразу позвонить.",
+      en: "Type a number and call at once.",
+    },
+    calc: {
+      uz: "Avval sizning telefoningiz jiringlaydi, keyin mijoz.",
+      ru: "Сначала звонит ваш телефон, затем клиент.",
+      en: "Your phone rings first, then the client.",
+    },
+  },
+  "ptel.b.top": {
+    what: {
+      uz: "Davrda eng ko'p qo'ng'iroq qilgan operatorlar.",
+      ru: "Операторы с наибольшим числом звонков.",
+      en: "The operators with the most calls.",
+    },
+    calc: {
+      uz: "Qo'ng'iroqlar soni va suhbat vaqti.",
+      ru: "Число звонков и время разговоров.",
+      en: "Number of calls and talk time.",
+    },
+  },
+  "ptel.b.recent": {
+    what: {
+      uz: "Oxirgi qo'ng'iroq qilingan raqamlar.",
+      ru: "Последние номера.",
+      en: "The latest numbers.",
+    },
+    calc: {
+      uz: "Bosing — raqam teriladi; telefon belgisi — darhol qo'ng'iroq.",
+      ru: "Нажмите — номер наберётся; значок телефона — звонок сразу.",
+      en: "Click to fill the number; the phone icon calls at once.",
+    },
+  },
+  "ptel.b.operators": {
+    what: {
+      uz: "Har bir operatorning qo'ng'iroqlari.",
+      ru: "Звонки каждого оператора.",
+      en: "Each operator's calls.",
+    },
+    calc: {
+      uz: "Jami, kiruvchi, chiquvchi, o'tkazilgan, javob foizi, suhbat vaqti, o'rtacha va eng uzun suhbat, AI ball.",
+      ru: "Всего, входящие, исходящие, пропущенные, % ответа, время, среднее и самый долгий разговор, AI-балл.",
+      en: "Total, in, out, missed, answer rate, talk time, average and longest call, AI score.",
+    },
+  },
+  "ptel.b.rating": {
+    what: {
+      uz: "Operatorlarning o'rtacha AI bahosi.",
+      ru: "Средняя AI-оценка операторов.",
+      en: "The operators' average AI score.",
+    },
+    calc: {
+      uz: "Audio tahlil qo'ng'iroqlarni skript bo'yicha 0–100 baholaydi; 80+ yaxshi, 60 dan past — e'tibor kerak.",
+      ru: "Аудиоаналитика оценивает звонки по скрипту 0–100; 80+ хорошо, ниже 60 — нужно внимание.",
+      en: "Audio analytics scores calls against the script 0–100; 80+ is good, under 60 needs attention.",
+    },
+  },
+  "ptel.b.scored": {
+    what: {
+      uz: "AI baholagan so'nggi qo'ng'iroqlar.",
+      ru: "Последние звонки с AI-оценкой.",
+      en: "The latest AI-scored calls.",
+    },
+    calc: {
+      uz: "Ball, operator, davomiylik va qisqa xulosa.",
+      ru: "Балл, оператор, длительность и краткий вывод.",
+      en: "Score, operator, duration and a short summary.",
+    },
+  },
+  "ptel.b.auto": {
+    what: {
+      uz: "Tanlangan bosqichlardagi lidlarga navbat bilan qo'ng'iroq.",
+      ru: "Обзвон лидов выбранных этапов по очереди.",
+      en: "Calls the chosen stages' leads one after another.",
+    },
+    calc: {
+      uz: "Keyingi qo'ng'iroq oldingisi tugagach, belgilangan soniyadan so'ng boshlanadi; har bir lid natijasi ko'rinadi.",
+      ru: "Следующий звонок начинается через заданные секунды после окончания предыдущего; результат по каждому лиду виден.",
+      en: "The next call starts the set seconds after the last one ends; each lead's result is shown.",
+    },
+  },
+  "ptel.b.voice": {
+    what: {
+      uz: "Ovozli xabarni kimlarga yuborish.",
+      ru: "Кому отправить голосовое.",
+      en: "Who gets the voice message.",
+    },
+    calc: {
+      uz: "Lidlarni qidirib tanlang yoki voronka bosqichlarini belgilang.",
+      ru: "Выберите лидов поиском или отметьте этапы воронки.",
+      en: "Pick leads by search or tick a funnel's stages.",
+    },
+  },
+  "ptel.b.record": {
+    what: {
+      uz: "Ovozli xabarni yozib yuborish.",
+      ru: "Записать и отправить голосовое.",
+      en: "Record and send the voice message.",
+    },
+    calc: {
+      uz: "Bir marta yoziladi va har bir mijozning Telegramiga ovozli xabar bo'lib boradi.",
+      ru: "Записывается один раз и уходит каждому клиенту в Telegram голосовым.",
+      en: "Recorded once, sent to every client's Telegram as a voice note.",
+    },
+  },
+  "ptel.b.connect": {
+    what: {
+      uz: "Qaysi ATS ulangan.",
+      ru: "Какая АТС подключена.",
+      en: "Which PBX is connected.",
+    },
+    calc: {
+      uz: "Ulangan provayder orqali qo'ng'iroqlar ketadi va tarix olinadi.",
+      ru: "Через подключённого провайдера идут звонки и загружается история.",
+      en: "Calls go and history comes through the connected provider.",
+    },
+  },
+  "ptel.b.settings": {
+    what: {
+      uz: "Telefoniya sozlamalari bir joyda.",
+      ru: "Настройки телефонии в одном месте.",
+      en: "The telephony settings in one place.",
+    },
+    calc: {
+      uz: "Ulanish, ichki raqamlar, raqam formati, bildirishnomalar va AI baholash.",
+      ru: "Подключение, внутренние номера, формат номера, уведомления и AI-оценка.",
+      en: "Connection, extensions, number format, notifications and AI scoring.",
+    },
+  },
+  "ptel.b.desktop": {
+    what: {
+      uz: "Platformani ilova qilib o'rnatish.",
+      ru: "Установка платформы как приложения.",
+      en: "Installing the platform as an app.",
+    },
+    calc: {
+      uz: "Brauzerning o'rnatish oynasi orqali; ilova alohida oynada ochiladi.",
+      ru: "Через окно установки браузера; приложение открывается в отдельном окне.",
+      en: "Through the browser's install prompt; the app opens in its own window.",
+    },
+  },
+  "ptel.b.notify": {
+    what: {
+      uz: "Kiruvchi qo'ng'iroq haqida push xabarnoma.",
+      ru: "Push-уведомление о входящем звонке.",
+      en: "A push alert for incoming calls.",
+    },
+    calc: {
+      uz: "Brauzer ruxsati kerak; xabarnomada mijoz ismi va lid.",
+      ru: "Нужно разрешение браузера; в уведомлении имя клиента и лид.",
+      en: "Needs the browser's permission; the alert shows the client and lead.",
+    },
+  },
 };

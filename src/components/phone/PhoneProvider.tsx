@@ -363,7 +363,14 @@ function dayTitle(iso: string, t: (k: string, v?: Record<string, string | number
   return date;
 }
 
-function CallHistoryPanel({ onClose }: { onClose: () => void }) {
+/** The call history; `embedded` puts it on a page (Telefon → Jurnal) instead of over the screen. */
+export function CallHistoryPanel({
+  onClose,
+  embedded = false,
+}: {
+  onClose: () => void;
+  embedded?: boolean;
+}) {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { call, live } = usePhone();
@@ -380,10 +387,11 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
   const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "uz-UZ";
 
   useEffect(() => {
+    if (embedded) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, embedded]);
 
   const counts = {
     all: calls.length,
@@ -416,74 +424,73 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
     onClose();
   }
 
-  return (
-    // Over the whole screen, blurred, with the window ~3 cm in from every
-    // edge (less on small screens).
-    <div
-      className="fixed inset-0 z-[55] bg-black/50 p-3 backdrop-blur-md sm:p-8 lg:p-[3cm]"
-      onClick={onClose}
+  const panel = (
+    <section
+      role={embedded ? "region" : "dialog"}
+      aria-label={t("phone.title")}
+      onClick={(e) => e.stopPropagation()}
+      className={
+        embedded
+          ? "flex h-[calc(100dvh-230px)] min-h-[520px] w-full flex-col overflow-hidden rounded-[8px] border border-border bg-card"
+          : "flex h-full w-full flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_30px_90px_rgba(0,0,0,0.45)]"
+      }
     >
-      <section
-        role="dialog"
-        aria-label={t("phone.title")}
-        onClick={(e) => e.stopPropagation()}
-        className="flex h-full w-full flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_30px_90px_rgba(0,0,0,0.45)]"
-      >
-        {/* Head: title, tabs, search */}
-        <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4">
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
-            <Phone className="h-5 w-5" />
-          </span>
-          <div className="mr-2">
-            <h2 className="text-[17px] font-bold leading-tight text-foreground">
-              {view === "analytics" ? t("callStats.title") : t("phone.title")}
-            </h2>
-            <p className="text-[12px] text-muted-foreground">
-              {view === "analytics" ? t("callStats.subtitle") : t("phone.subtitle")}
-            </p>
-          </div>
-          {view === "history" && (
-            <>
-              <div className="flex rounded-xl bg-muted/70 p-1">
-                {(["all", "incoming", "outgoing", "missed"] as Tab[]).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setTab(k)}
+      {/* Head: title, tabs, search */}
+      <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4">
+        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
+          <Phone className="h-5 w-5" />
+        </span>
+        <div className="mr-2">
+          <h2 className="text-[17px] font-bold leading-tight text-foreground">
+            {view === "analytics" ? t("callStats.title") : t("phone.title")}
+          </h2>
+          <p className="text-[12px] text-muted-foreground">
+            {view === "analytics" ? t("callStats.subtitle") : t("phone.subtitle")}
+          </p>
+        </div>
+        {view === "history" && (
+          <>
+            <div className="flex rounded-xl bg-muted/70 p-1">
+              {(["all", "incoming", "outgoing", "missed"] as Tab[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setTab(k)}
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium transition-colors",
+                    tab === k
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t(`phone.tab.${k}`)}
+                  <span
                     className={cn(
-                      "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium transition-colors",
-                      tab === k
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground",
+                      "rounded-md px-1.5 text-[11px] tabular-nums",
+                      k === "missed" && counts.missed
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-foreground/[0.06] text-muted-foreground",
                     )}
                   >
-                    {t(`phone.tab.${k}`)}
-                    <span
-                      className={cn(
-                        "rounded-md px-1.5 text-[11px] tabular-nums",
-                        k === "missed" && counts.missed
-                          ? "bg-destructive/15 text-destructive"
-                          : "bg-foreground/[0.06] text-muted-foreground",
-                      )}
-                    >
-                      {counts[k]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <label className="flex h-9 min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary">
-                <Search className="h-4 w-4 text-subtle" />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={t("phone.search")}
-                  className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
-                />
-              </label>
-            </>
-          )}
-          {view === "analytics" && <span className="flex-1" />}
-          {/* The way into (and back out of) the call analytics. */}
+                    {counts[k]}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <label className="flex h-9 min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary">
+              <Search className="h-4 w-4 text-subtle" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t("phone.search")}
+                className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
+              />
+            </label>
+          </>
+        )}
+        {view === "analytics" && <span className="flex-1" />}
+        {/* The way into (and back out of) the call analytics. */}
+        {!embedded && (
           <button
             type="button"
             onClick={() => setView(view === "history" ? "analytics" : "history")}
@@ -504,6 +511,8 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
               </>
             )}
           </button>
+        )}
+        {!embedded && (
           <button
             type="button"
             aria-label={t("phone.close")}
@@ -512,203 +521,214 @@ function CallHistoryPanel({ onClose }: { onClose: () => void }) {
           >
             <X className="h-5 w-5" />
           </button>
-        </header>
+        )}
+      </header>
 
-        {view === "analytics" ? (
-          <CallAnalytics />
-        ) : (
-          <>
-            {/* Column heads */}
-            <div className="hidden grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px] gap-3 border-b border-border bg-muted/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle md:grid">
-              <span>{t("phone.col.call")}</span>
-              <span>{t("phone.col.name")}</span>
-              <span>{t("phone.col.phone")}</span>
-              <span>{t("phone.col.duration")}</span>
-              <span>{t("phone.col.status")}</span>
-              <span />
-            </div>
+      {view === "analytics" ? (
+        <CallAnalytics />
+      ) : (
+        <>
+          {/* Column heads */}
+          <div className="hidden grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px] gap-3 border-b border-border bg-muted/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle md:grid">
+            <span>{t("phone.col.call")}</span>
+            <span>{t("phone.col.name")}</span>
+            <span>{t("phone.col.phone")}</span>
+            <span>{t("phone.col.duration")}</span>
+            <span>{t("phone.col.status")}</span>
+            <span />
+          </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-                </div>
-              ) : groups.length === 0 ? (
-                <p className="py-16 text-center text-sm text-subtle">{t("phone.empty")}</p>
-              ) : (
-                groups.map((g) => (
-                  <div key={g.day}>
-                    <p className="sticky top-0 z-[1] border-b border-border bg-background/95 px-5 py-2 text-[12px] font-semibold capitalize text-muted-foreground backdrop-blur">
-                      {dayTitle(g.items[0]!.at, t)}
-                    </p>
-                    {g.items.map((c) => (
-                      <div key={c.id} className="border-b border-border/70 last:border-0">
-                        <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-[13px] transition-colors hover:bg-accent/60 md:grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px]">
-                          <span className="flex items-center gap-2 tabular-nums text-muted-foreground">
-                            <CallIcon c={c} />
-                            {new Date(c.at).toLocaleTimeString(locale, {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                            <span className="truncate font-medium text-foreground md:hidden">
-                              {c.name || c.phone}
-                            </span>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
+              </div>
+            ) : groups.length === 0 ? (
+              <p className="py-16 text-center text-sm text-subtle">{t("phone.empty")}</p>
+            ) : (
+              groups.map((g) => (
+                <div key={g.day}>
+                  <p className="sticky top-0 z-[1] border-b border-border bg-background/95 px-5 py-2 text-[12px] font-semibold capitalize text-muted-foreground backdrop-blur">
+                    {dayTitle(g.items[0]!.at, t)}
+                  </p>
+                  {g.items.map((c) => (
+                    <div key={c.id} className="border-b border-border/70 last:border-0">
+                      <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-[13px] transition-colors hover:bg-accent/60 md:grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px]">
+                        <span className="flex items-center gap-2 tabular-nums text-muted-foreground">
+                          <CallIcon c={c} />
+                          {new Date(c.at).toLocaleTimeString(locale, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                          <span className="truncate font-medium text-foreground md:hidden">
+                            {c.name || c.phone}
                           </span>
-                          <span className="hidden min-w-0 md:block">
-                            {c.leadId ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  onClose();
-                                  void navigate({
-                                    to: "/crm/leads/$leadId",
-                                    params: { leadId: c.leadId! },
-                                  });
-                                }}
-                                className="block max-w-full truncate text-left font-medium text-foreground hover:text-primary hover:underline"
-                              >
-                                {c.name || t("phone.unknown")}
-                              </button>
-                            ) : (
-                              <span className="block truncate font-medium text-foreground">
-                                {c.name || t("phone.unknown")}
-                              </span>
-                            )}
-                          </span>
-                          <span className="hidden truncate tabular-nums text-foreground/85 md:block">
-                            {c.phone || "—"}
-                          </span>
-                          <span className="hidden tabular-nums text-muted-foreground md:block">
-                            {mmss(c.durationSeconds)}
-                          </span>
-                          <span className="hidden min-w-0 md:block" title={c.error ?? undefined}>
-                            <span
-                              className={cn("block truncate font-medium", OUTCOME_TONE[c.outcome])}
+                        </span>
+                        <span className="hidden min-w-0 md:block">
+                          {c.leadId ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onClose();
+                                void navigate({
+                                  to: "/crm/leads/$leadId",
+                                  params: { leadId: c.leadId! },
+                                });
+                              }}
+                              className="block max-w-full truncate text-left font-medium text-foreground hover:text-primary hover:underline"
                             >
-                              {t(`phone.outcome.${c.outcome}`)}
+                              {c.name || t("phone.unknown")}
+                            </button>
+                          ) : (
+                            <span className="block truncate font-medium text-foreground">
+                              {c.name || t("phone.unknown")}
                             </span>
-                            {c.outcome === "failed" && c.error && (
-                              <span className="block truncate text-[11.5px] text-muted-foreground">
-                                {c.error}
-                              </span>
-                            )}
+                          )}
+                        </span>
+                        <span className="hidden truncate tabular-nums text-foreground/85 md:block">
+                          {c.phone || "—"}
+                        </span>
+                        <span className="hidden tabular-nums text-muted-foreground md:block">
+                          {mmss(c.durationSeconds)}
+                        </span>
+                        <span className="hidden min-w-0 md:block" title={c.error ?? undefined}>
+                          <span
+                            className={cn("block truncate font-medium", OUTCOME_TONE[c.outcome])}
+                          >
+                            {t(`phone.outcome.${c.outcome}`)}
                           </span>
-                          <span className="flex items-center justify-end gap-1">
-                            {c.recordingUrl && (
-                              <button
-                                type="button"
-                                title={t("phone.listen")}
-                                onClick={() => setPlaying(playing === c.id ? null : c.id)}
-                                className={cn(
-                                  "grid h-8 w-8 place-items-center rounded-lg transition-colors",
-                                  playing === c.id
-                                    ? "bg-primary/12 text-primary"
-                                    : "text-muted-foreground hover:bg-background hover:text-foreground",
-                                )}
-                              >
-                                {playing === c.id ? (
-                                  <Pause className="h-4 w-4" />
-                                ) : (
-                                  <Play className="h-4 w-4" />
-                                )}
-                              </button>
-                            )}
-                            {c.phone && (
-                              <button
-                                type="button"
-                                title={t("phone.callBack")}
-                                disabled={!!live}
-                                onClick={() =>
-                                  dialNow(c.phone, {
-                                    ...(c.leadId ? { leadId: c.leadId } : {}),
-                                    ...(c.contactId ? { contactId: c.contactId } : {}),
-                                    ...(c.name ? { name: c.name } : {}),
-                                  })
-                                }
-                                className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/12 text-emerald-600 transition-colors hover:bg-emerald-500 hover:text-white disabled:opacity-40 dark:text-emerald-400"
-                              >
-                                <Phone className="h-4 w-4" />
-                              </button>
-                            )}
-                          </span>
-                        </div>
-                        {playing === c.id && c.recordingUrl && (
-                          <div className="px-5 pb-3">
-                            <RecordingAudio
-                              url={c.recordingUrl}
-                              controls
-                              autoPlay
-                              className="h-9 w-full"
-                            />
-                          </div>
-                        )}
+                          {c.outcome === "failed" && c.error && (
+                            <span className="block truncate text-[11.5px] text-muted-foreground">
+                              {c.error}
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex items-center justify-end gap-1">
+                          {c.recordingUrl && (
+                            <button
+                              type="button"
+                              title={t("phone.listen")}
+                              onClick={() => setPlaying(playing === c.id ? null : c.id)}
+                              className={cn(
+                                "grid h-8 w-8 place-items-center rounded-lg transition-colors",
+                                playing === c.id
+                                  ? "bg-primary/12 text-primary"
+                                  : "text-muted-foreground hover:bg-background hover:text-foreground",
+                              )}
+                            >
+                              {playing === c.id ? (
+                                <Pause className="h-4 w-4" />
+                              ) : (
+                                <Play className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                          {c.phone && (
+                            <button
+                              type="button"
+                              title={t("phone.callBack")}
+                              disabled={!!live}
+                              onClick={() =>
+                                dialNow(c.phone, {
+                                  ...(c.leadId ? { leadId: c.leadId } : {}),
+                                  ...(c.contactId ? { contactId: c.contactId } : {}),
+                                  ...(c.name ? { name: c.name } : {}),
+                                })
+                              }
+                              className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/12 text-emerald-600 transition-colors hover:bg-emerald-500 hover:text-white disabled:opacity-40 dark:text-emerald-400"
+                            >
+                              <Phone className="h-4 w-4" />
+                            </button>
+                          )}
+                        </span>
                       </div>
+                      {playing === c.id && c.recordingUrl && (
+                        <div className="px-5 pb-3">
+                          <RecordingAudio
+                            url={c.recordingUrl}
+                            controls
+                            autoPlay
+                            className="h-9 w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Dial bar */}
+          <footer className="flex items-center gap-2 border-t border-border bg-muted/40 px-5 py-3">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (dial.trim()) dialNow(dial);
+              }}
+              className="flex min-w-0 flex-1 items-center gap-2"
+            >
+              <input
+                value={dial}
+                onChange={(e) => setDial(e.target.value.replace(/[^\d+*#\s()-]/g, ""))}
+                inputMode="tel"
+                placeholder={t("phone.dialPlaceholder")}
+                className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-background px-3.5 text-[14px] tabular-nums outline-none placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    title={t("phone.keypad")}
+                    className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground"
+                  >
+                    <Grid3x3 className="h-4 w-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-56 p-2">
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {["1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "0", "#"].map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setDial((d) => d + k)}
+                        className="h-11 rounded-xl bg-muted text-[17px] font-semibold tabular-nums hover:bg-accent"
+                      >
+                        {k}
+                      </button>
                     ))}
                   </div>
-                ))
-              )}
-            </div>
-
-            {/* Dial bar */}
-            <footer className="flex items-center gap-2 border-t border-border bg-muted/40 px-5 py-3">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (dial.trim()) dialNow(dial);
-                }}
-                className="flex min-w-0 flex-1 items-center gap-2"
+                  <button
+                    type="button"
+                    onClick={() => setDial((d) => d.slice(0, -1))}
+                    className="mt-1.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl text-[12.5px] text-muted-foreground hover:bg-accent"
+                  >
+                    <Delete className="h-4 w-4" /> {t("phone.erase")}
+                  </button>
+                </PopoverContent>
+              </Popover>
+              <button
+                type="submit"
+                disabled={!dial.trim() || !!live}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-500 px-5 text-[13.5px] font-semibold text-white shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-50"
               >
-                <input
-                  value={dial}
-                  onChange={(e) => setDial(e.target.value.replace(/[^\d+*#\s()-]/g, ""))}
-                  inputMode="tel"
-                  placeholder={t("phone.dialPlaceholder")}
-                  className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-background px-3.5 text-[14px] tabular-nums outline-none placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
-                />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      title={t("phone.keypad")}
-                      className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground"
-                    >
-                      <Grid3x3 className="h-4 w-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent side="top" align="end" className="w-56 p-2">
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {["1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "0", "#"].map((k) => (
-                        <button
-                          key={k}
-                          type="button"
-                          onClick={() => setDial((d) => d + k)}
-                          className="h-11 rounded-xl bg-muted text-[17px] font-semibold tabular-nums hover:bg-accent"
-                        >
-                          {k}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setDial((d) => d.slice(0, -1))}
-                      className="mt-1.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl text-[12.5px] text-muted-foreground hover:bg-accent"
-                    >
-                      <Delete className="h-4 w-4" /> {t("phone.erase")}
-                    </button>
-                  </PopoverContent>
-                </Popover>
-                <button
-                  type="submit"
-                  disabled={!dial.trim() || !!live}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-500 px-5 text-[13.5px] font-semibold text-white shadow-sm transition-[filter] hover:brightness-110 disabled:opacity-50"
-                >
-                  <Phone className="h-4 w-4" /> {t("phone.call")}
-                </button>
-              </form>
-            </footer>
-          </>
-        )}
-      </section>
+                <Phone className="h-4 w-4" /> {t("phone.call")}
+              </button>
+            </form>
+          </footer>
+        </>
+      )}
+    </section>
+  );
+  if (embedded) return panel;
+  return (
+    // Over the whole screen, blurred, with the window ~3 cm in from every
+    // edge (less on small screens).
+    <div
+      className="fixed inset-0 z-[55] bg-black/50 p-3 backdrop-blur-md sm:p-8 lg:p-[3cm]"
+      onClick={onClose}
+    >
+      {panel}
     </div>
   );
 }

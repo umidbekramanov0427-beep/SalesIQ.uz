@@ -32,6 +32,7 @@ import { Route as LeadScoreRouteImport } from './routes/lead-score'
 import { Route as LeadTasksRouteImport } from './routes/lead-tasks'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as PhoneRouteImport } from './routes/phone'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReferralApiRouteImport } from './routes/referral-api'
@@ -182,6 +183,7 @@ import { Route as OnboardingAiSetupRouteImport } from './routes/onboarding.ai-se
 import { Route as OnboardingDataImportRouteImport } from './routes/onboarding.data-import'
 import { Route as OrgSubdomainRouteImport } from './routes/org.subdomain'
 import { Route as PayLinkIdRouteImport } from './routes/pay.$linkId'
+import { Route as PhoneDataRouteImport } from './routes/phone.data'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as PlatformActionsRouteImport } from './routes/platform.actions'
 import { Route as PlatformActionsApiRouteImport } from './routes/platform.actions-api'
@@ -437,6 +439,11 @@ const LoginRoute = LoginRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhoneRoute = PhoneRouteImport.update({
+  id: '/phone',
+  path: '/phone',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -1206,6 +1213,11 @@ const PayLinkIdRoute = PayLinkIdRouteImport.update({
   id: '/pay/$linkId',
   path: '/pay/$linkId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PhoneDataRoute = PhoneDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => PhoneRoute,
 } as any)
 const PlatformIndexRoute = PlatformIndexRouteImport.update({
   id: '/platform/',
@@ -1986,6 +1998,7 @@ export interface FileRoutesByFullPath {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/phone': typeof PhoneRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
@@ -2134,6 +2147,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
   '/pay/$linkId': typeof PayLinkIdRoute
+  '/phone/data': typeof PhoneDataRoute
   '/platform/actions': typeof PlatformActionsRoute
   '/platform/actions-api': typeof PlatformActionsApiRoute
   '/platform/activity': typeof PlatformActivityRoute
@@ -2302,6 +2316,7 @@ export interface FileRoutesByTo {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/phone': typeof PhoneRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
@@ -2450,6 +2465,7 @@ export interface FileRoutesByTo {
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
   '/pay/$linkId': typeof PayLinkIdRoute
+  '/phone/data': typeof PhoneDataRoute
   '/platform/actions': typeof PlatformActionsRoute
   '/platform/actions-api': typeof PlatformActionsApiRoute
   '/platform/activity': typeof PlatformActivityRoute
@@ -2619,6 +2635,7 @@ export interface FileRoutesById {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/phone': typeof PhoneRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referral-api': typeof ReferralApiRoute
@@ -2767,6 +2784,7 @@ export interface FileRoutesById {
   '/onboarding/data-import': typeof OnboardingDataImportRouteWithChildren
   '/org/subdomain': typeof OrgSubdomainRoute
   '/pay/$linkId': typeof PayLinkIdRoute
+  '/phone/data': typeof PhoneDataRoute
   '/platform/actions': typeof PlatformActionsRoute
   '/platform/actions-api': typeof PlatformActionsApiRoute
   '/platform/activity': typeof PlatformActivityRoute
@@ -2937,6 +2955,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/phone'
     | '/pricing'
     | '/privacy'
     | '/referral-api'
@@ -3085,6 +3104,7 @@ export interface FileRouteTypes {
     | '/onboarding/data-import'
     | '/org/subdomain'
     | '/pay/$linkId'
+    | '/phone/data'
     | '/platform/actions'
     | '/platform/actions-api'
     | '/platform/activity'
@@ -3253,6 +3273,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/phone'
     | '/pricing'
     | '/privacy'
     | '/referral-api'
@@ -3401,6 +3422,7 @@ export interface FileRouteTypes {
     | '/onboarding/data-import'
     | '/org/subdomain'
     | '/pay/$linkId'
+    | '/phone/data'
     | '/platform/actions'
     | '/platform/actions-api'
     | '/platform/activity'
@@ -3569,6 +3591,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/phone'
     | '/pricing'
     | '/privacy'
     | '/referral-api'
@@ -3717,6 +3740,7 @@ export interface FileRouteTypes {
     | '/onboarding/data-import'
     | '/org/subdomain'
     | '/pay/$linkId'
+    | '/phone/data'
     | '/platform/actions'
     | '/platform/actions-api'
     | '/platform/activity'
@@ -3886,6 +3910,7 @@ export interface RootRouteChildren {
   LeadTasksRoute: typeof LeadTasksRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
+  PhoneRoute: typeof PhoneRouteWithChildren
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ReferralApiRoute: typeof ReferralApiRoute
@@ -4229,6 +4254,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/phone': {
+      id: '/phone'
+      path: '/phone'
+      fullPath: '/phone'
+      preLoaderRoute: typeof PhoneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -5280,6 +5312,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/pay/$linkId'
       preLoaderRoute: typeof PayLinkIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/phone/data': {
+      id: '/phone/data'
+      path: '/data'
+      fullPath: '/phone/data'
+      preLoaderRoute: typeof PhoneDataRouteImport
+      parentRoute: typeof PhoneRoute
     }
     '/platform/': {
       id: '/platform/'
@@ -6580,6 +6619,16 @@ const IntegrationsRouteWithChildren = IntegrationsRoute._addFileChildren(
   IntegrationsRouteChildren,
 )
 
+interface PhoneRouteChildren {
+  PhoneDataRoute: typeof PhoneDataRoute
+}
+
+const PhoneRouteChildren: PhoneRouteChildren = {
+  PhoneDataRoute: PhoneDataRoute,
+}
+
+const PhoneRouteWithChildren = PhoneRoute._addFileChildren(PhoneRouteChildren)
+
 interface RefundsRouteChildren {
   RefundsReceiptRoute: typeof RefundsReceiptRoute
 }
@@ -6721,6 +6770,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadTasksRoute: LeadTasksRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
+  PhoneRoute: PhoneRouteWithChildren,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ReferralApiRoute: ReferralApiRoute,

@@ -318,6 +318,50 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "phone",
+    group: "basics",
+    open: "/phone",
+    title: {
+      uz: "Telefon (qo'ng'iroqlar markazi)",
+      ru: "Телефон (центр звонков)",
+      en: "Phone (call centre)",
+    },
+    summary: {
+      uz: "Raqam terish, jurnal, barcha qo'ng'iroqlar, operatorlar, avto-qo'ng'iroq, ovozli xabar va AI baho.",
+      ru: "Набор, журнал, все звонки, операторы, автообзвон, голосовые и AI-оценка.",
+      en: "Dialing, log, all calls, operators, autodialer, voice messages and AI scores.",
+    },
+    steps: [
+      {
+        uz: "Menyuda **Telefon**ni oching. Chapdagi ro'yxatda bo'limlar: **Asosiy** (bugungi raqamlar), **Telefon** (raqam terish), **Jurnal**, **Qo'ng'iroqlar**, **Hisobotlar**, **Operatorlar**, **Avto-qo'ng'iroq**, **Ovozli xabar**, **Baholash**, **Ulanish**, **Sozlamalar**, **Desktop ilova**.",
+        ru: "Откройте **Телефон** в меню. Разделы слева: **Главная** (цифры за сегодня), **Телефон** (набор), **Журнал**, **Звонки**, **Отчёты**, **Операторы**, **Автообзвон**, **Голосовое сообщение**, **Оценка**, **Подключение**, **Настройки**, **Приложение**.",
+        en: "Open **Phone** in the menu. Sections on the left: **Overview** (today's figures), **Dialer**, **Log**, **Calls**, **Reports**, **Operators**, **Autodialer**, **Voice message**, **Scoring**, **Connection**, **Settings**, **Desktop app**.",
+      },
+      {
+        uz: "**Telefon** bo'limida raqamni tering (klaviaturadan ham bo'ladi, Enter — qo'ng'iroq). Raqam CRM'da bo'lsa, lid nomi chiqadi. Qo'ng'iroq ATS orqali ketadi: avval sizning telefoningiz jiringlaydi, keyin mijoz.",
+        ru: "В разделе **Телефон** наберите номер (можно с клавиатуры, Enter — звонок). Если номер есть в CRM, появится лид. Звонок идёт через АТС: сначала звонит ваш телефон, затем клиент.",
+        en: "In **Dialer**, type the number (the keyboard works too, Enter calls). A number known to the CRM shows its lead. The call goes through the PBX: your phone rings first, then the client.",
+      },
+      {
+        uz: "**Avto-qo'ng'iroq**: voronka va bosqichlarni tanlang — telefoni bor lidlar navbatga turadi. **Boshlash** — har biriga navbat bilan qo'ng'iroq; oraliq soniyasi, pauza, o'tkazib yuborish va to'xtatish bor; har bir lid natijasi ko'rinadi.",
+        ru: "**Автообзвон**: выберите воронку и этапы — лиды с телефоном встанут в очередь. **Начать** — звонки по очереди; есть пауза между звонками, пауза, пропуск и остановка; результат по каждому лиду виден.",
+        en: "**Autodialer**: pick a funnel and stages and the leads with a phone line up. **Start** calls them one by one, with a gap between calls, pause, skip and stop; each lead's result is shown.",
+      },
+      {
+        uz: "**Ovozli xabar**: mijozlarni tanlang (qidirib yoki bosqich bo'yicha), ovozni yozing va yuboring — har bir mijozning Telegramiga ovozli xabar bo'lib boradi.",
+        ru: "**Голосовое сообщение**: выберите клиентов (поиском или по этапу), запишите и отправьте — каждому уйдёт голосовое в Telegram.",
+        en: "**Voice message**: pick clients (by search or stage), record and send — each gets a Telegram voice note.",
+      },
+      {
+        uz: "**Operatorlar** va **Baholash** — har bir xodimning qo'ng'iroqlari, suhbat vaqti va AI bali. ATS ulash va ichki raqamlar — **Ulanish** / **Sozlamalar** (administrator).",
+        ru: "**Операторы** и **Оценка** — звонки, время разговоров и AI-балл каждого. Подключение АТС и внутренние номера — **Подключение** / **Настройки** (администратор).",
+        en: "**Operators** and **Scoring** show each person's calls, talk time and AI score. Connecting the PBX and extensions: **Connection** / **Settings** (admin).",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
     slug: "audio",
     group: "basics",
     open: "/audio-analytics",

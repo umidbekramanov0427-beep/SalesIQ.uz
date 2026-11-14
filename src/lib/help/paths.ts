@@ -54,6 +54,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/daily-report-settings", "telegram-report"],
   ["/funnels", "funnels"],
   ["/inbox", "inbox"],
+  ["/phone", "phone"],
   ["/crm", "funnels"],
   ["/audio-analytics", "audio"],
   ["/scoring-criteria", "audio"],

@@ -32,6 +32,7 @@ import {
   BellRing,
   Megaphone,
   SlidersHorizontal,
+  PhoneCall,
 } from "lucide-react";
 import type { Feature } from "@/lib/plan-gating";
 import type { SessionUser } from "@/lib/auth";
@@ -117,6 +118,16 @@ export const NAV_ITEMS: NavItem[] = [
     group: "general",
     crmOnly: true,
     roles: REP_UP,
+  },
+  {
+    label: "Phone",
+    to: "/phone",
+    tone: "emerald",
+    icon: PhoneCall,
+    group: "general",
+    crmOnly: true,
+    roles: REP_UP,
+    minFeature: "telephony",
   },
   {
     label: "Audio Analytics",
