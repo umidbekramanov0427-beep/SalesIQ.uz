@@ -8331,6 +8331,7 @@ export const en: Record<string, string> = {
   "fin.noExpense": "No expenses entered for this period",
   "fin.statement": "Profit and loss",
   "fin.allLines": "Income and expense lines",
+  "fin.noEntries": "No income or expense lines for this period",
   "fin.date": "Date",
   "fin.amount": "Amount, so'm",
   "fin.category": "Category",

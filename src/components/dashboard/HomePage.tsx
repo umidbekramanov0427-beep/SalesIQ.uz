@@ -6,7 +6,7 @@ import {
   reportPeriod,
   useReportItems,
 } from "@/components/analytics/AnalyticsReports";
-import { MonthForecastCard, PnlTab } from "@/components/analytics/FinanceTabs";
+import { MonthForecastCard, usePnlItems } from "@/components/analytics/FinanceTabs";
 import { canOpenSection } from "@/lib/access-rules";
 import { appRoleOf } from "@/lib/nav";
 import { lazy, Suspense, useMemo, useState } from "react";
@@ -550,6 +550,9 @@ export function HomePage() {
     ...(analyticsOpen ? [...salesReport.items, ...winLossReport.items] : []),
   ];
 
+  // Moliya as a board: the P&L figures and blocks one card each.
+  const pnl = usePnlItems(finance.data, finance.isError ? t("an.loadError") : null);
+
   const tabsNode = (
     <Segmented
       sticky
@@ -692,8 +695,9 @@ export function HomePage() {
             )}
 
             {tab === "finance" && (
-              <div className="mt-6">
-                {finance.data ? <PnlTab data={finance.data} /> : <Loading />}
+              <div className="mt-5">
+                <CardBoard boardKey="home.finance" items={pnl.items} />
+                {pnl.dialog}
               </div>
             )}
 

@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Users,
   Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SectionCard, StatCard } from "@/components/layout/Primitives";
@@ -37,6 +38,8 @@ import {
   type MonthPoint,
 } from "@/lib/finance";
 import { useFinanceEntryMutations } from "@/hooks/use-crm-data";
+import { CardPlaceholder, type CardBoardItem, type Span } from "@/components/dashboard/HomeBoard";
+import type { CardTone } from "@/lib/tones";
 
 // Analitika -> Reklama (ad spend, cost per lead / sale, ROI by source),
 // Moliya (the period's P&L and the company's own income/expense lines) and
@@ -215,53 +218,82 @@ export function MarketingTab({
   );
 }
 
-export function PnlTab({ data }: { data: FinanceData }) {
+/**
+ * Moliya as board cards (CardBoard): the period's P&L figures, where money
+ * came from and went, the statement and the company's own lines. Each card
+ * holds a placeholder until the data arrives; `dialog` is the add-a-line
+ * window for the page to render.
+ */
+export function usePnlItems(
+  data: FinanceData | undefined,
+  error: string | null = null,
+): {
+  items: CardBoardItem[];
+  dialog: ReactNode;
+} {
   const { t } = useI18n();
   const { format } = useCurrency();
   const cat = useCat();
   const [adding, setAdding] = useState<"income" | "expense" | null>(null);
-  const p = data.pnl;
-  if (!p) return null;
-  const maxExp = Math.max(1, ...p.expenses.map((e) => e.amount));
-  const incomeRows = [{ category: "__sales", amount: p.salesRevenue }, ...p.otherIncome].filter(
-    (x) => x.amount > 0,
-  );
-  const maxInc = Math.max(1, ...incomeRows.map((e) => e.amount));
-  return (
-    <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={Banknote}
-          iconTone="emerald"
-          label={t("fin.income")}
-          tipKey="fin.income"
-          value={format(p.totalIncome)}
-        />
-        <StatCard
-          icon={Wallet}
-          iconTone="rose"
-          label={t("fin.expense")}
-          tipKey="fin.expense"
-          value={format(p.totalExpense)}
-        />
-        <StatCard
-          icon={p.profit >= 0 ? TrendingUp : TrendingDown}
-          iconTone={p.profit >= 0 ? "emerald" : "rose"}
-          label={t("fin.profit")}
-          tipKey="fin.profit"
-          value={format(p.profit)}
-        />
-        <StatCard
-          icon={Scale}
-          iconTone="violet"
-          label={t("fin.margin")}
-          tipKey="fin.margin"
-          value={p.marginPct == null ? "—" : `${p.marginPct}%`}
-          info={t("fin.marginInfo")}
-        />
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-2">
+  const p = data?.pnl ?? null;
+  const wait = (stat: boolean) => <CardPlaceholder stat={stat} error={error} />;
+  const stat = (
+    id: string,
+    icon: LucideIcon,
+    tone: CardTone,
+    label: string,
+    value: () => string,
+    info?: string,
+  ): CardBoardItem => ({
+    id: `pnl:${id}`,
+    title: t(label),
+    icon,
+    tone,
+    node: p ? (
+      <StatCard
+        icon={icon}
+        iconTone={tone}
+        label={t(label)}
+        tipKey={label}
+        value={value()}
+        {...(info ? { info } : {})}
+      />
+    ) : (
+      wait(true)
+    ),
+  });
+  const profitUp = !p || p.profit >= 0;
+  const incomeRows = p
+    ? [{ category: "__sales", amount: p.salesRevenue }, ...p.otherIncome].filter(
+        (x) => x.amount > 0,
+      )
+    : [];
+  const items: CardBoardItem[] = [
+    stat("income", Banknote, "emerald", "fin.income", () => format(p!.totalIncome)),
+    stat("expense", Wallet, "rose", "fin.expense", () => format(p!.totalExpense)),
+    stat(
+      "profit",
+      profitUp ? TrendingUp : TrendingDown,
+      profitUp ? "emerald" : "rose",
+      "fin.profit",
+      () => format(p!.profit),
+    ),
+    stat(
+      "margin",
+      Scale,
+      "violet",
+      "fin.margin",
+      () => (p!.marginPct == null ? "—" : `${p!.marginPct}%`),
+      t("fin.marginInfo"),
+    ),
+    {
+      id: "pnl:incomeBreakdown",
+      title: t("fin.incomeTitle"),
+      icon: TrendingUp,
+      tone: "emerald",
+      span: 6,
+      sizes: HALF_SIZES,
+      node: p ? (
         <SectionCard
           icon={TrendingUp}
           tone="emerald"
@@ -278,11 +310,23 @@ export function PnlTab({ data }: { data: FinanceData }) {
               label: r.category === "__sales" ? t("fin.salesRevenue") : cat(r.category),
               amount: r.amount,
             }))}
-            max={maxInc}
+            max={Math.max(1, ...incomeRows.map((e) => e.amount))}
             tone="bg-emerald-500"
             empty={t("fin.noIncome")}
           />
         </SectionCard>
+      ) : (
+        wait(false)
+      ),
+    },
+    {
+      id: "pnl:expenseBreakdown",
+      title: t("fin.expenseTitle"),
+      icon: TrendingDown,
+      tone: "rose",
+      span: 6,
+      sizes: HALF_SIZES,
+      node: p ? (
         <SectionCard
           icon={TrendingDown}
           tone="rose"
@@ -296,40 +340,69 @@ export function PnlTab({ data }: { data: FinanceData }) {
         >
           <Breakdown
             rows={p.expenses.map((r) => ({ label: cat(r.category), amount: r.amount }))}
-            max={maxExp}
+            max={Math.max(1, ...p.expenses.map((e) => e.amount))}
             tone="bg-rose-400"
             empty={t("fin.noExpense")}
           />
         </SectionCard>
-      </div>
-
-      {/* The bottom line, as a statement. */}
-      <SectionCard icon={Scale} tone="violet" title={t("fin.statement")}>
-        <dl className="divide-y divide-border text-[13.5px]">
-          <Line label={t("fin.income")} value={format(p.totalIncome)} />
-          <Line label={t("fin.expense")} value={`− ${format(p.totalExpense)}`} />
-          <Line
-            label={t("fin.profit")}
-            value={format(p.profit)}
-            strong
-            tone={
-              p.profit >= 0
-                ? "text-emerald-700 dark:text-emerald-300"
-                : "text-red-700 dark:text-red-300"
-            }
-          />
-        </dl>
-      </SectionCard>
-
-      {(data.entries ?? []).length > 0 && (
+      ) : (
+        wait(false)
+      ),
+    },
+    {
+      // The bottom line, as a statement.
+      id: "pnl:statement",
+      title: t("fin.statement"),
+      icon: Scale,
+      tone: "violet",
+      span: 12,
+      sizes: HALF_SIZES,
+      node: p ? (
+        <SectionCard icon={Scale} tone="violet" title={t("fin.statement")}>
+          <dl className="divide-y divide-border text-[13.5px]">
+            <Line label={t("fin.income")} value={format(p.totalIncome)} />
+            <Line label={t("fin.expense")} value={`− ${format(p.totalExpense)}`} />
+            <Line
+              label={t("fin.profit")}
+              value={format(p.profit)}
+              strong
+              tone={
+                p.profit >= 0
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : "text-red-700 dark:text-red-300"
+              }
+            />
+          </dl>
+        </SectionCard>
+      ) : (
+        wait(false)
+      ),
+    },
+    {
+      id: "pnl:entries",
+      title: t("fin.allLines"),
+      icon: Coins,
+      tone: "slate",
+      span: 12,
+      sizes: HALF_SIZES,
+      node: data ? (
         <EntriesCard title={t("fin.allLines")} entries={data.entries ?? []} />
-      )}
-      {adding && (
+      ) : (
+        wait(false)
+      ),
+    },
+  ];
+  return {
+    // A company without the finance tables yet (pnl missing) sees nothing, as before.
+    items: data && !p ? [] : items,
+    dialog:
+      adding && data ? (
         <EntryDialog kind={adding} sources={data.sources} onClose={() => setAdding(null)} />
-      )}
-    </div>
-  );
+      ) : null,
+  };
 }
+
+const HALF_SIZES: Span[] = [6, 8, 12];
 
 function Line({
   label,
@@ -401,6 +474,9 @@ function EntriesCard({ title, entries }: { title: string; entries: FinEntry[] })
   const { remove } = useFinanceEntryMutations();
   return (
     <SectionCard icon={Coins} tone="slate" title={title}>
+      {entries.length === 0 && (
+        <p className="py-8 text-center text-[13px] text-muted-foreground">{t("fin.noEntries")}</p>
+      )}
       <ul className="divide-y divide-border">
         {entries.map((e) => (
           <li key={e.id} className="flex items-center gap-3 py-2.5 text-[13px]">

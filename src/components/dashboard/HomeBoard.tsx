@@ -16,6 +16,7 @@ import {
   Check,
   GripVertical,
   LayoutDashboard,
+  Loader2,
   Plus,
   RotateCcw,
   X,
@@ -714,6 +715,31 @@ export function CardBoard({
         editing={editing}
         onEditingChange={setEditing}
       />
+    </div>
+  );
+}
+
+/** A board card's stand-in until its data arrives (or why it did not). */
+export function CardPlaceholder({
+  stat = false,
+  error = null,
+}: {
+  /** A figure card (short) rather than a block. */
+  stat?: boolean;
+  error?: string | null;
+}) {
+  return (
+    <div
+      className={cn(
+        "surface-card grid place-items-center p-5",
+        stat ? "min-h-[118px]" : "min-h-[240px]",
+      )}
+    >
+      {error ? (
+        <p className="text-center text-[13px] text-muted-foreground">{error}</p>
+      ) : (
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      )}
     </div>
   );
 }

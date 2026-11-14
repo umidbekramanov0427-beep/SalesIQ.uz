@@ -8503,6 +8503,7 @@ const uz: Record<string, string> = {
   "fin.noExpense": "Bu davr uchun xarajat kiritilmagan",
   "fin.statement": "Foyda va zarar",
   "fin.allLines": "Kirim va xarajat yozuvlari",
+  "fin.noEntries": "Bu davrda kirim yoki xarajat yozuvi yo'q",
   "fin.date": "Sana",
   "fin.amount": "Summa, so'm",
   "fin.category": "Turkum",

@@ -36,7 +36,7 @@ import {
 } from "@/lib/analytics-reports";
 import { useCurrency } from "@/lib/currency";
 import { useOrgAccess } from "@/lib/use-org-access";
-import type { CardBoardItem, Span } from "@/components/dashboard/HomeBoard";
+import { CardPlaceholder, type CardBoardItem, type Span } from "@/components/dashboard/HomeBoard";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -1083,23 +1083,6 @@ function usePartDefs(report: ReportKind): PartDef[] {
   return [];
 }
 
-function PartPlaceholder({ stat, error }: { stat: boolean; error: string | null }) {
-  return (
-    <div
-      className={cn(
-        "surface-card grid place-items-center p-5",
-        stat ? "min-h-[118px]" : "min-h-[240px]",
-      )}
-    >
-      {error ? (
-        <p className="text-center text-[13px] text-muted-foreground">{error}</p>
-      ) : (
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      )}
-    </div>
-  );
-}
-
 /**
  * A report as board cards (CardBoard): each figure card and block is its own
  * item, holding a placeholder until the data arrives. A company whose plan
@@ -1151,7 +1134,7 @@ export function useReportItems(
         data && !error ? (
           render(data, who)
         ) : (
-          <PartPlaceholder stat={(p.span ?? 12) <= 4} error={error} />
+          <CardPlaceholder stat={(p.span ?? 12) <= 4} error={error} />
         ),
     })),
   };

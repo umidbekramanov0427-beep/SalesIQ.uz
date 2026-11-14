@@ -8359,6 +8359,7 @@ const ru: Record<string, string> = {
   "fin.noExpense": "За период расходы не внесены",
   "fin.statement": "Прибыли и убытки",
   "fin.allLines": "Записи доходов и расходов",
+  "fin.noEntries": "За этот период записей о доходах и расходах нет",
   "fin.date": "Дата",
   "fin.amount": "Сумма, сум",
   "fin.category": "Категория",
