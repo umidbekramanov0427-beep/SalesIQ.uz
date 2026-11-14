@@ -100,21 +100,24 @@ function MetricCard({
   );
 }
 
-/**
- * The Konversiya tab: four conversion rates over the leads created in the
- * picked period (all time by default), for the funnel / team / operator
- * picked above. Which stages count as "no number", "unreachable", "new",
- * prepayment or full payment is read from the stage names and listed in
- * each card's "!".
- */
-export function ConversionMetricsCards({
-  funnel,
-  scope,
-}: {
-  funnel: string | null;
-  scope?: StatsScope;
-}) {
-  const { t } = useI18n();
+export const CONV_METRICS = ["overall", "qualified", "connected", "partialToFull"] as const;
+export type ConvMetric = (typeof CONV_METRICS)[number];
+
+/** Each metric's look, for the board's widget list too. */
+export const CONV_METRIC_META: Record<
+  ConvMetric,
+  { icon: LucideIcon; tone: CardTone; title: string }
+> = {
+  overall: { icon: Users, tone: "primary", title: "conv.overall" },
+  qualified: { icon: BadgeCheck, tone: "emerald", title: "conv.qualified" },
+  connected: { icon: PhoneCall, tone: "sky", title: "conv.connected" },
+  partialToFull: { icon: CircleDollarSign, tone: "amber", title: "conv.partialToFull" },
+};
+
+// The four rates over the leads created in the picked period (all time by
+// default), for the funnel / team / operator picked above. Cards share the
+// cached lead cube, so each card on its own costs nothing extra.
+function useConversionMetrics(funnel: string | null, scope?: StatsScope) {
   const { data: cube, isLoading } = useLeadCube({
     funnel,
     from: scope?.from ?? null,
@@ -136,61 +139,87 @@ export function ConversionMetricsCards({
     const pool = (stages ?? []).filter((s) => !funnel || s.pipeline_name === funnel);
     return conversionMetrics(counts, pool);
   }, [cube, stages, funnel, visibleOwnerIds, ownerKey]);
+  return { m, loading: isLoading || stagesLoading };
+}
 
-  const loading = isLoading || stagesLoading;
+/**
+ * One conversion rate as a figure card. Which stages count as "no number",
+ * "unreachable", "new", prepayment or full payment is read from the stage
+ * names and listed in the card's "!".
+ */
+export function ConversionMetricCard({
+  metric,
+  funnel,
+  scope,
+}: {
+  metric: ConvMetric;
+  funnel: string | null;
+  scope?: StatsScope;
+}) {
+  const { t } = useI18n();
+  const { m, loading } = useConversionMetrics(funnel, scope);
+  const meta = CONV_METRIC_META[metric];
   const sales = t("conv.sales");
+  const byMetric = {
+    overall: {
+      rate: m.overall,
+      numLabel: sales,
+      denLabel: t("conv.allLeads"),
+      info: t("conv.overallInfo", { sales: nameList([...m.names.partial, ...m.names.full]) }),
+    },
+    qualified: {
+      rate: m.qualified,
+      numLabel: sales,
+      denLabel: t("conv.qualifiedLeads"),
+      info: t("conv.qualifiedInfo", {
+        wrong: nameList(m.names.wrongNumber),
+        lost: nameList(m.names.lost),
+      }),
+    },
+    connected: {
+      rate: m.connected,
+      numLabel: sales,
+      denLabel: t("conv.connectedLeads"),
+      info: t("conv.connectedInfo", {
+        wrong: nameList(m.names.wrongNumber),
+        fresh: nameList(m.names.new),
+        unreachable: nameList(m.names.unreachable),
+      }),
+    },
+    partialToFull: {
+      rate: m.partialToFull,
+      numLabel: t("conv.fullPaid"),
+      denLabel: t("conv.partialOrFull"),
+      info: t("conv.partialToFullInfo", {
+        partial: nameList(m.names.partial),
+        full: nameList(m.names.full),
+      }),
+    },
+  }[metric];
+  return (
+    <MetricCard
+      icon={meta.icon}
+      tone={meta.tone}
+      title={t(meta.title)}
+      loading={loading}
+      {...byMetric}
+    />
+  );
+}
+
+/** The four conversion cards in a row (Bosh sahifa's overview widget). */
+export function ConversionMetricsCards({
+  funnel,
+  scope,
+}: {
+  funnel: string | null;
+  scope?: StatsScope;
+}) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard
-        icon={Users}
-        tone="primary"
-        title={t("conv.overall")}
-        rate={m.overall}
-        numLabel={sales}
-        denLabel={t("conv.allLeads")}
-        info={t("conv.overallInfo", { sales: nameList([...m.names.partial, ...m.names.full]) })}
-        loading={loading}
-      />
-      <MetricCard
-        icon={BadgeCheck}
-        tone="emerald"
-        title={t("conv.qualified")}
-        rate={m.qualified}
-        numLabel={sales}
-        denLabel={t("conv.qualifiedLeads")}
-        info={t("conv.qualifiedInfo", {
-          wrong: nameList(m.names.wrongNumber),
-          lost: nameList(m.names.lost),
-        })}
-        loading={loading}
-      />
-      <MetricCard
-        icon={PhoneCall}
-        tone="sky"
-        title={t("conv.connected")}
-        rate={m.connected}
-        numLabel={sales}
-        denLabel={t("conv.connectedLeads")}
-        info={t("conv.connectedInfo", {
-          wrong: nameList(m.names.wrongNumber),
-          fresh: nameList(m.names.new),
-          unreachable: nameList(m.names.unreachable),
-        })}
-        loading={loading}
-      />
-      <MetricCard
-        icon={CircleDollarSign}
-        tone="amber"
-        title={t("conv.partialToFull")}
-        rate={m.partialToFull}
-        numLabel={t("conv.fullPaid")}
-        denLabel={t("conv.partialOrFull")}
-        info={t("conv.partialToFullInfo", {
-          partial: nameList(m.names.partial),
-          full: nameList(m.names.full),
-        })}
-        loading={loading}
-      />
+      {CONV_METRICS.map((k) => (
+        <ConversionMetricCard key={k} metric={k} funnel={funnel} {...(scope ? { scope } : {})} />
+      ))}
     </div>
   );
 }

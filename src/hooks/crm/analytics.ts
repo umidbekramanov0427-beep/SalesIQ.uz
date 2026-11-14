@@ -22,11 +22,11 @@ async function getJson<T>(path: string): Promise<T> {
   return json;
 }
 
-export function useAnalytics(period: AnalyticsPeriod, funnel: string | null) {
+export function useAnalytics(period: AnalyticsPeriod, funnel: string | null, enabled = true) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["analytics", user?.organizationId, period.from, period.to, funnel],
-    enabled: !!user?.organizationId,
+    enabled: enabled && !!user?.organizationId,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
     queryFn: () => {

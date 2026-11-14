@@ -1,7 +1,11 @@
 import { CollectedPaymentsCard } from "./CollectedPaymentsCard";
 import { useAuth } from "@/lib/auth";
 import { FirstStepsCard } from "./FirstStepsCard";
-import { AnalyticsReport, reportPeriod } from "@/components/analytics/AnalyticsReports";
+import {
+  AnalyticsReport,
+  reportPeriod,
+  useReportItems,
+} from "@/components/analytics/AnalyticsReports";
 import { MonthForecastCard, PnlTab } from "@/components/analytics/FinanceTabs";
 import { canOpenSection } from "@/lib/access-rules";
 import { appRoleOf } from "@/lib/nav";
@@ -43,7 +47,9 @@ import {
 } from "@/components/dashboard/HomeOverview";
 import {
   BoardCustomizeButton,
+  CardBoard,
   HomeBoard,
+  type CardBoardItem,
   type BoardLayout,
   type BoardWidget,
 } from "@/components/dashboard/HomeBoard";
@@ -58,7 +64,12 @@ import {
 import { ReportExportDialog } from "@/components/dashboard/ReportExportDialog";
 import { SaveFiltersButton } from "@/components/filters/SaveFiltersButton";
 import { useSavedFilters } from "@/hooks/use-saved-filters";
-import { ConversionMetricsCards } from "@/components/dashboard/ConversionMetricsCards";
+import {
+  CONV_METRICS,
+  CONV_METRIC_META,
+  ConversionMetricCard,
+  ConversionMetricsCards,
+} from "@/components/dashboard/ConversionMetricsCards";
 import { SalesInsightsCards } from "@/components/dashboard/SalesInsightsCards";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
@@ -501,6 +512,44 @@ export function HomePage() {
     },
   ];
 
+  // Konversiya as a board: the four rates, the quality chart and (with
+  // Analitika open) the sales and win-loss reports' cards one by one.
+  const salesReport = useReportItems(
+    "sales",
+    reportRange,
+    funnel,
+    tab === "conversion" && analyticsOpen,
+  );
+  const winLossReport = useReportItems(
+    "winloss",
+    reportRange,
+    funnel,
+    tab === "conversion" && analyticsOpen,
+  );
+  const conversionItems: CardBoardItem[] = [
+    ...CONV_METRICS.map((k): CardBoardItem => ({
+      id: `conv:${k}`,
+      title: t(CONV_METRIC_META[k].title),
+      icon: CONV_METRIC_META[k].icon,
+      tone: CONV_METRIC_META[k].tone,
+      node: <ConversionMetricCard metric={k} funnel={funnel} scope={statsScope} />,
+    })),
+    {
+      id: "conv:chart",
+      title: t("board.w.conversionChart"),
+      icon: ChartColumnBig,
+      tone: "violet",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
+        <Suspense fallback={<ChartSkeleton height={340} />}>
+          <Charts.ConversionQualityChart funnel={funnel} />
+        </Suspense>
+      ),
+    },
+    ...(analyticsOpen ? [...salesReport.items, ...winLossReport.items] : []),
+  ];
+
   const tabsNode = (
     <Segmented
       sticky
@@ -611,17 +660,9 @@ export function HomePage() {
             )}
 
             {tab === "conversion" && (
-              <div className="mt-6 space-y-6">
-                <ConversionMetricsCards funnel={funnel} scope={statsScope} />
-                <Suspense fallback={<ChartSkeleton height={340} />}>
-                  <Charts.ConversionQualityChart funnel={funnel} />
-                </Suspense>
-                {analyticsOpen && (
-                  <>
-                    <AnalyticsReport report="sales" period={reportRange} funnel={funnel} />
-                    <AnalyticsReport report="winloss" period={reportRange} funnel={funnel} />
-                  </>
-                )}
+              <div className="mt-5">
+                {salesReport.notice}
+                <CardBoard boardKey="home.conversion" items={conversionItems} />
               </div>
             )}
 

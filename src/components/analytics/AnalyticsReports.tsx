@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRightLeft,
@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock3,
   Loader2,
+  Lock,
   MessageSquareText,
   Phone,
   PhoneIncoming,
@@ -34,6 +35,8 @@ import {
   type LogEvent,
 } from "@/lib/analytics-reports";
 import { useCurrency } from "@/lib/currency";
+import { useOrgAccess } from "@/lib/use-org-access";
+import type { CardBoardItem, Span } from "@/components/dashboard/HomeBoard";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -127,128 +130,176 @@ type Who = (id: string | null) => string;
 
 // ---- Savdo tahlili ------------------------------------------------------------
 
-function SalesTab({ data }: { data: AnalyticsData }) {
+// Each report is a list of parts (its figure cards and blocks), so a page can
+// lay them out on its board (CardBoard) one card at a time.
+type PartCtx = { t: T; format: (n: number) => string };
+type T = ReturnType<typeof useI18n>["t"];
+type PartDef = Omit<CardBoardItem, "node"> & {
+  render: (d: AnalyticsData, who: Who) => ReactNode;
+};
+
+const STAT_SIZES: Span[] = [3, 4, 6, 12];
+const HALF_SIZES: Span[] = [6, 8, 12];
+const BLOCK_SIZES: Span[] = [8, 12];
+
+function salesParts({ t, format }: PartCtx): PartDef[] {
+  const stat = (
+    id: string,
+    icon: LucideIcon,
+    tone: CardBoardItem["tone"],
+    label: string,
+    render: PartDef["render"],
+  ): PartDef => ({
+    id: `sales:${id}`,
+    title: t(label),
+    icon,
+    tone,
+    span: 4,
+    sizes: STAT_SIZES,
+    render,
+  });
+  return [
+    stat("newLeads", UserPlus, "sky", "an.newLeads", (d) => (
+      <StatCard
+        icon={UserPlus}
+        iconTone="sky"
+        label={t("an.newLeads")}
+        tipKey="an.newLeads"
+        value={String(d.sales.newLeads)}
+        {...(d.sales.quality
+          ? { hint: t("an.qualityHint", { q: d.sales.quality.qualified, j: d.sales.quality.junk }) }
+          : {})}
+      />
+    )),
+    stat("won", Trophy, "emerald", "an.won", (d) => (
+      <StatCard
+        icon={Trophy}
+        iconTone="emerald"
+        label={t("an.won")}
+        tipKey="an.won"
+        value={String(d.sales.won.count)}
+        hint={format(d.sales.won.sum)}
+      />
+    )),
+    stat("lost", XCircle, "rose", "an.lost", (d) => (
+      <StatCard
+        icon={XCircle}
+        iconTone="rose"
+        label={t("an.lost")}
+        tipKey="an.lost"
+        value={String(d.sales.lost.count)}
+        hint={format(d.sales.lost.sum)}
+      />
+    )),
+    stat("conversion", Target, "violet", "an.conversion", (d) => (
+      <StatCard
+        icon={Target}
+        iconTone="violet"
+        label={t("an.conversion")}
+        tipKey="an.conversion"
+        value={`${d.sales.conversion}%`}
+        info={t("an.conversionInfo")}
+      />
+    )),
+    stat("avgCheck", Banknote, "amber", "an.avgCheck", (d) => (
+      <StatCard
+        icon={Banknote}
+        iconTone="amber"
+        label={t("an.avgCheck")}
+        tipKey="an.avgCheck"
+        value={format(d.sales.avgCheck)}
+      />
+    )),
+    stat("cycle", Clock3, "slate", "an.cycle", (d) => (
+      <StatCard
+        icon={Clock3}
+        iconTone="slate"
+        label={t("an.cycle")}
+        tipKey="an.cycle"
+        value={d.sales.avgCycleDays === null ? "—" : t("an.days", { count: d.sales.avgCycleDays })}
+        info={t("an.cycleInfo")}
+      />
+    )),
+    {
+      id: "sales:funnel",
+      title: t("an.funnelTitle"),
+      icon: ArrowRightLeft,
+      tone: "violet",
+      span: 12,
+      sizes: BLOCK_SIZES,
+      render: (d) => <SalesFunnelCard data={d} />,
+    },
+  ];
+}
+
+function SalesFunnelCard({ data }: { data: AnalyticsData }) {
   const { t } = useI18n();
   const { format } = useCurrency();
   const s = data.sales;
   const max = Math.max(1, ...s.stages.map((x) => Math.max(x.entered, x.now)));
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <StatCard
-          icon={UserPlus}
-          iconTone="sky"
-          label={t("an.newLeads")}
-          tipKey="an.newLeads"
-          value={String(s.newLeads)}
-          {...(s.quality
-            ? { hint: t("an.qualityHint", { q: s.quality.qualified, j: s.quality.junk }) }
-            : {})}
-        />
-        <StatCard
-          icon={Trophy}
-          iconTone="emerald"
-          label={t("an.won")}
-          tipKey="an.won"
-          value={String(s.won.count)}
-          hint={format(s.won.sum)}
-        />
-        <StatCard
-          icon={XCircle}
-          iconTone="rose"
-          label={t("an.lost")}
-          tipKey="an.lost"
-          value={String(s.lost.count)}
-          hint={format(s.lost.sum)}
-        />
-        <StatCard
-          icon={Target}
-          iconTone="violet"
-          label={t("an.conversion")}
-          tipKey="an.conversion"
-          value={`${s.conversion}%`}
-          info={t("an.conversionInfo")}
-        />
-        <StatCard
-          icon={Banknote}
-          iconTone="amber"
-          label={t("an.avgCheck")}
-          tipKey="an.avgCheck"
-          value={format(s.avgCheck)}
-        />
-        <StatCard
-          icon={Clock3}
-          iconTone="slate"
-          label={t("an.cycle")}
-          tipKey="an.cycle"
-          value={s.avgCycleDays === null ? "—" : t("an.days", { count: s.avgCycleDays })}
-          info={t("an.cycleInfo")}
-        />
-      </div>
-
-      <SectionCard
-        icon={ArrowRightLeft}
-        tone="violet"
-        title={t("an.funnelTitle")}
-        description={t("an.funnelDesc", { funnel: data.funnel ?? "—" })}
-      >
-        {s.stages.length === 0 ? (
-          <Empty>{t("an.noStages")}</Empty>
-        ) : (
-          <div className="space-y-1">
-            <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)_90px_120px_80px] gap-4 px-2 pb-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground phone:hidden">
-              <span>{t("an.stage")}</span>
-              <span>{t("an.entered")}</span>
-              <span className="text-right">{t("an.now")}</span>
-              <span className="text-right">{t("an.amount")}</span>
-              <span className="text-right">{t("an.pass")}</span>
-            </div>
-            {s.stages.map((x) => (
-              <div
-                key={x.id}
-                className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)_90px_120px_80px] items-center gap-4 rounded-lg px-2 py-2 hover:bg-accent/50 phone:grid-cols-[minmax(0,1fr)_auto] phone:gap-2"
-              >
-                <span className="flex min-w-0 items-center gap-2 text-[13.5px] font-semibold text-foreground">
-                  {x.kind === "won" ? (
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-                  ) : x.kind === "lost" ? (
-                    <XCircle className="h-4 w-4 shrink-0 text-destructive" />
-                  ) : (
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                  )}
-                  <span className="truncate">{x.name}</span>
-                </span>
-                <span className="flex items-center gap-3 phone:hidden">
-                  <Bar
-                    value={x.entered}
-                    max={max}
-                    tone={
-                      x.kind === "won" ? "success" : x.kind === "lost" ? "destructive" : "primary"
-                    }
-                  />
-                  <span className="w-10 shrink-0 text-right text-[13px] font-semibold tabular-nums text-foreground">
-                    {x.entered}
-                  </span>
-                </span>
-                <span className="text-right text-[13px] tabular-nums text-foreground/85">
-                  {x.now}
-                </span>
-                <span className="text-right text-[13px] tabular-nums text-foreground/85 phone:hidden">
-                  {format(x.nowSum)}
-                </span>
-                <span className="text-right phone:hidden">
-                  {x.passRate !== null && (
-                    <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[12px] font-semibold tabular-nums text-primary">
-                      {x.passRate}%
-                    </span>
-                  )}
-                </span>
-              </div>
-            ))}
+    <SectionCard
+      icon={ArrowRightLeft}
+      tone="violet"
+      title={t("an.funnelTitle")}
+      description={t("an.funnelDesc", { funnel: data.funnel ?? "—" })}
+    >
+      {s.stages.length === 0 ? (
+        <Empty>{t("an.noStages")}</Empty>
+      ) : (
+        <div className="space-y-1">
+          <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)_90px_120px_80px] gap-4 px-2 pb-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground phone:hidden">
+            <span>{t("an.stage")}</span>
+            <span>{t("an.entered")}</span>
+            <span className="text-right">{t("an.now")}</span>
+            <span className="text-right">{t("an.amount")}</span>
+            <span className="text-right">{t("an.pass")}</span>
           </div>
-        )}
-      </SectionCard>
-    </div>
+          {s.stages.map((x) => (
+            <div
+              key={x.id}
+              className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)_90px_120px_80px] items-center gap-4 rounded-lg px-2 py-2 hover:bg-accent/50 phone:grid-cols-[minmax(0,1fr)_auto] phone:gap-2"
+            >
+              <span className="flex min-w-0 items-center gap-2 text-[13.5px] font-semibold text-foreground">
+                {x.kind === "won" ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                ) : x.kind === "lost" ? (
+                  <XCircle className="h-4 w-4 shrink-0 text-destructive" />
+                ) : (
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+                )}
+                <span className="truncate">{x.name}</span>
+              </span>
+              <span className="flex items-center gap-3 phone:hidden">
+                <Bar
+                  value={x.entered}
+                  max={max}
+                  tone={
+                    x.kind === "won" ? "success" : x.kind === "lost" ? "destructive" : "primary"
+                  }
+                />
+                <span className="w-10 shrink-0 text-right text-[13px] font-semibold tabular-nums text-foreground">
+                  {x.entered}
+                </span>
+              </span>
+              <span className="text-right text-[13px] tabular-nums text-foreground/85">
+                {x.now}
+              </span>
+              <span className="text-right text-[13px] tabular-nums text-foreground/85 phone:hidden">
+                {format(x.nowSum)}
+              </span>
+              <span className="text-right phone:hidden">
+                {x.passRate !== null && (
+                  <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[12px] font-semibold tabular-nums text-primary">
+                    {x.passRate}%
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionCard>
   );
 }
 
@@ -361,133 +412,173 @@ function SummaryTab({ data, who }: { data: AnalyticsData; who: Who }) {
 
 // ---- Win-Loss ----------------------------------------------------------------
 
-function WinLossTab({ data, who }: { data: AnalyticsData; who: Who }) {
+function winLossParts({ t }: PartCtx): PartDef[] {
+  const stat = (
+    id: string,
+    icon: LucideIcon,
+    tone: CardBoardItem["tone"],
+    label: string,
+    value: (d: AnalyticsData) => string,
+  ): PartDef => ({
+    id: `winloss:${id}`,
+    title: `${t(label)} · Win-Loss`,
+    icon,
+    tone,
+    span: 4,
+    sizes: STAT_SIZES,
+    render: (d) => (
+      <StatCard icon={icon} iconTone={tone} label={t(label)} tipKey={label} value={value(d)} />
+    ),
+  });
+  const rate = (d: AnalyticsData) => {
+    const w = d.winLoss;
+    return w.won + w.lost ? Math.round((w.won / (w.won + w.lost)) * 1000) / 10 : 0;
+  };
+  return [
+    stat("won", Trophy, "emerald", "an.won", (d) => String(d.winLoss.won)),
+    stat("lost", XCircle, "rose", "an.lost", (d) => String(d.winLoss.lost)),
+    stat("winRate", Target, "violet", "an.winRate", (d) => `${rate(d)}%`),
+    {
+      id: "winloss:reasons",
+      title: t("an.reasons"),
+      icon: XCircle,
+      tone: "rose",
+      span: 6,
+      sizes: HALF_SIZES,
+      render: (d) => <LostReasonsCard data={d} />,
+    },
+    {
+      id: "winloss:bySource",
+      title: t("an.bySource"),
+      icon: TrendingUp,
+      tone: "emerald",
+      span: 6,
+      sizes: HALF_SIZES,
+      render: (d) => <WinBySourceCard data={d} />,
+    },
+    {
+      id: "winloss:byOwner",
+      title: t("an.byOwner"),
+      icon: Users,
+      tone: "sky",
+      span: 12,
+      sizes: HALF_SIZES,
+      render: (d, who) => <WinByOwnerCard data={d} who={who} />,
+    },
+  ];
+}
+
+function WinSplit({ won, lost }: { won: number; lost: number }) {
+  const total = won + lost;
+  return (
+    <div className="flex h-2 w-full min-w-[120px] overflow-hidden rounded-full bg-muted">
+      <div className="h-full bg-success" style={{ width: `${total ? (won / total) * 100 : 0}%` }} />
+      <div
+        className="h-full bg-destructive/80"
+        style={{ width: `${total ? (lost / total) * 100 : 0}%` }}
+      />
+    </div>
+  );
+}
+
+function LostReasonsCard({ data }: { data: AnalyticsData }) {
   const { t } = useI18n();
   const { format } = useCurrency();
   const w = data.winLoss;
-  const rate = w.won + w.lost ? Math.round((w.won / (w.won + w.lost)) * 1000) / 10 : 0;
   const maxReason = Math.max(1, ...w.lostByReason.map((r) => r.count));
-  const split = (won: number, lost: number) => {
-    const total = won + lost;
-    return (
-      <div className="flex h-2 w-full min-w-[120px] overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full bg-success"
-          style={{ width: `${total ? (won / total) * 100 : 0}%` }}
-        />
-        <div
-          className="h-full bg-destructive/80"
-          style={{ width: `${total ? (lost / total) * 100 : 0}%` }}
-        />
-      </div>
-    );
-  };
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          icon={Trophy}
-          iconTone="emerald"
-          label={t("an.won")}
-          tipKey="an.won"
-          value={String(w.won)}
-        />
-        <StatCard
-          icon={XCircle}
-          iconTone="rose"
-          label={t("an.lost")}
-          tipKey="an.lost"
-          value={String(w.lost)}
-        />
-        <StatCard
-          icon={Target}
-          iconTone="violet"
-          label={t("an.winRate")}
-          tipKey="an.winRate"
-          value={`${rate}%`}
-        />
-      </div>
-      <div className="grid gap-5 xl:grid-cols-2">
-        <SectionCard
-          icon={XCircle}
-          tone="rose"
-          title={t("an.reasons")}
-          description={t("an.reasonsDesc")}
-        >
-          {w.lostByReason.length === 0 ? (
-            <Empty>{t("an.noLost")}</Empty>
-          ) : (
-            <ul className="space-y-3">
-              {w.lostByReason.map((r) => (
-                <li key={r.reason ?? "none"} className="space-y-1.5">
-                  <div className="flex items-baseline justify-between gap-3 text-[13px]">
-                    <span className="min-w-0 truncate font-semibold text-foreground">
-                      {r.reason ?? t("an.noReason")}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-muted-foreground">
-                      <span className="font-semibold text-foreground">{r.count}</span> ·{" "}
-                      {Math.round((r.count / Math.max(1, w.lost)) * 100)}% · {format(r.sum)}
-                    </span>
-                  </div>
-                  <Bar value={r.count} max={maxReason} tone="destructive" />
-                </li>
-              ))}
-            </ul>
-          )}
-        </SectionCard>
-        <SectionCard
-          icon={TrendingUp}
-          tone="emerald"
-          title={t("an.bySource")}
-          description={t("an.bySourceDesc")}
-        >
-          {w.bySource.length === 0 ? (
-            <Empty>{t("an.noData")}</Empty>
-          ) : (
-            <ul className="space-y-3">
-              {w.bySource.map((r) => (
-                <li
-                  key={r.source ?? "none"}
-                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_auto] items-center gap-3 text-[13px]"
-                >
-                  <span className="truncate font-semibold text-foreground">
-                    {r.source ?? t("an.noSource")}
-                  </span>
-                  {split(r.won, r.lost)}
-                  <span className="w-[92px] text-right tabular-nums text-muted-foreground">
-                    <span className="text-success">{r.won}</span> /{" "}
-                    <span className="text-destructive">{r.lost}</span> ·{" "}
-                    <span className="font-semibold text-foreground">{r.winRate}%</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </SectionCard>
-      </div>
-      <SectionCard icon={Users} tone="sky" title={t("an.byOwner")}>
-        {w.byOwner.length === 0 ? (
-          <Empty>{t("an.noData")}</Empty>
-        ) : (
-          <ul className="space-y-3">
-            {w.byOwner.map((r) => (
-              <li
-                key={r.ownerId ?? "none"}
-                className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] items-center gap-3 text-[13px]"
-              >
-                <span className="truncate font-semibold text-foreground">{who(r.ownerId)}</span>
-                {split(r.won, r.lost)}
-                <span className="w-[92px] text-right tabular-nums text-muted-foreground">
-                  <span className="text-success">{r.won}</span> /{" "}
-                  <span className="text-destructive">{r.lost}</span> ·{" "}
-                  <span className="font-semibold text-foreground">{r.winRate}%</span>
+    <SectionCard
+      icon={XCircle}
+      tone="rose"
+      title={t("an.reasons")}
+      description={t("an.reasonsDesc")}
+    >
+      {w.lostByReason.length === 0 ? (
+        <Empty>{t("an.noLost")}</Empty>
+      ) : (
+        <ul className="space-y-3">
+          {w.lostByReason.map((r) => (
+            <li key={r.reason ?? "none"} className="space-y-1.5">
+              <div className="flex items-baseline justify-between gap-3 text-[13px]">
+                <span className="min-w-0 truncate font-semibold text-foreground">
+                  {r.reason ?? t("an.noReason")}
                 </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionCard>
-    </div>
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  <span className="font-semibold text-foreground">{r.count}</span> ·{" "}
+                  {Math.round((r.count / Math.max(1, w.lost)) * 100)}% · {format(r.sum)}
+                </span>
+              </div>
+              <Bar value={r.count} max={maxReason} tone="destructive" />
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
+  );
+}
+
+function WinBySourceCard({ data }: { data: AnalyticsData }) {
+  const { t } = useI18n();
+  const w = data.winLoss;
+  return (
+    <SectionCard
+      icon={TrendingUp}
+      tone="emerald"
+      title={t("an.bySource")}
+      description={t("an.bySourceDesc")}
+    >
+      {w.bySource.length === 0 ? (
+        <Empty>{t("an.noData")}</Empty>
+      ) : (
+        <ul className="space-y-3">
+          {w.bySource.map((r) => (
+            <li
+              key={r.source ?? "none"}
+              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_auto] items-center gap-3 text-[13px]"
+            >
+              <span className="truncate font-semibold text-foreground">
+                {r.source ?? t("an.noSource")}
+              </span>
+              <WinSplit won={r.won} lost={r.lost} />
+              <span className="w-[92px] text-right tabular-nums text-muted-foreground">
+                <span className="text-success">{r.won}</span> /{" "}
+                <span className="text-destructive">{r.lost}</span> ·{" "}
+                <span className="font-semibold text-foreground">{r.winRate}%</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
+  );
+}
+
+function WinByOwnerCard({ data, who }: { data: AnalyticsData; who: Who }) {
+  const { t } = useI18n();
+  const w = data.winLoss;
+  return (
+    <SectionCard icon={Users} tone="sky" title={t("an.byOwner")}>
+      {w.byOwner.length === 0 ? (
+        <Empty>{t("an.noData")}</Empty>
+      ) : (
+        <ul className="space-y-3">
+          {w.byOwner.map((r) => (
+            <li
+              key={r.ownerId ?? "none"}
+              className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] items-center gap-3 text-[13px]"
+            >
+              <span className="truncate font-semibold text-foreground">{who(r.ownerId)}</span>
+              <WinSplit won={r.won} lost={r.lost} />
+              <span className="w-[92px] text-right tabular-nums text-muted-foreground">
+                <span className="text-success">{r.won}</span> /{" "}
+                <span className="text-destructive">{r.lost}</span> ·{" "}
+                <span className="font-semibold text-foreground">{r.winRate}%</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
   );
 }
 
@@ -741,111 +832,151 @@ function EventsTab({
 
 // ---- Prognoz ---------------------------------------------------------------------
 
-function ForecastTab({ data, who }: { data: AnalyticsData; who: Who }) {
+function forecastParts({ t, format }: PartCtx): PartDef[] {
+  const stat = (
+    id: string,
+    icon: LucideIcon,
+    tone: CardBoardItem["tone"],
+    label: string,
+    value: (d: AnalyticsData) => string,
+    info?: string,
+  ): PartDef => ({
+    id: `forecast:${id}`,
+    title: t(label),
+    icon,
+    tone,
+    span: 4,
+    sizes: STAT_SIZES,
+    render: (d) => (
+      <StatCard
+        icon={icon}
+        iconTone={tone}
+        label={t(label)}
+        tipKey={label}
+        value={value(d)}
+        {...(info ? { info } : {})}
+      />
+    ),
+  });
+  return [
+    stat("openLeads", Users, "sky", "an.openLeads", (d) => String(d.forecast.total.count)),
+    stat("pipelineSum", Banknote, "amber", "an.pipelineSum", (d) => format(d.forecast.total.sum)),
+    stat(
+      "expected",
+      TrendingUp,
+      "emerald",
+      "an.expected",
+      (d) => format(d.forecast.total.weighted),
+      t("an.expectedInfo"),
+    ),
+    {
+      id: "forecast:stages",
+      title: t("an.forecastStages"),
+      icon: TrendingUp,
+      tone: "emerald",
+      span: 12,
+      sizes: BLOCK_SIZES,
+      render: (d) => <ForecastStagesCard data={d} />,
+    },
+    {
+      id: "forecast:owners",
+      title: t("an.forecastOwners"),
+      icon: Users,
+      tone: "sky",
+      span: 12,
+      sizes: HALF_SIZES,
+      render: (d, who) => <ForecastOwnersCard data={d} who={who} />,
+    },
+  ];
+}
+
+function ForecastStagesCard({ data }: { data: AnalyticsData }) {
   const { t } = useI18n();
   const { format } = useCurrency();
   const f = data.forecast;
   const maxSum = Math.max(1, ...f.stages.map((s) => s.sum));
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          icon={Users}
-          iconTone="sky"
-          label={t("an.openLeads")}
-          tipKey="an.openLeads"
-          value={String(f.total.count)}
-        />
-        <StatCard
-          icon={Banknote}
-          iconTone="amber"
-          label={t("an.pipelineSum")}
-          tipKey="an.pipelineSum"
-          value={format(f.total.sum)}
-        />
-        <StatCard
-          icon={TrendingUp}
-          iconTone="emerald"
-          label={t("an.expected")}
-          tipKey="an.expected"
-          value={format(f.total.weighted)}
-          info={t("an.expectedInfo")}
-        />
-      </div>
-      <SectionCard
-        icon={TrendingUp}
-        tone="emerald"
-        title={t("an.forecastStages")}
-        description={t("an.forecastDesc")}
-        actions={<ForecastSettingsButton stages={f.stages} />}
-      >
-        {f.stages.length === 0 ? (
-          <Empty>{t("an.noStages")}</Empty>
-        ) : (
-          <TableWrap>
-            <thead className="border-b border-border">
-              <tr>
-                <Th>{t("an.stage")}</Th>
-                <Th right>{t("an.leads")}</Th>
-                <Th>{t("an.amount")}</Th>
-                <Th right>{t("an.probability")}</Th>
-                <Th right>{t("an.expected")}</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {f.stages.map((s) => (
-                <tr key={s.id} className="border-b border-border/60 last:border-0">
-                  <Td strong>{s.name}</Td>
-                  <Td right>{s.count}</Td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-full min-w-[120px]">
-                        <Bar value={s.sum} max={maxSum} />
-                      </div>
-                      <span className="w-[110px] shrink-0 text-right text-[13px] tabular-nums text-foreground/85">
-                        {format(s.sum)}
-                      </span>
+    <SectionCard
+      icon={TrendingUp}
+      tone="emerald"
+      title={t("an.forecastStages")}
+      description={t("an.forecastDesc")}
+      actions={<ForecastSettingsButton stages={f.stages} />}
+    >
+      {f.stages.length === 0 ? (
+        <Empty>{t("an.noStages")}</Empty>
+      ) : (
+        <TableWrap>
+          <thead className="border-b border-border">
+            <tr>
+              <Th>{t("an.stage")}</Th>
+              <Th right>{t("an.leads")}</Th>
+              <Th>{t("an.amount")}</Th>
+              <Th right>{t("an.probability")}</Th>
+              <Th right>{t("an.expected")}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {f.stages.map((s) => (
+              <tr key={s.id} className="border-b border-border/60 last:border-0">
+                <Td strong>{s.name}</Td>
+                <Td right>{s.count}</Td>
+                <td className="px-3 py-2.5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-full min-w-[120px]">
+                      <Bar value={s.sum} max={maxSum} />
                     </div>
-                  </td>
-                  <Td right>{s.probability}%</Td>
-                  <Td right strong>
-                    {format(s.weighted)}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </TableWrap>
-        )}
-      </SectionCard>
-      <SectionCard icon={Users} tone="sky" title={t("an.forecastOwners")}>
-        {f.byOwner.length === 0 ? (
-          <Empty>{t("an.noData")}</Empty>
-        ) : (
-          <TableWrap>
-            <thead className="border-b border-border">
-              <tr>
-                <Th>{t("an.person")}</Th>
-                <Th right>{t("an.leads")}</Th>
-                <Th right>{t("an.amount")}</Th>
-                <Th right>{t("an.expected")}</Th>
+                    <span className="w-[110px] shrink-0 text-right text-[13px] tabular-nums text-foreground/85">
+                      {format(s.sum)}
+                    </span>
+                  </div>
+                </td>
+                <Td right>{s.probability}%</Td>
+                <Td right strong>
+                  {format(s.weighted)}
+                </Td>
               </tr>
-            </thead>
-            <tbody>
-              {f.byOwner.map((o) => (
-                <tr key={o.ownerId ?? "none"} className="border-b border-border/60 last:border-0">
-                  <Td strong>{who(o.ownerId)}</Td>
-                  <Td right>{o.count}</Td>
-                  <Td right>{format(o.sum)}</Td>
-                  <Td right strong>
-                    {format(o.weighted)}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </TableWrap>
-        )}
-      </SectionCard>
-    </div>
+            ))}
+          </tbody>
+        </TableWrap>
+      )}
+    </SectionCard>
+  );
+}
+
+function ForecastOwnersCard({ data, who }: { data: AnalyticsData; who: Who }) {
+  const { t } = useI18n();
+  const { format } = useCurrency();
+  const f = data.forecast;
+  return (
+    <SectionCard icon={Users} tone="sky" title={t("an.forecastOwners")}>
+      {f.byOwner.length === 0 ? (
+        <Empty>{t("an.noData")}</Empty>
+      ) : (
+        <TableWrap>
+          <thead className="border-b border-border">
+            <tr>
+              <Th>{t("an.person")}</Th>
+              <Th right>{t("an.leads")}</Th>
+              <Th right>{t("an.amount")}</Th>
+              <Th right>{t("an.expected")}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {f.byOwner.map((o) => (
+              <tr key={o.ownerId ?? "none"} className="border-b border-border/60 last:border-0">
+                <Td strong>{who(o.ownerId)}</Td>
+                <Td right>{o.count}</Td>
+                <Td right>{format(o.sum)}</Td>
+                <Td right strong>
+                  {format(o.weighted)}
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </TableWrap>
+      )}
+    </SectionCard>
   );
 }
 
@@ -893,6 +1024,7 @@ function ReportBody({
 }) {
   const { t } = useI18n();
   const q = useAnalytics(period, funnel);
+  const defs = usePartDefs(report);
   const data = q.data;
   const people = useMemo(
     () => new Map((data?.people ?? []).map((p) => [p.id, p.name])),
@@ -914,12 +1046,113 @@ function ReportBody({
           {t("an.truncated")}
         </p>
       )}
-      {report === "sales" && <SalesTab data={data} />}
+      {isPartedReport(report) && (
+        <div className="grid grid-cols-12 gap-3.5 phone:grid-cols-1">
+          {defs.map((p) => (
+            <div
+              key={p.id}
+              className="min-w-0 [grid-column:span_var(--span)/span_var(--span)] phone:[grid-column:1/-1]"
+              style={{ "--span": p.span ?? 12 } as CSSProperties}
+            >
+              {p.render(data, who)}
+            </div>
+          ))}
+        </div>
+      )}
       {report === "summary" && <SummaryTab data={data} who={who} />}
-      {report === "winloss" && <WinLossTab data={data} who={who} />}
       {report === "staff" && <StaffTab data={data} who={who} />}
       {report === "events" && <EventsTab period={period} data={data} who={who} />}
-      {report === "forecast" && <ForecastTab data={data} who={who} />}
     </div>
   );
+}
+
+// ---- the reports as board cards ---------------------------------------------
+
+/** The reports a page can lay out card by card on its board. */
+export type PartedReport = "sales" | "winloss" | "forecast";
+const isPartedReport = (r: ReportKind): r is PartedReport =>
+  r === "sales" || r === "winloss" || r === "forecast";
+
+function usePartDefs(report: ReportKind): PartDef[] {
+  const { t } = useI18n();
+  const { format } = useCurrency();
+  const ctx = { t, format };
+  if (report === "sales") return salesParts(ctx);
+  if (report === "winloss") return winLossParts(ctx);
+  if (report === "forecast") return forecastParts(ctx);
+  return [];
+}
+
+function PartPlaceholder({ stat, error }: { stat: boolean; error: string | null }) {
+  return (
+    <div
+      className={cn(
+        "surface-card grid place-items-center p-5",
+        stat ? "min-h-[118px]" : "min-h-[240px]",
+      )}
+    >
+      {error ? (
+        <p className="text-center text-[13px] text-muted-foreground">{error}</p>
+      ) : (
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      )}
+    </div>
+  );
+}
+
+/**
+ * A report as board cards (CardBoard): each figure card and block is its own
+ * item, holding a placeholder until the data arrives. A company whose plan
+ * has no analytics gets one card saying so. `notice` is the "cut short"
+ * warning for above the board.
+ */
+export function useReportItems(
+  report: PartedReport,
+  period: AnalyticsPeriod,
+  funnel: string | null,
+  enabled = true,
+): { items: CardBoardItem[]; notice: ReactNode } {
+  const { t } = useI18n();
+  const locked = !!useOrgAccess().lockReason("analytics");
+  const q = useAnalytics(period, funnel, enabled && !locked);
+  const defs = usePartDefs(report);
+  const data = q.data;
+  const people = useMemo(
+    () => new Map((data?.people ?? []).map((p) => [p.id, p.name])),
+    [data?.people],
+  );
+  if (locked) {
+    return {
+      notice: null,
+      items: [
+        {
+          id: `${report}:locked`,
+          title: t("an.title"),
+          icon: Lock,
+          tone: "slate",
+          span: 12,
+          sizes: [12],
+          node: <AnalyticsReport report={report} period={period} funnel={funnel} />,
+        },
+      ],
+    };
+  }
+  const who = (id: string | null) => (id ? (people.get(id) ?? "—") : t("an.nobody"));
+  const error = q.isError ? t("an.loadError") : null;
+  return {
+    notice: data?.truncated ? (
+      <p className="mb-3 rounded-xl bg-warning/10 px-4 py-2.5 text-[13px] text-foreground">
+        {t("an.truncated")}
+      </p>
+    ) : null,
+    items: defs.map(({ render, ...p }) => ({
+      ...p,
+      node:
+        data && !error ? (
+          render(data, who)
+        ) : (
+          <PartPlaceholder stat={(p.span ?? 12) <= 4} error={error} />
+        ),
+    })),
+  };
 }
