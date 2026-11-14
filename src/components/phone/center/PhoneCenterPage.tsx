@@ -21,7 +21,6 @@ import { IconTile, PageHeader, StatusChip, type CardTone } from "@/components/la
 import { TONE_TILE } from "@/lib/tones";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CallAnalytics } from "@/components/phone/CallAnalytics";
-import { CallHistoryPanel } from "@/components/phone/PhoneProvider";
 import { useCallSettings, usePhoneCenter } from "@/hooks/use-crm-data";
 import type { PhoneCenterData } from "@/lib/phone-center";
 import { useAuth } from "@/lib/auth";
@@ -32,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { AutoDialer } from "./AutoDialer";
 import { CallsSection, DialerSection, OperatorsSection, RatingSection } from "./Sections";
 import { OverviewSection } from "./Overview";
+import { JournalSection } from "./Journal";
 import { VoiceMessage } from "./VoiceMessage";
 
 // Telefon (5TEL's functions in the platform's look): one page with every
@@ -125,10 +125,8 @@ export function PhoneCenterPage({
   const [layout, setLayout] = usePcLayout();
 
   const content = (
-    <div key={section} className={cn("tab-enter min-w-0", section === "log" && "h-full")}>
-      {section === "log" ? (
-        <CallHistoryPanel embedded onClose={onClose ?? (() => {})} />
-      ) : section === "reports" ? (
+    <div key={section} className="tab-enter min-w-0">
+      {section === "reports" ? (
         <div className="surface-card overflow-hidden">
           <CallAnalytics />
         </div>
@@ -486,6 +484,7 @@ function PeriodSections({
       </p>
     );
   }
+  if (section === "log") return <JournalSection data={data} period={period} onPeriod={onPeriod} />;
   if (section === "calls") return <CallsSection data={data} />;
   if (section === "operators") return <OperatorsSection data={data} />;
   if (section === "rating") return <RatingSection data={data} />;

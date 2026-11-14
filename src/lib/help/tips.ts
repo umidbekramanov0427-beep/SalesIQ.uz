@@ -2072,6 +2072,74 @@ export const TIPS: Record<string, Tip> = {
       en: "Each operator's calls in the period, answer share and talk time.",
     },
   },
+  "ptel.j.numbers": {
+    what: {
+      uz: "Davrda qo'ng'iroq bo'lgan alohida mijoz raqamlari.",
+      ru: "Разные номера клиентов, с которыми были звонки за период.",
+      en: "Distinct client numbers with calls in the period.",
+    },
+  },
+  "ptel.j.incomingNumbers": {
+    what: {
+      uz: "Kompaniyaga qo'ng'iroq qilgan raqamlar.",
+      ru: "Номера, которые звонили в компанию.",
+      en: "Numbers that called the company.",
+    },
+  },
+  "ptel.j.outgoingNumbers": {
+    what: {
+      uz: "Operatorlar qo'ng'iroq qilgan raqamlar.",
+      ru: "Номера, которым звонили операторы.",
+      en: "Numbers operators called.",
+    },
+  },
+  "ptel.j.unansweredNumbers": {
+    what: {
+      uz: "Bitta ham suhbat bo'lmagan raqamlar.",
+      ru: "Номера без единого разговора.",
+      en: "Numbers without a single conversation.",
+    },
+    act: {
+      uz: "Bularga birinchi bo'lib qayta qo'ng'iroq qiling.",
+      ru: "Перезвоните им в первую очередь.",
+      en: "Call these back first.",
+    },
+  },
+  "ptel.j.ops": {
+    what: {
+      uz: "Barcha qo'ng'iroqlar (kiruvchi va chiquvchi).",
+      ru: "Все звонки (входящие и исходящие).",
+      en: "All calls (incoming and outgoing).",
+    },
+  },
+  "ptel.j.incomingOps": {
+    what: {
+      uz: "Kiruvchi qo'ng'iroqlar soni.",
+      ru: "Количество входящих звонков.",
+      en: "Number of incoming calls.",
+    },
+  },
+  "ptel.j.outgoingOps": {
+    what: {
+      uz: "Chiquvchi qo'ng'iroqlar soni.",
+      ru: "Количество исходящих звонков.",
+      en: "Number of outgoing calls.",
+    },
+  },
+  "ptel.j.answeredOps": {
+    what: {
+      uz: "Suhbat bo'lgan qo'ng'iroqlar.",
+      ru: "Звонки, в которых был разговор.",
+      en: "Calls with a conversation.",
+    },
+  },
+  "ptel.b.journal": {
+    what: {
+      uz: "Har bir mijoz raqami bo'yicha: oxirgi qo'ng'iroq, operator, yozuv, AI tahlil va qayta qo'ng'iroq.",
+      ru: "По каждому номеру клиента: последний звонок, оператор, запись, AI анализ и перезвон.",
+      en: "Per client number: the last call, operator, recording, AI analysis and call back.",
+    },
+  },
   "ptel.k.total": {
     what: {
       uz: "Davrdagi barcha qo'ng'iroqlar.",

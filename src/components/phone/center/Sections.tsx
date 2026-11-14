@@ -40,7 +40,7 @@ import { isIos, promptInstall, useInstallState } from "@/lib/pwa";
 import { cn } from "@/lib/utils";
 import type { PcSection } from "./PhoneCenterPage";
 
-const OUTCOME_TONE: Record<PcOutcome, string> = {
+export const OUTCOME_TONE: Record<PcOutcome, string> = {
   answered: "text-emerald-600 dark:text-emerald-400",
   missed: "text-rose-600 dark:text-rose-400",
   noAnswer: "text-amber-600 dark:text-amber-400",
@@ -48,7 +48,7 @@ const OUTCOME_TONE: Record<PcOutcome, string> = {
   failed: "text-rose-600 dark:text-rose-400",
 };
 
-function CallGlyph({ c }: { c: Pick<PcCall, "outcome" | "direction"> }) {
+export function CallGlyph({ c }: { c: Pick<PcCall, "outcome" | "direction"> }) {
   const cls = cn("h-4 w-4 shrink-0", OUTCOME_TONE[c.outcome]);
   if (c.outcome === "missed") return <PhoneMissed className={cls} />;
   return c.direction === "incoming" ? (
@@ -58,7 +58,7 @@ function CallGlyph({ c }: { c: Pick<PcCall, "outcome" | "direction"> }) {
   );
 }
 
-const timeOf = (iso: string) => {
+export const timeOf = (iso: string) => {
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
