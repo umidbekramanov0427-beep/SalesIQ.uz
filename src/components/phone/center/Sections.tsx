@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Hash,
   Headphones,
+  LayoutGrid,
   MonitorDown,
   Pause,
   Percent,
@@ -28,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { RecordingAudio } from "@/components/audio/RecordingLink";
 import { DeskBlock, DeskKpi } from "@/components/dashboard/desk/DeskParts";
+import { CardBoard, type CardBoardItem, type Span } from "@/components/dashboard/HomeBoard";
 import { SettingRow, SettingRows, StatusChip } from "@/components/layout/Primitives";
 import { usePhone } from "@/components/phone/PhoneProvider";
 import { TELEPHONY_PROVIDERS, useLeadLookup, useTelephonyStatus } from "@/hooks/use-crm-data";
@@ -79,9 +81,15 @@ export function OverviewSection({
   const { t } = useI18n();
   const x = data.totals;
   const top = data.operators.filter((o) => o.total > 0).slice(0, 6);
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  // Asosiy as a board (CardBoard): «Panelni sozlash» moves, resizes, adds
+  // and removes its cards; each person's layout is kept in this browser.
+  const items: CardBoardItem[] = [
+    {
+      id: "total",
+      title: t("ptel.k.total"),
+      icon: Phone,
+      tone: "primary",
+      node: (
         <DeskKpi
           tipKey="ptel.k.total"
           label={t("ptel.k.total")}
@@ -91,6 +99,14 @@ export function OverviewSection({
           value={x.total}
           prevText={t("ptel.k.totalHint", { i: x.incoming, o: x.outgoing })}
         />
+      ),
+    },
+    {
+      id: "missed",
+      title: t("ptel.k.missed"),
+      icon: PhoneMissed,
+      tone: "rose",
+      node: (
         <DeskKpi
           tipKey="ptel.k.missed"
           label={t("ptel.k.missed")}
@@ -100,6 +116,14 @@ export function OverviewSection({
           value={x.missed}
           prevText={t("ptel.k.missedHint")}
         />
+      ),
+    },
+    {
+      id: "rate",
+      title: t("ptel.k.rate"),
+      icon: Percent,
+      tone: "emerald",
+      node: (
         <DeskKpi
           tipKey="ptel.k.rate"
           label={t("ptel.k.rate")}
@@ -109,6 +133,14 @@ export function OverviewSection({
           value={`${x.answerRate}%`}
           prevText={t("ptel.k.rateHint", { n: x.answered })}
         />
+      ),
+    },
+    {
+      id: "talk",
+      title: t("ptel.k.talk"),
+      icon: Timer,
+      tone: "amber",
+      node: (
         <DeskKpi
           tipKey="ptel.k.talk"
           label={t("ptel.k.talk")}
@@ -118,12 +150,29 @@ export function OverviewSection({
           value={clock(x.talkSeconds)}
           prevText={t("ptel.k.avg", { v: clock(x.avgSeconds) })}
         />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      ),
+    },
+    {
+      id: "quick",
+      title: t("ptel.b.quick"),
+      icon: Phone,
+      tone: "emerald",
+      span: 6,
+      sizes: BLOCK_SIZES,
+      node: (
         <DeskBlock tipKey="ptel.b.quick" title={t("ptel.b.quick")} icon={Phone} tone="emerald">
           <QuickDial />
         </DeskBlock>
+      ),
+    },
+    {
+      id: "top",
+      title: t("ptel.b.top"),
+      icon: Headphones,
+      tone: "amber",
+      span: 6,
+      sizes: BLOCK_SIZES,
+      node: (
         <DeskBlock
           tipKey="ptel.b.top"
           title={t("ptel.b.top")}
@@ -164,31 +213,43 @@ export function OverviewSection({
             </ul>
           )}
         </DeskBlock>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {(["dial", "auto", "voice", "rating"] as PcSection[]).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => onSection(s)}
-            className="group flex items-center gap-3 surface-card p-3.5 text-left transition-colors hover:border-primary/40"
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block text-[13.5px] font-semibold text-foreground">
-                {t(`ptel.s.${s}`)}
+      ),
+    },
+    {
+      id: "sections",
+      title: t("ptel.allSections"),
+      icon: LayoutGrid,
+      tone: "sky",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {(["dial", "auto", "voice", "rating"] as PcSection[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onSection(s)}
+              className="group flex items-center gap-3 surface-card p-3.5 text-left transition-colors hover:border-primary/40"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-semibold text-foreground">
+                  {t(`ptel.s.${s}`)}
+                </span>
+                <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
+                  {t(`ptel.d.${s}`)}
+                </span>
               </span>
-              <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
-                {t(`ptel.d.${s}`)}
-              </span>
-            </span>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+            </button>
+          ))}
+        </div>
+      ),
+    },
+  ];
+  return <CardBoard boardKey="phone.main" items={items} />;
 }
+
+const BLOCK_SIZES: Span[] = [4, 6, 8, 12];
 
 function QuickDial() {
   const { t } = useI18n();
