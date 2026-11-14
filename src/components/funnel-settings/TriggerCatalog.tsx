@@ -35,6 +35,7 @@ import {
   type LucideIcon,
   Undo2,
   ScanSearch,
+  UserCheck,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { blankAction } from "@/components/automations/ActionEditor";
@@ -65,7 +66,13 @@ type ActionTile = {
 };
 
 const GROUPS: { key: string; tiles: ActionTile[] }[] = [
-  { key: "bot", tiles: [{ key: "salesbot", icon: Bot, type: "start_salesbot" }] },
+  {
+    key: "bot",
+    tiles: [
+      { key: "salesbot", icon: Bot, type: "start_salesbot" },
+      { key: "tgSalesbot", icon: Send, type: "start_salesbot" },
+    ],
+  },
   {
     key: "work",
     tiles: [
@@ -78,6 +85,7 @@ const GROUPS: { key: string; tiles: ActionTile[] }[] = [
     tiles: [
       { key: "distribute", icon: Shuffle, type: "distribute" },
       { key: "assignOwner", icon: UserCog, type: "assign_owner" },
+      { key: "previousOwner", icon: UserCheck, type: "previous_owner" },
       { key: "releaseOwner", icon: Undo2, type: "release_owner" },
     ],
   },

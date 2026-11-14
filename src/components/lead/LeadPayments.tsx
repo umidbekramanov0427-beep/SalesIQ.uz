@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   CalendarClock,
@@ -802,5 +802,57 @@ export function LeadPaymentsSection({
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * The lead panel's money rows (5CRM's «Umumiy summa / To'langan summa /
+ * Qarzdorlik»): the deal's sum, what the payments ledger (or paid links)
+ * holds, and what is still owed -- read-only, from the same figures as
+ * «To'lovlar» below.
+ */
+export function LeadMoneyRows({
+  leadId,
+  total,
+  row,
+}: {
+  leadId: string;
+  total: number;
+  /** The panel's own field row (label on the left). */
+  row: (label: string, value: ReactNode) => ReactNode;
+}) {
+  const { t } = useI18n();
+  const { data: ledger } = useLeadLedger(leadId);
+  const { data: links = [] } = useLeadPaymentLinks(leadId);
+  const paidByLinks = links
+    .filter((l) => l.status === "paid")
+    .reduce((s, l) => s + Number(l.amount), 0);
+  const sum = ledgerSummary(total, Array.isArray(ledger) ? ledger : []);
+  const paid = Array.isArray(ledger) ? sum.paid : paidByLinks;
+  const deal = Math.max(0, Math.round(Number(total) || 0));
+  const owed = Math.max(0, deal - paid);
+  const money = (n: number) => `${formatSom(n)} so'm`;
+  return (
+    <>
+      {row(t("money.total"), deal > 0 ? money(deal) : "—")}
+      {row(t("money.paid"), paid > 0 ? money(paid) : "—")}
+      {row(
+        t("money.debt"),
+        deal > 0 ? (
+          <span
+            className={cn(
+              "font-semibold tabular-nums",
+              owed > 0
+                ? "text-rose-600 dark:text-rose-300"
+                : "text-emerald-600 dark:text-emerald-300",
+            )}
+          >
+            {owed > 0 ? money(owed) : t("money.none")}
+          </span>
+        ) : (
+          "—"
+        ),
+      )}
+    </>
   );
 }

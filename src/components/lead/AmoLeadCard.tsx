@@ -134,7 +134,11 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
-import { LeadPaymentsSection, PaymentLinkDialog } from "@/components/lead/LeadPayments";
+import {
+  LeadMoneyRows,
+  LeadPaymentsSection,
+  PaymentLinkDialog,
+} from "@/components/lead/LeadPayments";
 import { LeadRefundToggle } from "@/components/lead/LeadRefund";
 import { RecordingLink } from "@/components/audio/RecordingLink";
 import { useRecordingUrl } from "@/hooks/use-recording-url";
@@ -1844,6 +1848,20 @@ function LeadPanel({
                   <div className="space-y-1 pt-2">
                     {customFields}
                     {builtInRowsIn("none")}
+                  </div>
+                )}
+                {/* 5CRM's money rows: the deal, what is paid, what is owed. */}
+                {crmEnabled && (
+                  <div className="space-y-1 pt-2">
+                    <LeadMoneyRows
+                      leadId={lead.id}
+                      total={lead.budget}
+                      row={(label, value) => (
+                        <FieldRow key={label} label={label}>
+                          <span className="tabular-nums">{value}</span>
+                        </FieldRow>
+                      )}
+                    />
                   </div>
                 )}
               </div>

@@ -61,6 +61,7 @@ export function blankAction(type: AutomationActionType): AutomationAction {
       return { type, minutes: 60 };
     case "close_tasks":
     case "release_owner":
+    case "previous_owner":
     case "detect_phone":
       return { type };
     case "move_funnel":
@@ -451,6 +452,9 @@ export function ActionEditor({
 
       {action.type === "close_tasks" && (
         <p className="text-[11px] text-subtle">{t("dp.closeTasksHint")}</p>
+      )}
+      {action.type === "previous_owner" && (
+        <p className="text-[11px] text-subtle">{t("dp.previousOwnerHint")}</p>
       )}
       {action.type === "release_owner" && (
         <p className="text-[11px] text-subtle">{t("dp.releaseOwnerHint")}</p>

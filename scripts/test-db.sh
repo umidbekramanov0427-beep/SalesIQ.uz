@@ -103,6 +103,8 @@ MIGRATIONS=(
   20270118000000_telegram_user_groups # twice
   20270119000000_phone_key_country
   20270119000000_phone_key_country # twice
+  20270120000000_automation_previous_owner
+  20270120000000_automation_previous_owner # twice
 )
 
 cleanup() { :; }
