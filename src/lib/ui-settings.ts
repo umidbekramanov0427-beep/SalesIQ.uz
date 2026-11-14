@@ -1,4 +1,5 @@
 import { parseClientNotify, type ClientNotifyRules } from "./client-notify";
+import { compactCallSettings, parseCallSettings, type CallSettings } from "./call-settings";
 
 // The gear (⚙️) on every card and page: the company's own choices for how
 // its pages look and behave, kept in org_general_settings.ui_settings (the
@@ -36,6 +37,8 @@ export type UiSettings = {
   home: Record<string, Record<string, unknown>>;
   /** Client message notifications (client-notify.ts); absent = defaults. */
   notify?: ClientNotifyRules;
+  /** Admin → Qo'ng'iroq sozlamalari (call-settings.ts); absent = defaults. */
+  phone?: Partial<CallSettings>;
 };
 
 export const EMPTY_UI: UiSettings = { cards: {}, pages: {}, home: {} };
@@ -90,9 +93,10 @@ export function parseUiSettings(raw: unknown): UiSettings {
       if (isObj(v) && k.length <= 120 && Object.keys(v).length) home[k] = v;
     }
   }
-  return isObj(o["notify"])
-    ? { cards, pages, home, notify: parseClientNotify(o["notify"]) }
-    : { cards, pages, home };
+  const out: UiSettings = { cards, pages, home };
+  if (isObj(o["notify"])) out.notify = parseClientNotify(o["notify"]);
+  if (isObj(o["phone"])) out.phone = compactCallSettings(parseCallSettings(o["phone"]));
+  return out;
 }
 
 /** Settings with one Bosh sahifa card's own settings replaced (empty removes them). */

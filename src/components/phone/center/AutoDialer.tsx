@@ -4,6 +4,7 @@ import { Loader2, Pause, Phone, PhoneForwarded, Play, SkipForward, Square } from
 import { DeskBlock } from "@/components/dashboard/desk/DeskParts";
 import { usePhone } from "@/components/phone/PhoneProvider";
 import {
+  useCallSettings,
   useDialList,
   useFunnelNames,
   usePbxCall,
@@ -34,7 +35,10 @@ export function AutoDialer({ connected }: { connected: boolean }) {
   const { data: stages = [] } = usePipelineStagesRaw();
   const [funnel, setFunnel] = useState<string>("");
   const [picked, setPicked] = useState<string[]>([]);
-  const [gap, setGap] = useState(10);
+  // Starts from Admin → Qo'ng'iroq sozlamalari; the person may change it here.
+  const { value: callRules } = useCallSettings();
+  const [gap, setGap] = useState(callRules.autoGap);
+  useEffect(() => setGap(callRules.autoGap), [callRules.autoGap]);
   const funnelStages = useMemo(
     () =>
       stages

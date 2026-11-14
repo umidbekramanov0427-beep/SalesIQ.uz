@@ -87,9 +87,6 @@ const PHONE_SECTION_KEYS = [
   "auto",
   "voice",
   "rating",
-  "connect",
-  "settings",
-  "desktop",
 ];
 
 function AdminCatalogFeed({ onItems }: { onItems: (items: CatalogItem[]) => void }) {

@@ -320,7 +320,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     slug: "phone",
     group: "basics",
-    open: "/phone",
+    open: "/funnels",
     title: {
       uz: "Telefon (qo'ng'iroqlar markazi)",
       ru: "Телефон (центр звонков)",
@@ -333,9 +333,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Menyuda **Telefon**ni oching. Chapdagi ro'yxatda bo'limlar: **Asosiy** (bugungi raqamlar), **Telefon** (raqam terish), **Jurnal**, **Qo'ng'iroqlar**, **Hisobotlar**, **Operatorlar**, **Avto-qo'ng'iroq**, **Ovozli xabar**, **Baholash**, **Ulanish**, **Sozlamalar**, **Desktop ilova**.",
-        ru: "Откройте **Телефон** в меню. Разделы слева: **Главная** (цифры за сегодня), **Телефон** (набор), **Журнал**, **Звонки**, **Отчёты**, **Операторы**, **Автообзвон**, **Голосовое сообщение**, **Оценка**, **Подключение**, **Настройки**, **Приложение**.",
-        en: "Open **Phone** in the menu. Sections on the left: **Overview** (today's figures), **Dialer**, **Log**, **Calls**, **Reports**, **Operators**, **Autodialer**, **Voice message**, **Scoring**, **Connection**, **Settings**, **Desktop app**.",
+        uz: "Voronkalar sahifasidagi **telefon tugmasi**ni bosing — Telefon oynasi ochiladi. Chapdagi ro'yxatda bo'limlar: **Asosiy** (bugungi raqamlar), **Telefon** (raqam terish), **Jurnal**, **Qo'ng'iroqlar**, **Hisobotlar**, **Operatorlar**, **Avto-qo'ng'iroq**, **Ovozli xabar**, **Baholash**. Ulanish, qoidalar va desktop ilova — **Admin panel → Qo'ng'iroq sozlamalari**da. Suhbat bo'lgan qo'ng'iroq yonidagi **Audio tahlil** tugmasi AI tahlilini qisqacha ko'rsatadi, **To'liq tahlil** — batafsil.",
+        ru: "Нажмите **кнопку телефона** на странице воронок — откроется окно «Телефон». Разделы слева: **Главная** (цифры за сегодня), **Телефон** (набор), **Журнал**, **Звонки**, **Отчёты**, **Операторы**, **Автообзвон**, **Голосовое сообщение**, **Оценка**. Подключение, правила и десктоп-приложение — в **Админ-панели → Настройки звонков**. Кнопка **Аудиоанализ** у состоявшегося звонка показывает краткий AI-анализ, **Полный анализ** — подробный.",
+        en: "Press the **phone button** on the funnels page — the Phone window opens. Sections on the left: **Overview** (today's figures), **Dialer**, **Log**, **Calls**, **Reports**, **Operators**, **Autodialer**, **Voice message**, **Scoring**. Connection, rules and the desktop app are in **Admin panel → Call settings**. **Audio analysis** next to a talked call shows the AI analysis in short; **Full analysis** shows all of it.",
       },
       {
         uz: "**Telefon** bo'limida raqamni tering (klaviaturadan ham bo'ladi, Enter — qo'ng'iroq). Raqam CRM'da bo'lsa, lid nomi chiqadi. Qo'ng'iroq ATS orqali ketadi: avval sizning telefoningiz jiringlaydi, keyin mijoz.",

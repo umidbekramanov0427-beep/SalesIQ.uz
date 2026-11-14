@@ -30,6 +30,7 @@ import {
   Receipt,
   Pin,
   Plus,
+  PhoneCall,
   PhoneOutgoing,
   ShieldCheck,
   Sparkles,
@@ -267,6 +268,12 @@ export function useAdminCatalog(): CatalogGroup[] {
       key: "crm",
       items: [
         {
+          key: "callSettings",
+          to: "/admin/call-settings",
+          icon: PhoneCall,
+          tone: "emerald",
+        },
+        {
           key: "phoneFormat",
           to: "/admin/phone-format",
           icon: Phone,
@@ -387,15 +394,17 @@ export function useAdminCatalog(): CatalogGroup[] {
   if (crmEnabled) {
     groups.push({
       key: "telephony",
-      items: TELEPHONY.map((p) => ({
-        key: `tel_${p.id}`,
-        to: "/admin/telephony",
-        search: { provider: p.id },
-        icon: p.icon,
-        tone: p.tone,
-        ...(p.logo ? { logo: p.logo } : {}),
-        status: connected(telephony.isFetched, !!telephony.data?.[p.id]?.connected),
-      })),
+      items: [
+        ...TELEPHONY.map((p) => ({
+          key: `tel_${p.id}`,
+          to: "/admin/telephony",
+          search: { provider: p.id },
+          icon: p.icon,
+          tone: p.tone,
+          ...(p.logo ? { logo: p.logo } : {}),
+          status: connected(telephony.isFetched, !!telephony.data?.[p.id]?.connected),
+        })),
+      ],
     });
   }
 

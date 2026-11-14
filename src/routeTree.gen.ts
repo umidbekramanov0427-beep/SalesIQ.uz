@@ -71,6 +71,7 @@ import { Route as AdminAutoRespondersRouteImport } from './routes/admin.auto-res
 import { Route as AdminAutomationsRouteImport } from './routes/admin.automations'
 import { Route as AdminBackupRouteImport } from './routes/admin.backup'
 import { Route as AdminCallAnalysisSettingsRouteImport } from './routes/admin.call-analysis-settings'
+import { Route as AdminCallSettingsRouteImport } from './routes/admin.call-settings'
 import { Route as AdminCompanyBackupRouteImport } from './routes/admin.company-backup'
 import { Route as AdminContractTemplatesRouteImport } from './routes/admin.contract-templates'
 import { Route as AdminCreateEmployeeRouteImport } from './routes/admin.create-employee'
@@ -634,6 +635,11 @@ const AdminCallAnalysisSettingsRoute =
     path: '/call-analysis-settings',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminCallSettingsRoute = AdminCallSettingsRouteImport.update({
+  id: '/call-settings',
+  path: '/call-settings',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCompanyBackupRoute = AdminCompanyBackupRouteImport.update({
   id: '/company-backup',
   path: '/company-backup',
@@ -2000,6 +2006,7 @@ export interface FileRoutesByFullPath {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
+  '/admin/call-settings': typeof AdminCallSettingsRoute
   '/admin/company-backup': typeof AdminCompanyBackupRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
@@ -2312,6 +2319,7 @@ export interface FileRoutesByTo {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
+  '/admin/call-settings': typeof AdminCallSettingsRoute
   '/admin/company-backup': typeof AdminCompanyBackupRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
@@ -2625,6 +2633,7 @@ export interface FileRoutesById {
   '/admin/automations': typeof AdminAutomationsRoute
   '/admin/backup': typeof AdminBackupRoute
   '/admin/call-analysis-settings': typeof AdminCallAnalysisSettingsRoute
+  '/admin/call-settings': typeof AdminCallSettingsRoute
   '/admin/company-backup': typeof AdminCompanyBackupRoute
   '/admin/contract-templates': typeof AdminContractTemplatesRoute
   '/admin/create-employee': typeof AdminCreateEmployeeRoute
@@ -2939,6 +2948,7 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/backup'
     | '/admin/call-analysis-settings'
+    | '/admin/call-settings'
     | '/admin/company-backup'
     | '/admin/contract-templates'
     | '/admin/create-employee'
@@ -3251,6 +3261,7 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/backup'
     | '/admin/call-analysis-settings'
+    | '/admin/call-settings'
     | '/admin/company-backup'
     | '/admin/contract-templates'
     | '/admin/create-employee'
@@ -3563,6 +3574,7 @@ export interface FileRouteTypes {
     | '/admin/automations'
     | '/admin/backup'
     | '/admin/call-analysis-settings'
+    | '/admin/call-settings'
     | '/admin/company-backup'
     | '/admin/contract-templates'
     | '/admin/create-employee'
@@ -4449,6 +4461,13 @@ declare module '@tanstack/react-router' {
       path: '/call-analysis-settings'
       fullPath: '/admin/call-analysis-settings'
       preLoaderRoute: typeof AdminCallAnalysisSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/call-settings': {
+      id: '/admin/call-settings'
+      path: '/call-settings'
+      fullPath: '/admin/call-settings'
+      preLoaderRoute: typeof AdminCallSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/company-backup': {
@@ -6217,6 +6236,7 @@ interface AdminRouteChildren {
   AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminBackupRoute: typeof AdminBackupRoute
   AdminCallAnalysisSettingsRoute: typeof AdminCallAnalysisSettingsRoute
+  AdminCallSettingsRoute: typeof AdminCallSettingsRoute
   AdminCompanyBackupRoute: typeof AdminCompanyBackupRoute
   AdminContractTemplatesRoute: typeof AdminContractTemplatesRoute
   AdminCreateEmployeeRoute: typeof AdminCreateEmployeeRoute
@@ -6266,6 +6286,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAutomationsRoute: AdminAutomationsRoute,
   AdminBackupRoute: AdminBackupRoute,
   AdminCallAnalysisSettingsRoute: AdminCallAnalysisSettingsRoute,
+  AdminCallSettingsRoute: AdminCallSettingsRoute,
   AdminCompanyBackupRoute: AdminCompanyBackupRoute,
   AdminContractTemplatesRoute: AdminContractTemplatesRoute,
   AdminCreateEmployeeRoute: AdminCreateEmployeeRoute,

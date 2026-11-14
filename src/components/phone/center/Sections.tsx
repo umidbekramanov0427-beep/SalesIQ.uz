@@ -922,47 +922,6 @@ export function ConnectSection({ data }: { data: PhoneCenterData | undefined }) 
   );
 }
 
-/* ---- Sozlamalar --------------------------------------------------------------- */
-
-export function SettingsSection() {
-  const { t } = useI18n();
-  const admin = useIsAdmin();
-  const go = (to: string, label: string, search?: Record<string, string>) => (
-    <Link
-      to={to as never}
-      {...(search ? { search: search as never } : {})}
-      className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-[6px] px-3 text-[13px] font-semibold text-foreground"
-    >
-      {label} <ArrowRight className="h-3.5 w-3.5" />
-    </Link>
-  );
-  return (
-    <DeskBlock tipKey="ptel.b.settings" title={t("ptel.s.settings")} icon={Settings} tone="slate">
-      <SettingRows>
-        {admin && (
-          <SettingRow title={t("ptel.set.pbx")} description={t("ptel.set.pbxDesc")}>
-            {go("/admin/telephony", t("ptel.open"))}
-          </SettingRow>
-        )}
-        {admin && (
-          <SettingRow title={t("ptel.set.format")} description={t("ptel.set.formatDesc")}>
-            {go("/admin/phone-format", t("ptel.open"))}
-          </SettingRow>
-        )}
-        <SettingRow title={t("ptel.set.push")} description={t("ptel.set.pushDesc")}>
-          {go("/settings", t("ptel.open"), { section: "notifications" })}
-        </SettingRow>
-        <SettingRow title={t("ptel.set.audio")} description={t("ptel.set.audioDesc")}>
-          {go("/audio-analytics", t("ptel.open"))}
-        </SettingRow>
-      </SettingRows>
-      {!admin && (
-        <p className="mt-3 text-[12.5px] text-muted-foreground">{t("ptel.adminConnects")}</p>
-      )}
-    </DeskBlock>
-  );
-}
-
 /* ---- Desktop ---------------------------------------------------------------- */
 
 export function DesktopSection() {

@@ -6,16 +6,14 @@ import {
   Columns2,
   PanelLeft,
   PanelTop,
-  Cable,
   Grid3x3,
   Headphones,
   History,
   LayoutGrid,
   Megaphone,
-  MonitorDown,
   PhoneCall,
   PhoneForwarded,
-  Settings,
+  SlidersHorizontal,
   Star,
   type LucideIcon,
 } from "lucide-react";
@@ -23,26 +21,27 @@ import { IconTile, PageHeader, StatusChip, type CardTone } from "@/components/la
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CallAnalytics } from "@/components/phone/CallAnalytics";
 import { CallHistoryPanel } from "@/components/phone/PhoneProvider";
-import { usePhoneCenter } from "@/hooks/use-crm-data";
+import { useCallSettings, usePhoneCenter } from "@/hooks/use-crm-data";
+import { useAuth } from "@/lib/auth";
+import { sectionVisible } from "@/lib/call-settings";
+import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AutoDialer } from "./AutoDialer";
 import {
   CallsSection,
-  ConnectSection,
-  DesktopSection,
   DialerSection,
   OperatorsSection,
   OverviewSection,
   RatingSection,
-  SettingsSection,
 } from "./Sections";
 import { VoiceMessage } from "./VoiceMessage";
 
 // Telefon (5TEL's functions in the platform's look): one page with every
-// phone tool -- the dialer, the call log, all calls, reports, operators,
-// settings and connection, voice messages to clients' Telegram, the
-// autodialer, AI call scores and the desktop app. Calls go out through the
+// calling tool -- the dialer, the call log, all calls, reports, operators,
+// voice messages to clients' Telegram, the autodialer and AI call scores.
+// Everything to set up (connection, rules, the desktop app) is in Admin →
+// Qo'ng'iroq sozlamalari (/admin/call-settings). Calls go out through the
 // company's PBX (click-to-call): it rings the salesperson's own phone or
 // SIP line first, then the client.
 
@@ -56,9 +55,6 @@ export const PC_SECTIONS = [
   "auto",
   "voice",
   "rating",
-  "connect",
-  "settings",
-  "desktop",
 ] as const;
 export type PcSection = (typeof PC_SECTIONS)[number];
 
@@ -72,9 +68,6 @@ const ICON: Record<PcSection, [LucideIcon, CardTone]> = {
   auto: [PhoneForwarded, "rose"],
   voice: [Megaphone, "sky"],
   rating: [Star, "amber"],
-  connect: [Cable, "slate"],
-  settings: [Settings, "slate"],
-  desktop: [MonitorDown, "primary"],
 };
 
 const TONE_ICON: Record<CardTone, string> = {
@@ -99,12 +92,21 @@ export function pcPeriod(key: PcPeriodKey, now = new Date()) {
 export function PhoneCenterPage({
   section,
   onSection,
+  onClose,
 }: {
   section: PcSection;
   onSection: (s: PcSection) => void;
+  /** Opened over a page (the funnel's phone button): the window's close. */
+  onClose?: () => void;
 }) {
   const { t } = useI18n();
-  const [periodKey, setPeriodKey] = useState<PcPeriodKey>("today");
+  const { user } = useAuth();
+  const { value: callRules } = useCallSettings();
+  const [periodKey, setPeriodKey] = useState<PcPeriodKey>(callRules.period);
+  useEffect(() => setPeriodKey(callRules.period), [callRules.period]);
+  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
+  // Sections an admin hid from salespeople (Qo'ng'iroq sozlamalari).
+  const sections = PC_SECTIONS.filter((s) => sectionVisible(s, user?.role, callRules));
   const period = useMemo(() => pcPeriod(periodKey), [periodKey]);
   const { data, isLoading, error } = usePhoneCenter(period);
   const connected = !!data?.provider?.connected;
@@ -114,9 +116,9 @@ export function PhoneCenterPage({
   const [layout, setLayout] = usePcLayout();
 
   const content = (
-    <div key={section} className="tab-enter min-w-0">
+    <div key={section} className={cn("tab-enter min-w-0", section === "log" && "h-full")}>
       {section === "log" ? (
-        <CallHistoryPanel embedded onClose={() => {}} />
+        <CallHistoryPanel embedded onClose={onClose ?? (() => {})} />
       ) : section === "reports" ? (
         <div className="surface-card overflow-hidden">
           <CallAnalytics />
@@ -127,12 +129,6 @@ export function PhoneCenterPage({
         <AutoDialer connected={connected} />
       ) : section === "voice" ? (
         <VoiceMessage />
-      ) : section === "connect" ? (
-        <ConnectSection data={data} />
-      ) : section === "settings" ? (
-        <SettingsSection />
-      ) : section === "desktop" ? (
-        <DesktopSection />
       ) : (
         <PeriodSections
           section={section}
@@ -192,20 +188,40 @@ export function PhoneCenterPage({
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 phone:h-auto">
       <PageHeader
+        back={!onClose}
         title={t("ptel.title")}
         description={t("ptel.subtitle")}
         icon={PhoneCall}
         tone="emerald"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {data && (
-              <StatusChip state={connected ? "ok" : "warn"}>
-                {connected
-                  ? t("ptel.connectedTo", {
-                      name: t(`ptel.provider.${data.provider!.id}`),
-                    })
-                  : t("ptel.notConnected")}
-              </StatusChip>
+            {data &&
+              (() => {
+                const chip = (
+                  <StatusChip state={connected ? "ok" : "warn"}>
+                    {connected
+                      ? t("ptel.connectedTo", {
+                          name: t(`ptel.provider.${data.provider!.id}`),
+                        })
+                      : t("ptel.notConnected")}
+                  </StatusChip>
+                );
+                return isAdmin ? (
+                  <Link to="/admin/call-settings" title={t("callSet.title")}>
+                    {chip}
+                  </Link>
+                ) : (
+                  chip
+                );
+              })()}
+            {isAdmin && (
+              <Link
+                to="/admin/call-settings"
+                className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-semibold"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {t("callSet.title")}
+              </Link>
             )}
             {data?.myExtension && (
               <span className="rounded-lg border border-border bg-card px-2.5 py-1 text-[12.5px] font-semibold tabular-nums text-foreground">
@@ -243,7 +259,7 @@ export function PhoneCenterPage({
             aria-label={t("ptel.title")}
             className="surface-card max-h-full self-start overflow-y-auto p-1.5 phone:flex phone:gap-1 phone:overflow-x-auto phone:[scrollbar-width:none]"
           >
-            {PC_SECTIONS.map((s) => {
+            {sections.map((s) => {
               const [Icon, tone] = ICON[s];
               const on = s === section;
               return (
@@ -272,7 +288,7 @@ export function PhoneCenterPage({
 
       {layout === "tabs" && (
         <>
-          {tabRow(PC_SECTIONS)}
+          {tabRow(sections)}
           {scroll(content)}
         </>
       )}
@@ -282,28 +298,30 @@ export function PhoneCenterPage({
           scroll(
             <div className="space-y-4">
               <div className="grid grid-cols-4 gap-3 phone:grid-cols-2">
-                {PC_SECTIONS.filter((s) => s !== "main").map((s) => {
-                  const [Icon, tone] = ICON[s];
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => onSection(s)}
-                      className="surface-card group flex items-start gap-3 p-4 text-left transition-colors hover:border-primary/40"
-                    >
-                      <IconTile icon={Icon} tone={tone} size="md" />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1.5 text-[14px] font-semibold text-foreground">
-                          {t(`ptel.s.${s}`)}
-                          {badge(s)}
+                {sections
+                  .filter((s) => s !== "main")
+                  .map((s) => {
+                    const [Icon, tone] = ICON[s];
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => onSection(s)}
+                        className="surface-card group flex items-start gap-3 p-4 text-left transition-colors hover:border-primary/40"
+                      >
+                        <IconTile icon={Icon} tone={tone} size="md" />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-1.5 text-[14px] font-semibold text-foreground">
+                            {t(`ptel.s.${s}`)}
+                            {badge(s)}
+                          </span>
+                          <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
+                            {t(`ptel.d.${s}`)}
+                          </span>
                         </span>
-                        <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
-                          {t(`ptel.d.${s}`)}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
               </div>
               {content}
             </div>,
@@ -337,7 +355,7 @@ export function PhoneCenterPage({
             <DialerSection data={data} compact />
           </div>
           <div className="flex min-h-0 flex-col gap-3">
-            {tabRow(PC_SECTIONS.filter((s) => s !== "dial"))}
+            {tabRow(sections.filter((s) => s !== "dial"))}
             {scroll(
               section === "dial" ? (
                 <PeriodSections

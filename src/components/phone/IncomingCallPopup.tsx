@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { appRoleOf } from "@/lib/nav";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useCallSettings } from "@/hooks/use-crm-data";
 
 // The moment the PBX reports an incoming call ringing (the telephony
 // webhook writes it to pbx_calls), a card slides in with who is calling:
@@ -58,8 +59,11 @@ async function describe(row: CallRow): Promise<{ leadId: string | null; name: st
   return { leadId: null, name: null };
 }
 
-export function IncomingCallPopup({ enabled }: { enabled: boolean }) {
+export function IncomingCallPopup({ enabled: allowed }: { enabled: boolean }) {
   const { user } = useAuth();
+  // Admin → Qo'ng'iroq sozlamalari can turn the window off for the company.
+  const callRules = useCallSettings();
+  const enabled = allowed && callRules.value.popup;
   const [calls, setCalls] = useState<Incoming[]>([]);
   const userId = user?.id ?? null;
   const orgId = user?.organizationId ?? null;

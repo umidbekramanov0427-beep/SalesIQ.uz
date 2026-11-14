@@ -1,5 +1,7 @@
 import {
   createContext,
+  lazy,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -25,11 +27,13 @@ import {
   Play,
   Search,
   X,
+  AudioWaveform,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CallAnalytics } from "@/components/phone/CallAnalytics";
 import { RecordingAudio } from "@/components/audio/RecordingLink";
+import { CallReviewDialog, type CallReviewTarget } from "@/components/phone/CallReviewDialog";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
@@ -107,13 +111,69 @@ export function PhoneProvider({ enabled, children }: { enabled: boolean; childre
     <Ctx.Provider value={value}>
       {children}
       {enabled && !open && <FloatingPhone live={!!live} onOpen={() => setOpen(true)} />}
-      {enabled && open && <CallHistoryPanel onClose={() => setOpen(false)} />}
+      {enabled && open && <PhoneCenterModal onClose={() => setOpen(false)} />}
       {enabled && live && !open && <LiveCallCard call={live} onClose={() => setLive(null)} />}
     </Ctx.Provider>
   );
 }
 
 /* ------------------------------------------------------------------ */
+
+// The funnel's phone button opens every calling tool of Telefon (Asosiy,
+// terish, jurnal, qo'ng'iroqlar, hisobotlar, operatorlar, avto-qo'ng'iroq,
+// ovozli xabar, baholash) over the page; setting it up is in Admin →
+// Qo'ng'iroq sozlamalari. Loaded on first open.
+const PhoneCenterPage = lazy(() =>
+  import("@/components/phone/center/PhoneCenterPage").then((m) => ({
+    default: m.PhoneCenterPage,
+  })),
+);
+
+function PhoneCenterModal({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
+  const [section, setSection] =
+    useState<import("@/components/phone/center/PhoneCenterPage").PcSection>("main");
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // A window opened inside (Audio tahlil, a picker) closes first.
+      if (e.key === "Escape" && !document.querySelector("[role=dialog][data-state=open]"))
+        onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div
+      className="fixed inset-0 z-[55] bg-black/50 p-3 backdrop-blur-md sm:p-6 lg:px-10 lg:py-8"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        className="relative h-full w-full overflow-hidden rounded-3xl border border-border bg-background p-5 pr-16 shadow-[0_30px_90px_rgba(0,0,0,0.45)] phone:overflow-y-auto phone:p-3 phone:pr-12"
+      >
+        <button
+          type="button"
+          aria-label={t("phone.close")}
+          onClick={onClose}
+          className="absolute right-3 top-3 z-[2] grid h-10 w-10 place-items-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <Suspense
+          fallback={
+            <div className="grid h-full place-items-center">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          }
+        >
+          <PhoneCenterPage section={section} onSection={setSection} onClose={onClose} />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
 
 const FAB_KEY = "salesiq.phoneFab";
 const FAB = 54;
@@ -384,6 +444,8 @@ export function CallHistoryPanel({
   const [dial, setDial] = useState("");
   const [playing, setPlaying] = useState<string | null>(null);
   const [view, setView] = useState<"history" | "analytics">("history");
+  // «Audio tahlil»: the AI analysis of a talked call, in a window of its own.
+  const [review, setReview] = useState<CallReviewTarget | null>(null);
   const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "uz-UZ";
 
   useEffect(() => {
@@ -431,7 +493,7 @@ export function CallHistoryPanel({
       onClick={(e) => e.stopPropagation()}
       className={
         embedded
-          ? "flex h-[calc(100dvh-230px)] min-h-[520px] w-full flex-col overflow-hidden rounded-[8px] border border-border bg-card"
+          ? "flex h-full min-h-[420px] w-full flex-col overflow-hidden rounded-[8px] border border-border bg-card"
           : "flex h-full w-full flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_30px_90px_rgba(0,0,0,0.45)]"
       }
     >
@@ -529,7 +591,7 @@ export function CallHistoryPanel({
       ) : (
         <>
           {/* Column heads */}
-          <div className="hidden grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px] gap-3 border-b border-border bg-muted/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle md:grid">
+          <div className="hidden grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_212px] gap-3 border-b border-border bg-muted/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle md:grid">
             <span>{t("phone.col.call")}</span>
             <span>{t("phone.col.name")}</span>
             <span>{t("phone.col.phone")}</span>
@@ -553,7 +615,7 @@ export function CallHistoryPanel({
                   </p>
                   {g.items.map((c) => (
                     <div key={c.id} className="border-b border-border/70 last:border-0">
-                      <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-[13px] transition-colors hover:bg-accent/60 md:grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_112px]">
+                      <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-[13px] transition-colors hover:bg-accent/60 md:grid-cols-[96px_minmax(0,1.3fr)_160px_80px_minmax(0,1fr)_212px]">
                         <span className="flex items-center gap-2 tabular-nums text-muted-foreground">
                           <CallIcon c={c} />
                           {new Date(c.at).toLocaleTimeString(locale, {
@@ -604,6 +666,25 @@ export function CallHistoryPanel({
                           )}
                         </span>
                         <span className="flex items-center justify-end gap-1">
+                          {c.outcome === "answered" && c.durationSeconds > 0 && (
+                            <button
+                              type="button"
+                              title={t("callReview.open")}
+                              onClick={() =>
+                                setReview({
+                                  id: c.id,
+                                  name: c.name,
+                                  phone: c.phone,
+                                  at: c.at,
+                                  durationSeconds: c.durationSeconds,
+                                })
+                              }
+                              className="ctl-soft inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold"
+                            >
+                              <AudioWaveform className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                              {t("callReview.open")}
+                            </button>
+                          )}
                           {c.recordingUrl && (
                             <button
                               type="button"
@@ -718,6 +799,7 @@ export function CallHistoryPanel({
           </footer>
         </>
       )}
+      <CallReviewDialog call={review} onClose={() => setReview(null)} />
     </section>
   );
   if (embedded) return panel;

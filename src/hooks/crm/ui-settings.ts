@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { parseUiSettings, type UiSettings } from "@/lib/ui-settings";
+import { compactCallSettings, parseCallSettings, type CallSettings } from "@/lib/call-settings";
 import { useOrgGeneralSettings } from "./settings";
 import { usePlatformSettings } from "./duplicates-billing";
 
@@ -100,4 +101,23 @@ export function uiSaveErrorKey(err: unknown): "pending" | "other" {
   const m =
     err instanceof Error ? err.message : String((err as { message?: string })?.message ?? "");
   return /ui_settings/.test(m) ? "pending" : "other";
+}
+
+/** Admin → Qo'ng'iroq sozlamalari (src/lib/call-settings.ts), from ui_settings.phone. */
+export function useCallSettings(): {
+  value: CallSettings;
+  canEdit: boolean;
+  saving: boolean;
+  save: (next: CallSettings) => Promise<void>;
+} {
+  const { settings, canEdit, saving, save } = useUiSettings();
+  const key = JSON.stringify(settings.phone ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const value = useMemo(() => parseCallSettings(settings.phone), [key]);
+  return {
+    value,
+    canEdit,
+    saving,
+    save: (next) => save({ ...settings, phone: compactCallSettings(next) }),
+  };
 }

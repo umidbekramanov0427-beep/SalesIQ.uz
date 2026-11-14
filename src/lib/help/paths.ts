@@ -54,6 +54,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/funnels", "funnels"],
   ["/inbox", "inbox"],
   ["/phone", "phone"],
+  ["/admin/call-settings", "phone"],
   ["/crm", "funnels"],
   ["/audio-analytics", "audio"],
   ["/scoring-criteria", "audio"],
