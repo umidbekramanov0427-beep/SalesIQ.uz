@@ -90,6 +90,7 @@ import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/segmented";
+import { CardBoard, type CardBoardItem } from "@/components/dashboard/HomeBoard";
 import { PermissionGate } from "@/components/PermissionGate";
 import { PlanGate } from "@/components/PlanGate";
 import { FitText } from "@/components/ui/fit-text";
@@ -198,20 +199,17 @@ function ActionTab({
   format: (n: number) => string;
   t: (k: string, vars?: Record<string, string | number>) => string;
 }) {
-  return (
-    <>
-      <div className="mt-6">
-        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
-          {t("leadAnalytics.actionTitle")}
-          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
-            {t("leadAnalytics.actionSectionLabel")}
-          </span>
-        </h2>
-        <p className="mt-0.5 text-[13px] text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
-        <CallQueueToggle />
-      </div>
-
-      <div className="mt-4 grid gap-5 2xl:grid-cols-2">
+  // The tab's blocks as a board (CardBoard): each person moves, resizes,
+  // adds and removes them; the layout is kept per tab in this browser.
+  const items: CardBoardItem[] = [
+    {
+      id: "lost",
+      title: t("leadAnalytics.lostTitle"),
+      icon: RotateCcw,
+      tone: "rose",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={RotateCcw}
           tone="rose"
@@ -238,7 +236,16 @@ function ActionTab({
             <RecoverableList rows={data?.recoverable ?? []} format={format} t={t} />
           )}
         </SectionCard>
-
+      ),
+    },
+    {
+      id: "hot",
+      title: t("leadAnalytics.hotTitle"),
+      icon: Flame,
+      tone: "amber",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Flame}
           tone="amber"
@@ -251,9 +258,16 @@ function ActionTab({
             <HotList rows={data?.hotPipeline ?? []} format={format} t={t} />
           )}
         </SectionCard>
-      </div>
-
-      <div className="mt-6">
+      ),
+    },
+    {
+      id: "operatorActivity",
+      title: t("leadAnalytics.operatorActivityTitle"),
+      icon: Activity,
+      tone: "sky",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Activity}
           tone="sky"
@@ -310,7 +324,23 @@ function ActionTab({
             </div>
           )}
         </SectionCard>
+      ),
+    },
+  ];
+  return (
+    <>
+      <div className="mt-6">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+          {t("leadAnalytics.actionTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.actionSectionLabel")}
+          </span>
+        </h2>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">{t("leadAnalytics.actionDesc")}</p>
+        <CallQueueToggle />
       </div>
+
+      <CardBoard className="mt-4" boardKey="leadAnalytics.action" items={items} />
     </>
   );
 }
@@ -515,19 +545,17 @@ function QualityTab({
     teamId || null,
     since,
   );
-  return (
-    <>
-      <div className="mt-6">
-        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-          {t("leadAnalytics.qualityTitle")}
-          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
-            {t("leadAnalytics.tagResultsLabel")}
-          </span>
-        </h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.qualityDesc")}</p>
-      </div>
-
-      <div className="mt-4 grid gap-5 xl:grid-cols-2">
+  // The tab's blocks as a board (CardBoard): each person moves, resizes,
+  // adds and removes them; the layout is kept per tab in this browser.
+  const items: CardBoardItem[] = [
+    {
+      id: "tagResults",
+      title: t("leadAnalytics.tagResultsTitle"),
+      icon: Tags,
+      tone: "violet",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Tags}
           tone="violet"
@@ -540,7 +568,16 @@ function QualityTab({
             <TagResultsBars rows={data?.tagResults ?? []} t={t} />
           )}
         </SectionCard>
-
+      ),
+    },
+    {
+      id: "matrix",
+      title: t("leadAnalytics.matrixTitle"),
+      icon: Grid3x3,
+      tone: "violet",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Grid3x3}
           tone="violet"
@@ -553,9 +590,16 @@ function QualityTab({
             <TagMatrixTable rows={data?.tagMatrix ?? []} t={t} />
           )}
         </SectionCard>
-      </div>
-
-      <div className="mt-6">
+      ),
+    },
+    {
+      id: "category",
+      title: t("leadAnalytics.categoryTitle"),
+      icon: Tag,
+      tone: "violet",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Tag}
           tone="violet"
@@ -572,7 +616,22 @@ function QualityTab({
             <TagCategoryChart rows={data?.tagCategories ?? []} />
           )}
         </SectionCard>
+      ),
+    },
+  ];
+  return (
+    <>
+      <div className="mt-6">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+          {t("leadAnalytics.qualityTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.tagResultsLabel")}
+          </span>
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.qualityDesc")}</p>
       </div>
+
+      <CardBoard className="mt-4" boardKey="leadAnalytics.quality" items={items} />
     </>
   );
 }
@@ -746,19 +805,17 @@ function CurrentTab({
     teamId || null,
     since,
   );
-  return (
-    <>
-      <div className="mt-6">
-        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-          {t("leadAnalytics.currentTitle")}
-          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
-            {t("leadAnalytics.stagesLabel")}
-          </span>
-        </h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.currentDesc")}</p>
-      </div>
-
-      <div className="mt-4 grid gap-5 xl:grid-cols-2">
+  // The tab's blocks as a board (CardBoard): each person moves, resizes,
+  // adds and removes them; the layout is kept per tab in this browser.
+  const items: CardBoardItem[] = [
+    {
+      id: "temperature",
+      title: t("leadAnalytics.temperatureTitle"),
+      icon: Thermometer,
+      tone: "rose",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Thermometer}
           tone="rose"
@@ -774,7 +831,16 @@ function CurrentTab({
             />
           )}
         </SectionCard>
-
+      ),
+    },
+    {
+      id: "stages",
+      title: t("leadAnalytics.stagesTitle"),
+      icon: Hourglass,
+      tone: "amber",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Hourglass}
           tone="amber"
@@ -787,9 +853,16 @@ function CurrentTab({
             <StageFunnelList rows={data?.stages ?? []} t={t} />
           )}
         </SectionCard>
-      </div>
-
-      <div className="mt-6">
+      ),
+    },
+    {
+      id: "managerLoad",
+      title: t("leadAnalytics.managerLoadTitle"),
+      icon: Users,
+      tone: "sky",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Users}
           tone="sky"
@@ -806,7 +879,22 @@ function CurrentTab({
             <ManagerLoadChart rows={data?.managerLoad ?? []} />
           )}
         </SectionCard>
+      ),
+    },
+  ];
+  return (
+    <>
+      <div className="mt-6">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+          {t("leadAnalytics.currentTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.stagesLabel")}
+          </span>
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.currentDesc")}</p>
       </div>
+
+      <CardBoard className="mt-4" boardKey="leadAnalytics.current" items={items} />
     </>
   );
 }
@@ -1034,19 +1122,17 @@ function DirectionTab({
     teamId || null,
     since,
   );
-  return (
-    <>
-      <div className="mt-6">
-        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-          {t("leadAnalytics.directionTitle")}
-          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
-            {t("leadAnalytics.trajectoryTitle")}
-          </span>
-        </h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.directionDesc")}</p>
-      </div>
-
-      <div className="mt-4 grid gap-5 xl:grid-cols-2">
+  // The tab's blocks as a board (CardBoard): each person moves, resizes,
+  // adds and removes them; the layout is kept per tab in this browser.
+  const items: CardBoardItem[] = [
+    {
+      id: "trajectory",
+      title: t("leadAnalytics.trajectoryTitle"),
+      icon: GitBranch,
+      tone: "violet",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={GitBranch}
           tone="violet"
@@ -1062,7 +1148,16 @@ function DirectionTab({
             />
           )}
         </SectionCard>
-
+      ),
+    },
+    {
+      id: "lostReasons",
+      title: t("leadAnalytics.lostReasonsTitle"),
+      icon: TrendingDown,
+      tone: "rose",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={TrendingDown}
           tone="rose"
@@ -1075,9 +1170,16 @@ function DirectionTab({
             <LostReasonsDonut rows={data?.lostReasons ?? []} t={t} />
           )}
         </SectionCard>
-      </div>
-
-      <div className="mt-6 grid gap-5 xl:grid-cols-2">
+      ),
+    },
+    {
+      id: "speed",
+      title: t("leadAnalytics.speedTitle"),
+      icon: Timer,
+      tone: "amber",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Timer}
           tone="amber"
@@ -1090,7 +1192,16 @@ function DirectionTab({
             <StageSpeedChart rows={currentData?.stages ?? []} t={t} />
           )}
         </SectionCard>
-
+      ),
+    },
+    {
+      id: "churnRisk",
+      title: t("leadAnalytics.churnRiskTitle"),
+      icon: AlertTriangle,
+      tone: "rose",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={AlertTriangle}
           tone="rose"
@@ -1103,7 +1214,22 @@ function DirectionTab({
             <ChurnRiskTable rows={data?.churnRisk ?? []} t={t} />
           )}
         </SectionCard>
+      ),
+    },
+  ];
+  return (
+    <>
+      <div className="mt-6">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+          {t("leadAnalytics.directionTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.trajectoryTitle")}
+          </span>
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.directionDesc")}</p>
       </div>
+
+      <CardBoard className="mt-4" boardKey="leadAnalytics.direction" items={items} />
     </>
   );
 }
@@ -1545,19 +1671,17 @@ function MarketingTab({
     until,
   );
 
-  return (
-    <>
-      <div className="mt-6">
-        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-          {t("leadAnalytics.marketingTitle")}
-          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
-            {t("leadAnalytics.marketingSectionLabel")}
-          </span>
-        </h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.marketingDesc")}</p>
-      </div>
-
-      <div className="mt-4 grid gap-5 xl:grid-cols-2">
+  // The tab's blocks as a board (CardBoard): each person moves, resizes,
+  // adds and removes them; the layout is kept per tab in this browser.
+  const items: CardBoardItem[] = [
+    {
+      id: "bySource",
+      title: t("leadAnalytics.bySourceTitle"),
+      icon: Megaphone,
+      tone: "sky",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Megaphone}
           tone="sky"
@@ -1576,7 +1700,16 @@ function MarketingTab({
             />
           )}
         </SectionCard>
-
+      ),
+    },
+    {
+      id: "byCampaign",
+      title: t("leadAnalytics.byCampaignTitle"),
+      icon: Megaphone,
+      tone: "violet",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Megaphone}
           tone="violet"
@@ -1595,9 +1728,16 @@ function MarketingTab({
             />
           )}
         </SectionCard>
-      </div>
-
-      <div className="mt-6 grid gap-5 xl:grid-cols-2">
+      ),
+    },
+    {
+      id: "qualityBySource",
+      title: t("leadAnalytics.qualityBySourceTitle"),
+      icon: Gauge,
+      tone: "emerald",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Gauge}
           tone="emerald"
@@ -1610,7 +1750,16 @@ function MarketingTab({
             <QualityBySourceChart rows={data?.qualityBySource ?? []} t={t} />
           )}
         </SectionCard>
-
+      ),
+    },
+    {
+      id: "speedBySource",
+      title: t("leadAnalytics.speedBySourceTitle"),
+      icon: Timer,
+      tone: "sky",
+      span: 6,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={Timer}
           tone="sky"
@@ -1623,9 +1772,16 @@ function MarketingTab({
             <SpeedBySourceChart rows={data?.speedBySource ?? []} t={t} />
           )}
         </SectionCard>
-      </div>
-
-      <div className="mt-6">
+      ),
+    },
+    {
+      id: "dailyTrend",
+      title: t("leadAnalytics.dailyTrendTitle"),
+      icon: TrendingUp,
+      tone: "emerald",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: (
         <SectionCard
           icon={TrendingUp}
           tone="emerald"
@@ -1638,28 +1794,52 @@ function MarketingTab({
             <DailyTrendChart rows={data?.dailyTrend ?? []} t={t} />
           )}
         </SectionCard>
+      ),
+    },
+    ...(period === "monthly"
+      ? ([
+          {
+            id: "cplRoi",
+            title: t("leadAnalytics.cplRoiTitle"),
+            icon: DollarSign,
+            tone: "emerald",
+            span: 12,
+            sizes: [6, 8, 12],
+            node: (
+              <SectionCard
+                title={
+                  <span className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-success" />
+                    {t("leadAnalytics.cplRoiTitle")}
+                  </span>
+                }
+                description={t("leadAnalytics.cplRoiDesc")}
+              >
+                <MarketingSpendSection
+                  monthDate={monthDate}
+                  bySource={data?.bySource ?? []}
+                  format={format}
+                  t={t}
+                />
+              </SectionCard>
+            ),
+          },
+        ] satisfies CardBoardItem[])
+      : []),
+  ];
+  return (
+    <>
+      <div className="mt-6">
+        <h2 className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+          {t("leadAnalytics.marketingTitle")}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            {t("leadAnalytics.marketingSectionLabel")}
+          </span>
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("leadAnalytics.marketingDesc")}</p>
       </div>
 
-      {period === "monthly" && (
-        <div className="mt-6">
-          <SectionCard
-            title={
-              <span className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-success" />
-                {t("leadAnalytics.cplRoiTitle")}
-              </span>
-            }
-            description={t("leadAnalytics.cplRoiDesc")}
-          >
-            <MarketingSpendSection
-              monthDate={monthDate}
-              bySource={data?.bySource ?? []}
-              format={format}
-              t={t}
-            />
-          </SectionCard>
-        </div>
-      )}
+      <CardBoard className="mt-4" boardKey="leadAnalytics.marketing" items={items} />
     </>
   );
 }
