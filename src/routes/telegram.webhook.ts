@@ -39,6 +39,7 @@ import {
 import { internDay } from "@/lib/intern-roadmap";
 import { handleIncomingLeadMessage, startSalesbot } from "@/lib/automations/engine.server";
 import { salesbotIdFromStart } from "@/lib/salesbots/start-link";
+import { handleTelegramLoginCallback, handleTelegramLoginStart } from "@/lib/telegram-login.server";
 import { getDefaultSalesbotId } from "@/lib/salesbots/default-bot.server";
 import { ingestLead, rememberLeadTelegram } from "@/lib/leads/lead-intake.server";
 import {
@@ -56,7 +57,7 @@ type TelegramUpdate = {
     id: string;
     data?: string;
     from?: { id?: number };
-    message?: { chat?: { id?: number; type?: string } };
+    message?: { message_id?: number; chat?: { id?: number; type?: string } };
   };
   channel_post?: { chat?: { id?: number; title?: string }; text?: string };
   message?: {
@@ -228,10 +229,6 @@ async function continueAiSetup(
     ).catch(() => undefined);
   }
 }
-
-// Old "Telegram orqali kirish" links (t.me/<bot>?start=login_<token>).
-// Signing in through Telegram was removed; the bot only explains that.
-const LOGIN_START_RE = /^\/start login_/;
 
 // Phone verification: right after a staff member links their account the
 // bot asks them to share their own number (a reply-keyboard button), and
@@ -702,6 +699,14 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
   // A button under a bot message: "📝 Sababini yozish" under a late reminder.
   if (update.callback_query) {
     const cq = update.callback_query;
+    // "Telegram orqali kirish": Tasdiqlash / Rad etish.
+    if (
+      await handleTelegramLoginCallback(cq).catch((err) => {
+        console.error("[telegram] login callback", err);
+        return true;
+      })
+    )
+      return Response.json({ ok: true });
     const cqChat = cq.message?.chat;
     if (cqChat?.id && cqChat.type === "private") {
       const { data: who } = await supabaseAdmin
@@ -794,11 +799,14 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
     return Response.json({ ok: true });
   }
 
-  if (LOGIN_START_RE.test(rawText)) {
-    await sendTelegramMessage(
-      chatId,
-      "Telegram orqali kirish o'chirilgan. Saytga email va parol bilan kiring.",
-    ).catch(() => undefined);
+  // "Telegram orqali kirish" (t.me/<bot>?start=login_<token>): asks to confirm.
+  if (
+    chatType === "private" &&
+    (await handleTelegramLoginStart(chatId, rawText).catch((err) => {
+      console.error("[telegram] login start", err);
+      return true;
+    }))
+  ) {
     return Response.json({ ok: true });
   }
 

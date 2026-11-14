@@ -65,7 +65,7 @@ export function useRecordLoginEvent() {
       const res = await fetch("/account/login-event", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId: currentDeviceId() }),
+        body: JSON.stringify({ deviceId: currentDeviceId(), method: signinMethod() }),
       }).catch(() => null);
       const json = (await res?.json().catch(() => null)) as { sessionId?: string } | null;
       if (json?.sessionId) {
@@ -301,4 +301,15 @@ export function useNotificationsView() {
     [q.data],
   );
   return { rows, isLoading: q.isLoading, isError: q.isError };
+}
+
+/** How this sign-in was made, when the login page noted it ("telegram"). */
+function signinMethod(): string | null {
+  try {
+    const v = window.sessionStorage.getItem("salesiq.signinMethod");
+    window.sessionStorage.removeItem("salesiq.signinMethod");
+    return v;
+  } catch {
+    return null;
+  }
 }

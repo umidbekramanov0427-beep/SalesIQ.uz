@@ -15,7 +15,10 @@ export const Route = createFileRoute("/account/login-event")({
         try {
           const userId = await getRequestUserId(request);
           if (!userId) return Response.json({ error: "Not signed in." }, { status: 401 });
-          const body = (await request.json().catch(() => ({}))) as { deviceId?: unknown };
+          const body = (await request.json().catch(() => ({}))) as {
+            deviceId?: unknown;
+            method?: unknown;
+          };
           const deviceId =
             typeof body.deviceId === "string" && body.deviceId.length <= 100
               ? body.deviceId
@@ -63,6 +66,16 @@ export const Route = createFileRoute("/account/login-event")({
               .single());
           }
           if (error || !row) throw error ?? new Error("Sign-in not recorded");
+          // A sign-in through the Telegram bot shows as such in the visit's timeline.
+          if (body.method === "telegram") {
+            await supabaseAdmin.from("user_session_events").insert({
+              session_id: row.id,
+              user_id: userId,
+              organization_id: profile?.organization_id ?? null,
+              kind: "action",
+              label: "telegram_sign_in",
+            });
+          }
           if (earlier === 0) {
             await supabaseAdmin.from("user_session_events").insert({
               session_id: row.id,

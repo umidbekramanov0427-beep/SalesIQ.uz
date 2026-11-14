@@ -702,6 +702,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     notes: [
       {
+        uz: "**Telegram orqali kirish**: Telegram'ni profilingizga ulagan bo'lsangiz, kirish sahifasida «Telegram orqali kirish»ni bosing — bot «Kirishni tasdiqlaysizmi?» deb so'raydi, «Tasdiqlash»dan keyin sahifa o'zi ochiladi. So'rov 5 daqiqa amal qiladi va faqat o'sha sahifa uchun ishlaydi. Telegram ulanmagan bo'lsa, avval email va parol bilan kirib, Telegram'ni ulang.",
+        ru: "**Вход через Telegram**: если Telegram привязан к профилю, на странице входа нажмите «Войти через Telegram» — бот спросит «Подтверждаете вход?», после «Tasdiqlash» страница откроется сама. Запрос действует 5 минут и только для этой страницы. Если Telegram не привязан, сначала войдите по email и паролю и привяжите Telegram.",
+        en: "**Sign in with Telegram**: once Telegram is linked to your profile, tap «Sign in with Telegram» on the sign-in page — the bot asks you to confirm, and after «Tasdiqlash» the page opens by itself. The request lasts 5 minutes and works only for that page. Without a linked Telegram, sign in with email and password first and link it.",
+      },
+      {
         uz: "Kompaniyangizning o'z manzilini (masalan **niholl.salesiq.uz**) SalesIQ beradi. U Sozlamalar → Umumiy bo'limida holati bilan ko'rinadi. Yangi manzilda xodimlar bir marta qayta kiradi.",
         ru: "Собственный адрес компании (например, **niholl.salesiq.uz**) выдаёт SalesIQ. Он виден со статусом в Настройки → Общие. На новом адресе сотрудники входят один раз заново.",
         en: "Your company's own address (e.g. **niholl.salesiq.uz**) is assigned by SalesIQ. Settings → General shows it with its status. On the new address everyone signs in once more.",

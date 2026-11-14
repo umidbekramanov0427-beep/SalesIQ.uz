@@ -58,6 +58,8 @@ export function timelineLabel(
 ): string {
   if (item.kind === "page") return pageLabel(item.path ?? item.label, t);
   if (item.kind === "action" && item.label === "first_sign_in") return t("visits.firstSignIn");
+  if (item.kind === "action" && item.label === "telegram_sign_in")
+    return t("visits.telegramSignIn");
   if (item.kind === "action" && isAlert(item.label))
     return t(`visits.alert.${item.label.slice(6)}`);
   if (item.kind === "action" && (TRAILED_ACTIONS as readonly string[]).includes(item.label))
@@ -105,6 +107,7 @@ export const TRAILED_ACTIONS = [
 
 export function actionLabel(label: string, t: T): string {
   if (label === "first_sign_in") return t("visits.firstSignIn");
+  if (label === "telegram_sign_in") return t("visits.telegramSignIn");
   if (isAlert(label)) return t(`visits.alert.${label.slice(6)}`);
   return (TRAILED_ACTIONS as readonly string[]).includes(label) ? t(`visits.act.${label}`) : label;
 }

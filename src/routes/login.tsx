@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuthSkin } from "@/components/auth/auth-skins";
+import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { cn } from "@/lib/utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
@@ -410,6 +411,8 @@ function LoginPage() {
               )}
               {t("login.continueWithGoogle")}
             </button>
+
+            <TelegramLoginButton />
 
             <p className={cn("mt-5 text-center text-[13.5px]", skin.muted)}>
               {t("login.noAccount")}{" "}
