@@ -32,6 +32,7 @@ import {
   Phone,
   Sparkles,
   Target,
+  TrendingDown,
   TrendingUp,
   Trophy,
   Wallet,
@@ -71,7 +72,7 @@ import {
   ConversionMetricCard,
   ConversionMetricsCards,
 } from "@/components/dashboard/ConversionMetricsCards";
-import { SalesInsightsCards } from "@/components/dashboard/SalesInsightsCards";
+import { SalesInsightCard, SalesInsightsCards } from "@/components/dashboard/SalesInsightsCards";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -574,6 +575,38 @@ export function HomePage() {
     };
   }
 
+  // AI tahlil as a board: the AI's tips, then the score-band and
+  // skipped-step blocks.
+  const aiItems: CardBoardItem[] = [
+    {
+      id: "ai:insights",
+      title: t("board.w.aiInsights"),
+      icon: Sparkles,
+      tone: "violet",
+      span: 12,
+      sizes: [6, 8, 12],
+      node: <AiInsightsWidget funnel={funnel} dateRange={dateRange} />,
+    },
+    {
+      id: "ai:bands",
+      title: t("insights.bandsTitle"),
+      icon: Gauge,
+      tone: "sky",
+      span: 6,
+      sizes: [4, 6, 8, 12],
+      node: <SalesInsightCard part="bands" funnel={funnel} dateRange={dateRange} />,
+    },
+    {
+      id: "ai:gaps",
+      title: t("insights.gapsTitle"),
+      icon: TrendingDown,
+      tone: "rose",
+      span: 6,
+      sizes: [4, 6, 8, 12],
+      node: <SalesInsightCard part="gaps" funnel={funnel} dateRange={dateRange} />,
+    },
+  ];
+
   // Moliya as a board: the P&L figures and blocks one card each.
   const pnl = usePnlItems(finance.data, finance.isError ? t("an.loadError") : null);
 
@@ -720,12 +753,7 @@ export function HomePage() {
               </div>
             )}
 
-            {tab === "ai" && (
-              <div className="mt-6 space-y-6">
-                <AiInsightsWidget funnel={funnel} dateRange={dateRange} />
-                <SalesInsightsCards funnel={funnel} dateRange={dateRange} />
-              </div>
-            )}
+            {tab === "ai" && <CardBoard className="mt-5" boardKey="home.ai" items={aiItems} />}
           </>
         )}
       </div>

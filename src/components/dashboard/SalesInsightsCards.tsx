@@ -120,14 +120,20 @@ function StageGaps({ gaps }: { gaps: StageGap[] }) {
   );
 }
 
-export function SalesInsightsCards({
+export type SalesInsightPart = "bands" | "gaps";
+
+/** One of the two AI tahlil blocks (score bands or skipped script steps). */
+export function SalesInsightCard({
+  part,
   funnel,
   dateRange,
 }: {
+  part: SalesInsightPart;
   funnel: string | null;
   dateRange: { from: Date | null; to: Date | null };
 }) {
   const { t } = useI18n();
+  // Both cards share the one cached query.
   const { data, isLoading, error } = useSalesInsights({
     funnel,
     from: dateRange.from,
@@ -138,9 +144,9 @@ export function SalesInsightsCards({
       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
     </div>
   );
-  const closed = (data?.bands ?? []).reduce((s, b) => s + b.won + b.lost, 0);
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
+  if (part === "bands") {
+    const closed = (data?.bands ?? []).reduce((s, b) => s + b.won + b.lost, 0);
+    return (
       <SectionCard
         icon={Gauge}
         tone="sky"
@@ -157,22 +163,40 @@ export function SalesInsightsCards({
           <ScoreBands bands={data.bands} />
         )}
       </SectionCard>
-      <SectionCard
-        icon={TrendingDown}
-        tone="rose"
-        title={t("insights.gapsTitle")}
-        description={t("insights.gapsDesc")}
-      >
-        {isLoading ? (
-          loading
-        ) : error ? (
-          <Empty text={t("insights.failed")} />
-        ) : !data || data.gaps.length === 0 ? (
-          <Empty text={t("insights.gapsEmpty")} />
-        ) : (
-          <StageGaps gaps={data.gaps} />
-        )}
-      </SectionCard>
+    );
+  }
+  return (
+    <SectionCard
+      icon={TrendingDown}
+      tone="rose"
+      title={t("insights.gapsTitle")}
+      description={t("insights.gapsDesc")}
+    >
+      {isLoading ? (
+        loading
+      ) : error ? (
+        <Empty text={t("insights.failed")} />
+      ) : !data || data.gaps.length === 0 ? (
+        <Empty text={t("insights.gapsEmpty")} />
+      ) : (
+        <StageGaps gaps={data.gaps} />
+      )}
+    </SectionCard>
+  );
+}
+
+/** Both blocks side by side (Bosh sahifa's overview widget). */
+export function SalesInsightsCards({
+  funnel,
+  dateRange,
+}: {
+  funnel: string | null;
+  dateRange: { from: Date | null; to: Date | null };
+}) {
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <SalesInsightCard part="bands" funnel={funnel} dateRange={dateRange} />
+      <SalesInsightCard part="gaps" funnel={funnel} dateRange={dateRange} />
     </div>
   );
 }
