@@ -3,6 +3,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizePlan } from "@/lib/plan-gating";
 import { SELF_SIGNUP_TRIAL_DAYS } from "@/lib/org-access";
 import { recordReferral } from "@/lib/referral.server";
+import { createSignupLead } from "@/lib/company-leads.server";
+import { normalizePhone, TEAM_SIZES } from "@/lib/applications";
+import { CURRENT_TOOLS } from "@/lib/company-leads";
 
 // New companies self-provisioning here always land on this fixed trial --
 // same idea as the platform owner's own trial_days field on
@@ -17,6 +20,13 @@ type Body = {
   plan?: string;
   /** Taklif dasturi code from ?ref= (remembered by the browser). */
   ref?: string;
+  /** The sign-up wizard's questions and the booked call (owner -> Arizalar). */
+  phone?: string;
+  business?: string;
+  salesReps?: string;
+  currentTool?: string;
+  meetingAt?: string | null;
+  utm?: Record<string, string>;
 };
 
 // Public, unauthenticated by design -- this IS how a brand-new company
@@ -79,7 +89,36 @@ export const Route = createFileRoute("/signup/create")({
           );
         }
         const bonusDays = body.ref ? await recordReferral(org.id, body.ref) : 0;
-        return Response.json({ ok: true, bonusDays }, { status: 200 });
+        // The owner's lead for this company (with the booked call); the
+        // account works even if this fails.
+        const phone = normalizePhone(String(body.phone ?? "").slice(0, 40));
+        const clip = (v: unknown, n: number) => (typeof v === "string" ? v.trim().slice(0, n) : "");
+        const { meetingAt } = await createSignupLead({
+          organizationId: org.id,
+          name: fullName,
+          phone: phone || "—",
+          email,
+          company: companyName,
+          plan,
+          business: clip(body.business, 300) || null,
+          salesReps: (TEAM_SIZES as readonly string[]).includes(body.salesReps ?? "")
+            ? body.salesReps!
+            : null,
+          currentTool: (CURRENT_TOOLS as readonly string[]).includes(body.currentTool ?? "")
+            ? body.currentTool!
+            : null,
+          meetingAt: typeof body.meetingAt === "string" ? body.meetingAt : null,
+          utm: Object.fromEntries(
+            Object.entries(body.utm ?? {})
+              .filter(([k, v]) => /^utm_[a-z]{3,10}$/.test(k) && typeof v === "string")
+              .slice(0, 8)
+              .map(([k, v]) => [k, String(v).slice(0, 120)]),
+          ),
+        }).catch((err) => {
+          console.error("[signup] lead", err);
+          return { meetingAt: null };
+        });
+        return Response.json({ ok: true, bonusDays, meetingAt }, { status: 200 });
       },
     },
   },

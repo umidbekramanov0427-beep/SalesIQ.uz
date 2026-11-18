@@ -1,6 +1,7 @@
 import { CollectedPaymentsCard } from "./CollectedPaymentsCard";
 import { useAuth } from "@/lib/auth";
 import { FirstStepsCard } from "./FirstStepsCard";
+import { MyMeetingCard } from "./MyMeetingCard";
 import {
   AnalyticsReport,
   reportPeriod,
@@ -630,6 +631,7 @@ export function HomePage() {
   if (tab === "desk") {
     return (
       <>
+        <MyMeetingCard />
         <FirstStepsCard />
         <div key={tab} className="tab-enter">
           <Suspense
@@ -668,6 +670,7 @@ export function HomePage() {
         }
       />
 
+      <MyMeetingCard />
       <FirstStepsCard />
 
       {tabsNode}

@@ -5557,6 +5557,16 @@ export type Database = {
       };
       platform_applications: {
         Row: {
+          plan: string | null;
+          business: string | null;
+          sales_reps: string | null;
+          current_tool: string | null;
+          meeting_at: string | null;
+          meeting_note: string | null;
+          lost_reason: string | null;
+          assigned_to: string | null;
+          stage_changed_at: string;
+          last_activity_at: string;
           amount: number | null;
           company: string | null;
           created_at: string;
@@ -5574,6 +5584,16 @@ export type Database = {
           utm: Json;
         };
         Insert: {
+          plan?: string | null;
+          business?: string | null;
+          sales_reps?: string | null;
+          current_tool?: string | null;
+          meeting_at?: string | null;
+          meeting_note?: string | null;
+          lost_reason?: string | null;
+          assigned_to?: string | null;
+          stage_changed_at?: string;
+          last_activity_at?: string;
           amount?: number | null;
           company?: string | null;
           created_at?: string;
@@ -5591,6 +5611,16 @@ export type Database = {
           utm?: Json;
         };
         Update: {
+          plan?: string | null;
+          business?: string | null;
+          sales_reps?: string | null;
+          current_tool?: string | null;
+          meeting_at?: string | null;
+          meeting_note?: string | null;
+          lost_reason?: string | null;
+          assigned_to?: string | null;
+          stage_changed_at?: string;
+          last_activity_at?: string;
           amount?: number | null;
           company?: string | null;
           created_at?: string;
@@ -5611,6 +5641,8 @@ export type Database = {
       };
       platform_application_notes: {
         Row: {
+          resolved_at: string | null;
+          resolution: string | null;
           amount: number | null;
           application_id: string;
           body: string;
@@ -5623,6 +5655,8 @@ export type Database = {
           kind: string;
         };
         Insert: {
+          resolved_at?: string | null;
+          resolution?: string | null;
           amount?: number | null;
           application_id: string;
           body?: string;
@@ -5635,6 +5669,8 @@ export type Database = {
           kind?: string;
         };
         Update: {
+          resolved_at?: string | null;
+          resolution?: string | null;
           amount?: number | null;
           application_id?: string;
           body?: string;
@@ -6135,8 +6171,55 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_lead_tasks: {
+        Row: {
+          id: string;
+          application_id: string | null;
+          organization_id: string | null;
+          title: string;
+          body: string;
+          due_at: string | null;
+          audience: string;
+          done_at: string | null;
+          done_by: string | null;
+          notified_at: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          application_id?: string | null;
+          organization_id?: string | null;
+          title: string;
+          body?: string;
+          due_at?: string | null;
+          audience?: string;
+          done_at?: string | null;
+          done_by?: string | null;
+          notified_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          application_id?: string | null;
+          organization_id?: string | null;
+          title?: string;
+          body?: string;
+          due_at?: string | null;
+          audience?: string;
+          done_at?: string | null;
+          done_by?: string | null;
+          notified_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       platform_settings: {
         Row: {
+          meeting_settings: Json;
+          support_templates: Json;
           company_requisites: Json;
           extra_seat_price_uzs: number;
           default_salesbot_id: string | null;
@@ -6161,6 +6244,8 @@ export type Database = {
           backup_last_status: string | null;
         };
         Insert: {
+          meeting_settings?: Json;
+          support_templates?: Json;
           company_requisites?: Json;
           extra_seat_price_uzs?: number;
           default_salesbot_id?: string | null;
@@ -6185,6 +6270,8 @@ export type Database = {
           backup_last_status?: string | null;
         };
         Update: {
+          meeting_settings?: Json;
+          support_templates?: Json;
           company_requisites?: Json;
           extra_seat_price_uzs?: number;
           default_salesbot_id?: string | null;
@@ -8266,6 +8353,30 @@ export type Database = {
           telegram_name?: string | null;
           telegram_user_id?: number;
           telegram_username?: string | null;
+        };
+        Relationships: [];
+      };
+      support_threads: {
+        Row: {
+          organization_id: string;
+          status: string;
+          owner_read_at: string | null;
+          assigned_to: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          status?: string;
+          owner_read_at?: string | null;
+          assigned_to?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          status?: string;
+          owner_read_at?: string | null;
+          assigned_to?: string | null;
+          updated_at?: string;
         };
         Relationships: [];
       };

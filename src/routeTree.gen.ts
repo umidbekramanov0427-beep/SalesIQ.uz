@@ -56,6 +56,7 @@ import { Route as AccountIpCheckRouteImport } from './routes/account.ip-check'
 import { Route as AccountLoginCodeRouteImport } from './routes/account.login-code'
 import { Route as AccountLoginEventRouteImport } from './routes/account.login-event'
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
+import { Route as AccountMyMeetingRouteImport } from './routes/account.my-meeting'
 import { Route as AccountOnlineRouteImport } from './routes/account.online'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
@@ -111,6 +112,7 @@ import { Route as AnalyticsEventsRouteImport } from './routes/analytics.events'
 import { Route as AnalyticsFinanceRouteImport } from './routes/analytics.finance'
 import { Route as AnnouncementsActiveRouteImport } from './routes/announcements.active'
 import { Route as ApiPricingRouteImport } from './routes/api.pricing'
+import { Route as ApplicationsSlotsRouteImport } from './routes/applications.slots'
 import { Route as ApplicationsSubmitRouteImport } from './routes/applications.submit'
 import { Route as AudioAnalyticsAnalyzeRouteImport } from './routes/audio-analytics.analyze'
 import { Route as AudioAnalyticsAnalyzeOneRouteImport } from './routes/audio-analytics.analyze-one'
@@ -316,6 +318,7 @@ import { Route as MarketingWebinarsIdRouteImport } from './routes/marketing.webi
 import { Route as OnboardingAiSetupApplyRouteImport } from './routes/onboarding.ai-setup.apply'
 import { Route as OnboardingAiSetupStartRouteImport } from './routes/onboarding.ai-setup.start'
 import { Route as OnboardingDataImportUploadRouteImport } from './routes/onboarding.data-import.upload'
+import { Route as PlatformApplicationsAppIdRouteImport } from './routes/platform.applications_.$appId'
 import { Route as PlatformIntegrationsActionRouteImport } from './routes/platform.integrations.action'
 import { Route as PlatformIntegrationsOverviewRouteImport } from './routes/platform.integrations.overview'
 import { Route as PlatformOrganizationsOrgIdRouteImport } from './routes/platform.organizations.$orgId'
@@ -562,6 +565,11 @@ const AccountLoginEventRoute = AccountLoginEventRouteImport.update({
 const AccountLoginFailedRoute = AccountLoginFailedRouteImport.update({
   id: '/account/login-failed',
   path: '/account/login-failed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountMyMeetingRoute = AccountMyMeetingRouteImport.update({
+  id: '/account/my-meeting',
+  path: '/account/my-meeting',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountOnlineRoute = AccountOnlineRouteImport.update({
@@ -840,6 +848,11 @@ const AnnouncementsActiveRoute = AnnouncementsActiveRouteImport.update({
 const ApiPricingRoute = ApiPricingRouteImport.update({
   id: '/api/pricing',
   path: '/api/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationsSlotsRoute = ApplicationsSlotsRouteImport.update({
+  id: '/applications/slots',
+  path: '/applications/slots',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplicationsSubmitRoute = ApplicationsSubmitRouteImport.update({
@@ -1923,6 +1936,12 @@ const OnboardingDataImportUploadRoute =
     path: '/upload',
     getParentRoute: () => OnboardingDataImportRoute,
   } as any)
+const PlatformApplicationsAppIdRoute =
+  PlatformApplicationsAppIdRouteImport.update({
+    id: '/platform/applications_/$appId',
+    path: '/platform/applications/$appId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PlatformIntegrationsActionRoute =
   PlatformIntegrationsActionRouteImport.update({
     id: '/action',
@@ -2027,6 +2046,7 @@ export interface FileRoutesByFullPath {
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
@@ -2082,6 +2102,7 @@ export interface FileRoutesByFullPath {
   '/analytics/finance': typeof AnalyticsFinanceRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
+  '/applications/slots': typeof ApplicationsSlotsRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
@@ -2284,6 +2305,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
+  '/platform/applications/$appId': typeof PlatformApplicationsAppIdRoute
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
@@ -2346,6 +2368,7 @@ export interface FileRoutesByTo {
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
@@ -2401,6 +2424,7 @@ export interface FileRoutesByTo {
   '/analytics/finance': typeof AnalyticsFinanceRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
+  '/applications/slots': typeof ApplicationsSlotsRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
@@ -2603,6 +2627,7 @@ export interface FileRoutesByTo {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
+  '/platform/applications/$appId': typeof PlatformApplicationsAppIdRoute
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
@@ -2666,6 +2691,7 @@ export interface FileRoutesById {
   '/account/login-code': typeof AccountLoginCodeRoute
   '/account/login-event': typeof AccountLoginEventRoute
   '/account/login-failed': typeof AccountLoginFailedRoute
+  '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
@@ -2721,6 +2747,7 @@ export interface FileRoutesById {
   '/analytics/finance': typeof AnalyticsFinanceRoute
   '/announcements/active': typeof AnnouncementsActiveRoute
   '/api/pricing': typeof ApiPricingRoute
+  '/applications/slots': typeof ApplicationsSlotsRoute
   '/applications/submit': typeof ApplicationsSubmitRoute
   '/audio-analytics/analyze': typeof AudioAnalyticsAnalyzeRoute
   '/audio-analytics/analyze-one': typeof AudioAnalyticsAnalyzeOneRoute
@@ -2923,6 +2950,7 @@ export interface FileRoutesById {
   '/onboarding/ai-setup/apply': typeof OnboardingAiSetupApplyRoute
   '/onboarding/ai-setup/start': typeof OnboardingAiSetupStartRoute
   '/onboarding/data-import/upload': typeof OnboardingDataImportUploadRoute
+  '/platform/applications_/$appId': typeof PlatformApplicationsAppIdRoute
   '/platform/integrations/action': typeof PlatformIntegrationsActionRoute
   '/platform/integrations/overview': typeof PlatformIntegrationsOverviewRoute
   '/platform/organizations/$orgId': typeof PlatformOrganizationsOrgIdRoute
@@ -2987,6 +3015,7 @@ export interface FileRouteTypes {
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
+    | '/account/my-meeting'
     | '/account/online'
     | '/account/session-events'
     | '/admin/ai-agents'
@@ -3042,6 +3071,7 @@ export interface FileRouteTypes {
     | '/analytics/finance'
     | '/announcements/active'
     | '/api/pricing'
+    | '/applications/slots'
     | '/applications/submit'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
@@ -3244,6 +3274,7 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
+    | '/platform/applications/$appId'
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
@@ -3306,6 +3337,7 @@ export interface FileRouteTypes {
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
+    | '/account/my-meeting'
     | '/account/online'
     | '/account/session-events'
     | '/admin/ai-agents'
@@ -3361,6 +3393,7 @@ export interface FileRouteTypes {
     | '/analytics/finance'
     | '/announcements/active'
     | '/api/pricing'
+    | '/applications/slots'
     | '/applications/submit'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
@@ -3563,6 +3596,7 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
+    | '/platform/applications/$appId'
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
@@ -3625,6 +3659,7 @@ export interface FileRouteTypes {
     | '/account/login-code'
     | '/account/login-event'
     | '/account/login-failed'
+    | '/account/my-meeting'
     | '/account/online'
     | '/account/session-events'
     | '/admin/ai-agents'
@@ -3680,6 +3715,7 @@ export interface FileRouteTypes {
     | '/analytics/finance'
     | '/announcements/active'
     | '/api/pricing'
+    | '/applications/slots'
     | '/applications/submit'
     | '/audio-analytics/analyze'
     | '/audio-analytics/analyze-one'
@@ -3882,6 +3918,7 @@ export interface FileRouteTypes {
     | '/onboarding/ai-setup/apply'
     | '/onboarding/ai-setup/start'
     | '/onboarding/data-import/upload'
+    | '/platform/applications_/$appId'
     | '/platform/integrations/action'
     | '/platform/integrations/overview'
     | '/platform/organizations/$orgId'
@@ -3945,10 +3982,12 @@ export interface RootRouteChildren {
   AccountLoginCodeRoute: typeof AccountLoginCodeRoute
   AccountLoginEventRoute: typeof AccountLoginEventRoute
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
+  AccountMyMeetingRoute: typeof AccountMyMeetingRoute
   AccountOnlineRoute: typeof AccountOnlineRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
   AnnouncementsActiveRoute: typeof AnnouncementsActiveRoute
   ApiPricingRoute: typeof ApiPricingRoute
+  ApplicationsSlotsRoute: typeof ApplicationsSlotsRoute
   ApplicationsSubmitRoute: typeof ApplicationsSubmitRoute
   AuthHandoffRoute: typeof AuthHandoffRoute
   AutomationsTickRoute: typeof AutomationsTickRoute
@@ -4094,6 +4133,7 @@ export interface RootRouteChildren {
   MarketingChannelsIdRoute: typeof MarketingChannelsIdRoute
   MarketingProjectsIdRoute: typeof MarketingProjectsIdRoute
   MarketingWebinarsIdRoute: typeof MarketingWebinarsIdRoute
+  PlatformApplicationsAppIdRoute: typeof PlatformApplicationsAppIdRoute
   PlatformOrganizationsOrgIdRoute: typeof PlatformOrganizationsOrgIdRoute
   PlatformUsageOrgIdRoute: typeof PlatformUsageOrgIdRoute
   PlatformVisitSessionIdRoute: typeof PlatformVisitSessionIdRoute
@@ -4434,6 +4474,13 @@ declare module '@tanstack/react-router' {
       path: '/account/login-failed'
       fullPath: '/account/login-failed'
       preLoaderRoute: typeof AccountLoginFailedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/my-meeting': {
+      id: '/account/my-meeting'
+      path: '/account/my-meeting'
+      fullPath: '/account/my-meeting'
+      preLoaderRoute: typeof AccountMyMeetingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/online': {
@@ -4819,6 +4866,13 @@ declare module '@tanstack/react-router' {
       path: '/api/pricing'
       fullPath: '/api/pricing'
       preLoaderRoute: typeof ApiPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applications/slots': {
+      id: '/applications/slots'
+      path: '/applications/slots'
+      fullPath: '/applications/slots'
+      preLoaderRoute: typeof ApplicationsSlotsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/applications/submit': {
@@ -6256,6 +6310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingDataImportUploadRouteImport
       parentRoute: typeof OnboardingDataImportRoute
     }
+    '/platform/applications_/$appId': {
+      id: '/platform/applications_/$appId'
+      path: '/platform/applications/$appId'
+      fullPath: '/platform/applications/$appId'
+      preLoaderRoute: typeof PlatformApplicationsAppIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/integrations/action': {
       id: '/platform/integrations/action'
       path: '/action'
@@ -6805,10 +6866,12 @@ const rootRouteChildren: RootRouteChildren = {
   AccountLoginCodeRoute: AccountLoginCodeRoute,
   AccountLoginEventRoute: AccountLoginEventRoute,
   AccountLoginFailedRoute: AccountLoginFailedRoute,
+  AccountMyMeetingRoute: AccountMyMeetingRoute,
   AccountOnlineRoute: AccountOnlineRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
   AnnouncementsActiveRoute: AnnouncementsActiveRoute,
   ApiPricingRoute: ApiPricingRoute,
+  ApplicationsSlotsRoute: ApplicationsSlotsRoute,
   ApplicationsSubmitRoute: ApplicationsSubmitRoute,
   AuthHandoffRoute: AuthHandoffRoute,
   AutomationsTickRoute: AutomationsTickRoute,
@@ -6954,6 +7017,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketingChannelsIdRoute: MarketingChannelsIdRoute,
   MarketingProjectsIdRoute: MarketingProjectsIdRoute,
   MarketingWebinarsIdRoute: MarketingWebinarsIdRoute,
+  PlatformApplicationsAppIdRoute: PlatformApplicationsAppIdRoute,
   PlatformOrganizationsOrgIdRoute: PlatformOrganizationsOrgIdRoute,
   PlatformUsageOrgIdRoute: PlatformUsageOrgIdRoute,
   PlatformVisitSessionIdRoute: PlatformVisitSessionIdRoute,

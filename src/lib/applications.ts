@@ -1,12 +1,34 @@
 // Owner → Arizalar: the website application form's rules, shared by the
 // public form, its endpoint and the owner's page. Pure, so it is unit-tested.
 
-export const APPLICATION_STATUSES = ["new", "contacted", "demo", "won", "lost"] as const;
+// The company lead's stages (owner -> Arizalar), in order; "lost" stands apart.
+export const APPLICATION_STATUSES = [
+  "new",
+  "taken",
+  "informed",
+  "meeting",
+  "contract",
+  "installed",
+  "lost",
+] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
+
+/** A status written before the stages were renamed (contacted/demo/won). */
+export function stageOf(status: string): ApplicationStatus {
+  const legacy: Record<string, ApplicationStatus> = {
+    contacted: "taken",
+    demo: "meeting",
+    won: "installed",
+  };
+  if (legacy[status]) return legacy[status];
+  return (APPLICATION_STATUSES as readonly string[]).includes(status)
+    ? (status as ApplicationStatus)
+    : "new";
+}
 
 export const TEAM_SIZES = ["1-5", "6-15", "16-50", "50+"] as const;
 
-export const NOTE_KINDS = ["note", "receipt", "document", "file"] as const;
+export const NOTE_KINDS = ["note", "receipt", "document", "file", "issue", "call", "meeting"] as const;
 
 export type ApplicationInput = {
   name: string;

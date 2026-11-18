@@ -14,6 +14,7 @@ import { runLeadScoring } from "@/lib/lead-scoring.server";
 import { runRecurringPayments } from "@/lib/lead-payments/recurring.server";
 import { sendWeeklyOwnerReports } from "@/lib/weekly-report.server";
 import { runTrialNudges } from "@/lib/trial-nudges.server";
+import { runPlatformLeadTasks } from "@/lib/company-leads.server";
 import { refreshChannels } from "@/lib/marketing-live.server";
 import { runRefundReminders } from "@/lib/refunds.server";
 import { runCompanyBackupsDue, runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
@@ -85,6 +86,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await refreshChannels().catch((err) => console.error("[marketing] channels failed", err));
         // Trial companies: first-day / idle / trial-ending nudges.
         await runTrialNudges().catch((err) => console.error("[trial-nudges] tick failed", err));
+        // The owner's company tasks and call reminders (owner -> Arizalar).
+        await runPlatformLeadTasks().catch((err) =>
+          console.error("[lead-tasks] tick failed", err),
+        );
         // Admin → Fayllar: the companies' file rules and the 30-day trash.
         await runFileHousekeeping().catch((err) => console.error("[files] tick failed", err));
         // Lidlar savati: deleted leads leave for good after 30 days.

@@ -448,6 +448,74 @@ export const TIPS: Record<string, Tip> = {
       en: "Each company's staff added up.",
     },
   },
+  "lead.statCalls": {
+    what: {
+      uz: "Bugun belgilangan suhbatlar — ro'yxatdan o'tishda yoki siz belgilagan.",
+      ru: "Звонки, назначенные на сегодня — при регистрации или вами.",
+      en: "Calls booked for today — at sign-up or by you.",
+    },
+    calc: {
+      uz: "Suhbat vaqti bugunga (Toshkent) to'g'ri keladigan, yo'qotilmagan lidlar.",
+      ru: "Лиды (не потерянные), у которых звонок сегодня по Ташкенту.",
+      en: "Leads (not lost) whose call falls on today, Tashkent time.",
+    },
+    act: {
+      uz: "Suhbatdan oldin lid kartasidagi javoblarni o'qing; 1 soat oldin Telegramga eslatma keladi.",
+      ru: "Перед звонком прочитайте ответы в карточке; за час придёт напоминание в Telegram.",
+      en: "Read the answers on the lead card before the call; a Telegram reminder comes an hour before.",
+    },
+  },
+  "lead.statOverdue": {
+    what: {
+      uz: "Muddati o'tib ketgan, bajarilmagan vazifalar.",
+      ru: "Просроченные невыполненные задачи.",
+      en: "Tasks past their due time and not done.",
+    },
+    calc: {
+      uz: "Barcha lidlardagi ochiq vazifalar ichida muddati o'tganlari.",
+      ru: "Открытые задачи всех лидов, у которых срок прошёл.",
+      en: "Open tasks of all leads whose due time has passed.",
+    },
+    act: {
+      uz: "Lidni oching va vazifani bajaring yoki muddatini o'zgartiring.",
+      ru: "Откройте лид и выполните задачу или перенесите срок.",
+      en: "Open the lead and do the task or move its date.",
+    },
+  },
+  "lead.statInstalled": {
+    what: {
+      uz: "Shu oy «Platforma o'rnatildi» bosqichiga yetgan kompaniyalar.",
+      ru: "Компании, дошедшие до «Платформа внедрена» в этом месяце.",
+      en: "Companies that reached “Platform set up” this month.",
+    },
+    calc: {
+      uz: "Bosqichi shu oyda «o'rnatildi»ga o'zgargan lidlar.",
+      ru: "Лиды, перешедшие в «внедрена» в этом месяце.",
+      en: "Leads moved to “set up” this month.",
+    },
+    act: {
+      uz: "O'rnatilgan kompaniyaga birinchi hafta vazifa qo'ying: «hammasi ishlayaptimi?».",
+      ru: "Поставьте внедрённой компании задачу на первую неделю: «всё работает?».",
+      en: "Give a set-up company a first-week check-in task.",
+    },
+  },
+  "lead.statConv": {
+    what: {
+      uz: "Yopilgan lidlarning qanchasi platformani o'rnatdi.",
+      ru: "Какая доля закрытых лидов внедрила платформу.",
+      en: "How many closed leads ended up setting up the platform.",
+    },
+    calc: {
+      uz: "O'rnatildi ÷ (o'rnatildi + yo'qotildi) × 100.",
+      ru: "Внедрено ÷ (внедрено + потеряно) × 100.",
+      en: "Set up ÷ (set up + lost) × 100.",
+    },
+    act: {
+      uz: "Yo'qotish sabablarini ko'ring: ko'p uchraydigan sababni tuzating.",
+      ru: "Смотрите причины потерь и исправляйте самую частую.",
+      en: "Look at the lost reasons and fix the most common one.",
+    },
+  },
   "apps.statNew": {
     what: {
       uz: "Hali ishlanmagan yangi arizalar.",

@@ -107,6 +107,8 @@ MIGRATIONS=(
   20270124000000_nazorat_settings # twice
   20270125000000_org_bots
   20270125000000_org_bots # twice
+  20270126000000_company_leads
+  20270126000000_company_leads # twice
 )
 
 cleanup() { :; }

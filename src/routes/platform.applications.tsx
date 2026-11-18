@@ -1,354 +1,626 @@
-import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleDollarSign, Inbox, Loader2, Plus, Search, Sparkles, Trophy } from "lucide-react";
+import { useMemo, useState, type DragEvent } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
-  OwnerEmpty,
-  OwnerHeader,
-  OwnerPanel,
-  OwnerSegment,
-  OwnerStat,
-} from "@/components/owner/OwnerPage";
-import { ApplicationSheet, STATUS_LOOK, money } from "@/components/owner/ApplicationSheet";
+  AlertTriangle,
+  CalendarClock,
+  ChevronRight,
+  Columns3,
+  Inbox,
+  ListChecks,
+  Plus,
+  Rocket,
+  Search,
+  Table2,
+  Target,
+  Users,
+  XCircle,
+} from "lucide-react";
+import { OwnerEmpty, OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { APPLICATION_STATUSES, TEAM_SIZES } from "@/lib/applications";
-import { apiFetch } from "@/lib/api";
+  AddLeadDialog,
+  ago,
+  CompanyMark,
+  LostDialog,
+  money,
+  orgPhaseOf,
+  PHASE_CHIP,
+  StageChip,
+  useCompanyLeads,
+  useLeadAction,
+  type LeadItem,
+} from "@/components/owner/leads/shared";
+import { stageOf, type ApplicationStatus } from "@/lib/applications";
+import {
+  callDay,
+  PIPELINE_STAGES,
+  STAGE_TONE,
+  tashkentDay,
+  tashkentTime,
+} from "@/lib/company-leads";
+import { PLAN_LABELS, normalizePlan } from "@/lib/plan-gating";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-// Owner → Arizalar: applications from the website form (and ones added by
-// hand) as a small CRM -- status, expected sum, and per application a
-// timeline of notes, receipts, documents and files (ApplicationSheet).
+// Owner -> Arizalar: the platform's own CRM of companies. Every company that
+// signs up (with its plan, three answers and the booked call), leaves the
+// website form or is added by hand is a lead on this board; its card opens
+// the lead page (platform.applications_.$appId.tsx).
 export const Route = createFileRoute("/platform/applications")({
   head: () => ({ meta: [{ title: "Arizalar — SalesIQ Owner" }] }),
-  component: ApplicationsPage,
+  component: LeadsBoard,
 });
 
-type Item = {
-  id: string;
-  name: string;
-  phone: string;
-  email: string | null;
-  company: string | null;
-  team_size: string | null;
-  message: string;
-  source: string;
-  status: string;
-  amount: number | null;
-  created_at: string;
-  notes: number;
-  paid: number;
-};
+type View = "board" | "table";
+const SOURCES = ["all", "signup", "landing", "manual"] as const;
 
-const FILTERS = ["all", ...APPLICATION_STATUSES] as const;
-
-function ApplicationsPage() {
-  const { t } = useI18n();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
-  const [q, setQ] = useState("");
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
-  const { data, isLoading } = useQuery({
-    queryKey: ["owner-applications"],
-    refetchInterval: 60_000,
-    queryFn: async (): Promise<{ ready: boolean; items: Item[] }> => {
-      const res = await apiFetch("/platform/applications-api");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    },
+function LeadsBoard() {
+  const { t, lang } = useI18n();
+  const navigate = useNavigate();
+  const { data, isLoading } = useCompanyLeads();
+  const act = useLeadAction();
+  const [view, setView] = useState<View>(() => {
+    try {
+      return (localStorage.getItem("owner.leads.view") as View) || "board";
+    } catch {
+      return "board";
+    }
   });
-  const all = data?.items ?? [];
-  const count = (s: string) => all.filter((a) => a.status === s).length;
+  const [q, setQ] = useState("");
+  const [source, setSource] = useState<(typeof SOURCES)[number]>("all");
+  const [onlyCalls, setOnlyCalls] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [lostFor, setLostFor] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
+
+  const all = useMemo(() => data?.items ?? [], [data]);
+  const today = tashkentDay(new Date().toISOString());
   const items = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return all.filter(
       (a) =>
-        (filter === "all" || a.status === filter) &&
+        (source === "all" || a.source === source) &&
+        (!onlyCalls || (a.meeting_at && a.status !== "lost")) &&
         (!needle ||
-          [a.name, a.phone, a.company, a.email].some((v) => v?.toLowerCase().includes(needle))),
+          [a.name, a.phone, a.company, a.email, a.business].some((v) =>
+            v?.toLowerCase().includes(needle),
+          )),
     );
-  }, [all, filter, q]);
-  const closed = count("won") + count("lost");
-  const stats = {
-    fresh: count("new"),
-    working: count("contacted") + count("demo"),
-    won: count("won"),
-    conv: closed ? Math.round((count("won") / closed) * 100) : null,
-    paid: all.reduce((s, a) => s + a.paid, 0),
-    pipeline: all
-      .filter((a) => a.status !== "won" && a.status !== "lost")
-      .reduce((s, a) => s + (a.amount ?? 0), 0),
+  }, [all, q, source, onlyCalls]);
+
+  const by = (s: string) => items.filter((a) => a.status === s);
+  const count = (s: string) => all.filter((a) => a.status === s).length;
+  const callsToday = all.filter(
+    (a) => a.meeting_at && a.status !== "lost" && tashkentDay(a.meeting_at) === today,
+  );
+  const nextCall = all
+    .filter(
+      (a) => a.meeting_at && a.status !== "lost" && new Date(a.meeting_at).getTime() > Date.now(),
+    )
+    .sort((x, y) => x.meeting_at!.localeCompare(y.meeting_at!))[0];
+  const overdue = all.reduce((s, a) => s + a.overdue, 0);
+  const openTasks = all.reduce((s, a) => s + a.tasks, 0);
+  const month = today.slice(0, 7);
+  const installedMonth = all.filter(
+    (a) => a.status === "installed" && (a.stage_changed_at ?? a.updated_at).slice(0, 7) === month,
+  ).length;
+  const closed = count("installed") + count("lost");
+  const conv = closed ? Math.round((count("installed") / closed) * 100) : null;
+
+  function move(id: string, to: ApplicationStatus) {
+    const lead = all.find((a) => a.id === id);
+    if (!lead || lead.status === to) return;
+    if (to === "lost") {
+      setLostFor(id);
+      return;
+    }
+    act.mutate({ method: "PATCH", body: { id, status: to } });
+  }
+
+  const drop = (to: ApplicationStatus) => (e: DragEvent) => {
+    e.preventDefault();
+    setDragOver(null);
+    const id = e.dataTransfer.getData("text/lead");
+    if (id) move(id, to);
+  };
+  const over = (s: string) => (e: DragEvent) => {
+    e.preventDefault();
+    if (dragOver !== s) setDragOver(s);
+  };
+  const open = (id: string) =>
+    void navigate({ to: "/platform/applications/$appId", params: { appId: id } });
+  const setViewSaved = (v: View) => {
+    setView(v);
+    try {
+      localStorage.setItem("owner.leads.view", v);
+    } catch {
+      /* private window */
+    }
   };
 
   return (
     <div className="w-full">
       <OwnerHeader
         icon={Inbox}
-        title={t("apps.title")}
-        desc={t("apps.desc")}
+        title={t("lead.title")}
+        desc={t("lead.desc")}
         actions={
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" /> {t("apps.addApp")}
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="ctl-track inline-flex rounded-xl p-1">
+              {(
+                [
+                  ["board", Columns3],
+                  ["table", Table2],
+                ] as const
+              ).map(([v, Icon]) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-selected={view === v}
+                  onClick={() => setViewSaved(v)}
+                  className="ctl-tab inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-semibold"
+                >
+                  <Icon className="h-4 w-4" /> {t(`lead.view.${v}`)}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="ctl-lit inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold"
+            >
+              <Plus className="h-4 w-4" /> {t("lead.add")}
+            </button>
+          </div>
         }
       />
 
-      {data && !data.ready && (
+      {data && (!data.ready || data.stagesReady === false) && (
         <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-800 dark:text-amber-200">
-          {t("apps.notReady")}
+          {t("lead.notReady")}
         </p>
       )}
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <OwnerStat
-          icon={Sparkles}
-          tone="blue"
-          label={t("apps.statNew")}
-          tipKey="apps.statNew"
-          value={stats.fresh}
-          note={t("apps.statWorking", { n: String(stats.working) })}
-        />
-        <OwnerStat
-          icon={Trophy}
-          tone="green"
-          label={t("apps.statWon")}
-          tipKey="apps.statWon"
-          value={stats.won}
-          note={stats.conv == null ? "—" : t("apps.statConv", { n: String(stats.conv) })}
-        />
-        <OwnerStat
-          icon={CircleDollarSign}
-          tone="violet"
-          label={t("apps.statPaid")}
-          tipKey="apps.statPaid"
-          value={money(stats.paid)}
-          note={t("apps.statPaidNote")}
-        />
-        <OwnerStat
-          icon={Inbox}
+          icon={CalendarClock}
           tone="amber"
-          label={t("apps.statPipeline")}
-          tipKey="apps.statPipeline"
-          value={money(stats.pipeline)}
-          note={t("apps.statPipelineNote")}
+          label={t("lead.statCalls")}
+          tipKey="lead.statCalls"
+          value={callsToday.length}
+          note={
+            nextCall?.meeting_at
+              ? t("lead.statCallsNext", {
+                  day: callDay(nextCall.meeting_at, lang),
+                  time: tashkentTime(nextCall.meeting_at),
+                })
+              : t("lead.statCallsNone")
+          }
+        />
+        <OwnerStat
+          icon={ListChecks}
+          tone={overdue ? "rose" : "blue"}
+          label={t("lead.statOverdue")}
+          tipKey="lead.statOverdue"
+          value={overdue}
+          note={t("lead.statOpenTasks", { n: openTasks })}
+        />
+        <OwnerStat
+          icon={Rocket}
+          tone="green"
+          label={t("lead.statInstalled")}
+          tipKey="lead.statInstalled"
+          value={installedMonth}
+          note={t("lead.statInstalledAll", { n: count("installed") })}
+        />
+        <OwnerStat
+          icon={Target}
+          tone="violet"
+          label={t("lead.statConv")}
+          tipKey="lead.statConv"
+          value={conv == null ? "—" : `${conv}%`}
+          note={t("lead.statConvNote", { won: count("installed"), lost: count("lost") })}
         />
       </div>
 
-      <OwnerPanel
-        flush
-        title={t("apps.list")}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-subtle" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t("apps.search")}
-                className="h-8 w-48 rounded-lg border border-border bg-background pl-8 pr-2.5 text-[12.5px] outline-none placeholder:text-subtle focus:border-primary"
-              />
-            </label>
-            <OwnerSegment
-              value={filter}
-              options={FILTERS.map((f) => ({
-                value: f,
-                label:
-                  f === "all"
-                    ? `${t("apps.fAll")} ${all.length}`
-                    : `${t(`apps.st.${f}`)} ${count(f)}`,
-              }))}
-              onChange={(v) => setFilter(v as (typeof FILTERS)[number])}
-            />
-          </div>
-        }
-      >
-        {isLoading ? (
-          <div className="grid place-items-center p-10">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : items.length === 0 ? (
-          <OwnerEmpty icon={Inbox} title={t("apps.empty")} hint={t("apps.emptyHint")} />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-[13px]">
-              <thead>
-                <tr className="border-b border-border text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-subtle">
-                  <th className="px-4 py-2 font-semibold">{t("apps.colWho")}</th>
-                  <th className="px-3 py-2 font-semibold">{t("apps.phone")}</th>
-                  <th className="px-3 py-2 font-semibold">{t("apps.team")}</th>
-                  <th className="px-3 py-2 font-semibold">{t("apps.colStatus")}</th>
-                  <th className="px-3 py-2 text-right font-semibold">{t("apps.amount")}</th>
-                  <th className="px-4 py-2 text-right font-semibold">{t("apps.colDate")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/70">
-                {items.map((a) => (
-                  <tr
-                    key={a.id}
-                    onClick={() => setOpenId(a.id)}
-                    className="cursor-pointer transition-colors hover:bg-muted/40"
-                  >
-                    <td className="max-w-[300px] px-4 py-2.5">
-                      <p className="truncate font-semibold text-foreground">{a.name}</p>
-                      <p className="truncate text-[12px] text-muted-foreground">
-                        {a.company || a.message || t(`apps.src.${a.source}`)}
-                      </p>
-                    </td>
-                    <td className="px-3 py-2.5 font-mono text-[12.5px] tabular-nums text-foreground">
-                      {a.phone}
-                    </td>
-                    <td className="px-3 py-2.5 text-muted-foreground">{a.team_size ?? "—"}</td>
-                    <td className="px-3 py-2.5">
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold",
-                          STATUS_LOOK[a.status],
-                        )}
-                      >
-                        {t(`apps.st.${a.status}`)}
-                      </span>
-                      {a.notes > 0 && (
-                        <span className="ml-2 text-[11.5px] text-subtle">· {a.notes}</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-foreground">
-                      {a.paid > 0 ? (
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          {money(a.paid)}
-                        </span>
-                      ) : (
-                        money(a.amount)
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-[12px] tabular-nums text-subtle">
-                      {new Date(a.created_at).toLocaleString("ru-RU", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </OwnerPanel>
+      <PipelineRail all={all} />
 
-      <ApplicationSheet id={openId} onClose={() => setOpenId(null)} />
-      <AddDialog open={adding} onClose={() => setAdding(false)} onCreated={setOpenId} />
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <label className="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary sm:max-w-sm">
+          <Search className="h-4 w-4 text-subtle" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={t("lead.search")}
+            className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
+          />
+        </label>
+        <div className="ctl-track inline-flex rounded-xl p-1">
+          {SOURCES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              aria-selected={source === s}
+              onClick={() => setSource(s)}
+              className="ctl-tab h-8 rounded-lg px-3 text-[12.5px] font-semibold"
+            >
+              {t(`lead.src.${s}`)}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          aria-pressed={onlyCalls}
+          onClick={() => setOnlyCalls(!onlyCalls)}
+          className={cn(
+            "inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[12.5px] font-semibold",
+            onlyCalls
+              ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+              : "border-border bg-card text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <CalendarClock className="h-4 w-4" /> {t("lead.onlyCalls")}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted/60" />
+          ))}
+        </div>
+      ) : !all.length ? (
+        <div className="rounded-2xl border border-border bg-card">
+          <OwnerEmpty icon={Inbox} title={t("lead.empty")} hint={t("lead.emptyHint")} />
+        </div>
+      ) : view === "board" ? (
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-3">
+          {PIPELINE_STAGES.map((s) => {
+            const col = by(s);
+            const sum = col.reduce((x, a) => x + (a.amount ?? 0), 0);
+            return (
+              <section
+                key={s}
+                onDragOver={over(s)}
+                onDragLeave={() => setDragOver(null)}
+                onDrop={drop(s)}
+                className={cn(
+                  "flex w-[272px] shrink-0 flex-col rounded-2xl border bg-surface/60 transition-colors",
+                  dragOver === s ? "border-primary/60 bg-primary/[0.05]" : "border-border",
+                )}
+              >
+                <header className="px-3 pb-2 pt-3">
+                  <span
+                    className={cn(
+                      "mb-2.5 block h-1 rounded-full bg-gradient-to-r",
+                      STAGE_TONE[s].bar,
+                    )}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-foreground">
+                      {t(`lead.st.${s}`)}
+                    </span>
+                    <span className="rounded-md bg-card px-1.5 text-[12px] font-bold tabular-nums text-muted-foreground">
+                      {col.length}
+                    </span>
+                  </div>
+                  {sum > 0 && (
+                    <p className="mt-0.5 text-[11.5px] tabular-nums text-subtle">{money(sum)}</p>
+                  )}
+                </header>
+                <div className="flex min-h-[120px] flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+                  {col.map((a) => (
+                    <LeadCard key={a.id} a={a} onOpen={() => open(a.id)} today={today} />
+                  ))}
+                  {!col.length && (
+                    <p className="grid flex-1 place-items-center rounded-xl border border-dashed border-border px-3 py-6 text-center text-[12px] text-subtle">
+                      {t("lead.dropHere")}
+                    </p>
+                  )}
+                </div>
+              </section>
+            );
+          })}
+          <section
+            onDragOver={over("lost")}
+            onDragLeave={() => setDragOver(null)}
+            onDrop={drop("lost")}
+            className={cn(
+              "flex w-[200px] shrink-0 flex-col rounded-2xl border border-dashed transition-colors",
+              dragOver === "lost"
+                ? "border-rose-500/60 bg-rose-500/[0.06]"
+                : "border-rose-500/25 bg-rose-500/[0.025]",
+            )}
+          >
+            <header className="flex items-center gap-2 px-3 pb-2 pt-4">
+              <XCircle className="h-4 w-4 text-rose-500" />
+              <span className="flex-1 text-[13.5px] font-semibold text-foreground">
+                {t("lead.st.lost")}
+              </span>
+              <span className="text-[12px] font-bold tabular-nums text-muted-foreground">
+                {by("lost").length}
+              </span>
+            </header>
+            <div className="flex flex-col gap-1.5 overflow-y-auto px-2 pb-2">
+              {by("lost")
+                .slice(0, 30)
+                .map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => open(a.id)}
+                    className="rounded-lg bg-card/70 px-2.5 py-2 text-left hover:bg-card"
+                  >
+                    <span className="block truncate text-[12.5px] font-medium text-foreground">
+                      {a.company || a.name}
+                    </span>
+                    {a.lost_reason && (
+                      <span className="block truncate text-[11px] text-subtle">
+                        {a.lost_reason}
+                      </span>
+                    )}
+                  </button>
+                ))}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <LeadsTable items={items} onOpen={open} />
+      )}
+
+      <AddLeadDialog open={adding} onClose={() => setAdding(false)} onCreated={open} />
+      <LostDialog
+        open={!!lostFor}
+        busy={act.isPending}
+        onClose={() => setLostFor(null)}
+        onConfirm={(reason) =>
+          act.mutate(
+            { method: "PATCH", body: { id: lostFor, status: "lost", lostReason: reason } },
+            { onSuccess: () => setLostFor(null) },
+          )
+        }
+      />
     </div>
   );
 }
 
-function AddDialog({
-  open,
-  onClose,
-  onCreated,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onCreated: (id: string) => void;
-}) {
+/** The stages as one relay: how many stand at each and how many pass on. */
+function PipelineRail({ all }: { all: LeadItem[] }) {
   const { t } = useI18n();
-  const qc = useQueryClient();
-  const empty = { name: "", phone: "", company: "", email: "", teamSize: "", message: "" };
-  const [f, setF] = useState(empty);
-  const create = useMutation({
-    mutationFn: async () => {
-      const res = await apiFetch("/platform/applications-api", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(f),
-      });
-      const j = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
-      if (!res.ok || !j.id) throw new Error(j.error ?? `HTTP ${res.status}`);
-      return j.id;
-    },
-    onSuccess: (id) => {
-      void qc.invalidateQueries({ queryKey: ["owner-applications"] });
-      setF(empty);
-      onClose();
-      onCreated(id);
-    },
-    onError: (e: Error) => toast.error(t(`apps.err.${e.message}`)),
-  });
-  const field =
-    "h-9 w-full rounded-lg border border-border bg-background px-3 text-[13px] outline-none placeholder:text-subtle focus:border-primary";
+  const order = PIPELINE_STAGES;
+  // "Reached" = at this stage or further (lost ones count where they stood: unknown, so not).
+  const reached = order.map(
+    (_, i) =>
+      all.filter((a) => {
+        const k = order.indexOf(stageOf(a.status) as (typeof order)[number]);
+        return k >= i;
+      }).length,
+  );
+  const max = Math.max(1, reached[0] ?? 1);
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("apps.addApp")}</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-2 gap-2.5">
-          <input
-            className={cn(field, "col-span-2")}
-            placeholder={t("apps.f.name")}
-            value={f.name}
-            onChange={(e) => setF({ ...f, name: e.target.value })}
-          />
-          <input
-            className={field}
-            placeholder={t("apps.f.phone")}
-            value={f.phone}
-            onChange={(e) => setF({ ...f, phone: e.target.value })}
-          />
-          <input
-            className={field}
-            placeholder={t("apps.f.company")}
-            value={f.company}
-            onChange={(e) => setF({ ...f, company: e.target.value })}
-          />
-          <input
-            className={field}
-            placeholder="Email"
-            value={f.email}
-            onChange={(e) => setF({ ...f, email: e.target.value })}
-          />
-          <select
-            className={field}
-            value={f.teamSize}
-            onChange={(e) => setF({ ...f, teamSize: e.target.value })}
-          >
-            <option value="">{t("apps.team")}</option>
-            {TEAM_SIZES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <textarea
-            className={cn(field, "col-span-2 h-20 resize-none py-2")}
-            placeholder={t("apps.f.message")}
-            value={f.message}
-            onChange={(e) => setF({ ...f, message: e.target.value })}
-          />
+    <div className="mb-4 overflow-x-auto rounded-2xl border border-border bg-card px-4 py-3.5">
+      <div className="flex min-w-[860px] items-stretch">
+        {order.map((s, i) => {
+          const here = all.filter((a) => a.status === s).length;
+          const pass =
+            i > 0 && reached[i - 1] ? Math.round((reached[i]! / reached[i - 1]!) * 100) : null;
+          return (
+            <div key={s} className="flex min-w-0 flex-1 items-center">
+              {i > 0 && (
+                <span className="flex w-12 shrink-0 flex-col items-center text-[10.5px] font-semibold tabular-nums text-subtle">
+                  <ChevronRight className="h-4 w-4" />
+                  {pass == null ? "" : `${pass}%`}
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[22px] font-bold leading-none tabular-nums text-foreground">
+                    {here}
+                  </span>
+                  <span className="truncate text-[12px] font-medium text-muted-foreground">
+                    {t(`lead.st.${s}`)}
+                  </span>
+                </div>
+                <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-muted">
+                  <span
+                    className={cn("block h-full rounded-full bg-gradient-to-r", STAGE_TONE[s].bar)}
+                    style={{ width: `${Math.max(4, ((reached[i] ?? 0) / max) * 100)}%` }}
+                  />
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LeadCard({ a, onOpen, today }: { a: LeadItem; onOpen: () => void; today: string }) {
+  const { t, lang } = useI18n();
+  const phase = orgPhaseOf(a.org);
+  const callToday = a.meeting_at && tashkentDay(a.meeting_at) === today;
+  const callPast = a.meeting_at && new Date(a.meeting_at).getTime() < Date.now();
+  return (
+    <button
+      type="button"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/lead", a.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      onClick={onOpen}
+      className="group w-full cursor-grab rounded-xl border border-border bg-card p-3 text-left shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-foreground/20 hover:shadow-md active:cursor-grabbing"
+    >
+      <div className="flex items-start gap-2.5">
+        <CompanyMark name={a.company || a.name} size="sm" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13.5px] font-semibold leading-tight text-foreground">
+            {a.company || a.name}
+          </p>
+          <p className="truncate text-[12px] text-muted-foreground">
+            {a.company ? a.name : a.phone}
+          </p>
         </div>
-        <DialogFooter>
-          <button
-            type="button"
-            disabled={!f.name.trim() || !f.phone.trim() || create.isPending}
-            onClick={() => create.mutate()}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
-          >
-            {create.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("apps.save")}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {a.amount ? (
+          <span className="shrink-0 text-[11.5px] font-semibold tabular-nums text-foreground">
+            {Math.round(a.amount / 1000).toLocaleString("ru-RU")}k
+          </span>
+        ) : null}
+      </div>
+      {(a.business || a.plan || a.sales_reps || phase !== "none") && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {phase !== "none" && (
+            <span
+              className={cn(
+                "rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold",
+                PHASE_CHIP[phase],
+              )}
+            >
+              {t(`lead.phase.${phase}`)}
+            </span>
+          )}
+          {a.plan && (
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+              {PLAN_LABELS[normalizePlan(a.plan)]}
+            </span>
+          )}
+          {a.sales_reps && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+              <Users className="h-3 w-3" /> {a.sales_reps}
+            </span>
+          )}
+          {a.business && (
+            <span className="max-w-full truncate rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] text-muted-foreground">
+              {a.business}
+            </span>
+          )}
+        </div>
+      )}
+      {a.meeting_at && a.status !== "lost" && (
+        <p
+          className={cn(
+            "mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px] font-semibold",
+            callToday
+              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+              : callPast
+                ? "bg-muted text-subtle"
+                : "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+          )}
+        >
+          <CalendarClock className="h-3.5 w-3.5" />
+          {callToday ? t("lead.today") : callDay(a.meeting_at, lang)}, {tashkentTime(a.meeting_at)}
+        </p>
+      )}
+      <div className="mt-2 flex items-center gap-2 text-[11px] text-subtle">
+        {a.overdue > 0 ? (
+          <span className="inline-flex items-center gap-1 font-semibold text-rose-600">
+            <ListChecks className="h-3.5 w-3.5" /> {a.overdue}
+          </span>
+        ) : a.tasks > 0 ? (
+          <span className="inline-flex items-center gap-1">
+            <ListChecks className="h-3.5 w-3.5" /> {a.tasks}
+          </span>
+        ) : null}
+        {a.issues > 0 && (
+          <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
+            <AlertTriangle className="h-3.5 w-3.5" /> {a.issues}
+          </span>
+        )}
+        <span className="ml-auto">{ago(a.last_activity_at ?? a.updated_at, t)}</span>
+      </div>
+    </button>
+  );
+}
+
+function LeadsTable({ items, onOpen }: { items: LeadItem[]; onOpen: (id: string) => void }) {
+  const { t, lang } = useI18n();
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <table className="w-full min-w-[980px] text-left">
+        <thead>
+          <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wider text-subtle">
+            <th className="px-4 py-3">{t("lead.col.company")}</th>
+            <th className="px-3 py-3">{t("lead.col.stage")}</th>
+            <th className="px-3 py-3">{t("lead.col.plan")}</th>
+            <th className="px-3 py-3">{t("wiz.step.business")}</th>
+            <th className="px-3 py-3">{t("lead.col.call")}</th>
+            <th className="px-3 py-3">{t("lead.col.work")}</th>
+            <th className="px-3 py-3 text-right">{t("lead.col.activity")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((a) => {
+            const phase = orgPhaseOf(a.org);
+            return (
+              <tr
+                key={a.id}
+                onClick={() => onOpen(a.id)}
+                className="cursor-pointer border-b border-border/70 last:border-0 hover:bg-muted/40"
+              >
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <CompanyMark name={a.company || a.name} size="sm" />
+                    <div className="min-w-0">
+                      <p className="truncate text-[13.5px] font-semibold text-foreground">
+                        {a.company || a.name}
+                      </p>
+                      <p className="truncate text-[12px] text-muted-foreground">
+                        {a.name} · {a.phone}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-3">
+                  <StageChip stage={a.status} />
+                </td>
+                <td className="px-3 py-3 text-[12.5px]">
+                  <span className="text-foreground">
+                    {a.plan ? PLAN_LABELS[normalizePlan(a.plan)] : "—"}
+                  </span>
+                  {phase !== "none" && (
+                    <span
+                      className={cn(
+                        "ml-1.5 rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold",
+                        PHASE_CHIP[phase],
+                      )}
+                    >
+                      {t(`lead.phase.${phase}`)}
+                    </span>
+                  )}
+                </td>
+                <td className="max-w-[200px] px-3 py-3 text-[12.5px] text-muted-foreground">
+                  <span className="block truncate">{a.business || "—"}</span>
+                  {a.sales_reps && (
+                    <span className="text-subtle">{t("lead.reps", { n: a.sales_reps })}</span>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-[12.5px] tabular-nums text-foreground">
+                  {a.meeting_at
+                    ? `${callDay(a.meeting_at, lang)}, ${tashkentTime(a.meeting_at)}`
+                    : "—"}
+                </td>
+                <td className="px-3 py-3 text-[12.5px]">
+                  <span
+                    className={cn(
+                      a.overdue ? "font-semibold text-rose-600" : "text-muted-foreground",
+                    )}
+                  >
+                    {t("lead.tasksN", { n: a.tasks })}
+                  </span>
+                  {a.issues > 0 && (
+                    <span className="ml-2 font-semibold text-amber-600">
+                      {t("lead.issuesN", { n: a.issues })}
+                    </span>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-right text-[12px] text-subtle">
+                  {ago(a.last_activity_at ?? a.updated_at, t)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
