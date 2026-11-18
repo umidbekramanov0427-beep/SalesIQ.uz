@@ -26,13 +26,13 @@ export function OwnerMfaReminder() {
 
   if (!owner || !show) return null;
   return (
-    <div className="flex items-center justify-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-2 text-[13px] text-warning-foreground">
-      <ShieldAlert className="h-4 w-4 shrink-0" />
+    <div className="flex items-center justify-center gap-2 border-b border-border bg-card px-4 py-2 text-[13px] text-foreground">
+      <ShieldAlert className="h-4 w-4 shrink-0 text-warning" />
       <span>{t("mfa.ownerReminder")}</span>
       <Link
         to="/settings"
         search={{ section: "profile" }}
-        className="font-semibold underline underline-offset-2"
+        className="font-semibold text-primary underline underline-offset-2"
       >
         {t("mfa.turnOn")}
       </Link>

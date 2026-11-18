@@ -202,7 +202,7 @@ function PlatformPartnersPage() {
               <button
                 type="submit"
                 disabled={action.isPending || !form.name.trim()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="ctl-lit inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold disabled:opacity-50"
               >
                 <Plus className="h-4 w-4" /> {t("partners.add")}
               </button>
@@ -347,7 +347,7 @@ function PlatformPartnersPage() {
                                 void run({ action: "reward", id: r.id }, t("partners.rewarded"))
                               }
                               title={t("partners.rewardHint")}
-                              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                              className="ctl-soft inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold text-foreground disabled:opacity-60"
                             >
                               <Gift className="h-3.5 w-3.5 text-emerald-500" />
                               {t("partners.reward")}

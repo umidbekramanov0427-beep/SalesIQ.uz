@@ -51,7 +51,7 @@ export function FunnelPanel({ onExport }: { onExport?: (rows: PlatformFunnelComp
             type="button"
             disabled={!data?.companies.length}
             onClick={() => data && onExport(data.companies)}
-            className="ml-auto inline-flex h-9 items-center rounded-xl border border-border px-3 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+            className="ctl-soft ml-auto inline-flex h-9 items-center rounded-full px-3 text-xs font-semibold text-foreground disabled:opacity-50"
           >
             {t("visits.excel")}
           </button>

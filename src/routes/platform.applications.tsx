@@ -243,7 +243,7 @@ function LeadsBoard() {
             type="button"
             aria-haspopup="dialog"
             onClick={() => setAnalyticsOpen(true)}
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent"
+            className="ctl-soft inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold text-foreground hover:border-primary/40"
           >
             <BarChart3 className="h-4 w-4 text-primary" />
             {t("lead.analytics")}
@@ -251,7 +251,7 @@ function LeadsBoard() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110"
+            className="ctl-lit inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold shadow-sm transition-[filter] hover:brightness-110"
           >
             <Plus className="h-4 w-4" />
             {t("lead.add")}

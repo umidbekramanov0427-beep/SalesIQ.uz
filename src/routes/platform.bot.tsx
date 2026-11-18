@@ -263,7 +263,7 @@ function ConnectCard({ data }: { data: NonNullable<ReturnType<typeof usePlatform
               type="button"
               onClick={() => void connect()}
               disabled={link.isPending}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="ctl-lit inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold disabled:opacity-60"
             >
               {link.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -287,7 +287,7 @@ function ConnectCard({ data }: { data: NonNullable<ReturnType<typeof usePlatform
             type="button"
             onClick={() => void sendNow()}
             disabled={send.isPending || !data.linked}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+            className="ctl-soft inline-flex h-10 items-center gap-2 rounded-full bg-surface px-4 text-sm font-semibold text-foreground disabled:opacity-50"
           >
             {send.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

@@ -296,7 +296,7 @@ function PlatformSessionsPage() {
               type="button"
               disabled={!sessions.length}
               onClick={() => exportVisits(sessions)}
-              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-xl border border-border px-3 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+              className="ctl-soft ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-foreground disabled:opacity-50"
             >
               <FileSpreadsheet className="h-3.5 w-3.5" /> {t("visits.excel")}
             </button>

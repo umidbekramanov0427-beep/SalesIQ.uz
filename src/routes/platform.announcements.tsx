@@ -480,7 +480,7 @@ function AnnouncementsPage() {
               type="button"
               disabled={!canSend || create.isPending}
               onClick={() => create.mutate()}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="ctl-lit inline-flex h-10 w-full items-center justify-center gap-2 rounded-full text-[13px] font-semibold disabled:opacity-40"
             >
               {create.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -1110,7 +1110,7 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
               onMouseDown={(e) => e.preventDefault()}
               onClick={submit}
               disabled={busy || (!text.trim() && !att.files.length)}
-              className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground"
+              className="ctl-lit inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-semibold shadow-sm transition-[filter] hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground"
             >
               {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {t("oinbox.send")}

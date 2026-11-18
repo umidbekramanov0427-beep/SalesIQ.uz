@@ -97,7 +97,7 @@ function SetPasswordDialog({ company }: { company: CompanyDirectoryEntry }) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent"
+          className="ctl-soft inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold text-muted-foreground"
         >
           <KeyRound className="h-3.5 w-3.5" /> {t("pc.setPassword")}
         </button>
@@ -123,7 +123,7 @@ function SetPasswordDialog({ company }: { company: CompanyDirectoryEntry }) {
             <button
               type="submit"
               disabled={busy || password.length < 8}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="ctl-lit inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold disabled:opacity-60"
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("common.save")}
@@ -216,7 +216,7 @@ function CompanyRow({ company, index }: { company: CompanyDirectoryEntry; index:
         <Link
           to="/platform/organizations/$orgId"
           params={{ orgId: company.id }}
-          className="mr-2 inline-flex h-9 items-center gap-2 rounded-xl border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+          className="ctl-soft mr-2 inline-flex h-9 items-center gap-2 rounded-full px-3 text-xs font-semibold text-foreground"
         >
           <Settings2 className="h-3.5 w-3.5" /> {t("orgcard.manage")}
         </Link>
@@ -225,7 +225,7 @@ function CompanyRow({ company, index }: { company: CompanyDirectoryEntry; index:
           onClick={() => void enter()}
           disabled={!canEnter || busy}
           title={canEnter ? undefined : t("pc.noSuperAdmin")}
-          className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="ctl-lit inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
         >
           {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           {t("pc.enter")}

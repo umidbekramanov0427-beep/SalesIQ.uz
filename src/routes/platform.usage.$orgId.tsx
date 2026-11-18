@@ -93,7 +93,7 @@ function UsagePage() {
             <button
               type="button"
               onClick={() => exportUsage(data, sections, features, t)}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+              className="ctl-soft inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-foreground"
             >
               <FileSpreadsheet className="h-4 w-4" /> {t("visits.excel")}
             </button>

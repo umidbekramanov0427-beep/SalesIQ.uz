@@ -95,7 +95,7 @@ export function TrialsPanel({ onExport }: { onExport?: (rows: PlatformTrialHealt
                 },
               )
             }
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60 phone:flex-1"
+            className="ctl-lit inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold disabled:opacity-60 phone:flex-1"
           >
             {action.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
