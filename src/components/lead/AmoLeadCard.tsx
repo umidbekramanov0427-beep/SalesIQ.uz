@@ -1,5 +1,6 @@
 import { FunnelGroup } from "@/components/crm/FunnelGroup";
 import { LeadStatsTab } from "@/components/lead/LeadStatsTab";
+import { LeadQualBlock } from "@/components/lead/LeadQualBlock";
 import { stageAge } from "@/components/crm/KanbanLeadCard";
 import { checkPhone } from "@/lib/leads/intake-clean";
 import {
@@ -1817,6 +1818,8 @@ function LeadPanel({
                     {topRow[k]()}
                   </FieldRow>
                 ))}
+
+                <LeadQualBlock leadId={lead.id} phone={lead.phone || null} />
 
                 {groupBoxes.length > 0 && (
                   <div className="space-y-2.5 pt-3">

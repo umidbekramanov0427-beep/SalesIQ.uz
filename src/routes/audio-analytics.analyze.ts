@@ -555,6 +555,10 @@ function buildJsonInstruction(
       "\"recoverable\": {\"is_recoverable\": true yoki false, \"reason\": \"qisqa asos, 1 jumla\"} — bu lid YO'QOTILGAN, transkriptga qarab xolis baholang: mijozning voz kechish sababi VAQTINCHALIK/TUZATSA BO'LADIGAN narsami (masalan: narx bahonasi, hozir vaqti yo'q, byudjet keyinroq ochiladi, hali qandaydir qiziqishi bor, boshqa qaror qabul qiluvchi bilan gaplashishi kerak) — shunda is_recoverable true; yoki sabab QATʼIY/TUZATIB BO'LMAYDIGAN narsami (masalan: raqibga o'tib ketgan/shartnoma tuzgan, ehtiyoji umuman yo'q, mahsulot/xizmat mos emas, aloqa butunlay uzilgan, mijoz aniq va qatʼiy rad etdi) — shunda is_recoverable false. Xolis va real bo'ling, faqat haqiqatan ham qaytadan sotib bo'ladigan holatlargina true bo'lsin\"",
     );
   }
+  // Marketing: a qualified lead answered the phone and watched the webinar.
+  extraFields.push(
+    "\"watched_webinar\": true — mijoz suhbatda vebinarni (jonli efirni) ko'rganini aniq aytgan bo'lsa; false — ko'rmaganini aniq aytgan bo'lsa; null — gap bo'lmagan yoki aniq emas",
+  );
   const extra = extraFields.length > 0 ? ", " + extraFields.join(", ") : "";
 
   if (rubric.length === 0) {
@@ -800,6 +804,8 @@ async function analyzeTranscript(
   keyTopics: { topic: string; count: number }[];
   serviceLineN: number | null;
   leadQualityStageN: number | null;
+  /** The client said they watched the webinar (true) / did not (false). */
+  watchedWebinar: boolean | null;
   familyN: number | null;
   intakeAnswers: { n: number; answer: string }[];
   customerProfile: CustomerProfileExtract;
@@ -922,6 +928,7 @@ async function analyzeTranscript(
 
   try {
     const parsed = JSON.parse(content) as {
+      watched_webinar?: boolean | null;
       summary?: string;
       next_step?: string;
       mood?: string;
@@ -1038,6 +1045,7 @@ async function analyzeTranscript(
       keyTopics: asKeyTopics(parsed.key_topics),
       serviceLineN: Number.isFinite(serviceLineN) ? serviceLineN : null,
       leadQualityStageN: Number.isFinite(leadQualityStageN) ? leadQualityStageN : null,
+      watchedWebinar: typeof parsed.watched_webinar === "boolean" ? parsed.watched_webinar : null,
       familyN: Number.isFinite(familyN) ? familyN : null,
       intakeAnswers: Array.isArray(parsed.intake_answers)
         ? parsed.intake_answers
@@ -1082,6 +1090,7 @@ async function analyzeTranscript(
       keyTopics: [],
       serviceLineN: null,
       leadQualityStageN: null,
+      watchedWebinar: null,
       familyN: null,
       intakeAnswers: [],
       trainingRecommendation: null,
@@ -1389,6 +1398,22 @@ export async function analyzeCallById(
         ai_customer_profile: mergedProfile,
       })
       .eq("id", call.lead_id);
+    // "Watched the webinar" from the call -- never over a manager's own mark.
+    if (result.watchedWebinar != null) {
+      await supabaseAdmin
+        .from("leads")
+        .update({
+          webinar_watched: result.watchedWebinar,
+          webinar_watched_source: "ai",
+          webinar_watched_at: new Date().toISOString(),
+        })
+        .eq("id", call.lead_id)
+        .or("webinar_watched_source.is.null,webinar_watched_source.eq.ai")
+        .then(
+          () => undefined,
+          () => undefined,
+        );
+    }
   }
 
   // Training module: a lost-lead call the AI flagged a concrete mistake in

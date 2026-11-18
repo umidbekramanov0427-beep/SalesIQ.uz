@@ -170,6 +170,7 @@ import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
+import { Route as MarketingApiAiRouteImport } from './routes/marketing-api.ai'
 import { Route as MarketingApiBotRouteImport } from './routes/marketing-api.bot'
 import { Route as MarketingApiChannelAnalyticsRouteImport } from './routes/marketing-api.channel-analytics'
 import { Route as MarketingApiChannelsRouteImport } from './routes/marketing-api.channels'
@@ -1156,6 +1157,11 @@ const LeadsMergeRoute = LeadsMergeRouteImport.update({
 const LeadsTrashRoute = LeadsTrashRouteImport.update({
   id: '/leads/trash',
   path: '/leads/trash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingApiAiRoute = MarketingApiAiRouteImport.update({
+  id: '/marketing-api/ai',
+  path: '/marketing-api/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketingApiBotRoute = MarketingApiBotRouteImport.update({
@@ -2201,6 +2207,7 @@ export interface FileRoutesByFullPath {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/ai': typeof MarketingApiAiRoute
   '/marketing-api/bot': typeof MarketingApiBotRoute
   '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
@@ -2530,6 +2537,7 @@ export interface FileRoutesByTo {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/ai': typeof MarketingApiAiRoute
   '/marketing-api/bot': typeof MarketingApiBotRoute
   '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
@@ -2860,6 +2868,7 @@ export interface FileRoutesById {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/ai': typeof MarketingApiAiRoute
   '/marketing-api/bot': typeof MarketingApiBotRoute
   '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
@@ -3191,6 +3200,7 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/ai'
     | '/marketing-api/bot'
     | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
@@ -3520,6 +3530,7 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/ai'
     | '/marketing-api/bot'
     | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
@@ -3849,6 +3860,7 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/ai'
     | '/marketing-api/bot'
     | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
@@ -4111,6 +4123,7 @@ export interface RootRouteChildren {
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
   LeadsTrashRoute: typeof LeadsTrashRoute
+  MarketingApiAiRoute: typeof MarketingApiAiRoute
   MarketingApiBotRoute: typeof MarketingApiBotRoute
   MarketingApiChannelAnalyticsRoute: typeof MarketingApiChannelAnalyticsRoute
   MarketingApiChannelsRoute: typeof MarketingApiChannelsRoute
@@ -5363,6 +5376,13 @@ declare module '@tanstack/react-router' {
       path: '/leads/trash'
       fullPath: '/leads/trash'
       preLoaderRoute: typeof LeadsTrashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing-api/ai': {
+      id: '/marketing-api/ai'
+      path: '/marketing-api/ai'
+      fullPath: '/marketing-api/ai'
+      preLoaderRoute: typeof MarketingApiAiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing-api/bot': {
@@ -7051,6 +7071,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
   LeadsTrashRoute: LeadsTrashRoute,
+  MarketingApiAiRoute: MarketingApiAiRoute,
   MarketingApiBotRoute: MarketingApiBotRoute,
   MarketingApiChannelAnalyticsRoute: MarketingApiChannelAnalyticsRoute,
   MarketingApiChannelsRoute: MarketingApiChannelsRoute,
