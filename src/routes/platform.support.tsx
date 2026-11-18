@@ -40,7 +40,8 @@ import { FixedPage } from "@/components/layout/FixedPage";
 import { QuickReplies } from "@/components/chat/QuickReplies";
 import { recentReplies } from "@/lib/quick-replies";
 import { PageTools } from "@/components/layout/PageTools";
-import { CARD, FEED_BG, QUIET, dayWord, stamp } from "@/components/lead/amo-utils";
+import { BackIconButton } from "@/components/layout/BackButton";
+import { dayWord, stamp } from "@/components/lead/amo-utils";
 import {
   DropOverlay,
   PendingFile,
@@ -190,6 +191,7 @@ function OwnerInboxPage() {
       >
         <div className="border-b border-border px-4 pb-3 pt-4">
           <div className="flex items-center gap-2.5">
+            <BackIconButton className="phone:hidden" />
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
               <Headset className="h-[18px] w-[18px]" />
             </span>
@@ -702,15 +704,9 @@ function Conversation({
     "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50";
 
   return (
-    <section
-      className={cn(
-        "amo-skin flex min-w-0 flex-1 flex-col",
-        FEED_BG,
-        phoneHidden && "phone:hidden",
-      )}
-    >
+    <section className={cn("flex min-w-0 flex-1 flex-col", phoneHidden && "phone:hidden")}>
       {/* The conversation's head, as in the CRM Inbox: the company's name opens its details. */}
-      <div className="flex h-[52px] shrink-0 items-stretch border-b border-[var(--amo-divider)] bg-card">
+      <div className="flex h-[52px] shrink-0 items-stretch border-b border-border bg-card">
         <button
           type="button"
           onClick={onBack}
@@ -787,7 +783,7 @@ function Conversation({
         </div>
       </div>
       {/* Search in the conversation. */}
-      <div className="flex h-[48px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5 phone:px-3">
+      <div className="flex h-[48px] shrink-0 items-center gap-2 border-b border-border bg-card px-5 phone:px-3">
         <Search className="h-4 w-4 shrink-0 text-subtle" />
         <input
           value={query}
@@ -817,21 +813,19 @@ function Conversation({
           {days.map((d, di) => (
             <div key={`${d.day}-${di}`}>
               <div className="my-3 flex items-center gap-3">
-                <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
+                <span className="h-px flex-1 bg-border" />
                 <span
                   className={cn(
-                    "rounded-full px-3 py-1 text-[11.5px] font-medium text-muted-foreground",
-                    CARD,
+                    "rounded-full border border-border bg-card px-3 py-1 text-[11.5px] font-medium text-muted-foreground",
                   )}
                 >
                   {d.day}
                 </span>
-                <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
+                <span className="h-px flex-1 bg-border" />
               </div>
               <div className="my-2">
-                <div className="mx-2 h-[5px] rounded-t-xl border border-b-0 border-[var(--amo-box-line)] bg-[var(--amo-box)]" />
-                <div className={cn("rounded-xl px-5 pb-3 pt-3 phone:px-3", CARD)}>
-                  <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[var(--amo-soft)]">
+                <div className="rounded-2xl border border-border bg-card px-5 pb-3 pt-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] phone:px-3">
+                  <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-muted-foreground">
                     <Headset className="h-3.5 w-3.5 text-emerald-500" />
                     {t("oinbox.channel")}
                   </p>
@@ -868,7 +862,7 @@ function Conversation({
             onClick={() =>
               scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" })
             }
-            className="absolute bottom-3 right-5 grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-box-line)] bg-card shadow-md"
+            className="absolute bottom-3 right-5 grid h-9 w-9 place-items-center rounded-full border border-border bg-card shadow-md"
           >
             <ArrowDown className="h-4 w-4" />
           </button>
@@ -884,15 +878,15 @@ function FeedMessage({ m, onIssue }: { m: InboxMessage; onIssue?: (() => void) |
   const { t } = useI18n();
   const letter = (m.author.match(/\p{L}/u)?.[0] ?? "S").toUpperCase();
   const avatar = (
-    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[12px] font-bold text-[var(--amo-avatar-fg)]">
+    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-muted text-[12px] font-bold text-foreground">
       {letter}
     </span>
   );
   if (m.direction === "out")
     return (
       <div className="flex items-end justify-end gap-2.5">
-        <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-out)] px-3 py-2 phone:max-w-[85%]">
-          <p className="text-[12px] text-[var(--amo-bubble-out-meta)]">
+        <div className="max-w-[70%] rounded-2xl rounded-br-md bg-primary/[0.1] px-3 py-2 dark:bg-primary/20 phone:max-w-[85%]">
+          <p className="text-[12px] text-muted-foreground">
             {stamp(m.created_at, t)} {m.author} <Check className="inline h-3 w-3" />{" "}
             {t("amo.delivered")}
           </p>
@@ -902,7 +896,7 @@ function FeedMessage({ m, onIssue }: { m: InboxMessage; onIssue?: (() => void) |
             </div>
           )}
           {m.text && (
-            <div className="mt-1 whitespace-pre-wrap break-words text-[14px] text-[var(--amo-bubble-out-fg)] [&_a]:font-semibold [&_a]:underline">
+            <div className="mt-1 whitespace-pre-wrap break-words text-[14px] text-foreground [&_a]:font-semibold [&_a]:underline">
               {renderMessageContent(m.text, t("oinbox.open"))}
             </div>
           )}
@@ -913,8 +907,8 @@ function FeedMessage({ m, onIssue }: { m: InboxMessage; onIssue?: (() => void) |
   return (
     <div className="group/msg flex items-start gap-2.5">
       {avatar}
-      <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-in)] px-3 py-2 phone:max-w-[85%]">
-        <p className="text-[12px] text-[var(--amo-label)]">
+      <div className="max-w-[70%] rounded-2xl rounded-bl-md bg-muted px-3 py-2 phone:max-w-[85%]">
+        <p className="text-[12px] text-muted-foreground">
           {stamp(m.created_at, t)} {m.author}
           {m.role && ` · ${t(`lead.role.${m.role}`)}`}
         </p>
@@ -928,9 +922,7 @@ function FeedMessage({ m, onIssue }: { m: InboxMessage; onIssue?: (() => void) |
             {m.text}
           </p>
         )}
-        {m.page && (
-          <p className="mt-1 truncate font-mono text-[11px] text-[var(--amo-label)]">{m.page}</p>
-        )}
+        {m.page && <p className="mt-1 truncate font-mono text-[11px] text-subtle">{m.page}</p>}
       </div>
       {onIssue && (
         <button
@@ -1032,7 +1024,7 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
         onClick={() => !open && areaRef.current?.focus()}
         className={cn(
           "relative rounded-xl transition-colors",
-          QUIET,
+          "border border-border bg-card",
           open && "!border-primary/60",
           !open && "cursor-text",
         )}
@@ -1052,7 +1044,7 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="amo-skin w-60 p-1">
+            <PopoverContent align="start" side="top" className="w-60 p-1">
               {thread.people.map((p) => (
                 <button
                   key={p.id}
@@ -1097,12 +1089,7 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
         {att.files.length > 0 && !recorder && (
           <div className="flex flex-wrap gap-2 px-4 pb-1 pt-2">
             {att.files.map((f, i) => (
-              <PendingFile
-                key={`${f.name}-${i}`}
-                file={f}
-                onRemove={() => att.remove(i)}
-                className="border-[var(--amo-quiet-line)]"
-              />
+              <PendingFile key={`${f.name}-${i}`} file={f} onRemove={() => att.remove(i)} />
             ))}
           </div>
         )}

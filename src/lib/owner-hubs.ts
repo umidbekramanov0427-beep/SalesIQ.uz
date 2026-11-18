@@ -1,7 +1,7 @@
 // The owner panel's menu: a few sections, each holding its related pages as
 // tabs across the top of the page (Nazorat: visits, actions, errors ...). The pages keep their
 // own addresses; only the menu and the tab row are built from this.
-import { Gauge, Megaphone, type LucideIcon } from "lucide-react";
+import { Gauge, type LucideIcon } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
 import type { CardTone } from "@/lib/tones";
 
@@ -46,11 +46,8 @@ export const OWNER_HUBS: OwnerHub[][] = [
       icon: Gauge,
       tone: "violet",
     }),
-    hub("comms", ["/platform/announcements", "/platform/bot"], {
-      labelKey: "owner.group.comms",
-      icon: Megaphone,
-      tone: "sky",
-    }),
+    hub("announcements", ["/platform/announcements"]),
+    hub("bot", ["/platform/bot"]),
   ],
 ];
 export const OWNER_SETTINGS_HUB = hub("settings", ["/platform/settings"]);

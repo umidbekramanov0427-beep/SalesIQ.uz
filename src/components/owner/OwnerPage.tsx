@@ -12,6 +12,7 @@ import { keysForText, useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ownerHubOf } from "@/lib/owner-hubs";
 import { PageTools } from "@/components/layout/PageTools";
+import { BackIconButton } from "@/components/layout/BackButton";
 import type { CardTone } from "@/lib/tones";
 import { cn } from "@/lib/utils";
 import {
@@ -72,7 +73,8 @@ export function OwnerHeader({
   if ((ownerHubOf(pathname)?.hub.tabs.length ?? 0) > 1)
     return (
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="flex min-w-0 items-center gap-2 text-[13.5px] text-muted-foreground">
+        <p className="flex min-w-0 items-center gap-2.5 text-[13.5px] text-muted-foreground">
+          <BackIconButton />
           <span className="min-w-0">{desc}</span>
           <PageTools size="sm" title={title} description={desc} />
         </p>
@@ -86,7 +88,6 @@ export function OwnerHeader({
       title={title}
       {...(desc ? { description: desc } : {})}
       actions={actions}
-      back={false}
     />
   );
 }

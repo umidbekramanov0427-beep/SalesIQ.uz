@@ -2,28 +2,21 @@ import { useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
-  BarChart3,
   CalendarClock,
-  Check,
-  ChevronRight,
-  Columns3,
   Inbox,
   ListChecks,
   Plus,
-  Rocket,
   Search,
   SlidersHorizontal,
-  Table2,
-  Target,
+  UserRound,
   Users,
   X,
   XCircle,
-  type LucideIcon,
 } from "lucide-react";
 import { OwnerEmpty } from "@/components/owner/OwnerPage";
-import { PageTools } from "@/components/layout/PageTools";
+import { InfoTip } from "@/components/layout/InfoTip";
+import { BackIconButton } from "@/components/layout/BackButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FixedPage } from "@/components/layout/FixedPage";
 import {
   AddLeadDialog,
@@ -33,12 +26,11 @@ import {
   money,
   orgPhaseOf,
   PHASE_CHIP,
-  StageChip,
   useCompanyLeads,
   useLeadAction,
   type LeadItem,
 } from "@/components/owner/leads/shared";
-import { stageOf, type ApplicationStatus } from "@/lib/applications";
+import { type ApplicationStatus } from "@/lib/applications";
 import {
   callDay,
   PIPELINE_STAGES,
@@ -46,41 +38,87 @@ import {
   tashkentDay,
   tashkentTime,
 } from "@/lib/company-leads";
-import { PLAN_LABELS, normalizePlan } from "@/lib/plan-gating";
+import { PLANS, PLAN_LABELS, normalizePlan } from "@/lib/plan-gating";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 // Owner -> Arizalar: the platform's own CRM of companies. Every company that
 // signs up (with its plan, three answers and the booked call), leaves the
-// website form or is added by hand is a lead on this board; its card opens
-// the lead page (platform.applications_.$appId.tsx).
+// website form or is added by hand is a lead on this board -- drawn like the
+// CRM funnel: one toolbar row, stage columns without boxes, compact cards.
+// A card opens the lead page (platform.applications_.$appId.tsx).
 export const Route = createFileRoute("/platform/applications")({
   head: () => ({ meta: [{ title: "Arizalar — SalesIQ Owner" }] }),
   component: LeadsBoard,
 });
 
-type View = "board" | "table";
-const SOURCES = ["all", "signup", "landing", "manual"] as const;
+const SOURCES = ["signup", "landing", "manual"] as const;
+const PHASES = ["trial", "paid", "expired", "frozen", "none"] as const;
 
-// The toolbar's icon-only buttons, as on the CRM funnel (the name shows on hover).
-const ICON_BUTTON =
-  "grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:border-primary/40 hover:bg-accent";
+type LeadFilter = {
+  sources: string[];
+  stages: string[];
+  plans: string[];
+  phases: string[];
+  call: "" | "booked" | "today";
+  work: "" | "overdue" | "tasks" | "issues";
+  period: "" | "today" | "7" | "30";
+};
+const EMPTY: LeadFilter = {
+  sources: [],
+  stages: [],
+  plans: [],
+  phases: [],
+  call: "",
+  work: "",
+  period: "",
+};
+
+function filterCount(f: LeadFilter): number {
+  return (
+    (f.sources.length ? 1 : 0) +
+    (f.stages.length ? 1 : 0) +
+    (f.plans.length ? 1 : 0) +
+    (f.phases.length ? 1 : 0) +
+    (f.call ? 1 : 0) +
+    (f.work ? 1 : 0) +
+    (f.period ? 1 : 0)
+  );
+}
+
+function matches(a: LeadItem, f: LeadFilter, today: string): boolean {
+  if (f.sources.length && !f.sources.includes(a.source)) return false;
+  if (f.stages.length && !f.stages.includes(a.status)) return false;
+  if (f.plans.length && !f.plans.includes(normalizePlan(a.plan ?? a.org?.plan ?? null)))
+    return false;
+  if (f.phases.length && !f.phases.includes(orgPhaseOf(a.org))) return false;
+  if (f.call === "booked" && !(a.meeting_at && a.status !== "lost")) return false;
+  if (
+    f.call === "today" &&
+    !(a.meeting_at && a.status !== "lost" && tashkentDay(a.meeting_at) === today)
+  )
+    return false;
+  if (f.work === "overdue" && a.overdue === 0) return false;
+  if (f.work === "tasks" && a.tasks === 0) return false;
+  if (f.work === "issues" && a.issues === 0) return false;
+  if (f.period) {
+    const days = f.period === "today" ? 0 : Number(f.period);
+    const since =
+      f.period === "today"
+        ? today
+        : tashkentDay(new Date(Date.now() - days * 86_400_000).toISOString());
+    if (tashkentDay(a.created_at) < since) return false;
+  }
+  return true;
+}
 
 function LeadsBoard() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data, isLoading } = useCompanyLeads();
   const act = useLeadAction();
-  const [view, setView] = useState<View>(() => {
-    try {
-      return (localStorage.getItem("owner.leads.view") as View) || "board";
-    } catch {
-      return "board";
-    }
-  });
   const [q, setQ] = useState("");
-  const [source, setSource] = useState<(typeof SOURCES)[number]>("all");
-  const [onlyCalls, setOnlyCalls] = useState(false);
+  const [filter, setFilter] = useState<LeadFilter>(EMPTY);
   const [adding, setAdding] = useState(false);
   const [lostFor, setLostFor] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -91,33 +129,14 @@ function LeadsBoard() {
     const needle = q.trim().toLowerCase();
     return all.filter(
       (a) =>
-        (source === "all" || a.source === source) &&
-        (!onlyCalls || (a.meeting_at && a.status !== "lost")) &&
+        matches(a, filter, today) &&
         (!needle ||
           [a.name, a.phone, a.company, a.email, a.business].some((v) =>
             v?.toLowerCase().includes(needle),
           )),
     );
-  }, [all, q, source, onlyCalls]);
-
+  }, [all, q, filter, today]);
   const by = (s: string) => items.filter((a) => a.status === s);
-  const count = (s: string) => all.filter((a) => a.status === s).length;
-  const callsToday = all.filter(
-    (a) => a.meeting_at && a.status !== "lost" && tashkentDay(a.meeting_at) === today,
-  );
-  const nextCall = all
-    .filter(
-      (a) => a.meeting_at && a.status !== "lost" && new Date(a.meeting_at).getTime() > Date.now(),
-    )
-    .sort((x, y) => x.meeting_at!.localeCompare(y.meeting_at!))[0];
-  const overdue = all.reduce((s, a) => s + a.overdue, 0);
-  const openTasks = all.reduce((s, a) => s + a.tasks, 0);
-  const month = today.slice(0, 7);
-  const installedMonth = all.filter(
-    (a) => a.status === "installed" && (a.stage_changed_at ?? a.updated_at).slice(0, 7) === month,
-  ).length;
-  const closed = count("installed") + count("lost");
-  const conv = closed ? Math.round((count("installed") / closed) * 100) : null;
 
   function move(id: string, to: ApplicationStatus) {
     const lead = all.find((a) => a.id === id);
@@ -128,7 +147,6 @@ function LeadsBoard() {
     }
     act.mutate({ method: "PATCH", body: { id, status: to } });
   }
-
   const drop = (to: ApplicationStatus) => (e: DragEvent) => {
     e.preventDefault();
     setDragOver(null);
@@ -141,27 +159,22 @@ function LeadsBoard() {
   };
   const open = (id: string) =>
     void navigate({ to: "/platform/applications/$appId", params: { appId: id } });
-  const setViewSaved = (v: View) => {
-    setView(v);
-    try {
-      localStorage.setItem("owner.leads.view", v);
-    } catch {
-      /* private window */
-    }
-  };
-
-  const [analytics, setAnalytics] = useState(false);
 
   return (
     <FixedPage>
-      {/* One row, the CRM funnel's toolbar: name and totals, search with its
-          filter, then the icon buttons and "Lid qo'shish". */}
-      <header className="shrink-0 border-b border-border bg-card px-4 py-2.5 phone:px-3">
-        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
-          <div className="flex min-w-0 shrink-0 items-center gap-3 pr-1">
-            <h1 className="flex items-center gap-1.5 text-[15px] font-extrabold uppercase tracking-wide text-foreground sm:text-base">
+      {/* One row, the CRM funnel's toolbar: back, name and totals, search with its filter, "Lid qo'shish". */}
+      <header className="shrink-0 border-b border-border bg-card px-6 py-3 phone:px-3">
+        <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap">
+          <BackIconButton />
+          <div className="flex min-w-0 shrink-0 items-center gap-3.5 pl-1 pr-2">
+            <h1 className="flex items-center gap-2 text-[15px] font-extrabold uppercase tracking-wide text-foreground sm:text-base">
               {t("lead.title")}
-              <PageTools size="sm" title={t("lead.title")} />
+              <InfoTip
+                size="md"
+                side="bottom"
+                title={t("lead.title")}
+                tipKeys={["page:/platform/applications", "nav:/platform/applications"]}
+              />
             </h1>
             <span className="h-7 w-px bg-border" />
             <p className="flex items-baseline gap-1.5 whitespace-nowrap leading-none">
@@ -173,79 +186,35 @@ function LeadsBoard() {
               </span>
             </p>
           </div>
-          <div className="order-last flex w-full min-w-0 items-center lg:order-none lg:ml-3 lg:w-auto lg:flex-1">
-            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-card pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 sm:min-w-[260px]">
-              <Search className="h-4 w-4 shrink-0 text-subtle" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t("lead.search")}
-                className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-subtle"
-              />
-              {q && (
-                <button
-                  type="button"
-                  onClick={() => setQ("")}
-                  aria-label={t("leadFilter.clearSearch")}
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-subtle hover:bg-accent hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-              <span className="h-5 w-px shrink-0 bg-border" />
-              <LeadsFilter
-                source={source}
-                onSource={setSource}
-                onlyCalls={onlyCalls}
-                onOnlyCalls={setOnlyCalls}
-              />
-            </div>
+          <div className="flex h-10 w-[380px] min-w-0 items-center gap-2 rounded-2xl border border-border bg-card pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 phone:order-last phone:w-full">
+            <Search className="h-4 w-4 shrink-0 text-subtle" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("lead.search")}
+              className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-subtle"
+            />
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                aria-label={t("leadFilter.clearSearch")}
+                className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-subtle hover:bg-accent hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <span className="h-5 w-px shrink-0 bg-border" />
+            <LeadsFilter value={filter} onChange={setFilter} />
           </div>
-          <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1">
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => setAnalytics(true)}
-              aria-label={t("lead.analytics")}
-              title={t("lead.analytics")}
-              className={ICON_BUTTON}
-            >
-              <BarChart3 className="h-[18px] w-[18px] text-primary" />
-            </button>
-            <div className="inline-flex h-10 shrink-0 items-center gap-0.5 rounded-2xl border border-border bg-card p-1">
-              {(
-                [
-                  ["board", Columns3],
-                  ["table", Table2],
-                ] as const
-              ).map(([v, Icon]) => (
-                <button
-                  key={v}
-                  type="button"
-                  aria-label={t(`lead.view.${v}`)}
-                  title={t(`lead.view.${v}`)}
-                  aria-pressed={view === v}
-                  onClick={() => setViewSaved(v)}
-                  className={cn(
-                    "grid h-8 w-8 place-items-center rounded-xl transition-colors",
-                    view === v
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-3 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 sm:px-4"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden xl:inline">{t("lead.add")}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="ml-auto inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110"
+          >
+            <Plus className="h-4 w-4" />
+            {t("lead.add")}
+          </button>
         </div>
       </header>
 
@@ -257,17 +226,17 @@ function LeadsBoard() {
 
       <div className="min-h-0 flex-1">
         {isLoading ? (
-          <div className="flex h-full gap-3 px-4 py-3">
+          <div className="flex h-full gap-4 px-6 py-4">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-full w-[272px] animate-pulse rounded-2xl bg-muted/60" />
+              <div key={i} className="h-40 w-[280px] animate-pulse rounded-xl bg-muted/60" />
             ))}
           </div>
         ) : !all.length ? (
           <div className="grid h-full place-items-center">
             <OwnerEmpty icon={Inbox} title={t("lead.empty")} hint={t("lead.emptyHint")} />
           </div>
-        ) : view === "board" ? (
-          <div className="flex h-full gap-3 overflow-x-auto px-4 py-3 phone:px-3">
+        ) : (
+          <div className="flex h-full gap-4 overflow-x-auto px-6 py-4 phone:px-3">
             {PIPELINE_STAGES.map((s) => {
               const col = by(s);
               const sum = col.reduce((x, a) => x + (a.amount ?? 0), 0);
@@ -278,35 +247,31 @@ function LeadsBoard() {
                   onDragLeave={() => setDragOver(null)}
                   onDrop={drop(s)}
                   className={cn(
-                    "flex h-full w-[272px] shrink-0 flex-col rounded-2xl border bg-surface/60 transition-colors",
-                    dragOver === s ? "border-primary/60 bg-primary/[0.05]" : "border-border",
+                    // No box per stage, as on the CRM funnel: a header with a colored line over its cards.
+                    "flex h-full w-[280px] shrink-0 flex-col rounded-xl transition-colors",
+                    dragOver === s && "bg-primary/[0.06] ring-1 ring-primary/30",
                   )}
                 >
-                  <header className="px-3 pb-2 pt-3">
+                  <header className="px-1 pb-2 pt-1 text-center">
+                    <h2 className="truncate text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
+                      {t(`lead.st.${s}`)}
+                    </h2>
+                    <p className="mt-0.5 text-[12px] tabular-nums text-muted-foreground">
+                      {t("pipeline.columnCount", { count: col.length })}: {money(sum)}
+                    </p>
                     <span
                       className={cn(
-                        "mb-2.5 block h-1 rounded-full bg-gradient-to-r",
+                        "mt-2 block h-[2px] rounded-full bg-gradient-to-r",
                         STAGE_TONE[s].bar,
                       )}
                     />
-                    <div className="flex items-center gap-2">
-                      <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-foreground">
-                        {t(`lead.st.${s}`)}
-                      </span>
-                      <span className="rounded-md bg-card px-1.5 text-[12px] font-bold tabular-nums text-muted-foreground">
-                        {col.length}
-                      </span>
-                    </div>
-                    {sum > 0 && (
-                      <p className="mt-0.5 text-[11.5px] tabular-nums text-subtle">{money(sum)}</p>
-                    )}
                   </header>
-                  <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+                  <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pb-2">
                     {col.map((a) => (
                       <LeadCard key={a.id} a={a} onOpen={() => open(a.id)} today={today} />
                     ))}
                     {!col.length && (
-                      <p className="grid flex-1 place-items-center rounded-xl border border-dashed border-border px-3 py-6 text-center text-[12px] text-subtle">
+                      <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-[12px] text-subtle">
                         {t("lead.dropHere")}
                       </p>
                     )}
@@ -319,36 +284,34 @@ function LeadsBoard() {
               onDragLeave={() => setDragOver(null)}
               onDrop={drop("lost")}
               className={cn(
-                "flex h-full w-[200px] shrink-0 flex-col rounded-2xl border border-dashed transition-colors",
-                dragOver === "lost"
-                  ? "border-rose-500/60 bg-rose-500/[0.06]"
-                  : "border-rose-500/25 bg-rose-500/[0.025]",
+                "flex h-full w-[220px] shrink-0 flex-col rounded-xl transition-colors",
+                dragOver === "lost" && "bg-rose-500/[0.06] ring-1 ring-rose-500/30",
               )}
             >
-              <header className="flex items-center gap-2 px-3 pb-2 pt-4">
-                <XCircle className="h-4 w-4 text-rose-500" />
-                <span className="flex-1 text-[13.5px] font-semibold text-foreground">
-                  {t("lead.st.lost")}
-                </span>
-                <span className="text-[12px] font-bold tabular-nums text-muted-foreground">
-                  {by("lost").length}
-                </span>
+              <header className="px-1 pb-2 pt-1 text-center">
+                <h2 className="inline-flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-[0.04em] text-rose-600 dark:text-rose-400">
+                  <XCircle className="h-3.5 w-3.5" /> {t("lead.st.lost")}
+                </h2>
+                <p className="mt-0.5 text-[12px] tabular-nums text-muted-foreground">
+                  {t("pipeline.columnCount", { count: by("lost").length })}
+                </p>
+                <span className="mt-2 block h-[2px] rounded-full bg-rose-500/60" />
               </header>
-              <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-2 pb-2">
+              <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pb-2">
                 {by("lost")
-                  .slice(0, 30)
+                  .slice(0, 50)
                   .map((a) => (
                     <button
                       key={a.id}
                       type="button"
                       onClick={() => open(a.id)}
-                      className="rounded-lg bg-card/70 px-2.5 py-2 text-left hover:bg-card"
+                      className="rounded-lg border border-border bg-card px-2.5 py-2 text-left opacity-80 transition-opacity hover:opacity-100 dark:border-white/[0.1]"
                     >
-                      <span className="block truncate text-[12.5px] font-medium text-foreground">
+                      <span className="block truncate text-[13px] font-semibold text-foreground">
                         {a.company || a.name}
                       </span>
                       {a.lost_reason && (
-                        <span className="block truncate text-[11px] text-subtle">
+                        <span className="block truncate text-[11.5px] text-subtle">
                           {a.lost_reason}
                         </span>
                       )}
@@ -357,59 +320,9 @@ function LeadsBoard() {
               </div>
             </section>
           </div>
-        ) : (
-          <LeadsTable items={items} onOpen={open} />
         )}
       </div>
 
-      {/* Analytics: a window over the board, opened with its button. */}
-      <Dialog open={analytics} onOpenChange={setAnalytics}>
-        <DialogContent className="max-w-[1100px] gap-4" onOpenAutoFocus={(e) => e.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" /> {t("lead.analytics")}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-            <SmallStat
-              icon={CalendarClock}
-              tone="amber"
-              label={t("lead.statCalls")}
-              value={callsToday.length}
-              note={
-                nextCall?.meeting_at
-                  ? t("lead.statCallsNext", {
-                      day: callDay(nextCall.meeting_at, lang),
-                      time: tashkentTime(nextCall.meeting_at),
-                    })
-                  : t("lead.statCallsNone")
-              }
-            />
-            <SmallStat
-              icon={ListChecks}
-              tone={overdue ? "rose" : "slate"}
-              label={t("lead.statOverdue")}
-              value={overdue}
-              note={t("lead.statOpenTasks", { n: openTasks })}
-            />
-            <SmallStat
-              icon={Rocket}
-              tone="emerald"
-              label={t("lead.statInstalled")}
-              value={installedMonth}
-              note={t("lead.statInstalledAll", { n: count("installed") })}
-            />
-            <SmallStat
-              icon={Target}
-              tone="violet"
-              label={t("lead.statConv")}
-              value={conv == null ? "—" : `${conv}%`}
-              note={t("lead.statConvNote", { won: count("installed"), lost: count("lost") })}
-            />
-          </div>
-          <PipelineRail all={all} />
-        </DialogContent>
-      </Dialog>
       <AddLeadDialog open={adding} onClose={() => setAdding(false)} onCreated={open} />
       <LostDialog
         open={!!lostFor}
@@ -426,302 +339,150 @@ function LeadsBoard() {
   );
 }
 
-const MINI_TONE = {
-  amber: "bg-amber-500/12 text-amber-700 dark:text-amber-300",
-  rose: "bg-rose-500/12 text-rose-700 dark:text-rose-300",
-  emerald: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
-  violet: "bg-violet-500/12 text-violet-700 dark:text-violet-300",
-  slate: "bg-muted text-muted-foreground",
-} as const;
-
-/** A small analytics card: icon, number, label and one line under it. */
-function SmallStat({
-  icon: Icon,
-  tone,
-  label,
-  value,
-  note,
-}: {
-  icon: LucideIcon;
-  tone: keyof typeof MINI_TONE;
-  label: string;
-  value: ReactNode;
-  note: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-      <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", MINI_TONE[tone])}>
-        <Icon className="h-[18px] w-[18px]" />
-      </span>
-      <div className="min-w-0">
-        <p className="flex items-baseline gap-2">
-          <span className="text-[19px] font-bold leading-none tabular-nums text-foreground">
-            {value}
-          </span>
-          <span className="truncate text-[12px] font-medium text-muted-foreground">{label}</span>
-        </p>
-        <p className="mt-0.5 truncate text-[11.5px] text-subtle">{note}</p>
-      </div>
-    </div>
-  );
-}
-
-/** The stages as one relay: how many stand at each and how many pass on. */
-function PipelineRail({ all }: { all: LeadItem[] }) {
-  const { t } = useI18n();
-  const order = PIPELINE_STAGES;
-  // "Reached" = at this stage or further (lost ones count where they stood: unknown, so not).
-  const reached = order.map(
-    (_, i) =>
-      all.filter((a) => {
-        const k = order.indexOf(stageOf(a.status) as (typeof order)[number]);
-        return k >= i;
-      }).length,
-  );
-  const max = Math.max(1, reached[0] ?? 1);
-  return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card px-4 py-2.5">
-      <div className="flex min-w-[860px] items-stretch">
-        {order.map((s, i) => {
-          const here = all.filter((a) => a.status === s).length;
-          const pass =
-            i > 0 && reached[i - 1] ? Math.round((reached[i]! / reached[i - 1]!) * 100) : null;
-          return (
-            <div key={s} className="flex min-w-0 flex-1 items-center">
-              {i > 0 && (
-                <span className="flex w-12 shrink-0 flex-col items-center text-[10.5px] font-semibold tabular-nums text-subtle">
-                  <ChevronRight className="h-4 w-4" />
-                  {pass == null ? "" : `${pass}%`}
-                </span>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-[18px] font-bold leading-none tabular-nums text-foreground">
-                    {here}
-                  </span>
-                  <span className="truncate text-[12px] font-medium text-muted-foreground">
-                    {t(`lead.st.${s}`)}
-                  </span>
-                </div>
-                <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-muted">
-                  <span
-                    className={cn("block h-full rounded-full bg-gradient-to-r", STAGE_TONE[s].bar)}
-                    style={{ width: `${Math.max(4, ((reached[i] ?? 0) / max) * 100)}%` }}
-                  />
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
+/** A lead on the board, drawn like the CRM funnel's card. */
 function LeadCard({ a, onOpen, today }: { a: LeadItem; onOpen: () => void; today: string }) {
   const { t, lang } = useI18n();
   const phase = orgPhaseOf(a.org);
   const callToday = a.meeting_at && tashkentDay(a.meeting_at) === today;
   const callPast = a.meeting_at && new Date(a.meeting_at).getTime() < Date.now();
+  const title = a.company || a.name;
+  const plan = a.plan ?? a.org?.plan ?? null;
+  const hasFooter = !!a.amount || a.tasks > 0 || a.issues > 0;
   return (
-    <button
-      type="button"
+    <article
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("text/lead", a.id);
         e.dataTransfer.effectAllowed = "move";
       }}
       onClick={onOpen}
-      className="group w-full cursor-grab rounded-xl border border-border bg-card p-3 text-left shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-foreground/20 hover:shadow-md active:cursor-grabbing"
+      className="group relative cursor-pointer rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] shadow-[0_1px_1px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)] active:cursor-grabbing dark:border-white/[0.1] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]"
     >
-      <div className="flex items-start gap-2.5">
-        <CompanyMark name={a.company || a.name} size="sm" />
+      <div className="flex min-w-0 gap-2.5">
+        <CompanyMark name={title} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-semibold leading-tight text-foreground">
-            {a.company || a.name}
+          <div className="flex min-w-0 items-center gap-1.5 text-[12px] leading-4 text-muted-foreground">
+            <span className="flex min-w-0 items-center gap-1 font-medium text-foreground/75">
+              <UserRound className="h-3 w-3 shrink-0 text-subtle" />
+              <span className="truncate">{a.name}</span>
+            </span>
+            <span className="flex-1" />
+            <span className="shrink-0 tabular-nums">
+              {ago(a.last_activity_at ?? a.updated_at, t)}
+            </span>
+          </div>
+          <p className="mt-0.5 truncate text-[14px] font-semibold leading-[19px] text-primary">
+            {title}
           </p>
-          <p className="truncate text-[12px] text-muted-foreground">
-            {a.company ? a.name : a.phone}
-          </p>
-        </div>
-        {a.amount ? (
-          <span className="shrink-0 text-[11.5px] font-semibold tabular-nums text-foreground">
-            {Math.round(a.amount / 1000).toLocaleString("ru-RU")}k
-          </span>
-        ) : null}
-      </div>
-      {(a.business || a.plan || a.sales_reps || phase !== "none") && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {phase !== "none" && (
-            <span
+          {a.phone && (
+            <p className="truncate text-[13px] leading-[18px] tabular-nums text-foreground/85">
+              {a.phone}
+            </p>
+          )}
+          {(phase !== "none" || plan || a.sales_reps) && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {phase !== "none" && (
+                <span
+                  className={cn(
+                    "rounded px-1.5 py-px text-[11px] font-semibold",
+                    PHASE_CHIP[phase],
+                  )}
+                >
+                  {t(`lead.phase.${phase}`)}
+                </span>
+              )}
+              {plan && (
+                <span className="rounded bg-muted px-1.5 py-px text-[11px] font-semibold text-muted-foreground">
+                  {PLAN_LABELS[normalizePlan(plan)]}
+                </span>
+              )}
+              {a.sales_reps && (
+                <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-px text-[11px] font-semibold text-muted-foreground">
+                  <Users className="h-3 w-3" /> {a.sales_reps}
+                </span>
+              )}
+            </div>
+          )}
+          {a.meeting_at && a.status !== "lost" && (
+            <p
               className={cn(
-                "rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold",
-                PHASE_CHIP[phase],
+                "mt-1.5 inline-flex items-center gap-1.5 rounded px-1.5 py-px text-[11.5px] font-semibold",
+                callToday
+                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                  : callPast
+                    ? "bg-muted text-subtle"
+                    : "bg-sky-500/10 text-sky-700 dark:text-sky-300",
               )}
             >
-              {t(`lead.phase.${phase}`)}
-            </span>
+              <CalendarClock className="h-3.5 w-3.5" />
+              {callToday ? t("lead.today") : callDay(a.meeting_at, lang)},{" "}
+              {tashkentTime(a.meeting_at)}
+            </p>
           )}
-          {a.plan && (
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
-              {PLAN_LABELS[normalizePlan(a.plan)]}
-            </span>
-          )}
-          {a.sales_reps && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
-              <Users className="h-3 w-3" /> {a.sales_reps}
-            </span>
-          )}
-          {a.business && (
-            <span className="max-w-full truncate rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] text-muted-foreground">
-              {a.business}
-            </span>
+          {hasFooter && (
+            <div className="mt-1.5 flex items-center gap-2 border-t border-border/70 pt-1.5 text-[12px]">
+              <span className="font-semibold tabular-nums text-foreground">
+                {a.amount ? money(a.amount) : ""}
+              </span>
+              <span className="flex-1" />
+              {a.issues > 0 && (
+                <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
+                  <AlertTriangle className="h-3.5 w-3.5" /> {a.issues}
+                </span>
+              )}
+              {a.tasks > 0 && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1",
+                    a.overdue > 0 ? "font-semibold text-rose-600" : "text-muted-foreground",
+                  )}
+                >
+                  <ListChecks className="h-3.5 w-3.5" /> {a.overdue > 0 ? a.overdue : a.tasks}
+                </span>
+              )}
+            </div>
           )}
         </div>
-      )}
-      {a.meeting_at && a.status !== "lost" && (
-        <p
-          className={cn(
-            "mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11.5px] font-semibold",
-            callToday
-              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-              : callPast
-                ? "bg-muted text-subtle"
-                : "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-          )}
-        >
-          <CalendarClock className="h-3.5 w-3.5" />
-          {callToday ? t("lead.today") : callDay(a.meeting_at, lang)}, {tashkentTime(a.meeting_at)}
-        </p>
-      )}
-      <div className="mt-2 flex items-center gap-2 text-[11px] text-subtle">
-        {a.overdue > 0 ? (
-          <span className="inline-flex items-center gap-1 font-semibold text-rose-600">
-            <ListChecks className="h-3.5 w-3.5" /> {a.overdue}
-          </span>
-        ) : a.tasks > 0 ? (
-          <span className="inline-flex items-center gap-1">
-            <ListChecks className="h-3.5 w-3.5" /> {a.tasks}
-          </span>
-        ) : null}
-        {a.issues > 0 && (
-          <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
-            <AlertTriangle className="h-3.5 w-3.5" /> {a.issues}
-          </span>
-        )}
-        <span className="ml-auto">{ago(a.last_activity_at ?? a.updated_at, t)}</span>
       </div>
-    </button>
+    </article>
   );
 }
 
-function LeadsTable({ items, onOpen }: { items: LeadItem[]; onOpen: (id: string) => void }) {
-  const { t, lang } = useI18n();
-  return (
-    <div className="h-full overflow-auto bg-card">
-      <table className="w-full min-w-[980px] text-left">
-        <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_var(--border)]">
-          <tr className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
-            <th className="px-4 py-3">{t("lead.col.company")}</th>
-            <th className="px-3 py-3">{t("lead.col.stage")}</th>
-            <th className="px-3 py-3">{t("lead.col.plan")}</th>
-            <th className="px-3 py-3">{t("wiz.step.business")}</th>
-            <th className="px-3 py-3">{t("lead.col.call")}</th>
-            <th className="px-3 py-3">{t("lead.col.work")}</th>
-            <th className="px-3 py-3 text-right">{t("lead.col.activity")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((a) => {
-            const phase = orgPhaseOf(a.org);
-            return (
-              <tr
-                key={a.id}
-                onClick={() => onOpen(a.id)}
-                className="cursor-pointer border-b border-border/70 last:border-0 hover:bg-muted/40"
-              >
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <CompanyMark name={a.company || a.name} size="sm" />
-                    <div className="min-w-0">
-                      <p className="truncate text-[13.5px] font-semibold text-foreground">
-                        {a.company || a.name}
-                      </p>
-                      <p className="truncate text-[12px] text-muted-foreground">
-                        {a.name} · {a.phone}
-                      </p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-3 py-3">
-                  <StageChip stage={a.status} />
-                </td>
-                <td className="px-3 py-3 text-[12.5px]">
-                  <span className="text-foreground">
-                    {a.plan ? PLAN_LABELS[normalizePlan(a.plan)] : "—"}
-                  </span>
-                  {phase !== "none" && (
-                    <span
-                      className={cn(
-                        "ml-1.5 rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold",
-                        PHASE_CHIP[phase],
-                      )}
-                    >
-                      {t(`lead.phase.${phase}`)}
-                    </span>
-                  )}
-                </td>
-                <td className="max-w-[200px] px-3 py-3 text-[12.5px] text-muted-foreground">
-                  <span className="block truncate">{a.business || "—"}</span>
-                  {a.sales_reps && (
-                    <span className="text-subtle">{t("lead.reps", { n: a.sales_reps })}</span>
-                  )}
-                </td>
-                <td className="px-3 py-3 text-[12.5px] tabular-nums text-foreground">
-                  {a.meeting_at
-                    ? `${callDay(a.meeting_at, lang)}, ${tashkentTime(a.meeting_at)}`
-                    : "—"}
-                </td>
-                <td className="px-3 py-3 text-[12.5px]">
-                  <span
-                    className={cn(
-                      a.overdue ? "font-semibold text-rose-600" : "text-muted-foreground",
-                    )}
-                  >
-                    {t("lead.tasksN", { n: a.tasks })}
-                  </span>
-                  {a.issues > 0 && (
-                    <span className="ml-2 font-semibold text-amber-600">
-                      {t("lead.issuesN", { n: a.issues })}
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 py-3 text-right text-[12px] text-subtle">
-                  {ago(a.last_activity_at ?? a.updated_at, t)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/** The search box's filter: where the lead came from, only booked calls. */
+/** The search box's filter: source, stage, plan, company phase, calls, work and when added. */
 function LeadsFilter({
-  source,
-  onSource,
-  onlyCalls,
-  onOnlyCalls,
+  value,
+  onChange,
 }: {
-  source: (typeof SOURCES)[number];
-  onSource: (s: (typeof SOURCES)[number]) => void;
-  onlyCalls: boolean;
-  onOnlyCalls: (v: boolean) => void;
+  value: LeadFilter;
+  onChange: (f: LeadFilter) => void;
 }) {
   const { t } = useI18n();
-  const count = (source !== "all" ? 1 : 0) + (onlyCalls ? 1 : 0);
+  const n = filterCount(value);
+  const toggle = (k: "sources" | "stages" | "plans" | "phases", v: string) => {
+    const cur = value[k];
+    onChange({ ...value, [k]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v] });
+  };
+  const chip = (on: boolean, onClick: () => void, label: ReactNode, key: string) => (
+    <button
+      key={key}
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "h-8 rounded-lg border px-2.5 text-[12.5px] font-semibold transition-colors",
+        on
+          ? "border-primary/50 bg-primary/10 text-primary"
+          : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+      )}
+    >
+      {label}
+    </button>
+  );
+  const group = (label: string, children: ReactNode) => (
+    <div>
+      <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-subtle">{label}</p>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  );
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -730,53 +491,98 @@ function LeadsFilter({
           title={t("funnelFilter.button")}
           className={cn(
             "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-semibold transition-colors data-[state=open]:bg-primary/12 data-[state=open]:text-primary",
-            count > 0
+            n > 0
               ? "bg-primary/12 text-primary"
               : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
-          <span className="sr-only">{t("funnelFilter.button")}</span>
-          {count > 0 && (
+          {t("funnelFilter.button")}
+          {n > 0 && (
             <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10.5px] font-bold text-primary-foreground">
-              {count}
+              {n}
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-64 p-2">
-        <p className="px-2 pb-1.5 pt-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
-          {t("lead.col.source")}
-        </p>
-        {SOURCES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => onSource(s)}
-            className={cn(
-              "flex h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[13px] font-medium transition-colors",
-              source === s ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent",
-            )}
-          >
-            <span className="flex-1">{t(`lead.src.${s}`)}</span>
-            {source === s && <Check className="h-4 w-4" />}
-          </button>
-        ))}
-        <div className="my-1.5 h-px bg-border" />
-        <button
-          type="button"
-          onClick={() => onOnlyCalls(!onlyCalls)}
-          className={cn(
-            "flex h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[13px] font-medium transition-colors",
-            onlyCalls
-              ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
-              : "text-foreground hover:bg-accent",
+      <PopoverContent align="end" className="w-[min(600px,calc(100vw-2rem))] p-0">
+        <div className="grid gap-4 p-4 sm:grid-cols-2">
+          {group(
+            t("lead.col.stage"),
+            [...PIPELINE_STAGES, "lost" as const].map((s) =>
+              chip(value.stages.includes(s), () => toggle("stages", s), t(`lead.st.${s}`), s),
+            ),
           )}
-        >
-          <CalendarClock className="h-4 w-4" />
-          <span className="flex-1">{t("lead.onlyCalls")}</span>
-          {onlyCalls && <Check className="h-4 w-4" />}
-        </button>
+          <div className="space-y-4">
+            {group(
+              t("lead.col.source"),
+              SOURCES.map((s) =>
+                chip(value.sources.includes(s), () => toggle("sources", s), t(`lead.src.${s}`), s),
+              ),
+            )}
+            {group(
+              t("lead.col.plan"),
+              PLANS.map((p) =>
+                chip(value.plans.includes(p), () => toggle("plans", p), PLAN_LABELS[p], p),
+              ),
+            )}
+          </div>
+          {group(
+            t("oinbox.f.phase"),
+            PHASES.map((p) =>
+              chip(
+                value.phases.includes(p),
+                () => toggle("phases", p),
+                p === "none" ? t("lead.f.noCompany") : t(`lead.phase.${p}`),
+                p,
+              ),
+            ),
+          )}
+          {group(
+            t("lead.f.call"),
+            (["booked", "today"] as const).map((c) =>
+              chip(
+                value.call === c,
+                () => onChange({ ...value, call: value.call === c ? "" : c }),
+                t(`lead.f.call.${c}`),
+                c,
+              ),
+            ),
+          )}
+          {group(
+            t("lead.f.work"),
+            (["overdue", "tasks", "issues"] as const).map((w) =>
+              chip(
+                value.work === w,
+                () => onChange({ ...value, work: value.work === w ? "" : w }),
+                t(`lead.f.work.${w}`),
+                w,
+              ),
+            ),
+          )}
+          {group(
+            t("lead.f.period"),
+            (["today", "7", "30"] as const).map((d) =>
+              chip(
+                value.period === d,
+                () => onChange({ ...value, period: value.period === d ? "" : d }),
+                t(`lead.f.period.${d}`),
+                d,
+              ),
+            ),
+          )}
+        </div>
+        {n > 0 && (
+          <div className="flex justify-end border-t border-border px-4 py-2.5">
+            <button
+              type="button"
+              onClick={() => onChange(EMPTY)}
+              className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" /> {t("oinbox.reset")}
+            </button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );

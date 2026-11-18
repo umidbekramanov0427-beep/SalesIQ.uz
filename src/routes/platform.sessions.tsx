@@ -3,6 +3,8 @@ import { ConsoleTabs, OwnerHeader } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
+  ArrowLeft,
+  ChevronRight,
   Ban,
   CalendarClock,
   Eye,
@@ -20,7 +22,6 @@ import {
   Sprout,
   Timer,
 } from "lucide-react";
-import { OnlineNow } from "@/components/platform/OnlineNow";
 import { TrialsPanel } from "@/components/platform/TrialsPanel";
 import { FunnelPanel } from "@/components/platform/FunnelPanel";
 import { ActivityLogPanel } from "@/components/platform/ActivityLogPanel";
@@ -28,7 +29,8 @@ import { downloadXlsx } from "@/lib/xlsx-write";
 import { SectionCard, Pill } from "@/components/layout/Primitives";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { cn, roleTone } from "@/lib/utils";
+import { cn, roleTone, timeAgo } from "@/lib/utils";
+import { CompanyMark } from "@/components/owner/leads/shared";
 import { deviceIcon, durationLabel, placeLabel } from "@/lib/visit-labels";
 import {
   useOrganizations,
@@ -249,8 +251,6 @@ function PlatformSessionsPage() {
       {tab === "activity" && <ActivityLogPanel />}
       {tab === "visits" && (
         <>
-          <OnlineNow />
-
           <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2">
             <form
               onSubmit={(e) => {
@@ -315,11 +315,28 @@ function PlatformSessionsPage() {
               <p className="text-sm text-subtle">{t("visits.empty")}</p>
             ) : (
               <>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 phone:grid-cols-2">
-                  {sessions.map((s) => (
-                    <VisitCard key={s.id} visit={s} />
-                  ))}
-                </div>
+                {filters.org ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setFilters((f) => ({ ...f, org: "" }))}
+                      className="mb-3 inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      <ArrowLeft className="h-4 w-4" /> {t("visits.allCompanies")}
+                    </button>
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 phone:grid-cols-2">
+                      {sessions.map((s) => (
+                        <VisitCard key={s.id} visit={s} />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  // By company first: a click opens that company's visits.
+                  <CompanyVisitGroups
+                    sessions={sessions}
+                    onOpen={(id) => setFilters((f) => ({ ...f, org: id }))}
+                  />
+                )}
                 {visits.hasNextPage && (
                   <button
                     type="button"
@@ -467,5 +484,94 @@ function Count({
     >
       <Icon className="h-3 w-3" /> {n} {label}
     </span>
+  );
+}
+
+/** The visits grouped by company: one row each, opened with a click. */
+function CompanyVisitGroups({
+  sessions,
+  onOpen,
+}: {
+  sessions: PlatformVisit[];
+  onOpen: (orgId: string) => void;
+}) {
+  const { t } = useI18n();
+  const groups = new Map<
+    string,
+    {
+      id: string | null;
+      name: string;
+      org: PlatformVisit["org"];
+      visits: number;
+      people: Set<string>;
+      failed: number;
+      last: string;
+    }
+  >();
+  for (const v of sessions) {
+    const key = v.org?.id ?? "";
+    const g = groups.get(key) ?? {
+      id: v.org?.id ?? null,
+      name: v.org?.name ?? t("lead.f.noCompany"),
+      org: v.org,
+      visits: 0,
+      people: new Set<string>(),
+      failed: 0,
+      last: v.createdAt,
+    };
+    g.visits++;
+    if (v.user) g.people.add(v.user.id);
+    if (v.kind === "failed_login") g.failed++;
+    const seen = v.lastSeenAt ?? v.createdAt;
+    if (seen > g.last) g.last = seen;
+    groups.set(key, g);
+  }
+  const list = [...groups.values()].sort((a, b) => b.last.localeCompare(a.last));
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <ul className="divide-y divide-border">
+        {list.map((g) => (
+          <li key={g.id ?? "none"}>
+            <button
+              type="button"
+              disabled={!g.id}
+              onClick={() => g.id && onOpen(g.id)}
+              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50 disabled:cursor-default disabled:hover:bg-transparent"
+            >
+              <CompanyMark name={g.name} size="md" />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="truncate text-[14.5px] font-semibold text-foreground">
+                    {g.name}
+                  </span>
+                  {g.org && (
+                    <Pill tone={g.org.frozen ? "info" : g.org.trial ? "warning" : "success"}>
+                      {g.org.frozen
+                        ? t("orgcard.frozen")
+                        : g.org.trial
+                          ? t("visits.typeTrial")
+                          : t("visits.typePaid")}
+                    </Pill>
+                  )}
+                </span>
+                <span className="mt-0.5 block truncate text-[12.5px] text-muted-foreground">
+                  {t("visits.groupLine", { visits: g.visits, people: g.people.size })}
+                  {g.failed > 0 && (
+                    <span className="text-rose-600">
+                      {" "}
+                      · {t("visits.groupFailed", { n: g.failed })}
+                    </span>
+                  )}
+                </span>
+              </span>
+              <span className="shrink-0 text-right text-[12px] tabular-nums text-muted-foreground">
+                {timeAgo(g.last)}
+              </span>
+              {g.id && <ChevronRight className="h-4 w-4 shrink-0 text-subtle" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
