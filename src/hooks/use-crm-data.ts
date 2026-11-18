@@ -7,6 +7,7 @@ export * from "./crm/profile";
 export * from "./crm/dashboard";
 export * from "./crm/integrations";
 export * from "./crm/org-bot";
+export * from "./crm/owner-inbox";
 export * from "./crm/duplicates-billing";
 export * from "./crm/settings";
 export * from "./crm/team";

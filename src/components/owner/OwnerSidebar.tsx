@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/components/layout/AppSidebar";
-import { usePlatformSupportThreads, useSubscriptionRequestsRaw } from "@/hooks/use-crm-data";
+import { useOwnerInbox, useSubscriptionRequestsRaw } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { NAV_ITEMS, type NavItem } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -87,10 +87,11 @@ export function OwnerNav({
   const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = ownerNavItems();
-  const { data: support } = usePlatformSupportThreads();
+  const { data: inbox } = useOwnerInbox();
   const { data: requests } = useSubscriptionRequestsRaw();
   const counts: Record<string, number> = {
-    "/platform/support": support?.stats.waiting ?? 0,
+    // Companies waiting for an answer (the inbox groups by company).
+    "/platform/support": inbox?.stats?.waiting ?? 0,
     "/platform/notifications": (requests ?? []).filter((r) => r.status === "pending").length,
   };
   return (

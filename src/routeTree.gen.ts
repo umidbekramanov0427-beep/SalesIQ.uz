@@ -217,6 +217,7 @@ import { Route as PlatformInboxApiRouteImport } from './routes/platform.inbox-ap
 import { Route as PlatformInsightsRouteImport } from './routes/platform.insights'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformLoginCodeSettingRouteImport } from './routes/platform.login-code-setting'
+import { Route as PlatformMeetingSettingsRouteImport } from './routes/platform.meeting-settings'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformOpsApiRouteImport } from './routes/platform.ops-api'
 import { Route as PlatformPartnersRouteImport } from './routes/platform.partners'
@@ -1397,6 +1398,11 @@ const PlatformLoginCodeSettingRoute =
     path: '/platform/login-code-setting',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PlatformMeetingSettingsRoute = PlatformMeetingSettingsRouteImport.update({
+  id: '/platform/meeting-settings',
+  path: '/platform/meeting-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformNotificationsRoute = PlatformNotificationsRouteImport.update({
   id: '/platform/notifications',
   path: '/platform/notifications',
@@ -2210,6 +2216,7 @@ export interface FileRoutesByFullPath {
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
+  '/platform/meeting-settings': typeof PlatformMeetingSettingsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/partners': typeof PlatformPartnersRoute
@@ -2533,6 +2540,7 @@ export interface FileRoutesByTo {
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
+  '/platform/meeting-settings': typeof PlatformMeetingSettingsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/partners': typeof PlatformPartnersRoute
@@ -2857,6 +2865,7 @@ export interface FileRoutesById {
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
+  '/platform/meeting-settings': typeof PlatformMeetingSettingsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/partners': typeof PlatformPartnersRoute
@@ -3182,6 +3191,7 @@ export interface FileRouteTypes {
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/login-code-setting'
+    | '/platform/meeting-settings'
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/partners'
@@ -3505,6 +3515,7 @@ export interface FileRouteTypes {
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/login-code-setting'
+    | '/platform/meeting-settings'
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/partners'
@@ -3828,6 +3839,7 @@ export interface FileRouteTypes {
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/login-code-setting'
+    | '/platform/meeting-settings'
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/partners'
@@ -4083,6 +4095,7 @@ export interface RootRouteChildren {
   PlatformInsightsRoute: typeof PlatformInsightsRoute
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformLoginCodeSettingRoute: typeof PlatformLoginCodeSettingRoute
+  PlatformMeetingSettingsRoute: typeof PlatformMeetingSettingsRoute
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformOpsApiRoute: typeof PlatformOpsApiRoute
   PlatformPartnersRoute: typeof PlatformPartnersRoute
@@ -5616,6 +5629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformLoginCodeSettingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/meeting-settings': {
+      id: '/platform/meeting-settings'
+      path: '/platform/meeting-settings'
+      fullPath: '/platform/meeting-settings'
+      preLoaderRoute: typeof PlatformMeetingSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/notifications': {
       id: '/platform/notifications'
       path: '/platform/notifications'
@@ -6975,6 +6995,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformInsightsRoute: PlatformInsightsRoute,
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformLoginCodeSettingRoute: PlatformLoginCodeSettingRoute,
+  PlatformMeetingSettingsRoute: PlatformMeetingSettingsRoute,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformOpsApiRoute: PlatformOpsApiRoute,
   PlatformPartnersRoute: PlatformPartnersRoute,

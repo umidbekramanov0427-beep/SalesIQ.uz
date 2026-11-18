@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api";
 import {
   Bot,
+  CalendarClock,
   CreditCard,
   DatabaseBackup,
   FileSignature,
@@ -22,6 +23,7 @@ import { ConsoleSideTabs, OwnerEmpty, OwnerHeader, OwnerPanel } from "@/componen
 import type { CardTone } from "@/lib/tones";
 import { RequisitesCard } from "@/components/platform/RequisitesCard";
 import { BackupCard } from "@/components/platform/BackupCard";
+import { MeetingSettingsCard } from "@/components/owner/MeetingSettingsCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { useAllAiAgents } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
@@ -31,12 +33,21 @@ import { cn } from "@/lib/utils";
 // one section at a time -- the owner's own Payme/Click cashbox, company
 // requisites for invoices, support contacts shown to companies, the AI agents, the owner's own sign-in security
 // and the daily backup of every company's data to a Telegram channel.
-const TABS = ["payments", "requisites", "contacts", "ai", "security", "backup"] as const;
+const TABS = [
+  "payments",
+  "requisites",
+  "contacts",
+  "meetings",
+  "ai",
+  "security",
+  "backup",
+] as const;
 type Tab = (typeof TABS)[number];
 const ICONS: Record<Tab, LucideIcon> = {
   payments: CreditCard,
   requisites: FileSignature,
   contacts: LifeBuoy,
+  meetings: CalendarClock,
   ai: Bot,
   security: ShieldCheck,
   backup: DatabaseBackup,
@@ -45,6 +56,7 @@ const TONES: Record<Tab, CardTone> = {
   payments: "emerald",
   requisites: "sky",
   contacts: "amber",
+  meetings: "amber",
   ai: "violet",
   security: "rose",
   backup: "emerald",
@@ -82,6 +94,7 @@ function OwnerSettingsPage() {
           {tab === "payments" && <PlatformPaymentSettingsCard />}
           {tab === "requisites" && <RequisitesCard />}
           {tab === "contacts" && <SupportContactsCard />}
+          {tab === "meetings" && <MeetingSettingsCard />}
           {tab === "ai" && <AiAgentsPanel />}
           {tab === "backup" && <BackupCard />}
           {tab === "security" && (

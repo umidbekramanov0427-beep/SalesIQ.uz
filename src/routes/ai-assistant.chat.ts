@@ -5,7 +5,8 @@ import { loadOrgAccess } from "@/lib/org-access.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runChatRounds, type ChatEvent, type GeminiContent } from "@/lib/ai-chat-rounds.server";
-import { guideRules, pageIndex } from "@/lib/ai/platform-guide";
+import { guideRules, pageIndex, setupProgress } from "@/lib/ai/platform-guide";
+import { loadFirstSteps } from "@/lib/first-steps.server";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -1080,6 +1081,16 @@ Other pages:
           }) +
           "\n\nMore pages (settings and tools) you may link to:\n" +
           pageIndex(uzDict);
+        // The admin's setup progress, so "where do I start?" gets the real next step.
+        if (orgId && caller?.role === "super_admin") {
+          const { data: me } = await supabaseAdmin
+            .from("profiles")
+            .select("telegram_chat_id")
+            .eq("id", userId)
+            .maybeSingle();
+          const setup = await loadFirstSteps(orgId, !!me?.telegram_chat_id).catch(() => null);
+          if (setup) systemPrompt += "\n\n" + setupProgress(setup.steps, setup.ownBot);
+        }
         if (profile) {
           const context = [
             profile.company_name && `Company: ${profile.company_name}`,

@@ -4,6 +4,12 @@
 // something -- the company admin gets the live Operator tab, everyone else
 // the SalesIQ support contact (or their own admin). Pure, unit-tested.
 import { SEARCH_CATALOG } from "@/lib/search-catalog";
+import {
+  FIRST_STEP_PATH,
+  FIRST_STEPS,
+  type FirstStep,
+  type FirstStepsState,
+} from "@/lib/first-steps";
 
 /** "- [Telefoniya](/admin/telephony) — telephony sip onlinepbx" lines. */
 export function pageIndex(dict: Record<string, string>): string {
@@ -48,4 +54,37 @@ export function guideRules(role: string | null, contact: SupportContact): string
       handoff,
     "- Never promise the SalesIQ team will do something by a certain time.",
   ].join("\n");
+}
+
+const STEP_LABEL: Record<FirstStep, string> = {
+  bot: "Link your own Telegram to the SalesIQ bot (reports, reminders, phone check)",
+  team: "Add the team (employees)",
+  lead: "Get the first lead into a funnel",
+  integration: "Connect an integration (telephony, amoCRM, Bitrix24 or Instagram)",
+  business: "Fill in the business profile (what you sell) -- the AI uses it",
+};
+
+/**
+ * The company's setup progress for the prompt: what is done, what is next
+ * (with its link), and whether its clients already have the company's own
+ * Telegram bot. Only the company admin can do these, so only they get it.
+ */
+export function setupProgress(state: FirstStepsState, ownBot: boolean | null): string {
+  const done = FIRST_STEPS.filter((s) => state[s]);
+  const todo = FIRST_STEPS.filter((s) => !state[s]);
+  const lines = ["Company setup progress (the company admin's first steps):"];
+  for (const s of done) lines.push(`- DONE: ${STEP_LABEL[s]}`);
+  for (const s of todo) lines.push(`- NOT DONE: [${STEP_LABEL[s]}](${FIRST_STEP_PATH[s]})`);
+  if (ownBot === false)
+    lines.push(
+      "- NOT DONE: [Connect the company's own Telegram bot for clients](/integrations/telegram-bot) -- the shared trial bot takes new clients only for the first 14 days",
+    );
+  else if (ownBot) lines.push("- DONE: The company's own Telegram bot for clients is connected");
+  const next = todo[0];
+  lines.push(
+    next
+      ? `When they ask where to start or what to do next, the next step is: [${STEP_LABEL[next]}](${FIRST_STEP_PATH[next]}). Mention the remaining ones briefly.`
+      : "All first steps are done: suggest deeper setup (funnel stages, salesbots, telephony, call scoring) when they ask what to do next.",
+  );
+  return lines.join("\n");
 }

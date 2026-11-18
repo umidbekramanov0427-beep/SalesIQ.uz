@@ -1,4 +1,4 @@
-import { guideRules, pageIndex, telegramLink } from "@/lib/ai/platform-guide";
+import { guideRules, pageIndex, setupProgress, telegramLink } from "@/lib/ai/platform-guide";
 
 describe("AI platform guide", () => {
   it("lists catalog pages as markdown links", () => {
@@ -21,5 +21,21 @@ describe("AI platform guide", () => {
     expect(rep).toContain("https://t.me/x_support");
     expect(rep).not.toContain("#operator");
     expect(guideRules("rop", { telegram: null, phone: null })).toContain("company admin");
+  });
+});
+
+describe("AI setup progress", () => {
+  it("names the next step with its link and the own bot", () => {
+    const text = setupProgress(
+      { bot: true, team: false, lead: false, integration: false, business: true },
+      false,
+    );
+    expect(text).toContain("DONE: Link your own Telegram");
+    expect(text).toContain("the next step is: [Add the team (employees)](/admin/employees)");
+    expect(text).toContain("(/integrations/telegram-bot)");
+  });
+  it("suggests deeper setup when everything is done", () => {
+    const all = { bot: true, team: true, lead: true, integration: true, business: true };
+    expect(setupProgress(all, true)).toContain("All first steps are done");
   });
 });

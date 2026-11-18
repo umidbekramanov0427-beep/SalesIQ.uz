@@ -30,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import { CompanyMark, HEALTH_DOT, PHASE_CHIP, StageChip } from "@/components/owner/leads/shared";
 import { renderMessageContent } from "@/components/ai/MessageContent";
+import { useOwnerInbox } from "@/hooks/use-crm-data";
 import { FixedPage } from "@/components/layout/FixedPage";
 import { responseLabel } from "@/lib/support";
 import { apiFetch } from "@/lib/api";
@@ -61,17 +62,6 @@ export const Route = createFileRoute("/platform/support")({
   component: OwnerInboxPage,
 });
 
-type ListData = {
-  ready: boolean;
-  statesReady: boolean;
-  threads: CompanyThread[];
-  stats?: {
-    waiting: number;
-    avgResponseMs: number | null;
-    answeredToday: number;
-    questions: number;
-  };
-};
 type Facts = {
   org: {
     plan: string | null;
@@ -156,15 +146,7 @@ function OwnerInboxPage() {
       return !v;
     });
   const listSize = useResizableWidth("owner-inbox-list", 360, 290, 520);
-  const { data, isLoading } = useQuery({
-    queryKey: ["owner_inbox"],
-    refetchInterval: 12_000,
-    queryFn: async (): Promise<ListData> => {
-      const res = await apiFetch("/platform/inbox-api");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    },
-  });
+  const { data, isLoading } = useOwnerInbox();
   const all = useMemo(() => data?.threads ?? [], [data]);
   const list = useMemo(() => all.filter((x) => matchesOwnerInbox(x, filter)), [all, filter]);
   const current = all.find((x) => x.key === selected) ?? null;
