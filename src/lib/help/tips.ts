@@ -364,6 +364,18 @@ export const TIPS: Record<string, Tip> = {
       en: "From the lead's chats, calls and stage; hot ≥ 70, cold < 40.",
     },
   },
+  "nav:/marketing/ai": {
+    what: {
+      uz: "AI tahlilchi — vebinar, lid, sotuv va reklama raqamlarini yig'ib, muammolarni topadi, dalil bilan tushuntiradi va tavsiya beradi.",
+      ru: "AI-аналитик — собирает цифры вебинаров, лидов, продаж и рекламы, находит проблемы, объясняет их с доказательствами и даёт рекомендации.",
+      en: "AI analyst — gathers webinar, lead, sales and ad figures, finds problems, explains them with evidence and recommends what to do.",
+    },
+    calc: {
+      uz: "Raqamlarni tizim kompaniyaning o'z ma'lumotidan hisoblaydi (tanlangan davrda kelgan lidlar). AI faqat shu raqamlarni tushuntiradi; ma'lumotda yo'q raqamli xulosa tashlab yuboriladi.",
+      ru: "Цифры считает система по данным компании (лиды выбранного периода). ИИ только объясняет их; вывод с цифрой, которой нет в данных, отбрасывается.",
+      en: "The system works out the figures from the company's own data (leads of the period). The AI only explains them; a finding citing a number not in the data is dropped.",
+    },
+  },
   "nav:/marketing/channels": {
     what: {
       uz: "Kanallar — Telegram kanallaringiz: obunachilar, qo'shilgan va chiqib ketganlar, eng faol soatlar.",

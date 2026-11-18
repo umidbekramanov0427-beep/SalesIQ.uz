@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
+  BrainCircuit,
   LayoutDashboard,
   Laptop,
   LogOut,
@@ -57,6 +58,12 @@ export const MARKETING_NAV: Item[] = [
     to: "/marketing/quality",
     icon: Sparkles,
     key: "quality",
+    tone: "text-violet-600 dark:text-violet-400",
+  },
+  {
+    to: "/marketing/ai",
+    icon: BrainCircuit,
+    key: "ai",
     tone: "text-violet-600 dark:text-violet-400",
   },
   {

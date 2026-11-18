@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   Activity,
   Bot,
+  BrainCircuit,
   Copy,
   FolderKanban,
   Globe,
@@ -25,6 +26,7 @@ import { ProjectsBoard } from "@/components/marketing/ProjectsBoard";
 import { SourcesBoard } from "@/components/marketing/SourcesBoard";
 import { TrackingSettings } from "@/components/marketing/TrackingSettings";
 import { MarketingBotSettings } from "@/components/marketing/MarketingBotSettings";
+import { MarketingAiSettings } from "@/components/marketing/MarketingAiSettings";
 import { useMarketingFilters } from "@/components/marketing/MarketingFilters";
 
 // Marketing paneli -> Sozlash, in tabs: Loyihalar (projects: funnels + UTM
@@ -36,7 +38,7 @@ import { useMarketingFilters } from "@/components/marketing/MarketingFilters";
 // and campaign). Day / night and the language are in the person's tile at the
 // bottom of the panel's menu -- their one place.
 
-const TABS = ["projects", "sources", "bot", "tracking", "team", "utm"] as const;
+const TABS = ["projects", "sources", "bot", "ai", "tracking", "team", "utm"] as const;
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/marketing/settings")({
@@ -75,6 +77,7 @@ function MarketingSettings() {
           { value: "projects", label: t("mkt.set.projects"), icon: FolderKanban },
           { value: "sources", label: t("mkt.set.sources"), icon: PlugZap },
           { value: "bot", label: t("mkt.set.bot"), icon: Bot },
+          { value: "ai", label: t("mkt.set.ai"), icon: BrainCircuit },
           { value: "tracking", label: t("mkt.set.tracking"), icon: Activity },
           { value: "team", label: t("mkt.set.team"), icon: Users },
           { value: "utm", label: t("mkt.set.utm"), icon: Tags },
@@ -88,6 +91,7 @@ function MarketingSettings() {
       )}
       {tab === "sources" && <SourcesBoard />}
       {tab === "bot" && <MarketingBotSettings />}
+      {tab === "ai" && <MarketingAiSettings />}
       {tab === "tracking" && <TrackingSettings />}
       {tab === "team" && <TeamTab />}
       {tab === "utm" && <UtmTab />}

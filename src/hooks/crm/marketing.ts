@@ -9,6 +9,7 @@ import type { MarketingData } from "@/lib/marketing";
 import type { ChannelAnalytics, TgStats } from "@/lib/channel-analytics";
 import type { SiteStats } from "@/lib/site-tracking";
 import { parseMarketingRules, type MarketingRules } from "@/lib/marketing-rules";
+import type { AiOverview } from "@/lib/marketing-ai/types";
 import { useOrgGeneralSettings } from "./settings";
 
 export function useMarketingData(
@@ -792,5 +793,66 @@ export function useMarketingBotAction() {
       return json;
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["marketing_bot"] }),
+  });
+}
+
+/* ---- AI tahlilchi (src/lib/marketing-ai/) ------------------------------- */
+
+export type AiScope = {
+  from: string;
+  to: string;
+  project?: string | null;
+  campaign?: string | null;
+  webinar?: string | null;
+};
+
+/** Figures, previous period, rule alerts, last analysis and the dollar rate. */
+export function useMarketingAi(scope: AiScope) {
+  const { user } = useAuth();
+  const qs = new URLSearchParams({ from: scope.from, to: scope.to });
+  if (scope.project) qs.set("project", scope.project);
+  if (scope.campaign) qs.set("campaign", scope.campaign);
+  if (scope.webinar) qs.set("webinar", scope.webinar);
+  return useQuery({
+    queryKey: ["marketing_ai", user?.organizationId, qs.toString()],
+    enabled: !!user?.organizationId,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const res = await apiFetch(`/marketing-api/ai?${qs}`);
+      const json = (await res.json().catch(() => ({}))) as Record<string, unknown> & {
+        error?: string;
+      };
+      if (!res.ok) throw new Error(json.error ?? "Could not load");
+      return json as unknown as AiOverview;
+    },
+  });
+}
+
+export async function marketingAiPost<T = Record<string, unknown>>(
+  body: Record<string, unknown>,
+): Promise<T> {
+  const res = await apiFetch("/marketing-api/ai", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = (await res.json().catch(() => ({}))) as T & { error?: string; code?: string };
+  if (!res.ok) {
+    const err = new Error(json.error ?? "Xatolik") as Error & { code?: string };
+    if (json.code) err.code = json.code;
+    throw err;
+  }
+  return json;
+}
+
+export function useMarketingAiQuery<T>(key: string, body: Record<string, unknown>, enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["marketing_ai_post", user?.organizationId, key, JSON.stringify(body)],
+    enabled: !!user?.organizationId && enabled,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: () => marketingAiPost<T>(body),
   });
 }

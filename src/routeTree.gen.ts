@@ -182,6 +182,7 @@ import { Route as MarketingApiSiteRouteImport } from './routes/marketing-api.sit
 import { Route as MarketingApiTgAccountRouteImport } from './routes/marketing-api.tg-account'
 import { Route as MarketingIndexRouteImport } from './routes/marketing.index'
 import { Route as MarketingAdsRouteImport } from './routes/marketing.ads'
+import { Route as MarketingAiRouteImport } from './routes/marketing.ai'
 import { Route as MarketingDataRouteImport } from './routes/marketing.data'
 import { Route as MarketingQualityRouteImport } from './routes/marketing.quality'
 import { Route as MarketingSettingsRouteImport } from './routes/marketing.settings'
@@ -1221,6 +1222,11 @@ const MarketingAdsRoute = MarketingAdsRouteImport.update({
   path: '/marketing/ads',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingAiRoute = MarketingAiRouteImport.update({
+  id: '/marketing/ai',
+  path: '/marketing/ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingDataRoute = MarketingDataRouteImport.update({
   id: '/marketing/data',
   path: '/marketing/data',
@@ -2218,6 +2224,7 @@ export interface FileRoutesByFullPath {
   '/marketing-api/site': typeof MarketingApiSiteRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
+  '/marketing/ai': typeof MarketingAiRoute
   '/marketing/data': typeof MarketingDataRoute
   '/marketing/quality': typeof MarketingQualityRoute
   '/marketing/settings': typeof MarketingSettingsRoute
@@ -2548,6 +2555,7 @@ export interface FileRoutesByTo {
   '/marketing-api/site': typeof MarketingApiSiteRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
+  '/marketing/ai': typeof MarketingAiRoute
   '/marketing/data': typeof MarketingDataRoute
   '/marketing/quality': typeof MarketingQualityRoute
   '/marketing/settings': typeof MarketingSettingsRoute
@@ -2879,6 +2887,7 @@ export interface FileRoutesById {
   '/marketing-api/site': typeof MarketingApiSiteRoute
   '/marketing-api/tg-account': typeof MarketingApiTgAccountRoute
   '/marketing/ads': typeof MarketingAdsRoute
+  '/marketing/ai': typeof MarketingAiRoute
   '/marketing/data': typeof MarketingDataRoute
   '/marketing/quality': typeof MarketingQualityRoute
   '/marketing/settings': typeof MarketingSettingsRoute
@@ -3211,6 +3220,7 @@ export interface FileRouteTypes {
     | '/marketing-api/site'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
+    | '/marketing/ai'
     | '/marketing/data'
     | '/marketing/quality'
     | '/marketing/settings'
@@ -3541,6 +3551,7 @@ export interface FileRouteTypes {
     | '/marketing-api/site'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
+    | '/marketing/ai'
     | '/marketing/data'
     | '/marketing/quality'
     | '/marketing/settings'
@@ -3871,6 +3882,7 @@ export interface FileRouteTypes {
     | '/marketing-api/site'
     | '/marketing-api/tg-account'
     | '/marketing/ads'
+    | '/marketing/ai'
     | '/marketing/data'
     | '/marketing/quality'
     | '/marketing/settings'
@@ -4134,6 +4146,7 @@ export interface RootRouteChildren {
   MarketingApiSiteRoute: typeof MarketingApiSiteRoute
   MarketingApiTgAccountRoute: typeof MarketingApiTgAccountRoute
   MarketingAdsRoute: typeof MarketingAdsRoute
+  MarketingAiRoute: typeof MarketingAiRoute
   MarketingDataRoute: typeof MarketingDataRoute
   MarketingQualityRoute: typeof MarketingQualityRoute
   MarketingSettingsRoute: typeof MarketingSettingsRoute
@@ -5460,6 +5473,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing/ads'
       fullPath: '/marketing/ads'
       preLoaderRoute: typeof MarketingAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketing/ai': {
+      id: '/marketing/ai'
+      path: '/marketing/ai'
+      fullPath: '/marketing/ai'
+      preLoaderRoute: typeof MarketingAiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing/data': {
@@ -7082,6 +7102,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketingApiSiteRoute: MarketingApiSiteRoute,
   MarketingApiTgAccountRoute: MarketingApiTgAccountRoute,
   MarketingAdsRoute: MarketingAdsRoute,
+  MarketingAiRoute: MarketingAiRoute,
   MarketingDataRoute: MarketingDataRoute,
   MarketingQualityRoute: MarketingQualityRoute,
   MarketingSettingsRoute: MarketingSettingsRoute,
