@@ -12,6 +12,7 @@ import {
   type InboxPhase,
 } from "@/lib/owner-inbox";
 import { loadLeadFacts } from "@/lib/company-leads.server";
+import { average, supportResponseTimes } from "@/lib/support";
 
 type Msg = {
   id: string;
@@ -56,10 +57,25 @@ async function names(ids: string[]) {
   return map;
 }
 
+export type OwnerInboxStats = {
+  waiting: number;
+  avgResponseMs: number | null;
+  answeredToday: number;
+  questions: number;
+};
+
+const EMPTY_STATS: OwnerInboxStats = {
+  waiting: 0,
+  avgResponseMs: null,
+  answeredToday: 0,
+  questions: 0,
+};
+
 export async function listCompanyThreads(days = 90): Promise<{
   ready: boolean;
   statesReady: boolean;
   threads: CompanyThread[];
+  stats: OwnerInboxStats;
 }> {
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   const { data, error } = await supabaseAdmin
@@ -68,7 +84,7 @@ export async function listCompanyThreads(days = 90): Promise<{
     .gte("created_at", since)
     .order("created_at", { ascending: true })
     .limit(10000);
-  if (error) return { ready: false, statesReady: false, threads: [] };
+  if (error) return { ready: false, statesReady: false, threads: [], stats: EMPTY_STATS };
   const msgs = (data ?? []) as Msg[];
   const groups = new Map<string, Msg[]>();
   for (const m of msgs) {
@@ -159,10 +175,26 @@ export async function listCompanyThreads(days = 90): Promise<{
       lastAskerId: lastIn?.user_id ?? last.user_id,
     };
   });
+  // The last 30 days: how fast the team answers, today's answers, questions.
+  const monthAgo = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const todayStart = new Date(
+    Math.floor((Date.now() + 5 * 3_600_000) / 86_400_000) * 86_400_000 - 5 * 3_600_000,
+  ).toISOString();
+  const responses: number[] = [];
+  for (const list of groups.values())
+    responses.push(
+      ...supportResponseTimes(list.filter((m) => m.created_at >= monthAgo)).responsesMs,
+    );
   return {
     ready: true,
     statesReady: !(states as { error?: unknown }).error,
     threads: sortThreads(threads),
+    stats: {
+      waiting: threads.filter((t) => t.waitingSince).length,
+      avgResponseMs: average(responses),
+      answeredToday: msgs.filter((m) => m.direction === "out" && m.created_at >= todayStart).length,
+      questions: msgs.filter((m) => m.direction === "in" && m.created_at >= monthAgo).length,
+    },
   };
 }
 

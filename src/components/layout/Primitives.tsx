@@ -87,7 +87,10 @@ export function SettingsLayout({
   return (
     <SettingsDensity.Provider value={true}>
       <AdminLook.Provider value={variant === "admin"}>
-        <div className={cn("settings-scope", gutter && "lg:pr-5")}>{children}</div>
+        {/* Without its gutter the wrapper takes no box of its own (only its
+            styles), so a page pinned to the screen (FixedPage) sits right
+            in <main> and can cancel its padding. */}
+        <div className={cn("settings-scope", gutter ? "lg:pr-5" : "contents")}>{children}</div>
       </AdminLook.Provider>
     </SettingsDensity.Provider>
   );

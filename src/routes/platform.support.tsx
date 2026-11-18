@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowDown,
+  ArrowLeft,
+  BarChart3,
+  ChevronDown,
   Building2,
   Check,
   CheckCheck,
@@ -27,6 +30,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import { CompanyMark, HEALTH_DOT, PHASE_CHIP, StageChip } from "@/components/owner/leads/shared";
 import { renderMessageContent } from "@/components/ai/MessageContent";
+import { FixedPage } from "@/components/layout/FixedPage";
+import { responseLabel } from "@/lib/support";
 import { apiFetch } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -56,7 +61,17 @@ export const Route = createFileRoute("/platform/support")({
   component: OwnerInboxPage,
 });
 
-type ListData = { ready: boolean; statesReady: boolean; threads: CompanyThread[] };
+type ListData = {
+  ready: boolean;
+  statesReady: boolean;
+  threads: CompanyThread[];
+  stats?: {
+    waiting: number;
+    avgResponseMs: number | null;
+    answeredToday: number;
+    questions: number;
+  };
+};
 type Facts = {
   org: {
     plan: string | null;
@@ -122,6 +137,24 @@ function OwnerInboxPage() {
   const [filter, setFilter] = useState<OwnerInboxFilter>(EMPTY_OWNER_FILTER);
   const [selected, setSelected] = useState<string | null>(search.org ?? null);
   const [infoOpen, setInfoOpen] = useState(true);
+  // Phones show the list or the open conversation, one at a time.
+  const [phoneChat, setPhoneChat] = useState(!!search.org);
+  const [analytics, setAnalytics] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("owner.inbox.analytics") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleAnalytics = () =>
+    setAnalytics((v) => {
+      try {
+        localStorage.setItem("owner.inbox.analytics", v ? "0" : "1");
+      } catch {
+        /* private window */
+      }
+      return !v;
+    });
   const listSize = useResizableWidth("owner-inbox-list", 360, 290, 520);
   const { data, isLoading } = useQuery({
     queryKey: ["owner_inbox"],
@@ -146,13 +179,14 @@ function OwnerInboxPage() {
     JSON.stringify(presetFilter(p)) === JSON.stringify({ ...filter, text: "" });
 
   return (
-    <div className="flex h-[calc(100dvh-148px)] min-h-[560px] w-full overflow-hidden rounded-2xl border border-border bg-card">
+    <FixedPage className="flex-row bg-card">
       {/* list */}
       <aside
         style={{ width: listSize.width }}
         className={cn(
-          "relative flex shrink-0 flex-col border-r border-border phone:w-full",
+          "relative flex shrink-0 flex-col border-r border-border phone:!w-full phone:border-r-0",
           current && infoOpen && "lg:max-xl:hidden",
+          phoneChat && current && "phone:hidden",
         )}
       >
         <div className="border-b border-border px-4 pb-3 pt-4">
@@ -168,7 +202,53 @@ function OwnerInboxPage() {
                 {t("oinbox.summary", { all: all.length, waiting, unread })}
               </p>
             </div>
+            <button
+              type="button"
+              aria-pressed={analytics}
+              onClick={toggleAnalytics}
+              title={t("oinbox.analytics")}
+              className={cn(
+                "inline-flex h-8 items-center gap-1 rounded-lg border px-2 text-[12px] font-semibold transition-colors",
+                analytics
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", analytics && "rotate-180")}
+              />
+            </button>
           </div>
+          {analytics && data?.stats && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["waiting", data.stats.waiting, "text-rose-600"],
+                  [
+                    "avg",
+                    data.stats.avgResponseMs == null
+                      ? "—"
+                      : responseLabel(data.stats.avgResponseMs, {
+                          min: t("oinbox.u.min"),
+                          hour: t("oinbox.u.hour"),
+                          day: t("oinbox.u.day"),
+                        }),
+                    "text-foreground",
+                  ],
+                  ["today", data.stats.answeredToday, "text-emerald-600"],
+                  ["questions", data.stats.questions, "text-foreground"],
+                ] as const
+              ).map(([k, v, cls]) => (
+                <div key={k} className="rounded-xl border border-border bg-surface px-3 py-2">
+                  <p className={cn("text-[16px] font-bold leading-tight tabular-nums", cls)}>{v}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {t(`oinbox.stat.${k}`)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="mt-3 flex gap-2">
             <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 focus-within:border-primary">
               <Search className="h-4 w-4 text-subtle" />
@@ -227,7 +307,10 @@ function OwnerInboxPage() {
                 key={x.key}
                 x={x}
                 active={x.key === selected}
-                onClick={() => setSelected(x.key)}
+                onClick={() => {
+                  setSelected(x.key);
+                  setPhoneChat(true);
+                }}
               />
             ))
           )}
@@ -242,17 +325,19 @@ function OwnerInboxPage() {
           thread={current}
           infoOpen={infoOpen}
           onToggleInfo={() => setInfoOpen(!infoOpen)}
+          phoneHidden={!phoneChat}
+          onBack={() => setPhoneChat(false)}
           onChanged={() => void qc.invalidateQueries({ queryKey: ["owner_inbox"] })}
         />
       ) : (
-        <div className="grid flex-1 place-items-center text-center">
+        <div className="grid flex-1 place-items-center text-center phone:hidden">
           <div>
             <MessageSquareQuote className="mx-auto h-9 w-9 text-subtle" />
             <p className="mt-2 text-[13.5px] text-muted-foreground">{t("oinbox.pick")}</p>
           </div>
         </div>
       )}
-    </div>
+    </FixedPage>
   );
 }
 
@@ -542,11 +627,15 @@ function Conversation({
   infoOpen,
   onToggleInfo,
   onChanged,
+  phoneHidden,
+  onBack,
 }: {
   thread: CompanyThread;
   infoOpen: boolean;
   onToggleInfo: () => void;
   onChanged: () => void;
+  phoneHidden: boolean;
+  onBack: () => void;
 }) {
   const { t, lang } = useI18n();
   const qc = useQueryClient();
@@ -584,8 +673,16 @@ function Conversation({
 
   return (
     <>
-      <section className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-border px-5 py-3">
+      <section className={cn("flex min-w-0 flex-1 flex-col", phoneHidden && "phone:hidden")}>
+        <header className="flex items-center gap-3 border-b border-border px-5 py-3 phone:px-3">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label={t("common.back")}
+            className="hidden h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted phone:grid"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
           <button
             type="button"
             onClick={onToggleInfo}

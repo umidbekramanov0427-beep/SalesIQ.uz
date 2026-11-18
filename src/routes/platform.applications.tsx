@@ -1,8 +1,10 @@
-import { useMemo, useState, type DragEvent } from "react";
+import { useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
+  BarChart3,
   CalendarClock,
+  ChevronDown,
   ChevronRight,
   Columns3,
   Inbox,
@@ -14,8 +16,10 @@ import {
   Target,
   Users,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
-import { OwnerEmpty, OwnerHeader, OwnerStat } from "@/components/owner/OwnerPage";
+import { OwnerEmpty } from "@/components/owner/OwnerPage";
+import { FixedPage } from "@/components/layout/FixedPage";
 import {
   AddLeadDialog,
   ago,
@@ -137,14 +141,76 @@ function LeadsBoard() {
     }
   };
 
+  const [analytics, setAnalytics] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("owner.leads.analytics") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleAnalytics = () => {
+    setAnalytics((v) => {
+      try {
+        localStorage.setItem("owner.leads.analytics", v ? "0" : "1");
+      } catch {
+        /* private window */
+      }
+      return !v;
+    });
+  };
+
   return (
-    <div className="w-full">
-      <OwnerHeader
-        icon={Inbox}
-        title={t("lead.title")}
-        desc={t("lead.desc")}
-        actions={
-          <div className="flex items-center gap-2">
+    <FixedPage>
+      {/* One compact bar: the title, filters, views and actions. */}
+      <header className="shrink-0 space-y-2 border-b border-border bg-card px-4 py-2.5 phone:px-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-500/12 text-sky-700 dark:text-sky-300">
+            <Inbox className="h-[18px] w-[18px]" />
+          </span>
+          <h1 className="mr-2 text-[17px] font-bold tracking-tight text-foreground">
+            {t("lead.title")}
+          </h1>
+          <MiniChip
+            icon={CalendarClock}
+            tone="amber"
+            value={callsToday.length}
+            label={t("lead.mini.calls")}
+          />
+          <MiniChip
+            icon={ListChecks}
+            tone={overdue ? "rose" : "slate"}
+            value={overdue}
+            label={t("lead.mini.overdue")}
+          />
+          <MiniChip
+            icon={Rocket}
+            tone="emerald"
+            value={installedMonth}
+            label={t("lead.mini.installed")}
+          />
+          <MiniChip
+            icon={Target}
+            tone="violet"
+            value={conv == null ? "—" : `${conv}%`}
+            label={t("lead.mini.conv")}
+          />
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              aria-pressed={analytics}
+              onClick={toggleAnalytics}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[12.5px] font-semibold transition-colors",
+                analytics
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <BarChart3 className="h-4 w-4" /> {t("lead.analytics")}
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", analytics && "rotate-180")}
+              />
+            </button>
             <div className="ctl-track inline-flex rounded-xl p-1">
               {(
                 [
@@ -157,7 +223,7 @@ function LeadsBoard() {
                   type="button"
                   aria-selected={view === v}
                   onClick={() => setViewSaved(v)}
-                  className="ctl-tab inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-semibold"
+                  className="ctl-tab inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-semibold"
                 >
                   <Icon className="h-4 w-4" /> {t(`lead.view.${v}`)}
                 </button>
@@ -166,206 +232,215 @@ function LeadsBoard() {
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="ctl-lit inline-flex h-10 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold"
+              className="ctl-lit inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-[13px] font-semibold"
             >
               <Plus className="h-4 w-4" /> {t("lead.add")}
             </button>
           </div>
-        }
-      />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex h-9 w-[280px] items-center gap-2 rounded-xl border border-border bg-surface px-3 focus-within:border-primary phone:w-full">
+            <Search className="h-4 w-4 text-subtle" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t("lead.search")}
+              className="h-full min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
+            />
+          </label>
+          <div className="ctl-track inline-flex rounded-xl p-1">
+            {SOURCES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                aria-selected={source === s}
+                onClick={() => setSource(s)}
+                className="ctl-tab h-7 rounded-lg px-2.5 text-[12px] font-semibold"
+              >
+                {t(`lead.src.${s}`)}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            aria-pressed={onlyCalls}
+            onClick={() => setOnlyCalls(!onlyCalls)}
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[12px] font-semibold",
+              onlyCalls
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                : "border-border bg-card text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <CalendarClock className="h-4 w-4" /> {t("lead.onlyCalls")}
+          </button>
+          {nextCall?.meeting_at && (
+            <span className="ml-auto text-[12px] text-muted-foreground">
+              {t("lead.statCallsNext", {
+                day: callDay(nextCall.meeting_at, lang),
+                time: tashkentTime(nextCall.meeting_at),
+              })}
+            </span>
+          )}
+        </div>
+      </header>
 
       {data && (!data.ready || data.stagesReady === false) && (
-        <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-800 dark:text-amber-200">
+        <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-[12.5px] text-amber-800 dark:text-amber-200">
           {t("lead.notReady")}
         </p>
       )}
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <OwnerStat
-          icon={CalendarClock}
-          tone="amber"
-          label={t("lead.statCalls")}
-          tipKey="lead.statCalls"
-          value={callsToday.length}
-          note={
-            nextCall?.meeting_at
-              ? t("lead.statCallsNext", {
-                  day: callDay(nextCall.meeting_at, lang),
-                  time: tashkentTime(nextCall.meeting_at),
-                })
-              : t("lead.statCallsNone")
-          }
-        />
-        <OwnerStat
-          icon={ListChecks}
-          tone={overdue ? "rose" : "blue"}
-          label={t("lead.statOverdue")}
-          tipKey="lead.statOverdue"
-          value={overdue}
-          note={t("lead.statOpenTasks", { n: openTasks })}
-        />
-        <OwnerStat
-          icon={Rocket}
-          tone="green"
-          label={t("lead.statInstalled")}
-          tipKey="lead.statInstalled"
-          value={installedMonth}
-          note={t("lead.statInstalledAll", { n: count("installed") })}
-        />
-        <OwnerStat
-          icon={Target}
-          tone="violet"
-          label={t("lead.statConv")}
-          tipKey="lead.statConv"
-          value={conv == null ? "—" : `${conv}%`}
-          note={t("lead.statConvNote", { won: count("installed"), lost: count("lost") })}
-        />
-      </div>
-
-      <PipelineRail all={all} />
-
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary sm:max-w-sm">
-          <Search className="h-4 w-4 text-subtle" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t("lead.search")}
-            className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
-          />
-        </label>
-        <div className="ctl-track inline-flex rounded-xl p-1">
-          {SOURCES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              aria-selected={source === s}
-              onClick={() => setSource(s)}
-              className="ctl-tab h-8 rounded-lg px-3 text-[12.5px] font-semibold"
-            >
-              {t(`lead.src.${s}`)}
-            </button>
-          ))}
+      {/* Analytics: opened with its button, small cards and the stage relay. */}
+      {analytics && (
+        <div className="shrink-0 space-y-2.5 border-b border-border bg-surface/50 px-4 py-3 phone:px-3">
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+            <SmallStat
+              icon={CalendarClock}
+              tone="amber"
+              label={t("lead.statCalls")}
+              value={callsToday.length}
+              note={
+                nextCall?.meeting_at
+                  ? t("lead.statCallsNext", {
+                      day: callDay(nextCall.meeting_at, lang),
+                      time: tashkentTime(nextCall.meeting_at),
+                    })
+                  : t("lead.statCallsNone")
+              }
+            />
+            <SmallStat
+              icon={ListChecks}
+              tone={overdue ? "rose" : "slate"}
+              label={t("lead.statOverdue")}
+              value={overdue}
+              note={t("lead.statOpenTasks", { n: openTasks })}
+            />
+            <SmallStat
+              icon={Rocket}
+              tone="emerald"
+              label={t("lead.statInstalled")}
+              value={installedMonth}
+              note={t("lead.statInstalledAll", { n: count("installed") })}
+            />
+            <SmallStat
+              icon={Target}
+              tone="violet"
+              label={t("lead.statConv")}
+              value={conv == null ? "—" : `${conv}%`}
+              note={t("lead.statConvNote", { won: count("installed"), lost: count("lost") })}
+            />
+          </div>
+          <PipelineRail all={all} />
         </div>
-        <button
-          type="button"
-          aria-pressed={onlyCalls}
-          onClick={() => setOnlyCalls(!onlyCalls)}
-          className={cn(
-            "inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[12.5px] font-semibold",
-            onlyCalls
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-              : "border-border bg-card text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <CalendarClock className="h-4 w-4" /> {t("lead.onlyCalls")}
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div className="grid grid-cols-4 gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted/60" />
-          ))}
-        </div>
-      ) : !all.length ? (
-        <div className="rounded-2xl border border-border bg-card">
-          <OwnerEmpty icon={Inbox} title={t("lead.empty")} hint={t("lead.emptyHint")} />
-        </div>
-      ) : view === "board" ? (
-        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-3">
-          {PIPELINE_STAGES.map((s) => {
-            const col = by(s);
-            const sum = col.reduce((x, a) => x + (a.amount ?? 0), 0);
-            return (
-              <section
-                key={s}
-                onDragOver={over(s)}
-                onDragLeave={() => setDragOver(null)}
-                onDrop={drop(s)}
-                className={cn(
-                  "flex w-[272px] shrink-0 flex-col rounded-2xl border bg-surface/60 transition-colors",
-                  dragOver === s ? "border-primary/60 bg-primary/[0.05]" : "border-border",
-                )}
-              >
-                <header className="px-3 pb-2 pt-3">
-                  <span
-                    className={cn(
-                      "mb-2.5 block h-1 rounded-full bg-gradient-to-r",
-                      STAGE_TONE[s].bar,
-                    )}
-                  />
-                  <div className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-foreground">
-                      {t(`lead.st.${s}`)}
-                    </span>
-                    <span className="rounded-md bg-card px-1.5 text-[12px] font-bold tabular-nums text-muted-foreground">
-                      {col.length}
-                    </span>
-                  </div>
-                  {sum > 0 && (
-                    <p className="mt-0.5 text-[11.5px] tabular-nums text-subtle">{money(sum)}</p>
-                  )}
-                </header>
-                <div className="flex min-h-[120px] flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
-                  {col.map((a) => (
-                    <LeadCard key={a.id} a={a} onOpen={() => open(a.id)} today={today} />
-                  ))}
-                  {!col.length && (
-                    <p className="grid flex-1 place-items-center rounded-xl border border-dashed border-border px-3 py-6 text-center text-[12px] text-subtle">
-                      {t("lead.dropHere")}
-                    </p>
-                  )}
-                </div>
-              </section>
-            );
-          })}
-          <section
-            onDragOver={over("lost")}
-            onDragLeave={() => setDragOver(null)}
-            onDrop={drop("lost")}
-            className={cn(
-              "flex w-[200px] shrink-0 flex-col rounded-2xl border border-dashed transition-colors",
-              dragOver === "lost"
-                ? "border-rose-500/60 bg-rose-500/[0.06]"
-                : "border-rose-500/25 bg-rose-500/[0.025]",
-            )}
-          >
-            <header className="flex items-center gap-2 px-3 pb-2 pt-4">
-              <XCircle className="h-4 w-4 text-rose-500" />
-              <span className="flex-1 text-[13.5px] font-semibold text-foreground">
-                {t("lead.st.lost")}
-              </span>
-              <span className="text-[12px] font-bold tabular-nums text-muted-foreground">
-                {by("lost").length}
-              </span>
-            </header>
-            <div className="flex flex-col gap-1.5 overflow-y-auto px-2 pb-2">
-              {by("lost")
-                .slice(0, 30)
-                .map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => open(a.id)}
-                    className="rounded-lg bg-card/70 px-2.5 py-2 text-left hover:bg-card"
-                  >
-                    <span className="block truncate text-[12.5px] font-medium text-foreground">
-                      {a.company || a.name}
-                    </span>
-                    {a.lost_reason && (
-                      <span className="block truncate text-[11px] text-subtle">
-                        {a.lost_reason}
-                      </span>
-                    )}
-                  </button>
-                ))}
-            </div>
-          </section>
-        </div>
-      ) : (
-        <LeadsTable items={items} onOpen={open} />
       )}
+
+      <div className="min-h-0 flex-1">
+        {isLoading ? (
+          <div className="flex h-full gap-3 px-4 py-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-full w-[272px] animate-pulse rounded-2xl bg-muted/60" />
+            ))}
+          </div>
+        ) : !all.length ? (
+          <div className="grid h-full place-items-center">
+            <OwnerEmpty icon={Inbox} title={t("lead.empty")} hint={t("lead.emptyHint")} />
+          </div>
+        ) : view === "board" ? (
+          <div className="flex h-full gap-3 overflow-x-auto px-4 py-3 phone:px-3">
+            {PIPELINE_STAGES.map((s) => {
+              const col = by(s);
+              const sum = col.reduce((x, a) => x + (a.amount ?? 0), 0);
+              return (
+                <section
+                  key={s}
+                  onDragOver={over(s)}
+                  onDragLeave={() => setDragOver(null)}
+                  onDrop={drop(s)}
+                  className={cn(
+                    "flex h-full w-[272px] shrink-0 flex-col rounded-2xl border bg-surface/60 transition-colors",
+                    dragOver === s ? "border-primary/60 bg-primary/[0.05]" : "border-border",
+                  )}
+                >
+                  <header className="px-3 pb-2 pt-3">
+                    <span
+                      className={cn(
+                        "mb-2.5 block h-1 rounded-full bg-gradient-to-r",
+                        STAGE_TONE[s].bar,
+                      )}
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-foreground">
+                        {t(`lead.st.${s}`)}
+                      </span>
+                      <span className="rounded-md bg-card px-1.5 text-[12px] font-bold tabular-nums text-muted-foreground">
+                        {col.length}
+                      </span>
+                    </div>
+                    {sum > 0 && (
+                      <p className="mt-0.5 text-[11.5px] tabular-nums text-subtle">{money(sum)}</p>
+                    )}
+                  </header>
+                  <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+                    {col.map((a) => (
+                      <LeadCard key={a.id} a={a} onOpen={() => open(a.id)} today={today} />
+                    ))}
+                    {!col.length && (
+                      <p className="grid flex-1 place-items-center rounded-xl border border-dashed border-border px-3 py-6 text-center text-[12px] text-subtle">
+                        {t("lead.dropHere")}
+                      </p>
+                    )}
+                  </div>
+                </section>
+              );
+            })}
+            <section
+              onDragOver={over("lost")}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={drop("lost")}
+              className={cn(
+                "flex h-full w-[200px] shrink-0 flex-col rounded-2xl border border-dashed transition-colors",
+                dragOver === "lost"
+                  ? "border-rose-500/60 bg-rose-500/[0.06]"
+                  : "border-rose-500/25 bg-rose-500/[0.025]",
+              )}
+            >
+              <header className="flex items-center gap-2 px-3 pb-2 pt-4">
+                <XCircle className="h-4 w-4 text-rose-500" />
+                <span className="flex-1 text-[13.5px] font-semibold text-foreground">
+                  {t("lead.st.lost")}
+                </span>
+                <span className="text-[12px] font-bold tabular-nums text-muted-foreground">
+                  {by("lost").length}
+                </span>
+              </header>
+              <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-2 pb-2">
+                {by("lost")
+                  .slice(0, 30)
+                  .map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => open(a.id)}
+                      className="rounded-lg bg-card/70 px-2.5 py-2 text-left hover:bg-card"
+                    >
+                      <span className="block truncate text-[12.5px] font-medium text-foreground">
+                        {a.company || a.name}
+                      </span>
+                      {a.lost_reason && (
+                        <span className="block truncate text-[11px] text-subtle">
+                          {a.lost_reason}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <LeadsTable items={items} onOpen={open} />
+        )}
+      </div>
 
       <AddLeadDialog open={adding} onClose={() => setAdding(false)} onCreated={open} />
       <LostDialog
@@ -379,6 +454,73 @@ function LeadsBoard() {
           )
         }
       />
+    </FixedPage>
+  );
+}
+
+const MINI_TONE = {
+  amber: "bg-amber-500/12 text-amber-700 dark:text-amber-300",
+  rose: "bg-rose-500/12 text-rose-700 dark:text-rose-300",
+  emerald: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
+  violet: "bg-violet-500/12 text-violet-700 dark:text-violet-300",
+  slate: "bg-muted text-muted-foreground",
+} as const;
+
+/** A figure in the top bar: icon, number, a word. */
+function MiniChip({
+  icon: Icon,
+  tone,
+  value,
+  label,
+}: {
+  icon: LucideIcon;
+  tone: keyof typeof MINI_TONE;
+  value: ReactNode;
+  label: string;
+}) {
+  return (
+    <span
+      title={label}
+      className={cn(
+        "inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[12px] font-semibold phone:hidden",
+        MINI_TONE[tone],
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      <span className="tabular-nums">{value}</span>
+      <span className="font-medium opacity-80">{label}</span>
+    </span>
+  );
+}
+
+/** A small analytics card: icon, number, label and one line under it. */
+function SmallStat({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  note,
+}: {
+  icon: LucideIcon;
+  tone: keyof typeof MINI_TONE;
+  label: string;
+  value: ReactNode;
+  note: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
+      <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", MINI_TONE[tone])}>
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
+      <div className="min-w-0">
+        <p className="flex items-baseline gap-2">
+          <span className="text-[19px] font-bold leading-none tabular-nums text-foreground">
+            {value}
+          </span>
+          <span className="truncate text-[12px] font-medium text-muted-foreground">{label}</span>
+        </p>
+        <p className="mt-0.5 truncate text-[11.5px] text-subtle">{note}</p>
+      </div>
     </div>
   );
 }
@@ -397,7 +539,7 @@ function PipelineRail({ all }: { all: LeadItem[] }) {
   );
   const max = Math.max(1, reached[0] ?? 1);
   return (
-    <div className="mb-4 overflow-x-auto rounded-2xl border border-border bg-card px-4 py-3.5">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card px-4 py-2.5">
       <div className="flex min-w-[860px] items-stretch">
         {order.map((s, i) => {
           const here = all.filter((a) => a.status === s).length;
@@ -413,7 +555,7 @@ function PipelineRail({ all }: { all: LeadItem[] }) {
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-[22px] font-bold leading-none tabular-nums text-foreground">
+                  <span className="text-[18px] font-bold leading-none tabular-nums text-foreground">
                     {here}
                   </span>
                   <span className="truncate text-[12px] font-medium text-muted-foreground">
@@ -535,10 +677,10 @@ function LeadCard({ a, onOpen, today }: { a: LeadItem; onOpen: () => void; today
 function LeadsTable({ items, onOpen }: { items: LeadItem[]; onOpen: (id: string) => void }) {
   const { t, lang } = useI18n();
   return (
-    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+    <div className="h-full overflow-auto bg-card">
       <table className="w-full min-w-[980px] text-left">
-        <thead>
-          <tr className="border-b border-border text-[11px] font-semibold uppercase tracking-wider text-subtle">
+        <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_var(--border)]">
+          <tr className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
             <th className="px-4 py-3">{t("lead.col.company")}</th>
             <th className="px-3 py-3">{t("lead.col.stage")}</th>
             <th className="px-3 py-3">{t("lead.col.plan")}</th>
