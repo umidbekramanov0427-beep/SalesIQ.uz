@@ -77,6 +77,28 @@ export function shotIsDue(last: string | null, now: Date, rules: MarketingRules)
   return now.getTime() - Date.parse(last) >= rules.shots.everyMin * 60_000 - 20_000;
 }
 
+/**
+ * A webinar streamed on YouTube and in Telegram at once: each source keeps
+ * its own picture time, but when the other source has just taken one (in
+ * the last 90 s) this one follows, so the two pictures of a moment are
+ * taken together -- unless this one took its own less than half an
+ * interval ago (which keeps them from chasing each other every minute).
+ */
+export function pairedShotDue(
+  own: string | null,
+  partner: string | null,
+  now: Date,
+  rules: MarketingRules,
+): boolean {
+  if (shotIsDue(own, now, rules)) return true;
+  if (!rules.shots.enabled || !partner || !own) return false;
+  const sincePartner = now.getTime() - Date.parse(partner);
+  const sinceOwn = now.getTime() - Date.parse(own);
+  return (
+    sincePartner >= 0 && sincePartner <= 90_000 && sinceOwn >= (rules.shots.everyMin * 60_000) / 2
+  );
+}
+
 /** Whether a channel's subscriber count is due again. */
 export function channelCheckDue(lastChecked: string | null, now: Date, rules: MarketingRules) {
   if (!lastChecked) return true;

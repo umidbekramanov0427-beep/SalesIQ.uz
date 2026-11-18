@@ -4753,6 +4753,264 @@ export type Database = {
           },
         ];
       };
+      marketing_ai_chat_messages: {
+        Row: {
+          id: string;
+          chat_id: string;
+          organization_id: string;
+          role: string;
+          content: string;
+          meta: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          chat_id: string;
+          organization_id: string;
+          role: string;
+          content: string;
+          meta?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          chat_id?: string;
+          organization_id?: string;
+          role?: string;
+          content?: string;
+          meta?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_ai_chats: {
+        Row: {
+          id: string;
+          organization_id: string;
+          profile_id: string;
+          title: string;
+          scope: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          profile_id: string;
+          title?: string;
+          scope?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          profile_id?: string;
+          title?: string;
+          scope?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_ai_recommendations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          problem: string | null;
+          priority: string;
+          status: string;
+          assignee_id: string | null;
+          metric_key: string | null;
+          metric_before: number | null;
+          metric_after: number | null;
+          measured_at: string | null;
+          scope: Json;
+          run_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          done_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          problem?: string | null;
+          priority?: string;
+          status?: string;
+          assignee_id?: string | null;
+          metric_key?: string | null;
+          metric_before?: number | null;
+          metric_after?: number | null;
+          measured_at?: string | null;
+          scope?: Json;
+          run_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          done_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          problem?: string | null;
+          priority?: string;
+          status?: string;
+          assignee_id?: string | null;
+          metric_key?: string | null;
+          metric_before?: number | null;
+          metric_after?: number | null;
+          measured_at?: string | null;
+          scope?: Json;
+          run_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          done_at?: string | null;
+        };
+        Relationships: [];
+      };
+      marketing_ai_runs: {
+        Row: {
+          id: string;
+          organization_id: string;
+          kind: string;
+          input_hash: string;
+          scope: Json;
+          period_from: string | null;
+          period_to: string | null;
+          result: Json;
+          provider: string | null;
+          model: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          kind: string;
+          input_hash: string;
+          scope?: Json;
+          period_from?: string | null;
+          period_to?: string | null;
+          result: Json;
+          provider?: string | null;
+          model?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          kind?: string;
+          input_hash?: string;
+          scope?: Json;
+          period_from?: string | null;
+          period_to?: string | null;
+          result?: Json;
+          provider?: string | null;
+          model?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_ai_settings: {
+        Row: {
+          organization_id: string;
+          enabled: boolean;
+          provider: string;
+          model: string | null;
+          key_sealed: string | null;
+          key_last4: string | null;
+          daily_limit_usd: number | null;
+          monthly_limit_usd: number | null;
+          frequency: string;
+          last_auto_at: string | null;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          enabled?: boolean;
+          provider?: string;
+          model?: string | null;
+          key_sealed?: string | null;
+          key_last4?: string | null;
+          daily_limit_usd?: number | null;
+          monthly_limit_usd?: number | null;
+          frequency?: string;
+          last_auto_at?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          enabled?: boolean;
+          provider?: string;
+          model?: string | null;
+          key_sealed?: string | null;
+          key_last4?: string | null;
+          daily_limit_usd?: number | null;
+          monthly_limit_usd?: number | null;
+          frequency?: string;
+          last_auto_at?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_ai_usage: {
+        Row: {
+          id: string;
+          organization_id: string;
+          at: string;
+          feature: string;
+          provider: string;
+          model: string;
+          input_tokens: number;
+          output_tokens: number;
+          cost_usd: number;
+          cached: boolean;
+          ok: boolean;
+          error: string | null;
+          profile_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          at?: string;
+          feature: string;
+          provider: string;
+          model: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          cost_usd?: number;
+          cached?: boolean;
+          ok?: boolean;
+          error?: string | null;
+          profile_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          at?: string;
+          feature?: string;
+          provider?: string;
+          model?: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          cost_usd?: number;
+          cached?: boolean;
+          ok?: boolean;
+          error?: string | null;
+          profile_id?: string | null;
+        };
+        Relationships: [];
+      };
       marketing_channel_days: {
         Row: {
           channel_id: string;
@@ -5105,6 +5363,12 @@ export type Database = {
           at: string;
           kind: string;
           label: string | null;
+          seq: number | null;
+          auto: boolean;
+          ai_guess: boolean;
+          confirmed: boolean;
+          meta: Json | null;
+          shot_id: string | null;
         };
         Insert: {
           id?: string;
@@ -5113,6 +5377,12 @@ export type Database = {
           at?: string;
           kind?: string;
           label?: string | null;
+          seq?: number | null;
+          auto?: boolean;
+          ai_guess?: boolean;
+          confirmed?: boolean;
+          meta?: Json | null;
+          shot_id?: string | null;
         };
         Update: {
           id?: string;
@@ -5121,6 +5391,12 @@ export type Database = {
           at?: string;
           kind?: string;
           label?: string | null;
+          seq?: number | null;
+          auto?: boolean;
+          ai_guess?: boolean;
+          confirmed?: boolean;
+          meta?: Json | null;
+          shot_id?: string | null;
         };
         Relationships: [];
       };
@@ -5148,6 +5424,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      marketing_webinar_templates: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          plan: Json;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          plan?: Json;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          plan?: Json;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       marketing_webinars: {
         Row: {
           id: string;
@@ -5167,6 +5470,12 @@ export type Database = {
           archived_at: string | null;
           auto_created: boolean;
           shot_at: string | null;
+          peak_youtube: number | null;
+          peak_telegram: number | null;
+          peak_total: number | null;
+          peak_at: string | null;
+          tg_shot_at: string | null;
+          plan: Json | null;
         };
         Insert: {
           id?: string;
@@ -5186,6 +5495,12 @@ export type Database = {
           archived_at?: string | null;
           auto_created?: boolean;
           shot_at?: string | null;
+          peak_youtube?: number | null;
+          peak_telegram?: number | null;
+          peak_total?: number | null;
+          peak_at?: string | null;
+          tg_shot_at?: string | null;
+          plan?: Json | null;
         };
         Update: {
           id?: string;
@@ -5205,6 +5520,12 @@ export type Database = {
           archived_at?: string | null;
           auto_created?: boolean;
           shot_at?: string | null;
+          peak_youtube?: number | null;
+          peak_telegram?: number | null;
+          peak_total?: number | null;
+          peak_at?: string | null;
+          tg_shot_at?: string | null;
+          plan?: Json | null;
         };
         Relationships: [];
       };

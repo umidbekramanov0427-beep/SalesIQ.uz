@@ -18,12 +18,13 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { ShotsGallery } from "@/components/marketing/ShotsGallery";
 import { Button } from "@/components/ui/button";
-import { ViewersChart, MARK_COLOR } from "@/components/marketing/ViewersChart";
+import { WebinarChart } from "@/components/marketing/ViewersChart";
 import { StatusChip, WebinarDialog } from "@/components/marketing/WebinarParts";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { downloadXlsx } from "@/lib/xlsx-write";
 import { MARK_KINDS, webinarStats, type Mark, type MarkKind } from "@/lib/webinars";
+import { EVENT_COLOR, combineSamples, isEventKind, type EventKind } from "@/lib/webinar-timeline";
 import { useWebinar, useWebinarMutations } from "@/hooks/use-crm-data";
 
 // One webinar: the viewers line (YouTube counted every minute by itself;
@@ -68,6 +69,19 @@ function WebinarPage() {
     label: x.label,
   }));
   const st = webinarStats(samples, marks);
+  const points = combineSamples(
+    (q.data?.samples ?? []).map((s) => ({ at: s.at, viewers: s.viewers, source: s.source })),
+  );
+  const events = (q.data?.marks ?? [])
+    .filter((x) => isEventKind(x.kind))
+    .map((x) => ({
+      id: x.id,
+      at: x.at,
+      kind: x.kind as EventKind,
+      seq: x.seq ?? null,
+      label: x.label,
+      confirmed: x.confirmed,
+    }));
   const manual = w.platform !== "youtube" || !w.youtube_video_id;
 
   const setStatus = (status: "live" | "ended") =>
@@ -215,7 +229,7 @@ function WebinarPage() {
         title={t("mkt.wb.chartTitle")}
         description={manual ? t("mkt.wb.chartManual") : t("mkt.wb.chartAuto")}
       >
-        <ViewersChart samples={samples} marks={marks} />
+        <WebinarChart points={points} events={events} />
       </SectionCard>
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]">
@@ -250,7 +264,7 @@ function WebinarPage() {
                 }
                 className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-3.5 text-[13px] font-semibold text-foreground"
               >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: MARK_COLOR[k] }} />
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: EVENT_COLOR[k] }} />
                 {t(`mkt.wb.mark.${k}`)}
               </button>
             ))}
@@ -301,7 +315,7 @@ function WebinarPage() {
                 <li key={x.id} className="flex items-center gap-3 py-2.5">
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ background: MARK_COLOR[x.kind] }}
+                    style={{ background: EVENT_COLOR[x.kind] }}
                   />
                   <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-foreground">
                     {x.label || t(`mkt.wb.mark.${x.kind}`)}

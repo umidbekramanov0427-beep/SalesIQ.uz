@@ -285,29 +285,54 @@ export function useWebinarMutations() {
       onSuccess: done,
     }),
     addSample: useMutation({
+      // A plain insert: a typed-in count at this very moment, next to the
+      // YouTube and Telegram counts of the same minute.
       mutationFn: async ({ webinarId, viewers }: { webinarId: string; viewers: number }) => {
-        const { error } = await supabase.from("marketing_webinar_samples").upsert(
-          {
-            webinar_id: webinarId,
-            organization_id: org(),
-            at: new Date().toISOString(),
-            viewers,
-            source: "manual",
-          },
-          { onConflict: "webinar_id,at" },
-        );
+        const { error } = await supabase.from("marketing_webinar_samples").insert({
+          webinar_id: webinarId,
+          organization_id: org(),
+          at: new Date().toISOString(),
+          viewers,
+          source: "manual",
+        });
         if (error) throw error;
       },
       onSuccess: done,
     }),
     addMark: useMutation({
-      mutationFn: async (m: { webinarId: string; kind: string; label?: string | null }) => {
-        const { error } = await supabase.from("marketing_webinar_marks").insert({
+      mutationFn: async (m: {
+        webinarId: string;
+        kind: string;
+        label?: string | null;
+        seq?: number | null;
+        at?: string;
+        meta?: Record<string, unknown> | null;
+      }) => {
+        const base = {
           webinar_id: m.webinarId,
           organization_id: org(),
           kind: m.kind,
           label: m.label ?? null,
-        });
+          ...(m.at ? { at: m.at } : {}),
+        };
+        const extra =
+          m.seq != null || m.meta ? { seq: m.seq ?? null, meta: (m.meta ?? null) as never } : {};
+        const { error } = await supabase
+          .from("marketing_webinar_marks")
+          .insert({ ...base, ...extra });
+        if (error) throw error;
+      },
+      onSuccess: done,
+    }),
+    updateMark: useMutation({
+      mutationFn: async ({
+        id,
+        patch,
+      }: {
+        id: string;
+        patch: Partial<Tables["marketing_webinar_marks"]["Update"]>;
+      }) => {
+        const { error } = await supabase.from("marketing_webinar_marks").update(patch).eq("id", id);
         if (error) throw error;
       },
       onSuccess: done,
@@ -320,6 +345,51 @@ export function useWebinarMutations() {
       onSuccess: done,
     }),
   };
+}
+
+export type WebinarTemplateRow = Tables["marketing_webinar_templates"]["Row"];
+
+/** Scenario templates (Vebinar -> Ssenariy); empty until migration 20270128. */
+export function useWebinarTemplates() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const list = useQuery({
+    queryKey: ["marketing_webinar_templates", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<{ rows: WebinarTemplateRow[]; missing: boolean }> => {
+      const { data, error } = await supabase
+        .from("marketing_webinar_templates")
+        .select("*")
+        .eq("organization_id", user!.organizationId!)
+        .order("created_at", { ascending: false });
+      if (error) {
+        if (tableMissing(error.message)) return { rows: [], missing: true };
+        throw error;
+      }
+      return { rows: data ?? [], missing: false };
+    },
+  });
+  const done = () => void qc.invalidateQueries({ queryKey: ["marketing_webinar_templates"] });
+  const save = useMutation({
+    mutationFn: async (t: { name: string; plan: unknown }) => {
+      const { error } = await supabase.from("marketing_webinar_templates").insert({
+        organization_id: user!.organizationId!,
+        name: t.name,
+        plan: t.plan as never,
+        created_by: user!.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: done,
+  });
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("marketing_webinar_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: done,
+  });
+  return { list, save, remove };
 }
 
 /* ---- Loyihalar (src/lib/marketing-projects.ts) -------------------------- */

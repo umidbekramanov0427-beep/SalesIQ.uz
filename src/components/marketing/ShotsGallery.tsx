@@ -22,6 +22,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { downloadXlsx } from "@/lib/xlsx-write";
 import { shotsSummary } from "@/lib/marketing-projects";
+import { pairShots } from "@/lib/webinar-timeline";
 import {
   useShotDelete,
   useShotUpload,
@@ -45,10 +46,13 @@ export function ShotsGallery({
   projectId,
   webinarId,
   title,
+  paired = false,
 }: {
   projectId?: string | null;
   webinarId?: string | null;
   title?: string;
+  /** YouTube and Telegram pictures of one moment side by side. */
+  paired?: boolean;
 }) {
   const { t } = useI18n();
   const q = useShots({ projectId: projectId ?? null, webinarId: webinarId ?? null });
@@ -138,33 +142,37 @@ export function ShotsGallery({
                   {sum.from ? dateText(sum.from) : ""}
                 </p>
               </header>
-              <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                {list.map((s, i) => (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      onClick={() => setOpen({ list, i })}
-                      className="group block w-full overflow-hidden rounded-xl border border-border bg-card text-left transition hover:border-primary/40 hover:shadow-md"
-                    >
-                      <ShotPicture s={s} />
-                      <div className="px-3 py-2">
-                        <p className="text-[12.5px] font-semibold text-foreground">
-                          {t("mkt.shots.caption", {
-                            n: i + 1,
-                            time: clock(s.at),
-                          })}
-                        </p>
-                        <p className="mt-0.5 flex items-center gap-1 text-[12.5px] text-muted-foreground">
-                          <Users className="h-3.5 w-3.5" />
-                          {s.viewers != null
-                            ? t("mkt.shots.viewersN", { n: num(s.viewers) })
-                            : t("mkt.shots.noCount")}
-                        </p>
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {paired ? (
+                <PairedRows list={list} onOpen={(i) => setOpen({ list, i })} />
+              ) : (
+                <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                  {list.map((s, i) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => setOpen({ list, i })}
+                        className="group block w-full overflow-hidden rounded-xl border border-border bg-card text-left transition hover:border-primary/40 hover:shadow-md"
+                      >
+                        <ShotPicture s={s} />
+                        <div className="px-3 py-2">
+                          <p className="text-[12.5px] font-semibold text-foreground">
+                            {t("mkt.shots.caption", {
+                              n: i + 1,
+                              time: clock(s.at),
+                            })}
+                          </p>
+                          <p className="mt-0.5 flex items-center gap-1 text-[12.5px] text-muted-foreground">
+                            <Users className="h-3.5 w-3.5" />
+                            {s.viewers != null
+                              ? t("mkt.shots.viewersN", { n: num(s.viewers) })
+                              : t("mkt.shots.noCount")}
+                          </p>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {/* The little report under each group. */}
               <footer className="grid gap-px border-t border-border bg-border sm:grid-cols-4">
                 {[
@@ -197,6 +205,89 @@ export function ShotsGallery({
           webinarId={webinarId ?? null}
           onClose={() => setUploading(false)}
         />
+      )}
+    </div>
+  );
+}
+
+/**
+ * One row per moment: the YouTube picture and the Telegram picture taken
+ * together, each with its own viewers, and their sum.
+ */
+function PairedRows({ list, onOpen }: { list: ShotRow[]; onOpen: (i: number) => void }) {
+  const { t } = useI18n();
+  const pairs = pairShots(list);
+  const manual = list.filter((s) => s.source === "manual");
+  const cell = (s: ShotRow | null, src: "youtube" | "telegram") =>
+    s ? (
+      <button
+        type="button"
+        onClick={() => onOpen(list.indexOf(s))}
+        className="group block w-full overflow-hidden rounded-xl border border-border bg-card text-left transition hover:border-primary/40 hover:shadow-md"
+      >
+        <ShotPicture s={s} />
+        <p className="flex items-center gap-1.5 px-3 py-2 text-[12.5px] text-muted-foreground">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: src === "youtube" ? "#ef4444" : "#0ea5e9" }}
+          />
+          {t(`mkt.shots.src.${src}`)}
+          <span className="ml-auto inline-flex items-center gap-1 font-semibold tabular-nums text-foreground">
+            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            {s.viewers != null ? num(s.viewers) : "—"}
+          </span>
+        </p>
+      </button>
+    ) : (
+      <div className="grid aspect-video place-items-center rounded-xl border border-dashed border-border text-center text-[12.5px] text-muted-foreground">
+        {t("mkt.shots.noPair", { src: t(`mkt.shots.src.${src}`) })}
+      </div>
+    );
+  return (
+    <div className="divide-y divide-border">
+      {pairs.map((p, i) => {
+        const total =
+          p.youtube?.viewers != null || p.telegram?.viewers != null
+            ? (p.youtube?.viewers ?? 0) + (p.telegram?.viewers ?? 0)
+            : null;
+        return (
+          <div key={p.at + i} className="grid gap-3 p-4 md:grid-cols-[120px_1fr_1fr]">
+            <div className="flex flex-row items-baseline gap-3 md:flex-col md:gap-1">
+              <p className="text-[12px] font-semibold text-muted-foreground">
+                {t("mkt.shots.moment", { n: i + 1 })}
+              </p>
+              <p className="font-mono text-[20px] font-bold tabular-nums text-foreground">
+                {clock(p.at)}
+              </p>
+              {total != null && (
+                <p className="text-[12.5px] text-muted-foreground">
+                  {t("mkt.shots.together")}:{" "}
+                  <b className="tabular-nums text-foreground">{num(total)}</b>
+                </p>
+              )}
+            </div>
+            {cell(p.youtube, "youtube")}
+            {cell(p.telegram, "telegram")}
+          </div>
+        );
+      })}
+      {manual.length > 0 && (
+        <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          {manual.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(list.indexOf(s))}
+                className="block w-full overflow-hidden rounded-xl border border-border bg-card text-left hover:border-primary/40"
+              >
+                <ShotPicture s={s} />
+                <p className="px-3 py-2 text-[12.5px] text-muted-foreground">
+                  {t("mkt.shots.src.manual")} · {clock(s.at)}
+                </p>
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

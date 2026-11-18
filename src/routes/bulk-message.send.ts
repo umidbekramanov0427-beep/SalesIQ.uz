@@ -1,6 +1,7 @@
 import { TELEGRAM_FILE_KINDS } from "@/lib/telegram-report.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { requireOrgMember } from "@/lib/auth.server";
+import { markSmsSent } from "@/lib/webinar-events.server";
 import {
   sendBulkMessage,
   type BulkAttachment,
@@ -121,6 +122,12 @@ export const Route = createFileRoute("/bulk-message/send")({
           ...(attachments.length > 0 ? { attachments } : {}),
         });
         const sent = results.filter((r) => r.ok).length;
+        // An SMS broadcast during a live webinar is one of its events.
+        if (channel === "sms" && sent > 0) {
+          await markSmsSent(caller.organizationId, sent).catch((err) =>
+            console.error("[bulk] webinar sms mark", err),
+          );
+        }
         return Response.json({ sent, failed: results.length - sent, results });
       },
     },

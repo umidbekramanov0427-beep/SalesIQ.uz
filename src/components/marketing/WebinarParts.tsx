@@ -48,7 +48,6 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
   const { save } = useWebinarMutations();
   const { data: channels } = useChannels();
   const [title, setTitle] = useState(w?.title ?? "");
-  const [platform, setPlatform] = useState(w?.platform ?? "youtube");
   const [link, setLink] = useState(
     w?.youtube_video_id ? `https://youtu.be/${w.youtube_video_id}` : "",
   );
@@ -67,15 +66,16 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
 
   async function submit() {
     if (!title.trim()) return void toast.error(t("mkt.wb.titleNeeded"));
-    if (platform === "youtube" && link.trim() && !videoId)
-      return void toast.error(t("mkt.wb.badLink"));
+    if (link.trim() && !videoId) return void toast.error(t("mkt.wb.badLink"));
     try {
       const id = await save.mutateAsync({
         ...(w ? { id: w.id } : {}),
         patch: {
           title: title.trim(),
-          platform,
-          youtube_video_id: platform === "youtube" ? videoId : null,
+          // YouTube and a Telegram channel may both be set: one webinar,
+          // two streams at once. The platform is the main one.
+          platform: videoId ? "youtube" : channelId ? "telegram" : "other",
+          youtube_video_id: videoId,
           channel_id: channelId || null,
           project_id: projectId,
           starts_at: startsAt ? new Date(`${startsAt}:00+05:00`).toISOString() : null,
@@ -107,41 +107,46 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
               autoFocus
             />
           </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(["youtube", "telegram", "other"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPlatform(p)}
-                className={cn(
-                  "h-10 rounded-xl border text-[13px] font-semibold transition-colors",
-                  platform === p
-                    ? "border-primary/50 bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t(`mkt.wb.platform.${p}`)}
-              </button>
-            ))}
+          <div className="rounded-xl border border-border bg-surface/60 p-3">
+            <p className="text-[12.5px] font-semibold text-foreground">{t("mkt.wb.sources")}</p>
+            <p className="mb-2.5 text-[12px] text-muted-foreground">{t("mkt.wb.sourcesHint")}</p>
+            <div className="grid gap-2.5">
+              <label className="space-y-1">
+                <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full bg-[#ef4444]" /> {t("mkt.wb.ytLink")}
+                </span>
+                <input
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                  placeholder="https://www.youtube.com/live/..."
+                  className={cn(input, link && !videoId && "border-destructive")}
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full bg-[#0ea5e9]" /> {t("mkt.wb.channel")}
+                </span>
+                <select
+                  value={channelId}
+                  onChange={(e) => setChannelId(e.target.value)}
+                  className={input}
+                >
+                  <option value="">—</option>
+                  {(channels?.rows ?? [])
+                    .filter((c) => !c.archived_at)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title || `@${c.username}`}
+                        {c.track_live ? "" : ` · ${t("mkt.wb.noTrack")}`}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            </div>
+            {!videoId && !channelId && (
+              <p className="mt-2 text-[12px] text-muted-foreground">{t("mkt.wb.manualHint")}</p>
+            )}
           </div>
-          {platform === "youtube" ? (
-            <label className="space-y-1">
-              <span className="text-[12.5px] font-medium text-muted-foreground">
-                {t("mkt.wb.ytLink")}
-              </span>
-              <input
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                placeholder="https://www.youtube.com/live/..."
-                className={cn(input, link && !videoId && "border-destructive")}
-              />
-              <span className="block text-[12px] text-muted-foreground">{t("mkt.wb.ytHint")}</span>
-            </label>
-          ) : (
-            <p className="rounded-lg bg-surface px-3 py-2 text-[12.5px] text-muted-foreground">
-              {t("mkt.wb.manualHint")}
-            </p>
-          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1">
               <span className="text-[12.5px] font-medium text-muted-foreground">
@@ -199,25 +204,6 @@ export function WebinarDialog({ w, onClose }: { w?: WebinarRow; onClose: () => v
               })}
             </div>
           </div>
-          <label className="space-y-1">
-            <span className="text-[12.5px] font-medium text-muted-foreground">
-              {t("mkt.wb.channel")}
-            </span>
-            <select
-              value={channelId}
-              onChange={(e) => setChannelId(e.target.value)}
-              className={input}
-            >
-              <option value="">—</option>
-              {(channels?.rows ?? [])
-                .filter((c) => !c.archived_at)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title || `@${c.username}`}
-                  </option>
-                ))}
-            </select>
-          </label>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

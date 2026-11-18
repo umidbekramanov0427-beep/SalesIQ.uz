@@ -3,7 +3,8 @@ import { callTelegramMethod } from "@/lib/telegram-report.server";
 import { parseChannelUsername } from "@/lib/webinars";
 import { saveShot } from "@/lib/marketing-shots.server";
 import { botIsAdmin, syncChannelAccount } from "@/lib/channel-events.server";
-import { channelCheckDue, shotIsDue } from "@/lib/marketing-rules";
+import { channelCheckDue, pairedShotDue } from "@/lib/marketing-rules";
+import { addAutoEvent, recordPeak, upsertSample } from "@/lib/webinar-events.server";
 import { marketingRulesFor, rulesOf } from "@/lib/marketing-rules.server";
 import {
   SessionRevoked,
@@ -270,8 +271,8 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
   const soon = new Date(now.getTime() + 15 * 60_000).toISOString();
   const { data } = await supabaseAdmin
     .from("marketing_webinars")
-    .select("id, organization_id, youtube_video_id, status, starts_at, project_id, shot_at")
-    .eq("platform", "youtube")
+    // "*": tg_shot_at exists only after migration 20270128.
+    .select("*")
     .is("archived_at", null)
     .neq("status", "ended")
     .not("youtube_video_id", "is", null)
@@ -334,16 +335,13 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
       if (lsd?.concurrentViewers != null) {
         const viewers = Number(lsd.concurrentViewers) || 0;
         const at = new Date(Math.floor(now.getTime() / 60_000) * 60_000).toISOString();
-        await supabaseAdmin.from("marketing_webinar_samples").upsert(
-          {
-            webinar_id: w.id,
-            organization_id: w.organization_id,
-            at,
-            viewers,
-            source: "youtube",
-          },
-          { onConflict: "webinar_id,at" },
-        );
+        await upsertSample({
+          webinar_id: w.id,
+          organization_id: w.organization_id,
+          at,
+          viewers,
+          source: "youtube",
+        });
         await supabaseAdmin
           .from("marketing_webinars")
           .update({
@@ -352,11 +350,21 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
             ...(w.starts_at ? {} : { starts_at: lsd.actualStartTime ?? at }),
           })
           .eq("id", w.id);
+        await recordPeak(w.id, now).catch(() => undefined);
+        if (w.status !== "live") {
+          await addAutoEvent({
+            webinarId: w.id,
+            orgId: w.organization_id,
+            kind: "yt_live_on",
+            at: lsd.actualStartTime ? new Date(lsd.actualStartTime) : now,
+          }).catch(() => false);
+        }
         saved++;
         // Every few minutes: the stream's current frame as proof. Cutting
         // a frame takes up to a minute, so it is not waited for.
         const r = rulesOf(rules, w.organization_id);
-        if (shotIsDue(w.shot_at, now, r)) {
+        const tgShotAt = (w as { tg_shot_at?: string | null }).tg_shot_at ?? null;
+        if (pairedShotDue(w.shot_at, w.channel_id ? tgShotAt : null, now, r)) {
           await supabaseAdmin
             .from("marketing_webinars")
             .update({ shot_at: now.toISOString() })
@@ -439,11 +447,13 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
     if (!ref) continue;
     try {
       const state = await tgLive(session, ref);
+      // The webinar this stream belongs to: one already live on this channel
+      // (also a YouTube webinar streaming here at the same time), else one
+      // planned on this channel around now, else a new one.
       const { data: open } = await supabaseAdmin
         .from("marketing_webinars")
-        .select("id, project_id, shot_at")
+        .select("*")
         .eq("organization_id", c.organization_id)
-        .eq("platform", "telegram")
         .eq("channel_id", c.id)
         .eq("status", "live")
         .is("archived_at", null)
@@ -451,7 +461,8 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
         .limit(1)
         .maybeSingle();
       if (!state.live) {
-        if (open) {
+        // A YouTube webinar is closed by YouTube; a Telegram-only one here.
+        if (open && !open.youtube_video_id) {
           await supabaseAdmin
             .from("marketing_webinars")
             .update({ status: "ended", ended_at: now.toISOString() })
@@ -460,6 +471,27 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
         continue;
       }
       let webinar = open;
+      if (!webinar) {
+        const { data: planned } = await supabaseAdmin
+          .from("marketing_webinars")
+          .select("*")
+          .eq("organization_id", c.organization_id)
+          .eq("channel_id", c.id)
+          .eq("status", "planned")
+          .is("archived_at", null)
+          .gte("starts_at", new Date(now.getTime() - 3 * 3_600_000).toISOString())
+          .lte("starts_at", new Date(now.getTime() + 3_600_000).toISOString())
+          .order("starts_at")
+          .limit(1)
+          .maybeSingle();
+        if (planned) {
+          await supabaseAdmin
+            .from("marketing_webinars")
+            .update({ status: "live", poll_error: null })
+            .eq("id", planned.id);
+          webinar = { ...planned, status: "live" };
+        }
+      }
       if (!webinar) {
         const day = new Date(now.getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
         const { data: created, error: insErr } = await supabaseAdmin
@@ -476,25 +508,44 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
             starts_at: now.toISOString(),
             auto_created: true,
           })
-          .select("id, project_id, shot_at")
+          .select("*")
           .single();
         if (insErr) throw insErr;
         webinar = created;
       }
+      // The Telegram live just came on (no Telegram count in 3 minutes).
+      const { data: recentTg } = await supabaseAdmin
+        .from("marketing_webinar_samples")
+        .select("at")
+        .eq("webinar_id", webinar.id)
+        .eq("source", "telegram")
+        .gte("at", new Date(now.getTime() - 3 * 60_000).toISOString())
+        .limit(1);
+      if (!recentTg?.length) {
+        await addAutoEvent({
+          webinarId: webinar.id,
+          orgId: c.organization_id,
+          kind: "tg_live_on",
+          at: now,
+        }).catch(() => false);
+      }
       if (state.participants != null) {
-        await supabaseAdmin.from("marketing_webinar_samples").upsert(
-          {
-            webinar_id: webinar.id,
-            organization_id: c.organization_id,
-            at,
-            viewers: state.participants,
-            source: "telegram",
-          },
-          { onConflict: "webinar_id,at" },
-        );
+        await upsertSample({
+          webinar_id: webinar.id,
+          organization_id: c.organization_id,
+          at,
+          viewers: state.participants,
+          source: "telegram",
+        });
+        await recordPeak(webinar.id, now).catch(() => undefined);
         saved++;
       }
-      if (shotIsDue(webinar.shot_at, now, rulesOf(rules, c.organization_id))) {
+      // Its own picture time after migration 20270128 (tg_shot_at), so the
+      // YouTube and Telegram pictures of one webinar are both taken.
+      const hasOwn = "tg_shot_at" in webinar;
+      const own = hasOwn ? (webinar.tg_shot_at ?? null) : webinar.shot_at;
+      const partner = hasOwn && webinar.youtube_video_id ? webinar.shot_at : null;
+      if (pairedShotDue(own, partner, now, rulesOf(rules, c.organization_id))) {
         const frame = await tgFrame(session, ref).catch((e) => {
           if (e instanceof SessionRevoked) throw e;
           return null;
@@ -511,7 +562,7 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
         });
         await supabaseAdmin
           .from("marketing_webinars")
-          .update({ shot_at: now.toISOString() })
+          .update(hasOwn ? { tg_shot_at: now.toISOString() } : { shot_at: now.toISOString() })
           .eq("id", webinar.id);
       }
     } catch (err) {
