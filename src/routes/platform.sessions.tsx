@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { OwnerHeader } from "@/components/owner/OwnerPage";
+import { ConsoleTabs, OwnerHeader } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -233,39 +233,15 @@ function PlatformSessionsPage() {
         desc={t("visits.desc")}
       />
 
-      <div className="phone-joined mb-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        {tabs.map((x) => (
-          <button
-            key={x.id}
-            type="button"
-            onClick={() =>
-              void navigate({ search: x.id === "visits" ? {} : { tab: x.id }, replace: true })
-            }
-            className={cn(
-              "admin-card flex min-w-0 items-center gap-3 rounded-2xl border bg-card px-4 py-3.5 text-left transition-colors",
-              tab === x.id
-                ? "border-primary/60 ring-1 ring-primary/40 shadow-[0_0_22px_-8px_var(--console-glow)]"
-                : "border-border hover:border-foreground/15",
-            )}
-          >
-            <span
-              className={cn(
-                "icon-tile grid h-10 w-10 shrink-0 place-items-center rounded-xl",
-                tab === x.id ? "bg-primary/15 text-primary" : "bg-surface text-muted-foreground",
-              )}
-            >
-              <x.icon className="h-4.5 w-4.5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-foreground">
-                {x.label}
-              </span>
-              <span className="block truncate font-mono text-[11px] text-muted-foreground phone:hidden">
-                {x.hint}
-              </span>
-            </span>
-          </button>
-        ))}
+      <div className="mb-4">
+        <ConsoleTabs
+          size="md"
+          value={tab}
+          onChange={(id) =>
+            void navigate({ search: id === "visits" ? {} : { tab: id }, replace: true })
+          }
+          options={tabs.map((x) => ({ value: x.id, label: x.label, icon: x.icon }))}
+        />
       </div>
 
       {tab === "trials" && <TrialsPanel onExport={exportTrials} />}
@@ -304,40 +280,18 @@ function PlatformSessionsPage() {
                 </option>
               ))}
             </select>
-            <div className="flex gap-1">
-              {types.map((x) => (
-                <button
-                  key={x.id}
-                  type="button"
-                  onClick={() => setFilters((f) => ({ ...f, type: x.id }))}
-                  className={cn(
-                    "h-9 rounded-xl px-3 text-xs font-semibold transition-colors",
-                    filters.type === x.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                  )}
-                >
-                  {x.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-1">
-              {periods.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setFilters((f) => ({ ...f, days: d }))}
-                  className={cn(
-                    "h-9 rounded-xl px-3 text-xs font-semibold transition-colors",
-                    filters.days === d
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                  )}
-                >
-                  {t(`visits.days${d}`)}
-                </button>
-              ))}
-            </div>
+            <ConsoleTabs
+              value={filters.type}
+              onChange={(v) => setFilters((f) => ({ ...f, type: v }))}
+              options={types.map((x) => ({ value: x.id, label: x.label }))}
+            />
+            <ConsoleTabs
+              value={String(filters.days)}
+              onChange={(v) =>
+                setFilters((f) => ({ ...f, days: Number(v) as PlatformVisitFilters["days"] }))
+              }
+              options={periods.map((d) => ({ value: String(d), label: t(`visits.days${d}`) }))}
+            />
             <button
               type="button"
               disabled={!sessions.length}

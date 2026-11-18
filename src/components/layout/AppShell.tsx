@@ -6,7 +6,7 @@ import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { OwnerHubTabs, OwnerNav, OwnerSidebar } from "@/components/owner/OwnerSidebar";
-import { ownerHubOf } from "@/lib/owner-hubs";
+import { OWNER_HUBS, ownerHubOf } from "@/lib/owner-hubs";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
@@ -343,7 +343,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           </main>
         </div>
 
-        <MobileTabBar items={menuItems} onOpenMenu={() => setMobileOpen(true)} />
+        <MobileTabBar
+          items={
+            isPlatformOwner
+              ? // The owner's main sections (lib/owner-hubs.ts); the rest is in "Menyu".
+                OWNER_HUBS[0]!.flatMap((h) => menuItems.filter((i) => i.to === h.to))
+              : menuItems
+          }
+          onOpenMenu={() => setMobileOpen(true)}
+        />
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
         <LiveNotifications enabled={crmEnabled && !isPlatformOwner} />
         <IncomingCallPopup enabled={crmEnabled && !isPlatformOwner} />
