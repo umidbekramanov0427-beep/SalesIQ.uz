@@ -95,6 +95,7 @@ function VisitPage() {
   return (
     <>
       <OwnerHeader
+        back
         icon={Device}
         title={failedLogin ? t("visits.failedLogin") : (v.user?.name ?? t("visits.unknownUser"))}
         {...(v.userAgent ? { desc: v.userAgent } : {})}

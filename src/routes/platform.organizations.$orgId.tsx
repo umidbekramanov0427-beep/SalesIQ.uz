@@ -572,6 +572,7 @@ function OrgDetailPage() {
   return (
     <>
       <OwnerHeader
+        back
         icon={Building2}
         title={org.name}
         desc={t("platform.orgDetailDesc")}

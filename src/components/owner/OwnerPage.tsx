@@ -10,9 +10,6 @@ import {
 } from "@/components/layout/Primitives";
 import { keysForText, useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/lib/nav";
-import { ownerHubOf } from "@/lib/owner-hubs";
-import { PageTools } from "@/components/layout/PageTools";
-import { BackIconButton } from "@/components/layout/BackButton";
 import type { CardTone } from "@/lib/tones";
 import { cn } from "@/lib/utils";
 import {
@@ -58,31 +55,22 @@ export function OwnerHeader({
   desc,
   actions,
   tone,
+  back = false,
 }: {
   icon: LucideIcon;
   title: string;
   desc?: string;
   actions?: ReactNode;
+  /** An inner page (a company's card, a visit): a way back to its list. */
+  back?: boolean;
   /** Defaults to the section's colour in the owner menu. */
   tone?: CardTone;
 }) {
   const section = useOwnerSection();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // Under a section's tab row the tab already names the page: one slim row
-  // with what the page is for, its "!" / gear and its buttons.
-  if ((ownerHubOf(pathname)?.hub.tabs.length ?? 0) > 1)
-    return (
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="flex min-w-0 items-center gap-2.5 text-[13.5px] text-muted-foreground">
-          <BackIconButton />
-          <span className="min-w-0">{desc}</span>
-          <PageTools size="sm" title={title} description={desc} />
-        </p>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-      </div>
-    );
+  // The full menu is always beside a section page; only inner pages go back.
   return (
     <PageHeader
+      back={back}
       icon={icon}
       tone={tone ?? (section?.tone as CardTone | undefined) ?? "primary"}
       title={title}

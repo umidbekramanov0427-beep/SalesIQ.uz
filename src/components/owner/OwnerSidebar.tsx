@@ -1,22 +1,21 @@
 import type { CSSProperties } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
-import { RAIL_ITEM, RAIL_LABEL, RAIL_STACK, UserMenu } from "@/components/layout/AppSidebar";
-import { RailGlyph } from "@/components/layout/RailGlyph";
+import { UserMenu } from "@/components/layout/AppSidebar";
 import { useOwnerInbox, useSubscriptionRequestsRaw } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 import { NAV_ITEMS, railLabel, type NavItem } from "@/lib/nav";
 import { OWNER_HUBS, OWNER_SETTINGS_HUB, ownerHubOf, type OwnerHub } from "@/lib/owner-hubs";
 import { cn } from "@/lib/utils";
 import { useBrowserZoom } from "@/lib/browser-zoom";
-import { TONE_TEXT, TONE_TILE } from "@/lib/tones";
+import { TONE_TILE } from "@/lib/tones";
 
-// The platform owner's menu, the same rail as a company's CRM (AppSidebar):
-// always folded, 72px, a few sections (lib/owner-hubs.ts) as coloured glyphs
-// with a short name under them; the related pages of a section are tabs at
-// the top of the page (OwnerHubTabs). Waiting support chats and renewal
-// requests show as a red count. One fixed size whatever the page zoom; the
-// person's menu (theme, language, profile, sign out) at the bottom.
+// The platform owner's menu: a full 256px sidebar with every page named,
+// in three groups (Biznes / Nazorat / Tizim, lib/owner-hubs.ts) -- no
+// folded rail and no tab row on top of the pages. The chosen page is a solid
+// brand row; waiting support chats and renewal requests show as a red
+// count. One fixed size whatever the page zoom; the person's menu (theme,
+// language, profile, sign out) at the bottom.
 
 export function ownerNavItems(): NavItem[] {
   return NAV_ITEMS.filter((i) => i.platformOwnerOnly);
@@ -31,9 +30,6 @@ function useOwnerCounts(): Record<string, number> {
     "/platform/notifications": (requests ?? []).filter((r) => r.status === "pending").length,
   };
 }
-
-const hubCount = (h: OwnerHub, counts: Record<string, number>) =>
-  h.tabs.reduce((n, tab) => n + (counts[tab] ?? 0), 0);
 
 const hubLabel = (t: (k: string) => string, h: OwnerHub, rail: boolean) =>
   h.labelKey.startsWith("nav.") && rail ? railLabel(t, h.to) : t(h.labelKey);
@@ -54,64 +50,36 @@ function CountDot({ n, className }: { n: number; className?: string }) {
 
 export function OwnerSidebar({ onEditProfile }: { onEditProfile: () => void }) {
   const { t } = useI18n();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const counts = useOwnerCounts();
-  const current = ownerHubOf(pathname)?.hub.id ?? null;
-
   // Like the CRM's rail: one fixed size whatever the page zoom.
   const zoom = useBrowserZoom();
   const frame: CSSProperties | undefined =
     zoom === 1 ? undefined : { zoom: 1 / zoom, height: `calc(100dvh * ${zoom})` };
-
-  const railItem = (h: OwnerHub) => {
-    const active = current === h.id;
-    return (
-      <Link
-        key={h.id}
-        to={h.to}
-        title={t(h.labelKey)}
-        className={cn(
-          "group flex items-center transition-colors duration-150",
-          RAIL_ITEM,
-          active
-            ? "bg-sidebar-active font-bold text-sidebar-active-foreground shadow-soft"
-            : "font-semibold text-sidebar-foreground hover:bg-accent",
-        )}
-      >
-        <span className="relative">
-          <RailGlyph icon={h.icon} active={active} className={TONE_TEXT[h.tone]} />
-          <CountDot
-            n={hubCount(h, counts)}
-            className="absolute -right-2.5 -top-1.5 ring-2 ring-background"
-          />
-        </span>
-        <span className={RAIL_LABEL}>{hubLabel(t, h, true)}</span>
-      </Link>
-    );
-  };
-
   return (
-    <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden" style={frame}>
+    <div className="relative hidden h-dvh w-[256px] shrink-0 lg:block phone:hidden" style={frame}>
       <aside
         data-app-rail
         className="absolute inset-0 flex flex-col border-r border-sidebar-border bg-background"
       >
-        <div className="flex h-14 shrink-0 items-center justify-center">
-          <Link to="/platform/companies" aria-label={t("app.name")} title={t("owner.badge")}>
-            <Logo className="h-9 w-9" />
-          </Link>
-        </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-1.5 [scrollbar-width:none]">
-          {OWNER_HUBS.map((group, gi) => (
-            <div key={gi}>
-              {gi > 0 && <div className="mx-2 my-2.5 border-t border-sidebar-border" />}
-              <div className={RAIL_STACK}>{group.map(railItem)}</div>
-            </div>
-          ))}
-        </nav>
-        <div className="shrink-0 border-t border-sidebar-border p-1.5">
-          <div className="mb-2">{railItem(OWNER_SETTINGS_HUB)}</div>
-          <UserMenu collapsed isAdmin={false} onEditProfile={onEditProfile} />
+        <Link
+          to="/platform/companies"
+          className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5"
+        >
+          <Logo className="h-9 w-9" />
+          <span className="min-w-0">
+            <span className="block text-[15px] font-bold leading-tight text-foreground">
+              {t("app.name")}
+            </span>
+            <span className="block text-[11.5px] font-medium text-muted-foreground">
+              {t("owner.badge")}
+            </span>
+          </span>
+        </Link>
+        <OwnerNav
+          grouped
+          className="min-h-0 flex-1 overflow-y-auto px-3 py-4 [scrollbar-width:thin]"
+        />
+        <div className="shrink-0 border-t border-sidebar-border p-3">
+          <UserMenu collapsed={false} isAdmin={false} onEditProfile={onEditProfile} />
         </div>
       </aside>
     </div>
@@ -122,45 +90,59 @@ export function OwnerSidebar({ onEditProfile }: { onEditProfile: () => void }) {
 export function OwnerNav({
   className,
   onNavigate,
+  grouped = false,
 }: {
   className?: string | undefined;
   onNavigate?: (() => void) | undefined;
+  /** Desktop: the menu's three groups instead of one heading per section. */
+  grouped?: boolean;
 }) {
   const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const counts = useOwnerCounts();
   const at = ownerHubOf(pathname);
+  const sections: { label: string; tabs: string[] }[] = grouped
+    ? [
+        { label: t("owner.group.business"), tabs: OWNER_HUBS[0]!.flatMap((h) => h.tabs) },
+        { label: t("owner.group.control"), tabs: OWNER_HUBS[1]!.flatMap((h) => h.tabs) },
+        { label: t("owner.group.system"), tabs: OWNER_SETTINGS_HUB.tabs },
+      ]
+    : [...OWNER_HUBS.flat(), OWNER_SETTINGS_HUB].map((h) => ({
+        label: hubLabel(t, h, false),
+        tabs: h.tabs,
+      }));
   return (
-    <nav className={cn("space-y-4", className)}>
-      {[...OWNER_HUBS.flat(), OWNER_SETTINGS_HUB].map((h) => (
-        <div key={h.id}>
-          <p className="px-2.5 pb-1 text-[11px] font-bold uppercase tracking-wide text-sidebar-muted">
-            {hubLabel(t, h, false)}
+    <nav className={cn("space-y-5", className)}>
+      {sections.map((sec) => (
+        <div key={sec.label}>
+          <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-sidebar-muted">
+            {sec.label}
           </p>
-          <div className="space-y-0.5">
-            {h.tabs.map((tab) => {
-              const nav = NAV_ITEMS.find((i) => i.to === tab);
-              if (!nav) return null;
+          <div className="space-y-1">
+            {sec.tabs.map((tab) => {
+              const item = NAV_ITEMS.find((i) => i.to === tab);
+              if (!item) return null;
               const active = at?.tab === tab;
               return (
                 <Link
                   key={tab}
                   to={tab}
                   onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-10 items-center gap-2.5 rounded-xl px-2 text-[13.5px] font-medium transition-colors",
+                    "flex h-11 items-center gap-3 rounded-xl px-2.5 text-[14px] transition-colors",
                     active
-                      ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-soft"
-                      : "text-sidebar-foreground hover:bg-accent hover:text-foreground",
+                      ? "bg-primary font-semibold text-primary-foreground shadow-soft"
+                      : "font-medium text-sidebar-foreground hover:bg-accent hover:text-foreground",
                   )}
                 >
                   <span
                     className={cn(
-                      "grid h-7 w-7 shrink-0 place-items-center rounded-lg",
-                      TONE_TILE[nav.tone],
+                      "grid h-8 w-8 shrink-0 place-items-center rounded-lg",
+                      active ? "bg-white/18 text-primary-foreground" : TONE_TILE[item.tone],
                     )}
                   >
-                    <nav.icon className="h-[15px] w-[15px]" strokeWidth={2.1} />
+                    <item.icon className="h-4 w-4" strokeWidth={2.1} />
                   </span>
                   <span className="min-w-0 flex-1 truncate">{t(`nav.${tab}`)}</span>
                   <CountDot n={counts[tab] ?? 0} className="h-5 min-w-5 text-[10.5px]" />
@@ -171,42 +153,5 @@ export function OwnerNav({
         </div>
       ))}
     </nav>
-  );
-}
-
-/**
- * The tab row at the top of an owner page: the other pages of its section
- * (Nazorat: Tashriflar · Amallar · Xatolar). Nothing for a one-page section.
- */
-export function OwnerHubTabs() {
-  const { t } = useI18n();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const counts = useOwnerCounts();
-  const at = ownerHubOf(pathname);
-  if (!at || at.hub.tabs.length < 2) return null;
-  return (
-    // Pinned: it stays at the top while the page scrolls under it.
-    <div className="pointer-events-none sticky top-2 z-30 mb-4 flex justify-center phone:mb-3">
-      <div className="pointer-events-auto max-w-full rounded-xl shadow-[0_10px_28px_-14px_rgb(15_23_42/0.45)]">
-        <div className="phone-tabs ctl-track inline-flex h-11 items-center gap-1 rounded-xl p-1">
-          {at.hub.tabs.map((tab) => {
-            const nav = NAV_ITEMS.find((i) => i.to === tab);
-            if (!nav) return null;
-            return (
-              <Link
-                key={tab}
-                to={tab}
-                aria-selected={at.tab === tab}
-                className="ctl-tab inline-flex h-full items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold"
-              >
-                <nav.icon className="h-4 w-4" />
-                {t(`nav.${tab}`)}
-                <CountDot n={counts[tab] ?? 0} />
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </div>
   );
 }

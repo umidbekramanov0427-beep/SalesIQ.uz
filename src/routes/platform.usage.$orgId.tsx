@@ -85,6 +85,7 @@ function UsagePage() {
   return (
     <>
       <OwnerHeader
+        back
         icon={BarChart3}
         title={data.org.name}
         desc={t("visits.usage.desc", { n: String(data.days) })}

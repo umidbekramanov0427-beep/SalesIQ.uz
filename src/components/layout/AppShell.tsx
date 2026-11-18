@@ -5,7 +5,7 @@ import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
-import { OwnerHubTabs, OwnerNav, OwnerSidebar } from "@/components/owner/OwnerSidebar";
+import { OwnerNav, OwnerSidebar } from "@/components/owner/OwnerSidebar";
 import { OWNER_HUBS, ownerHubOf } from "@/lib/owner-hubs";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
@@ -315,19 +315,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={`${pathname}|${orgGeneral?.date_format ?? ""}`}
               className="page-enter h-full w-full"
             >
-              {!pageAllowed ? (
-                <Navigate to={homePathFor(role)} replace />
-              ) : isPlatformOwner && (ownerHubOf(pathname)?.hub.tabs.length ?? 0) > 1 ? (
-                // An owner section's related pages as tabs at the top.
-                // Its own box (not the full-height page box) so the pinned
-                // tab row stays on top for the whole scroll.
-                <div>
-                  <OwnerHubTabs />
-                  {children}
-                </div>
-              ) : (
-                children
-              )}
+              {!pageAllowed ? <Navigate to={homePathFor(role)} replace /> : children}
               {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)
                 still read as the last card touching the viewport edge on a

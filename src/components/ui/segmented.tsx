@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 
 /**
- * The platform's tab row: a brand-tinted track, every segment a soft tile
- * (styles.css .ctl-tab), the chosen one lit in the brand colour. Scrolls
- * sideways when it doesn't fit.
+ * The platform's tab row: one plain card-coloured panel with the segments
+ * as words (styles.css .ctl-track / .ctl-tab), the chosen one a solid brand
+ * chip. Scrolls sideways when it doesn't fit.
  */
 export function Segmented<T extends string>({
   value,
