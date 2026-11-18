@@ -9371,6 +9371,9 @@ export const en: Record<string, string> = {
   "ai.s.ownKey": "The company's own key is used.",
   "ai.s.platformKey": "No key — the platform's Gemini is used.",
   "ai.s.clearKey": "Remove key",
+  "mkt.rules.aiGuess": "AI guess (from frames)",
+  "mkt.rules.aiGuessDesc":
+    "The AI looks at each frame and suggests moments: prices, timer, presentation, Q&A. Not counted until you confirm. Uses AI spend.",
   "mkt.wb.sheetMinutes": "By minute",
   "refund.done": "Done",
   "refund.fFunnel": "Funnel",

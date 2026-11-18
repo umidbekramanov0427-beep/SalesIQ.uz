@@ -17,6 +17,8 @@ export type MarketingRules = {
     everyMin: number;
     /** YouTube: cut a real frame from the stream (else only the time + viewers card). */
     youtubeFrame: boolean;
+    /** AI looks at each frame and suggests a moment (prices, timer, ...) -- costs AI calls. */
+    aiGuess: boolean;
   };
   channels: {
     /** Minutes between two subscriber counts. */
@@ -33,7 +35,7 @@ export type MarketingRules = {
 };
 
 export const DEFAULT_MARKETING_RULES: MarketingRules = {
-  shots: { enabled: true, everyMin: 5, youtubeFrame: true },
+  shots: { enabled: true, everyMin: 5, youtubeFrame: true, aiGuess: false },
   channels: {
     checkEveryMin: 60,
     statsEveryH: 6,
@@ -59,6 +61,7 @@ export function parseMarketingRules(raw: unknown): MarketingRules {
       enabled: bool(s["enabled"], d.shots.enabled),
       everyMin: pick(s["everyMin"], SHOT_EVERY_OPTIONS, d.shots.everyMin),
       youtubeFrame: bool(s["youtubeFrame"], d.shots.youtubeFrame),
+      aiGuess: bool(s["aiGuess"], d.shots.aiGuess),
     },
     channels: {
       checkEveryMin: pick(c["checkEveryMin"], CHECK_EVERY_OPTIONS, d.channels.checkEveryMin),

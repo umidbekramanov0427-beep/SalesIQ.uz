@@ -47,6 +47,15 @@ export async function saveShot(input: {
     .select("id")
     .single();
   if (error) throw error;
+  // A live stream's own frame: the AI may say which moment it shows
+  // (Kuzatuv -> "AI taxmini", off by default). Never holds the picture up.
+  if (input.image && input.webinarId && !input.createdBy) {
+    const image = input.image;
+    const webinarId = input.webinarId;
+    void import("@/lib/marketing-ai/auto.server")
+      .then((m) => m.guessFromShot({ orgId: input.orgId, webinarId, shotId: data.id, at, image }))
+      .catch((err) => console.error("[marketing-ai] frame guess", err));
+  }
   return data.id;
 }
 

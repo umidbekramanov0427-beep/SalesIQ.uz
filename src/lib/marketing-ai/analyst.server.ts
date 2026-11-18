@@ -57,7 +57,7 @@ export type AnalysisResult = {
 export async function analyze(
   orgId: string,
   scope: Scope,
-  profileId: string,
+  profileId: string | null,
   force = false,
 ): Promise<AnalysisResult> {
   const [current, previous] = await Promise.all([

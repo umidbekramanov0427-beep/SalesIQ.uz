@@ -95,6 +95,17 @@ export function TrackingSettings() {
                 disabled={!d.shots.enabled}
               />
             </Row>
+            <Row
+              title={t("mkt.rules.aiGuess")}
+              desc={t("mkt.rules.aiGuessDesc")}
+              disabled={!d.shots.enabled}
+            >
+              <Switch
+                checked={d.shots.aiGuess}
+                onCheckedChange={(v) => shots({ aiGuess: v })}
+                disabled={!d.shots.enabled}
+              />
+            </Row>
           </Rows>
         </SectionCard>
 

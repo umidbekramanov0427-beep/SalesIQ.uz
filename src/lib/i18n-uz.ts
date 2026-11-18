@@ -9564,6 +9564,9 @@ const uz: Record<string, string> = {
   "ai.s.ownKey": "Kompaniyaning o'z kaliti ishlatilmoqda.",
   "ai.s.platformKey": "Kalit kiritilmagan — platformaning Gemini'si ishlatiladi.",
   "ai.s.clearKey": "Kalitni o'chirish",
+  "mkt.rules.aiGuess": "AI taxmini (skrinshotdan)",
+  "mkt.rules.aiGuessDesc":
+    "AI har kadrni ko'rib, «narxlar», «timer», «taqdimot», «savol-javob» kabi lahzalarni taxmin qiladi. Taxmin siz tasdiqlaguningizcha hisobga kirmaydi. AI sarfi bor.",
   "mkt.wb.sheetMinutes": "Daqiqalar bo'yicha",
   "refund.done": "Yakunlandi",
   "refund.fFunnel": "Voronka",

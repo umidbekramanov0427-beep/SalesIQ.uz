@@ -21,6 +21,7 @@ import { runRefundReminders } from "@/lib/refunds.server";
 import { runCompanyBackupsDue, runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
 import { ensureStaffBot } from "@/lib/bot-tokens.server";
 import { metaSyncDue } from "@/lib/meta-ads.server";
+import { runMarketingAiAuto } from "@/lib/marketing-ai/auto.server";
 
 export const Route = createFileRoute("/telegram/send-daily-report")({
   server: {
@@ -85,6 +86,9 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await metaSyncDue().catch((err) => console.error("[meta] sync failed", err));
         // Marketing paneli: Telegram channels' subscriber counts (hourly each).
         await refreshChannels().catch((err) => console.error("[marketing] channels failed", err));
+        // Marketing -> AI tahlilchi working by itself (daily / after a webinar),
+        // findings to the marketing bot. Not awaited: AI calls take a while.
+        void runMarketingAiAuto().catch((err) => console.error("[marketing-ai] auto failed", err));
         // Trial companies: first-day / idle / trial-ending nudges.
         await runTrialNudges().catch((err) => console.error("[trial-nudges] tick failed", err));
         // The owner's company tasks and call reminders (owner -> Arizalar).
