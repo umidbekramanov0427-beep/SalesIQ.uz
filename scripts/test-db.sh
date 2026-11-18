@@ -109,6 +109,8 @@ MIGRATIONS=(
   20270125000000_org_bots # twice
   20270126000000_company_leads
   20270126000000_company_leads # twice
+  20270127000000_owner_tools
+  20270127000000_owner_tools # twice
 )
 
 cleanup() { :; }

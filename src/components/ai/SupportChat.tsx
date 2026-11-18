@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Headset, Loader2, Send } from "lucide-react";
+import { Headset, Loader2, Mic, Paperclip, Send, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useMySupportMessages, useSendSupportMessage } from "@/hooks/use-crm-data";
 import { ChatSearchBar, Highlight, type ChatSearchState } from "@/components/chat/ChatSearch";
 import { EmojiPicker } from "@/components/lead/EmojiPicker";
+import { VoiceRecorder } from "@/components/lead/VoiceRecorder";
+import { VideoRecorder } from "@/components/lead/VideoRecorder";
+import {
+  DropOverlay,
+  PendingFile,
+  SupportFile,
+  useAttachments,
+  useFileDrop,
+} from "@/components/chat/AttachmentKit";
 import { useI18n } from "@/lib/i18n";
 import { isPending, type SupportMessage } from "@/lib/support";
 import { cn } from "@/lib/utils";
@@ -25,6 +34,10 @@ export function SupportChat({
   const messages = useMySupportMessages(true);
   const send = useSendSupportMessage();
   const [input, setInput] = useState("");
+  const [recorder, setRecorder] = useState<"voice" | "video" | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const att = useAttachments();
+  const drop = useFileDrop(att.addFiles);
   const listRef = useRef<HTMLDivElement>(null);
   const list = messages.data ?? [];
 
@@ -33,24 +46,44 @@ export function SupportChat({
     onSeen();
   }, [list.length, onSeen, search.open]);
 
+  function failed(err: unknown) {
+    const code = err instanceof Error ? err.message : "";
+    toast.error(
+      code === "RATE_LIMIT"
+        ? t("support.rateLimit")
+        : code === "SUPPORT_NOT_READY" || code === "FILES_NOT_READY"
+          ? t("support.notReady")
+          : code === "TOO_BIG"
+            ? t("smsg.fileTooBig", { name: "" })
+            : t("support.sendFailed"),
+    );
+  }
+
   async function submit(e?: FormEvent) {
     e?.preventDefault();
     const text = input.trim();
-    if (!text) return;
+    const files = att.files;
+    if (!text && !files.length) return;
     // On screen at once; the text comes back to the box if sending fails.
     setInput("");
+    att.clear();
     try {
-      await send.mutateAsync({ text, page });
+      // The text rides with the first file; every other file is its own message.
+      if (!files.length) await send.mutateAsync({ text, page });
+      for (const [i, file] of files.entries())
+        await send.mutateAsync({ text: i === 0 ? text : "", page, file });
     } catch (err) {
       setInput((current) => current || text);
-      const code = err instanceof Error ? err.message : "";
-      toast.error(
-        code === "RATE_LIMIT"
-          ? t("support.rateLimit")
-          : code === "SUPPORT_NOT_READY"
-            ? t("support.notReady")
-            : t("support.sendFailed"),
-      );
+      failed(err);
+    }
+  }
+
+  async function sendRecording(file: File, as: string) {
+    try {
+      await send.mutateAsync({ text: "", page, file, as });
+      setRecorder(null);
+    } catch (err) {
+      failed(err);
     }
   }
 
@@ -85,33 +118,97 @@ export function SupportChat({
         ))}
       </div>
 
-      <form onSubmit={submit} className="flex items-end gap-1.5 border-t border-border p-3">
-        <div className="pb-1">
-          <EmojiPicker onPick={(e) => setInput((v) => v + e)} />
-        </div>
-        <textarea
-          id="support-input"
-          value={input}
-          rows={1}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void submit();
-            }
-          }}
-          placeholder={t("support.placeholder")}
-          maxLength={4000}
-          className="max-h-28 min-h-10 min-w-0 flex-1 resize-none rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary/50"
-        />
-        <button
-          type="submit"
-          disabled={!input.trim()}
-          aria-label={t("ai.send")}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-        >
-          <Send className="h-4 w-4" />
-        </button>
+      <form onSubmit={submit} {...drop.dropProps} className="relative border-t border-border p-3">
+        <DropOverlay show={drop.dragging} />
+        {att.files.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {att.files.map((f, i) => (
+              <PendingFile key={`${f.name}-${i}`} file={f} onRemove={() => att.remove(i)} />
+            ))}
+          </div>
+        )}
+        {recorder === "voice" ? (
+          <VoiceRecorder
+            onSend={(f, as) => sendRecording(f, as)}
+            onClose={() => setRecorder(null)}
+          />
+        ) : recorder === "video" ? (
+          <VideoRecorder
+            onSend={(f, as) => sendRecording(f, as)}
+            onClose={() => setRecorder(null)}
+          />
+        ) : (
+          <div className="flex items-end gap-1">
+            <div className="flex pb-1">
+              <EmojiPicker onPick={(e) => setInput((v) => v + e)} />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                aria-label={t("attach.file")}
+                title={t("attach.file")}
+                className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                hidden
+                onChange={(e) => {
+                  att.addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+            <textarea
+              id="support-input"
+              value={input}
+              rows={1}
+              onPaste={att.onPaste}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void submit();
+                }
+              }}
+              placeholder={t("support.placeholder")}
+              maxLength={4000}
+              className="max-h-28 min-h-10 min-w-0 flex-1 resize-none rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none focus:border-primary/50"
+            />
+            {input.trim() || att.files.length ? (
+              <button
+                type="submit"
+                aria-label={t("ai.send")}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white transition-opacity hover:opacity-90"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setRecorder("voice")}
+                  aria-label={t("attach.voice")}
+                  title={t("attach.voice")}
+                  className="grid h-10 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <Mic className="h-[18px] w-[18px]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRecorder("video")}
+                  aria-label={t("attach.video")}
+                  title={t("attach.video")}
+                  className="grid h-10 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <Video className="h-[18px] w-[18px]" />
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </form>
     </>
   );
@@ -147,7 +244,20 @@ function Bubble({
             : "rounded-bl-md border border-border bg-card text-foreground",
         )}
       >
-        <Highlight text={msg.text} query={query} current={current} />
+        {(msg.file_path || msg.file_kind === "uploading") && (
+          <div className={cn(msg.text && "mb-1.5")}>
+            <SupportFile
+              messageId={msg.id}
+              file={{
+                name: msg.file_name ?? null,
+                type: msg.file_type ?? null,
+                size: msg.file_size ?? null,
+                kind: msg.file_kind ?? null,
+              }}
+            />
+          </div>
+        )}
+        {msg.text && <Highlight text={msg.text} query={query} current={current} />}
       </div>
       <span className="mx-1 mt-0.5 text-[10.5px] tabular-nums text-muted-foreground">
         {pending ? t("support.sending") : stamp(msg.created_at)}

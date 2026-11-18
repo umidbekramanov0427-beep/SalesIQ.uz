@@ -244,7 +244,9 @@ import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as SignupCreateRouteImport } from './routes/signup.create'
 import { Route as SubscriptionPaymentsCreateRouteImport } from './routes/subscription-payments.create'
 import { Route as SubscriptionPaymentsStatusRouteImport } from './routes/subscription-payments.status'
+import { Route as SupportFileRouteImport } from './routes/support.file'
 import { Route as SupportSendRouteImport } from './routes/support.send'
+import { Route as SupportUploadRouteImport } from './routes/support.upload'
 import { Route as TLeadRouteImport } from './routes/t.lead'
 import { Route as TVisitRouteImport } from './routes/t.visit'
 import { Route as TelegramLeadAvatarRouteImport } from './routes/telegram.lead-avatar'
@@ -1536,9 +1538,19 @@ const SubscriptionPaymentsStatusRoute =
     path: '/subscription-payments/status',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SupportFileRoute = SupportFileRouteImport.update({
+  id: '/support/file',
+  path: '/support/file',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportSendRoute = SupportSendRouteImport.update({
   id: '/support/send',
   path: '/support/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportUploadRoute = SupportUploadRouteImport.update({
+  id: '/support/upload',
+  path: '/support/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TLeadRoute = TLeadRouteImport.update({
@@ -2243,7 +2255,9 @@ export interface FileRoutesByFullPath {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/support/file': typeof SupportFileRoute
   '/support/send': typeof SupportSendRoute
+  '/support/upload': typeof SupportUploadRoute
   '/t/lead': typeof TLeadRoute
   '/t/visit': typeof TVisitRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
@@ -2567,7 +2581,9 @@ export interface FileRoutesByTo {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/support/file': typeof SupportFileRoute
   '/support/send': typeof SupportSendRoute
+  '/support/upload': typeof SupportUploadRoute
   '/t/lead': typeof TLeadRoute
   '/t/visit': typeof TVisitRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
@@ -2892,7 +2908,9 @@ export interface FileRoutesById {
   '/signup/create': typeof SignupCreateRoute
   '/subscription-payments/create': typeof SubscriptionPaymentsCreateRoute
   '/subscription-payments/status': typeof SubscriptionPaymentsStatusRoute
+  '/support/file': typeof SupportFileRoute
   '/support/send': typeof SupportSendRoute
+  '/support/upload': typeof SupportUploadRoute
   '/t/lead': typeof TLeadRoute
   '/t/visit': typeof TVisitRoute
   '/telegram/lead-avatar': typeof TelegramLeadAvatarRoute
@@ -3218,7 +3236,9 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/support/file'
     | '/support/send'
+    | '/support/upload'
     | '/t/lead'
     | '/t/visit'
     | '/telegram/lead-avatar'
@@ -3542,7 +3562,9 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/support/file'
     | '/support/send'
+    | '/support/upload'
     | '/t/lead'
     | '/t/visit'
     | '/telegram/lead-avatar'
@@ -3866,7 +3888,9 @@ export interface FileRouteTypes {
     | '/signup/create'
     | '/subscription-payments/create'
     | '/subscription-payments/status'
+    | '/support/file'
     | '/support/send'
+    | '/support/upload'
     | '/t/lead'
     | '/t/visit'
     | '/telegram/lead-avatar'
@@ -4120,7 +4144,9 @@ export interface RootRouteChildren {
   SignTokenRoute: typeof SignTokenRoute
   SubscriptionPaymentsCreateRoute: typeof SubscriptionPaymentsCreateRoute
   SubscriptionPaymentsStatusRoute: typeof SubscriptionPaymentsStatusRoute
+  SupportFileRoute: typeof SupportFileRoute
   SupportSendRoute: typeof SupportSendRoute
+  SupportUploadRoute: typeof SupportUploadRoute
   TLeadRoute: typeof TLeadRoute
   TVisitRoute: typeof TVisitRoute
   TelegramLeadAvatarRoute: typeof TelegramLeadAvatarRoute
@@ -5818,11 +5844,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscriptionPaymentsStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/support/file': {
+      id: '/support/file'
+      path: '/support/file'
+      fullPath: '/support/file'
+      preLoaderRoute: typeof SupportFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/support/send': {
       id: '/support/send'
       path: '/support/send'
       fullPath: '/support/send'
       preLoaderRoute: typeof SupportSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support/upload': {
+      id: '/support/upload'
+      path: '/support/upload'
+      fullPath: '/support/upload'
+      preLoaderRoute: typeof SupportUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/t/lead': {
@@ -7020,7 +7060,9 @@ const rootRouteChildren: RootRouteChildren = {
   SignTokenRoute: SignTokenRoute,
   SubscriptionPaymentsCreateRoute: SubscriptionPaymentsCreateRoute,
   SubscriptionPaymentsStatusRoute: SubscriptionPaymentsStatusRoute,
+  SupportFileRoute: SupportFileRoute,
   SupportSendRoute: SupportSendRoute,
+  SupportUploadRoute: SupportUploadRoute,
   TLeadRoute: TLeadRoute,
   TVisitRoute: TVisitRoute,
   TelegramLeadAvatarRoute: TelegramLeadAvatarRoute,

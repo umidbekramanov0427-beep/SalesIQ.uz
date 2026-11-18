@@ -4,6 +4,7 @@
 // and "save as a problem" onto the company's lead.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
+  slaDue,
   sortThreads,
   threadStatus,
   unreadCount,
@@ -13,8 +14,14 @@ import {
 } from "@/lib/owner-inbox";
 import { loadLeadFacts } from "@/lib/company-leads.server";
 import { average, supportResponseTimes } from "@/lib/support";
+import { supportFileLabel } from "@/lib/support-files.server";
 
 type Msg = {
+  file_name?: string | null;
+  file_kind?: string | null;
+  file_type?: string | null;
+  file_size?: number | null;
+  file_path?: string | null;
   id: string;
   organization_id: string | null;
   user_id: string;
@@ -57,6 +64,8 @@ async function names(ids: string[]) {
   return map;
 }
 
+const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 export type OwnerInboxStats = {
   waiting: number;
   avgResponseMs: number | null;
@@ -80,7 +89,7 @@ export async function listCompanyThreads(days = 90): Promise<{
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   const { data, error } = await supabaseAdmin
     .from("support_messages")
-    .select("id, organization_id, user_id, direction, text, page, sent_by, created_at")
+    .select("*")
     .gte("created_at", since)
     .order("created_at", { ascending: true })
     .limit(10000);
@@ -167,12 +176,15 @@ export async function listCompanyThreads(days = 90): Promise<{
       unread: unreadCount(list, state?.owner_read_at ?? null),
       waitingSince: status === "closed" ? null : waitingSince,
       lastAt: last.created_at,
-      lastText: last.text.slice(0, 200),
+      lastText: (
+        last.text || supportFileLabel(last.file_kind ?? null, last.file_name ?? null)
+      ).slice(0, 200),
       lastAuthor: last.direction === "out" ? "SalesIQ" : (people.get(last.user_id)?.name ?? null),
       lastDirection: last.direction,
       count: list.length,
       people: who,
       lastAskerId: lastIn?.user_id ?? last.user_id,
+      assignedTo: (state as { assigned_to?: string | null } | undefined)?.assigned_to ?? null,
     };
   });
   // The last 30 days: how fast the team answers, today's answers, questions.
@@ -203,7 +215,7 @@ export async function loadCompanyThread(key: string) {
   const orgId = key.startsWith("u:") ? null : key;
   const q = supabaseAdmin
     .from("support_messages")
-    .select("id, organization_id, user_id, direction, text, page, sent_by, created_at")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(500);
   const { data } = orgId
@@ -220,6 +232,14 @@ export async function loadCompanyThread(key: string) {
     page: m.page,
     created_at: m.created_at,
     userId: m.user_id,
+    file: m.file_path
+      ? {
+          name: m.file_name ?? "file",
+          type: m.file_type ?? "",
+          size: m.file_size ?? 0,
+          kind: m.file_kind ?? "document",
+        }
+      : null,
     author:
       m.direction === "out"
         ? ((m.sent_by ? people.get(m.sent_by)?.name : null) ?? "SalesIQ")
@@ -262,14 +282,16 @@ export async function loadCompanyThread(key: string) {
 
 export async function markThread(
   orgId: string,
-  patch: { read?: boolean; status?: "open" | "closed" },
+  patch: { read?: boolean; status?: "open" | "closed"; assignedTo?: string | null },
 ): Promise<{ ok: boolean; error?: string }> {
-  const row: Record<string, unknown> = {
-    organization_id: orgId,
-    updated_at: new Date().toISOString(),
-  };
+  const row: Record<string, unknown> = { organization_id: orgId };
+  // updated_at marks when it was closed (a later question reopens it).
+  if (patch.status) {
+    row["status"] = patch.status;
+    row["updated_at"] = new Date().toISOString();
+  }
   if (patch.read) row["owner_read_at"] = new Date().toISOString();
-  if (patch.status) row["status"] = patch.status;
+  if (patch.assignedTo !== undefined) row["assigned_to"] = patch.assignedTo;
   const { error } = await supabaseAdmin
     .from("support_threads")
     .upsert(row as { organization_id: string }, { onConflict: "organization_id" });
@@ -317,4 +339,76 @@ export async function saveAsIssue(
     created_by: ownerId,
   });
   return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+/** The platform owners (for "who answers" pickers). */
+export async function listOwners(): Promise<{ id: string; name: string }[]> {
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("role", "platform_owner");
+  return (data ?? []).map((p) => ({ id: p.id, name: p.full_name || p.email || "—" }));
+}
+
+/**
+ * From the 5-minute cron: a company waiting longer than the answer limit
+ * (platform_settings.support_sla_minutes) is reported once per wait -- to
+ * the owner who answers it, else to every owner.
+ */
+export async function runSupportSla(now = new Date()): Promise<number> {
+  const { data: settings } = await supabaseAdmin
+    .from("platform_settings")
+    .select("*")
+    .maybeSingle();
+  // Before migration 20270127 there is no limit column: stay quiet rather
+  // than alert every five minutes with nowhere to remember it.
+  if (!settings || !("support_sla_minutes" in settings)) return 0;
+  const minutes = Number((settings as { support_sla_minutes?: number }).support_sla_minutes);
+  if (!minutes || minutes <= 0) return 0;
+  const { threads } = await listCompanyThreads(7);
+  const waiting = threads.filter((t) => t.orgId && t.waitingSince);
+  if (!waiting.length) return 0;
+  const { data: states, error } = await supabaseAdmin
+    .from("support_threads")
+    .select("*")
+    .in(
+      "organization_id",
+      waiting.map((t) => t.orgId!),
+    );
+  if (error) return 0;
+  const alerted = new Map(
+    (states ?? []).map((s) => [
+      s.organization_id,
+      (s as { sla_alerted_at?: string | null }).sla_alerted_at ?? null,
+    ]),
+  );
+  const { notifyOwners, sendToOwner } = await import("@/lib/ops/bot.server");
+  let sent = 0;
+  for (const t of waiting) {
+    if (!slaDue(t.waitingSince, alerted.get(t.orgId!) ?? null, minutes, now)) continue;
+    const { error: markError } = await supabaseAdmin
+      .from("support_threads")
+      .upsert(
+        { organization_id: t.orgId!, sla_alerted_at: now.toISOString() },
+        { onConflict: "organization_id" },
+      );
+    if (markError) continue; // not remembered = would repeat every run
+    const mins = Math.round((now.getTime() - new Date(t.waitingSince!).getTime()) / 60_000);
+    const text =
+      `⏳ <b>Javob kutmoqda: ${mins} daqiqa</b>\n🏢 ${esc(t.name)}\n💬 ${esc(t.lastText.slice(0, 200))}\n` +
+      `<i>Owner panel → Yordam</i>`;
+    let delivered = false;
+    if (t.assignedTo) {
+      const { data: owner } = await supabaseAdmin
+        .from("profiles")
+        .select("telegram_chat_id")
+        .eq("id", t.assignedTo)
+        .maybeSingle();
+      if (owner?.telegram_chat_id)
+        delivered = !!(await sendToOwner(Number(owner.telegram_chat_id), text).catch(() => null));
+    }
+    if (!delivered) await notifyOwners(text).catch(() => []);
+    sent++;
+  }
+  return sent;
 }

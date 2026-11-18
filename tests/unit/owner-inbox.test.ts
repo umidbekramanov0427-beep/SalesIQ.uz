@@ -2,6 +2,7 @@ import {
   EMPTY_OWNER_FILTER,
   matchesOwnerInbox,
   presetFilter,
+  slaDue,
   sortThreads,
   threadStatus,
   unreadCount,
@@ -64,5 +65,17 @@ describe("owner inbox", () => {
     expect(threadStatus("closed", "2027-01-10", "2027-01-09")).toBe("closed");
     expect(threadStatus("closed", "2027-01-10", "2027-01-11")).toBe("open");
     expect(threadStatus(null, null, null)).toBe("open");
+  });
+});
+
+describe("support answer limit", () => {
+  const now = new Date("2027-01-10T10:40:00Z");
+  it("alerts once per wait after the limit", () => {
+    expect(slaDue("2027-01-10T10:00:00Z", null, 30, now)).toBe(true);
+    expect(slaDue("2027-01-10T10:20:00Z", null, 30, now)).toBe(false);
+    expect(slaDue("2027-01-10T10:00:00Z", "2027-01-10T10:31:00Z", 30, now)).toBe(false);
+    expect(slaDue("2027-01-10T10:00:00Z", "2027-01-09T10:00:00Z", 30, now)).toBe(true);
+    expect(slaDue(null, null, 30, now)).toBe(false);
+    expect(slaDue("2027-01-10T10:00:00Z", null, 0, now)).toBe(false);
   });
 });

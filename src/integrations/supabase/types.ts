@@ -5480,8 +5480,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_announcement_views: {
+        Row: {
+          announcement_id: string;
+          user_id: string;
+          organization_id: string | null;
+          seen_at: string;
+        };
+        Insert: {
+          announcement_id: string;
+          user_id: string;
+          organization_id?: string | null;
+          seen_at?: string;
+        };
+        Update: {
+          announcement_id?: string;
+          user_id?: string;
+          organization_id?: string | null;
+          seen_at?: string;
+        };
+        Relationships: [];
+      };
       platform_announcements: {
         Row: {
+          plans: string[] | null;
           active: boolean;
           audience: string;
           body: string;
@@ -5500,6 +5522,7 @@ export type Database = {
           title: string;
         };
         Insert: {
+          plans?: string[] | null;
           active?: boolean;
           audience?: string;
           body?: string;
@@ -5518,6 +5541,7 @@ export type Database = {
           title: string;
         };
         Update: {
+          plans?: string[] | null;
           active?: boolean;
           audience?: string;
           body?: string;
@@ -6218,6 +6242,7 @@ export type Database = {
       };
       platform_settings: {
         Row: {
+          support_sla_minutes: number;
           meeting_settings: Json;
           support_templates: Json;
           company_requisites: Json;
@@ -6244,6 +6269,7 @@ export type Database = {
           backup_last_status: string | null;
         };
         Insert: {
+          support_sla_minutes?: number;
           meeting_settings?: Json;
           support_templates?: Json;
           company_requisites?: Json;
@@ -6270,6 +6296,7 @@ export type Database = {
           backup_last_status?: string | null;
         };
         Update: {
+          support_sla_minutes?: number;
           meeting_settings?: Json;
           support_templates?: Json;
           company_requisites?: Json;
@@ -6294,6 +6321,24 @@ export type Database = {
           backup_bind_expires_at?: string | null;
           backup_last_at?: string | null;
           backup_last_status?: string | null;
+        };
+        Relationships: [];
+      };
+      platform_owner_access: {
+        Row: {
+          profile_id: string;
+          sections: string[] | null;
+          updated_at: string;
+        };
+        Insert: {
+          profile_id: string;
+          sections?: string[] | null;
+          updated_at?: string;
+        };
+        Update: {
+          profile_id?: string;
+          sections?: string[] | null;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -8358,6 +8403,7 @@ export type Database = {
       };
       support_threads: {
         Row: {
+          sla_alerted_at: string | null;
           organization_id: string;
           status: string;
           owner_read_at: string | null;
@@ -8365,6 +8411,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          sla_alerted_at?: string | null;
           organization_id: string;
           status?: string;
           owner_read_at?: string | null;
@@ -8372,6 +8419,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          sla_alerted_at?: string | null;
           organization_id?: string;
           status?: string;
           owner_read_at?: string | null;
@@ -8382,6 +8430,11 @@ export type Database = {
       };
       support_messages: {
         Row: {
+          file_path: string | null;
+          file_name: string | null;
+          file_type: string | null;
+          file_size: number | null;
+          file_kind: string | null;
           created_at: string;
           direction: string;
           id: string;
@@ -8393,6 +8446,11 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          file_path?: string | null;
+          file_name?: string | null;
+          file_type?: string | null;
+          file_size?: number | null;
+          file_kind?: string | null;
           created_at?: string;
           direction: string;
           id?: string;
@@ -8404,6 +8462,11 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          file_path?: string | null;
+          file_name?: string | null;
+          file_type?: string | null;
+          file_size?: number | null;
+          file_kind?: string | null;
           created_at?: string;
           direction?: string;
           id?: string;

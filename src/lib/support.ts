@@ -7,6 +7,12 @@ export type SupportMessage = {
   direction: "in" | "out";
   text: string;
   created_at: string;
+  /** A photo, document, voice note or video sent with the message. */
+  file_path?: string | null;
+  file_name?: string | null;
+  file_type?: string | null;
+  file_size?: number | null;
+  file_kind?: string | null;
 };
 
 /** Longest support message, same as the table's check. */
@@ -54,10 +60,11 @@ export function responseLabel(ms: number, units: { min: string; hour: string; da
 }
 
 /** Trims a message and rejects empty or over-long ones. */
-export function cleanSupportText(raw: unknown): string | null {
-  if (typeof raw !== "string") return null;
+export function cleanSupportText(raw: unknown, allowEmpty = false): string | null {
+  if (typeof raw !== "string") return allowEmpty ? "" : null;
   const text = raw.trim();
-  return text.length > 0 && text.length <= SUPPORT_TEXT_MAX ? text : null;
+  if (text.length > SUPPORT_TEXT_MAX) return null;
+  return text.length > 0 || allowEmpty ? text : null;
 }
 
 /**

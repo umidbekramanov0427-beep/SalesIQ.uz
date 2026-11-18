@@ -40,6 +40,12 @@ import { readFile } from "@/components/crm/bulk-message-shared";
 import { VoiceRecorder } from "@/components/lead/VoiceRecorder";
 import { VideoRecorder } from "@/components/lead/VideoRecorder";
 import { EmojiPicker } from "@/components/lead/EmojiPicker";
+import { namedChatFile, PendingFile as KitPendingFile } from "@/components/chat/AttachmentKit";
+
+/** The lead composer's own frame colour around a waiting file. */
+function PendingFile(props: { file: File; onRemove: () => void }) {
+  return <KitPendingFile {...props} className="border-[var(--amo-quiet-line)]" />;
+}
 
 /** Telegram takes files from a bot up to 50 MB; Storage uploads cap at 20 MB. */
 const CHAT_MAX_FILE = 20 * 1024 * 1024;
@@ -514,15 +520,7 @@ export function Composer({
         toast.error(t("smsg.fileTooBig", { name: raw.name }));
         continue;
       }
-      ok.push(
-        raw.name === "image.png" || !raw.name
-          ? new File(
-              [raw],
-              `screenshot-${new Date().toTimeString().slice(0, 8).replace(/:/g, "")}.png`,
-              { type: raw.type || "image/png" },
-            )
-          : raw,
-      );
+      ok.push(namedChatFile(raw));
     }
     setFiles((prev) => [...prev, ...ok].slice(0, 10));
     focusArea();
@@ -1201,50 +1199,6 @@ export function Composer({
         )}
       </div>
     </div>
-  );
-}
-
-/** A file waiting in the composer: a thumbnail for pictures, else its name. */
-function PendingFile({ file, onRemove }: { file: File; onRemove: () => void }) {
-  const { t } = useI18n();
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!file.type.startsWith("image/")) return;
-    const u = URL.createObjectURL(file);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
-  }, [file]);
-  const size =
-    file.size >= 1024 * 1024
-      ? `${(file.size / 1024 / 1024).toFixed(1)} MB`
-      : `${Math.max(1, Math.round(file.size / 1024))} KB`;
-  return (
-    <span className="relative flex max-w-[220px] items-center gap-2 rounded-lg border border-[var(--amo-quiet-line)] bg-card p-1.5 pr-7">
-      {url ? (
-        <img src={url} alt="" className="h-9 w-9 shrink-0 rounded-md object-cover" />
-      ) : (
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary/10 text-[16px]">
-          {file.type.startsWith("audio/") ? "🎵" : file.type.startsWith("video/") ? "🎬" : "📎"}
-        </span>
-      )}
-      <span className="min-w-0">
-        <span className="block truncate text-[12px] font-semibold text-foreground">
-          {file.name}
-        </span>
-        <span className="block text-[11px] text-muted-foreground">{size}</span>
-      </span>
-      <button
-        type="button"
-        aria-label={t("smsg.removeFile")}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
-    </span>
   );
 }
 

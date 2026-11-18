@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarClock,
-  ChevronDown,
   ChevronRight,
   Columns3,
   Inbox,
@@ -19,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { OwnerEmpty } from "@/components/owner/OwnerPage";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FixedPage } from "@/components/layout/FixedPage";
 import {
   AddLeadDialog,
@@ -141,23 +141,7 @@ function LeadsBoard() {
     }
   };
 
-  const [analytics, setAnalytics] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem("owner.leads.analytics") === "1";
-    } catch {
-      return false;
-    }
-  });
-  const toggleAnalytics = () => {
-    setAnalytics((v) => {
-      try {
-        localStorage.setItem("owner.leads.analytics", v ? "0" : "1");
-      } catch {
-        /* private window */
-      }
-      return !v;
-    });
-  };
+  const [analytics, setAnalytics] = useState(false);
 
   return (
     <FixedPage>
@@ -170,46 +154,14 @@ function LeadsBoard() {
           <h1 className="mr-2 text-[17px] font-bold tracking-tight text-foreground">
             {t("lead.title")}
           </h1>
-          <MiniChip
-            icon={CalendarClock}
-            tone="amber"
-            value={callsToday.length}
-            label={t("lead.mini.calls")}
-          />
-          <MiniChip
-            icon={ListChecks}
-            tone={overdue ? "rose" : "slate"}
-            value={overdue}
-            label={t("lead.mini.overdue")}
-          />
-          <MiniChip
-            icon={Rocket}
-            tone="emerald"
-            value={installedMonth}
-            label={t("lead.mini.installed")}
-          />
-          <MiniChip
-            icon={Target}
-            tone="violet"
-            value={conv == null ? "—" : `${conv}%`}
-            label={t("lead.mini.conv")}
-          />
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <button
               type="button"
-              aria-pressed={analytics}
-              onClick={toggleAnalytics}
-              className={cn(
-                "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[12.5px] font-semibold transition-colors",
-                analytics
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground",
-              )}
+              aria-haspopup="dialog"
+              onClick={() => setAnalytics(true)}
+              className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-semibold"
             >
               <BarChart3 className="h-4 w-4" /> {t("lead.analytics")}
-              <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform", analytics && "rotate-180")}
-              />
             </button>
             <div className="ctl-track inline-flex rounded-xl p-1">
               {(
@@ -274,14 +226,6 @@ function LeadsBoard() {
           >
             <CalendarClock className="h-4 w-4" /> {t("lead.onlyCalls")}
           </button>
-          {nextCall?.meeting_at && (
-            <span className="ml-auto text-[12px] text-muted-foreground">
-              {t("lead.statCallsNext", {
-                day: callDay(nextCall.meeting_at, lang),
-                time: tashkentTime(nextCall.meeting_at),
-              })}
-            </span>
-          )}
         </div>
       </header>
 
@@ -289,50 +233,6 @@ function LeadsBoard() {
         <p className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-[12.5px] text-amber-800 dark:text-amber-200">
           {t("lead.notReady")}
         </p>
-      )}
-
-      {/* Analytics: opened with its button, small cards and the stage relay. */}
-      {analytics && (
-        <div className="shrink-0 space-y-2.5 border-b border-border bg-surface/50 px-4 py-3 phone:px-3">
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-            <SmallStat
-              icon={CalendarClock}
-              tone="amber"
-              label={t("lead.statCalls")}
-              value={callsToday.length}
-              note={
-                nextCall?.meeting_at
-                  ? t("lead.statCallsNext", {
-                      day: callDay(nextCall.meeting_at, lang),
-                      time: tashkentTime(nextCall.meeting_at),
-                    })
-                  : t("lead.statCallsNone")
-              }
-            />
-            <SmallStat
-              icon={ListChecks}
-              tone={overdue ? "rose" : "slate"}
-              label={t("lead.statOverdue")}
-              value={overdue}
-              note={t("lead.statOpenTasks", { n: openTasks })}
-            />
-            <SmallStat
-              icon={Rocket}
-              tone="emerald"
-              label={t("lead.statInstalled")}
-              value={installedMonth}
-              note={t("lead.statInstalledAll", { n: count("installed") })}
-            />
-            <SmallStat
-              icon={Target}
-              tone="violet"
-              label={t("lead.statConv")}
-              value={conv == null ? "—" : `${conv}%`}
-              note={t("lead.statConvNote", { won: count("installed"), lost: count("lost") })}
-            />
-          </div>
-          <PipelineRail all={all} />
-        </div>
       )}
 
       <div className="min-h-0 flex-1">
@@ -442,6 +342,54 @@ function LeadsBoard() {
         )}
       </div>
 
+      {/* Analytics: a window over the board, opened with its button. */}
+      <Dialog open={analytics} onOpenChange={setAnalytics}>
+        <DialogContent className="max-w-[1100px] gap-4" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" /> {t("lead.analytics")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+            <SmallStat
+              icon={CalendarClock}
+              tone="amber"
+              label={t("lead.statCalls")}
+              value={callsToday.length}
+              note={
+                nextCall?.meeting_at
+                  ? t("lead.statCallsNext", {
+                      day: callDay(nextCall.meeting_at, lang),
+                      time: tashkentTime(nextCall.meeting_at),
+                    })
+                  : t("lead.statCallsNone")
+              }
+            />
+            <SmallStat
+              icon={ListChecks}
+              tone={overdue ? "rose" : "slate"}
+              label={t("lead.statOverdue")}
+              value={overdue}
+              note={t("lead.statOpenTasks", { n: openTasks })}
+            />
+            <SmallStat
+              icon={Rocket}
+              tone="emerald"
+              label={t("lead.statInstalled")}
+              value={installedMonth}
+              note={t("lead.statInstalledAll", { n: count("installed") })}
+            />
+            <SmallStat
+              icon={Target}
+              tone="violet"
+              label={t("lead.statConv")}
+              value={conv == null ? "—" : `${conv}%`}
+              note={t("lead.statConvNote", { won: count("installed"), lost: count("lost") })}
+            />
+          </div>
+          <PipelineRail all={all} />
+        </DialogContent>
+      </Dialog>
       <AddLeadDialog open={adding} onClose={() => setAdding(false)} onCreated={open} />
       <LostDialog
         open={!!lostFor}
@@ -465,33 +413,6 @@ const MINI_TONE = {
   violet: "bg-violet-500/12 text-violet-700 dark:text-violet-300",
   slate: "bg-muted text-muted-foreground",
 } as const;
-
-/** A figure in the top bar: icon, number, a word. */
-function MiniChip({
-  icon: Icon,
-  tone,
-  value,
-  label,
-}: {
-  icon: LucideIcon;
-  tone: keyof typeof MINI_TONE;
-  value: ReactNode;
-  label: string;
-}) {
-  return (
-    <span
-      title={label}
-      className={cn(
-        "inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[12px] font-semibold phone:hidden",
-        MINI_TONE[tone],
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      <span className="tabular-nums">{value}</span>
-      <span className="font-medium opacity-80">{label}</span>
-    </span>
-  );
-}
 
 /** A small analytics card: icon, number, label and one line under it. */
 function SmallStat({

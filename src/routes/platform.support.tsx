@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Mic,
+  Paperclip,
+  Video as VideoIcon,
   AlertTriangle,
   ArrowDown,
   ArrowLeft,
   BarChart3,
-  ChevronDown,
   Building2,
   Check,
   CheckCheck,
@@ -26,12 +28,23 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ResizeHandle, useResizableWidth } from "@/components/ui/resize-handle";
 import { CompanyMark, HEALTH_DOT, PHASE_CHIP, StageChip } from "@/components/owner/leads/shared";
 import { renderMessageContent } from "@/components/ai/MessageContent";
 import { useOwnerInbox } from "@/hooks/use-crm-data";
 import { FixedPage } from "@/components/layout/FixedPage";
+import {
+  DropOverlay,
+  PendingFile,
+  SupportFile,
+  useAttachments,
+  useFileDrop,
+} from "@/components/chat/AttachmentKit";
+import { VoiceRecorder } from "@/components/lead/VoiceRecorder";
+import { VideoRecorder } from "@/components/lead/VideoRecorder";
+import { uploadSupportFile } from "@/hooks/crm/support";
 import { responseLabel } from "@/lib/support";
 import { apiFetch } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -129,22 +142,7 @@ function OwnerInboxPage() {
   const [infoOpen, setInfoOpen] = useState(true);
   // Phones show the list or the open conversation, one at a time.
   const [phoneChat, setPhoneChat] = useState(!!search.org);
-  const [analytics, setAnalytics] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem("owner.inbox.analytics") === "1";
-    } catch {
-      return false;
-    }
-  });
-  const toggleAnalytics = () =>
-    setAnalytics((v) => {
-      try {
-        localStorage.setItem("owner.inbox.analytics", v ? "0" : "1");
-      } catch {
-        /* private window */
-      }
-      return !v;
-    });
+  const [analytics, setAnalytics] = useState(false);
   const listSize = useResizableWidth("owner-inbox-list", 360, 290, 520);
   const { data, isLoading } = useOwnerInbox();
   const all = useMemo(() => data?.threads ?? [], [data]);
@@ -186,51 +184,61 @@ function OwnerInboxPage() {
             </div>
             <button
               type="button"
-              aria-pressed={analytics}
-              onClick={toggleAnalytics}
+              aria-haspopup="dialog"
+              onClick={() => setAnalytics(true)}
               title={t("oinbox.analytics")}
-              className={cn(
-                "inline-flex h-8 items-center gap-1 rounded-lg border px-2 text-[12px] font-semibold transition-colors",
-                analytics
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground",
-              )}
+              className="ctl-soft inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold"
             >
-              <BarChart3 className="h-4 w-4" />
-              <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform", analytics && "rotate-180")}
-              />
+              <BarChart3 className="h-4 w-4" /> {t("oinbox.analytics")}
             </button>
           </div>
-          {analytics && data?.stats && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {(
-                [
-                  ["waiting", data.stats.waiting, "text-rose-600"],
-                  [
-                    "avg",
-                    data.stats.avgResponseMs == null
-                      ? "—"
-                      : responseLabel(data.stats.avgResponseMs, {
-                          min: t("oinbox.u.min"),
-                          hour: t("oinbox.u.hour"),
-                          day: t("oinbox.u.day"),
-                        }),
-                    "text-foreground",
-                  ],
-                  ["today", data.stats.answeredToday, "text-emerald-600"],
-                  ["questions", data.stats.questions, "text-foreground"],
-                ] as const
-              ).map(([k, v, cls]) => (
-                <div key={k} className="rounded-xl border border-border bg-surface px-3 py-2">
-                  <p className={cn("text-[16px] font-bold leading-tight tabular-nums", cls)}>{v}</p>
-                  <p className="truncate text-[11px] text-muted-foreground">
-                    {t(`oinbox.stat.${k}`)}
-                  </p>
+          {/* Analytics: a window over the inbox, opened with its button. */}
+          <Dialog open={analytics} onOpenChange={setAnalytics}>
+            <DialogContent
+              className="max-w-[520px] gap-4"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" /> {t("oinbox.analytics")}
+                </DialogTitle>
+              </DialogHeader>
+              {data?.stats ? (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {(
+                    [
+                      ["waiting", data.stats.waiting, "text-rose-600"],
+                      [
+                        "avg",
+                        data.stats.avgResponseMs == null
+                          ? "—"
+                          : responseLabel(data.stats.avgResponseMs, {
+                              min: t("oinbox.u.min"),
+                              hour: t("oinbox.u.hour"),
+                              day: t("oinbox.u.day"),
+                            }),
+                        "text-foreground",
+                      ],
+                      ["today", data.stats.answeredToday, "text-emerald-600"],
+                      ["questions", data.stats.questions, "text-foreground"],
+                    ] as const
+                  ).map(([k, v, cls]) => (
+                    <div key={k} className="rounded-xl border border-border bg-surface px-3.5 py-3">
+                      <p className={cn("text-[20px] font-bold leading-tight tabular-nums", cls)}>
+                        {v}
+                      </p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {t(`oinbox.stat.${k}`)}
+                      </p>
+                    </div>
+                  ))}
+                  <SlaField minutes={data.slaMinutes ?? null} />
                 </div>
-              ))}
-            </div>
-          )}
+              ) : (
+                <p className="text-[13px] text-muted-foreground">…</p>
+              )}
+            </DialogContent>
+          </Dialog>
           <div className="mt-3 flex gap-2">
             <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 focus-within:border-primary">
               <Search className="h-4 w-4 text-subtle" />
@@ -307,6 +315,7 @@ function OwnerInboxPage() {
           thread={current}
           infoOpen={infoOpen}
           onToggleInfo={() => setInfoOpen(!infoOpen)}
+          owners={data?.owners ?? []}
           phoneHidden={!phoneChat}
           onBack={() => setPhoneChat(false)}
           onChanged={() => void qc.invalidateQueries({ queryKey: ["owner_inbox"] })}
@@ -611,11 +620,13 @@ function Conversation({
   onChanged,
   phoneHidden,
   onBack,
+  owners,
 }: {
   thread: CompanyThread;
   infoOpen: boolean;
   onToggleInfo: () => void;
   onChanged: () => void;
+  owners: { id: string; name: string }[];
   phoneHidden: boolean;
   onBack: () => void;
 }) {
@@ -682,6 +693,27 @@ function Conversation({
             </span>
           </button>
           {thread.stage && <StageChip stage={thread.stage} />}
+          {thread.orgId && owners.length > 1 && (
+            <select
+              value={thread.assignedTo ?? ""}
+              onChange={(e) =>
+                act.mutate({
+                  action: "assign",
+                  orgId: thread.orgId,
+                  assignedTo: e.target.value || null,
+                })
+              }
+              title={t("oinbox.assignee")}
+              className="h-9 max-w-[130px] rounded-xl border border-border bg-card px-2 text-[12.5px] font-semibold text-foreground outline-none phone:hidden"
+            >
+              <option value="">{t("oinbox.noAssignee")}</option>
+              {owners.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          )}
           {thread.orgId &&
             (thread.status === "open" ? (
               <button
@@ -749,9 +781,16 @@ function Conversation({
                         </span>
                       )}
                     </p>
-                    <div className="whitespace-pre-wrap break-words [&_a]:font-semibold [&_a]:underline [&_a]:!text-current">
-                      {mine ? renderMessageContent(m.text, t("oinbox.open")) : m.text}
-                    </div>
+                    {m.file && (
+                      <div className={cn(m.text && "mb-1.5")}>
+                        <SupportFile messageId={m.id} file={m.file} />
+                      </div>
+                    )}
+                    {m.text && (
+                      <div className="whitespace-pre-wrap break-words [&_a]:font-semibold [&_a]:underline [&_a]:!text-current">
+                        {mine ? renderMessageContent(m.text, t("oinbox.open")) : m.text}
+                      </div>
+                    )}
                     <p
                       className={cn(
                         "mt-1 flex items-center gap-2 text-[10.5px]",
@@ -808,10 +847,12 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [to, setTo] = useState<string>(thread.lastAskerId ?? thread.people[0]?.id ?? "");
-  const send = useInboxAction(() => {
-    setText("");
-    onSent();
-  });
+  const [recorder, setRecorder] = useState<"voice" | "video" | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const att = useAttachments();
+  const drop = useFileDrop(att.addFiles);
+  const send = useInboxAction(() => undefined);
   const { data: tpl } = useQuery({
     queryKey: ["owner_inbox_templates"],
     staleTime: 5 * 60_000,
@@ -824,12 +865,48 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
   const saveTpl = useInboxAction(
     () => void qc.invalidateQueries({ queryKey: ["owner_inbox_templates"] }),
   );
-  const submit = () => {
-    if (!text.trim() || !to) return;
-    send.mutate({ action: "reply", orgId: thread.orgId, userId: to, text: text.trim() });
-  };
+  // Uploads one file into the company's support folder, for the answer.
+  const upload = (file: File, as?: string) =>
+    uploadSupportFile(
+      file,
+      (name, size) =>
+        apiFetch("/platform/inbox-api", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "sign", orgId: thread.orgId, name, size }),
+        }),
+      as,
+    );
+  async function deliver(body: string, files: File[], as?: string) {
+    if (!to || (!body && !files.length)) return;
+    setBusy(true);
+    try {
+      if (!files.length)
+        await send.mutateAsync({ action: "reply", orgId: thread.orgId, userId: to, text: body });
+      for (const [i, f] of files.entries()) {
+        const file = await upload(f, as);
+        await send.mutateAsync({
+          action: "reply",
+          orgId: thread.orgId,
+          userId: to,
+          text: i === 0 ? body : "",
+          file,
+        });
+      }
+      setText("");
+      att.clear();
+      setRecorder(null);
+      onSent();
+    } catch {
+      /* the toast is shown by useInboxAction */
+    } finally {
+      setBusy(false);
+    }
+  }
+  const submit = () => void deliver(text.trim(), att.files);
   return (
-    <div className="border-t border-border bg-card p-3">
+    <div {...drop.dropProps} className="relative border-t border-border bg-card p-3">
+      <DropOverlay show={drop.dragging} />
       <div className="mb-2 flex items-center gap-2 text-[12px] text-muted-foreground">
         <span>{t("oinbox.to")}</span>
         <select
@@ -862,34 +939,86 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
           </PopoverContent>
         </Popover>
       </div>
-      <div className="flex items-end gap-2 rounded-2xl border border-border bg-surface px-3 py-2 focus-within:border-primary">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
-          }}
-          rows={2}
-          placeholder={t("oinbox.ph")}
-          className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
-        />
-        <button
-          type="button"
-          disabled={!text.trim() || send.isPending}
-          onClick={submit}
-          className="ctl-lit grid h-10 w-10 shrink-0 place-items-center rounded-xl disabled:opacity-40"
-          aria-label={t("oinbox.send")}
-        >
-          {send.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+      {att.files.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {att.files.map((f, i) => (
+            <PendingFile key={`${f.name}-${i}`} file={f} onRemove={() => att.remove(i)} />
+          ))}
+        </div>
+      )}
+      {recorder === "voice" ? (
+        <VoiceRecorder onSend={(f, as) => deliver("", [f], as)} onClose={() => setRecorder(null)} />
+      ) : recorder === "video" ? (
+        <VideoRecorder onSend={(f, as) => deliver("", [f], as)} onClose={() => setRecorder(null)} />
+      ) : (
+        <div className="flex items-end gap-2 rounded-2xl border border-border bg-surface px-3 py-2 focus-within:border-primary">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            aria-label={t("attach.file")}
+            title={t("attach.file")}
+            className="mb-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            hidden
+            onChange={(e) => {
+              att.addFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <textarea
+            value={text}
+            onPaste={att.onPaste}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit();
+              }
+            }}
+            rows={2}
+            placeholder={t("oinbox.ph")}
+            className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
+          />
+          {!text.trim() && !att.files.length && !busy ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setRecorder("voice")}
+                aria-label={t("attach.voice")}
+                title={t("attach.voice")}
+                className="grid h-10 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Mic className="h-[18px] w-[18px]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecorder("video")}
+                aria-label={t("attach.video")}
+                title={t("attach.video")}
+                className="grid h-10 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <VideoIcon className="h-[18px] w-[18px]" />
+              </button>
+            </>
           ) : (
-            <Send className="h-4 w-4" />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={submit}
+              className="ctl-lit grid h-10 w-10 shrink-0 place-items-center rounded-xl disabled:opacity-40"
+              aria-label={t("oinbox.send")}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
           )}
-        </button>
-      </div>
+        </div>
+      )}
       <p className="mt-1.5 text-[11px] text-subtle">{t("oinbox.hint")}</p>
     </div>
   );
@@ -1049,5 +1178,28 @@ function InfoPane({ thread, data }: { thread: CompanyThread; data: ThreadData | 
         )}
       </div>
     </aside>
+  );
+}
+
+/** Inbox analytics: how long a company may wait before the owners are told. */
+function SlaField({ minutes }: { minutes: number | null }) {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const [v, setV] = useState(String(minutes ?? 30));
+  const save = useInboxAction(() => void qc.invalidateQueries({ queryKey: ["owner_inbox"] }));
+  return (
+    <label className="col-span-2 flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-[12px] text-muted-foreground">
+      <span className="min-w-0 flex-1">{t("oinbox.sla")}</span>
+      <input
+        value={v}
+        inputMode="numeric"
+        onChange={(e) => setV(e.target.value.replace(/\D/g, "").slice(0, 4))}
+        onBlur={() => {
+          if (Number(v) !== minutes) save.mutate({ action: "sla", minutes: Number(v) || 0 });
+        }}
+        className="h-7 w-14 rounded-lg border border-border bg-card px-2 text-right text-[12.5px] font-semibold text-foreground outline-none focus:border-primary"
+      />
+      <span>{t("oinbox.u.min")}</span>
+    </label>
   );
 }

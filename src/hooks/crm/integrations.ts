@@ -1523,7 +1523,7 @@ export function useBoardChatInfo(leadIds: string[]) {
  * fetched with the session's token and kept for the session. null while
  * loading or when there is no file (404).
  */
-function useAuthedBlobUrl(key: unknown[], path: string | null) {
+export function useAuthedBlobUrl(key: unknown[], path: string | null) {
   return useQuery({
     queryKey: key,
     enabled: !!path,

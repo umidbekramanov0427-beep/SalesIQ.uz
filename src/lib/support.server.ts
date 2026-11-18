@@ -1,6 +1,12 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendPush } from "@/lib/push/push.server";
 import {
+  readSupportFile,
+  storeTelegramSupportFile,
+  supportFileLabel,
+  type SupportFileRow,
+} from "@/lib/support-files.server";
+import {
   average,
   supportResponseTimes,
   SUPPORT_PER_HOUR,
@@ -110,6 +116,16 @@ async function saveRefs(id: string, refs: (string | null)[]) {
   }
 }
 
+function insertFailed(
+  error: { code?: string; message?: string } | null,
+  withFile: boolean,
+): SendResult {
+  if (isMissingTable(error)) return { ok: false, status: 503, error: "SUPPORT_NOT_READY" };
+  if (withFile && /file_|column|check/i.test(error?.message ?? ""))
+    return { ok: false, status: 503, error: "FILES_NOT_READY" };
+  return { ok: false, status: 500, error: error?.message ?? "Insert failed" };
+}
+
 export type SendResult =
   | { ok: true; message: SupportMessage; personName?: string }
   | { ok: false; status: number; error: string };
@@ -126,6 +142,7 @@ export async function sendSupportQuestion(input: {
   text: string;
   page: string | null;
   person?: Person | null;
+  file?: SupportFileRow | null;
 }): Promise<SendResult> {
   const since = new Date(Date.now() - 3_600_000).toISOString();
   const [{ count, error: countError }, person] = await Promise.all([
@@ -152,14 +169,23 @@ export async function sendSupportQuestion(input: {
       direction: "in",
       text: input.text,
       page: input.page,
+      ...(input.file ?? {}),
     })
-    .select("id, direction, text, created_at")
+    .select("*")
     .single();
-  if (error || !row) return { ok: false, status: 500, error: error?.message ?? "Insert failed" };
+  if (error || !row) return insertFailed(error, !!input.file);
 
   if (person) {
     const { notifyOwners } = await import("@/lib/ops/bot.server");
-    const refs = await notifyOwners(questionText(person, input.text, input.page)).catch(() => []);
+    const body = [
+      input.text,
+      input.file
+        ? supportFileLabel(input.file.file_kind, input.file.file_name) + " — panelda ko'ring"
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const refs = await notifyOwners(questionText(person, body, input.page)).catch(() => []);
     await saveRefs(row.id, refs);
   }
   return { ok: true, message: row as SupportMessage };
@@ -171,6 +197,7 @@ export async function sendSupportAnswer(input: {
   text: string;
   sentBy: string;
   person?: Person | null;
+  file?: SupportFileRow | null;
 }): Promise<SendResult> {
   const person = input.person ?? (await loadPerson(input.userId));
   if (!person?.organization_id) return { ok: false, status: 404, error: "User not found" };
@@ -182,26 +209,44 @@ export async function sendSupportAnswer(input: {
       direction: "out",
       text: input.text,
       sent_by: input.sentBy,
+      ...(input.file ?? {}),
     })
-    .select("id, direction, text, created_at")
+    .select("*")
     .single();
-  if (error || !row) {
-    return isMissingTable(error)
-      ? { ok: false, status: 503, error: "SUPPORT_NOT_READY" }
-      : { ok: false, status: 500, error: error?.message ?? "Insert failed" };
-  }
+  if (error || !row) return insertFailed(error, !!input.file);
   if (person.telegram_chat_id) {
+    const chatId = Number(person.telegram_chat_id);
     const ref = await sendToPerson(
-      Number(person.telegram_chat_id),
-      `💬 <b>SalesIQ yordam xizmati</b>\n\n${esc(input.text)}\n\n` +
+      chatId,
+      `💬 <b>SalesIQ yordam xizmati</b>\n\n${esc(input.text || supportFileLabel(input.file?.file_kind ?? null, input.file?.file_name ?? null))}\n\n` +
         `<i>Javob yozish uchun shu xabarga reply qiling yoki saytdagi yordamchi oynasining "Operator" bo'limida yozing.</i>`,
     );
     await saveRefs(row.id, [ref]);
+    // The file itself follows in their Telegram.
+    if (input.file) {
+      const bytes = await readSupportFile(input.file.file_path);
+      if (bytes) {
+        const { sendTelegramFileAs } = await import("@/lib/telegram-report.server");
+        const kind = (
+          ["photo", "document", "audio", "voice", "video", "video_note", "animation"].includes(
+            input.file.file_kind,
+          )
+            ? input.file.file_kind
+            : "document"
+        ) as "document";
+        await sendTelegramFileAs(
+          chatId,
+          { kind, name: input.file.file_name, type: input.file.file_type, data: bytes },
+          "",
+        ).catch(() => undefined);
+      }
+    }
   }
   await sendPush(person.organization_id, [person.id], {
     kind: "support",
     title: "💬 SalesIQ yordam xizmati",
-    body: input.text,
+    body:
+      input.text || supportFileLabel(input.file?.file_kind ?? null, input.file?.file_name ?? null),
     url: "/?support=1",
     tag: "support",
   });
@@ -214,7 +259,14 @@ export async function sendSupportAnswer(input: {
 
 type TgReply = {
   text?: string;
+  caption?: string;
   reply_to_message?: { message_id?: number };
+  photo?: { file_id?: string }[];
+  document?: { file_id?: string; file_name?: string };
+  audio?: { file_id?: string; file_name?: string };
+  voice?: { file_id?: string };
+  video?: { file_id?: string; file_name?: string };
+  video_note?: { file_id?: string };
 };
 
 /**
@@ -253,17 +305,25 @@ export async function handleSupportTelegramReply(
     (via === "ops" ? sendToOwner(chatId, t) : sendTelegramMessage(chatId, t)).catch(
       () => undefined,
     );
-  const text = (message.text ?? "").trim();
-  if (!text) {
-    await answer("Hozircha faqat matnli javob yuboriladi.");
+  const text = (message.text ?? message.caption ?? "").trim().slice(0, 4000);
+  // A photo, document, voice note or video sent as the reply.
+  const { incomingFile } = await import("@/lib/telegram/lead-chat.server");
+  const tgFile = incomingFile(message);
+  const file =
+    tgFile && tgFile.kind !== "sticker"
+      ? await storeTelegramSupportFile(original.organization_id, tgFile, via).catch(() => null)
+      : null;
+  if (!text && !file) {
+    await answer(tgFile ? "⚠️ Faylni olib bo'lmadi (20 MB gacha)." : "Xabar bo'sh.");
     return true;
   }
 
   if (sender?.role === "platform_owner") {
     const result = await sendSupportAnswer({
       userId: original.user_id,
-      text: text.slice(0, 4000),
+      text,
       sentBy: sender.id,
+      file,
     });
     await answer(
       result.ok
@@ -277,8 +337,9 @@ export async function handleSupportTelegramReply(
     const result = await sendSupportQuestion({
       userId: original.user_id,
       organizationId: original.organization_id,
-      text: text.slice(0, 4000),
+      text,
       page: "Telegram",
+      file,
     });
     await answer(
       result.ok

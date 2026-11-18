@@ -26,7 +26,7 @@ export function useMySupportMessages(open: boolean) {
     queryFn: async (): Promise<SupportMessage[] | null> => {
       const { data, error } = await supabase
         .from("support_messages")
-        .select("id, direction, text, created_at")
+        .select("*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(200);
@@ -62,12 +62,17 @@ export function useSupportRealtime() {
         },
         (payload) => {
           const row = payload.new as Partial<SupportMessage> | undefined;
-          if (!row?.id || !row.created_at || !row.text) return;
+          if (!row?.id || !row.created_at || (!row.text && !row.file_path)) return;
           const msg: SupportMessage = {
             id: row.id,
             direction: row.direction === "out" ? "out" : "in",
-            text: row.text,
+            text: row.text ?? "",
             created_at: row.created_at,
+            file_path: row.file_path ?? null,
+            file_name: row.file_name ?? null,
+            file_type: row.file_type ?? null,
+            file_size: row.file_size ?? null,
+            file_kind: row.file_kind ?? null,
           };
           qc.setQueryData<SupportMessage[] | null>(["support_messages", userId], (old) =>
             mergeSupportMessage(old, msg),
@@ -83,18 +88,62 @@ export function useSupportRealtime() {
 
 let pendingSeq = 0;
 
+/** The file a support message carries, as the send routes take it. */
+export type SupportUpload = {
+  path: string;
+  name: string;
+  type: string;
+  size: number;
+  kind?: string;
+};
+
+/**
+ * Uploads one support file straight to Storage through a one-time slot
+ * (`sign` asks the server for it) and returns how the message names it.
+ */
+export async function uploadSupportFile(
+  file: File,
+  sign: (name: string, size: number) => Promise<Response>,
+  kind?: string,
+): Promise<SupportUpload> {
+  const res = await sign(file.name, file.size);
+  const json = (await res.json().catch(() => ({}))) as {
+    path?: string;
+    token?: string;
+    error?: string;
+  };
+  if (!res.ok || !json.path || !json.token) throw new Error(json.error ?? "UPLOAD_FAILED");
+  const { error } = await supabase.storage
+    .from("lead-files")
+    .uploadToSignedUrl(json.path, json.token, file, {
+      contentType: file.type || "application/octet-stream",
+    });
+  if (error) throw error;
+  return {
+    path: json.path,
+    name: file.name,
+    type: file.type || "application/octet-stream",
+    size: file.size,
+    ...(kind ? { kind } : {}),
+  };
+}
+
+type SendInput = { text: string; page: string; file?: File | null; as?: string };
+
 /** Sends a question; it shows on screen at once and is swapped for the saved one. */
 export function useSendSupportMessage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const key = ["support_messages", user?.id];
   return useMutation({
-    onMutate: (input: { text: string; page: string }) => {
+    onMutate: (input: SendInput) => {
       const placeholder: SupportMessage = {
         id: `pending-${++pendingSeq}`,
         direction: "in",
         text: input.text,
         created_at: new Date().toISOString(),
+        file_name: input.file?.name ?? null,
+        file_kind: input.file ? "uploading" : null,
       };
       qc.setQueryData<SupportMessage[] | null>(key, (old) => mergeSupportMessage(old, placeholder));
       return { placeholderId: placeholder.id };
@@ -104,11 +153,23 @@ export function useSendSupportMessage() {
         (old ?? []).filter((m) => m.id !== ctx?.placeholderId),
       );
     },
-    mutationFn: async (input: { text: string; page: string }): Promise<SupportMessage> => {
+    mutationFn: async (input: SendInput): Promise<SupportMessage> => {
+      const file = input.file
+        ? await uploadSupportFile(
+            input.file,
+            (name, size) =>
+              apiFetch("/support/upload", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ name, size }),
+              }),
+            input.as,
+          )
+        : null;
       const res = await apiFetch("/support/send", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify({ text: input.text, page: input.page, file }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? "SEND_FAILED");

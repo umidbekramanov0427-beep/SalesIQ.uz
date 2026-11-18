@@ -14,6 +14,8 @@ export type OwnerInboxData = {
     answeredToday: number;
     questions: number;
   };
+  owners?: { id: string; name: string }[];
+  slaMinutes?: number | null;
 };
 
 export function useOwnerInbox(enabled = true) {

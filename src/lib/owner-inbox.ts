@@ -26,6 +26,8 @@ export type CompanyThread = {
   people: { id: string; name: string; role: string | null }[];
   /** Who wrote last -- the default "to" of an answer. */
   lastAskerId: string | null;
+  /** The platform owner who answers this company (support_threads). */
+  assignedTo?: string | null;
 };
 
 export type InboxMessage = {
@@ -37,6 +39,8 @@ export type InboxMessage = {
   userId: string;
   author: string;
   role: string | null;
+  /** A photo, document, voice note or video sent with it (/support/file?id=). */
+  file?: { name: string; type: string; size: number; kind: string } | null;
 };
 
 export type OwnerInboxFilter = {
@@ -136,4 +140,19 @@ export function threadStatus(
   if (saved !== "closed") return "open";
   if (lastInAt && closedAt && lastInAt > closedAt) return "open";
   return "closed";
+}
+
+/**
+ * Whether a waiting conversation should raise the "no answer yet" alert now:
+ * waiting longer than `slaMinutes`, and not alerted for this wait already.
+ */
+export function slaDue(
+  waitingSince: string | null,
+  alertedAt: string | null,
+  slaMinutes: number,
+  now: Date,
+): boolean {
+  if (!waitingSince || slaMinutes <= 0) return false;
+  if (now.getTime() - new Date(waitingSince).getTime() < slaMinutes * 60_000) return false;
+  return !alertedAt || alertedAt < waitingSince;
 }

@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requirePlatformOwner } from "@/lib/auth.server";
 import { cleanSupportText } from "@/lib/support";
 import { sendSupportAnswer } from "@/lib/support.server";
+import { signSupportUpload, supportFileRow } from "@/lib/support-files.server";
 import {
+  listOwners,
   listCompanyThreads,
   loadCompanyThread,
   loadTemplates,
@@ -35,7 +37,14 @@ export const Route = createFileRoute("/platform/inbox-api")({
             return Response.json({ error: "BAD_KEY" }, { status: 400 });
           return Response.json(await loadCompanyThread(key));
         }
-        return Response.json(await listCompanyThreads(90));
+        const [list, owners] = await Promise.all([listCompanyThreads(90), listOwners()]);
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: settings } = await supabaseAdmin
+          .from("platform_settings")
+          .select("*")
+          .maybeSingle();
+        const sla = (settings as { support_sla_minutes?: number } | null)?.support_sla_minutes;
+        return Response.json({ ...list, owners, slaMinutes: sla ?? null });
       },
       POST: async ({ request }) => {
         const ownerId = await requirePlatformOwner(request);
@@ -43,13 +52,30 @@ export const Route = createFileRoute("/platform/inbox-api")({
         const b = (await request.json().catch(() => ({}))) as Record<string, unknown>;
         const orgId = typeof b["orgId"] === "string" && UUID.test(b["orgId"]) ? b["orgId"] : null;
         switch (b["action"]) {
+          case "sign": {
+            if (!orgId) return Response.json({ error: "BAD_ID" }, { status: 400 });
+            try {
+              return Response.json(
+                await signSupportUpload(
+                  orgId,
+                  typeof b["name"] === "string" ? b["name"] : "file",
+                  typeof b["size"] === "number" ? b["size"] : 0,
+                ),
+              );
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              return Response.json({ error: msg }, { status: msg === "TOO_BIG" ? 413 : 500 });
+            }
+          }
           case "reply": {
-            const text = cleanSupportText(b["text"]);
+            const file = orgId && b["file"] ? supportFileRow(orgId, b["file"]) : null;
+            if (b["file"] && !file) return Response.json({ error: "BAD_FILE" }, { status: 400 });
+            const text = cleanSupportText(b["text"], !!file);
             const userId =
               typeof b["userId"] === "string" && UUID.test(b["userId"]) ? b["userId"] : null;
-            if (!text || !userId)
+            if (text === null || !userId)
               return Response.json({ error: "userId and text are required" }, { status: 400 });
-            const r = await sendSupportAnswer({ userId, text, sentBy: ownerId });
+            const r = await sendSupportAnswer({ userId, text, sentBy: ownerId, file });
             if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
             if (orgId) await markThread(orgId, { read: true, status: "open" });
             return Response.json({ ok: true, message: r.message });
@@ -66,6 +92,31 @@ export const Route = createFileRoute("/platform/inbox-api")({
             return r.ok
               ? Response.json({ ok: true })
               : Response.json({ error: r.error }, { status: 400 });
+          }
+          case "assign": {
+            if (!orgId) return Response.json({ error: "BAD_ID" }, { status: 400 });
+            const to =
+              typeof b["assignedTo"] === "string" && UUID.test(b["assignedTo"])
+                ? b["assignedTo"]
+                : null;
+            const r = await markThread(orgId, { assignedTo: to });
+            return r.ok
+              ? Response.json({ ok: true })
+              : Response.json({ error: r.error }, { status: 400 });
+          }
+          case "sla": {
+            const minutes = Math.max(0, Math.min(1440, Math.round(Number(b["minutes"]) || 0)));
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { error } = await supabaseAdmin
+              .from("platform_settings")
+              .update({ support_sla_minutes: minutes })
+              .eq("id", true);
+            return error
+              ? Response.json(
+                  { error: "Bu imkoniyat bazani yangilagandan keyin ishlaydi." },
+                  { status: 400 },
+                )
+              : Response.json({ ok: true });
           }
           case "templates": {
             const list = Array.isArray(b["list"])
