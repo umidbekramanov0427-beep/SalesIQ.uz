@@ -1,23 +1,25 @@
 import type { CSSProperties } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Logo } from "@/components/Logo";
-import { UserMenu } from "@/components/layout/AppSidebar";
+import { RAIL_ITEM, RAIL_LABEL, RAIL_STACK, UserMenu } from "@/components/layout/AppSidebar";
+import { RailGlyph } from "@/components/layout/RailGlyph";
 import { useOwnerInbox, useSubscriptionRequestsRaw } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
-import { NAV_ITEMS, type NavItem } from "@/lib/nav";
+import { NAV_ITEMS, railLabel, type NavItem } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useBrowserZoom } from "@/lib/browser-zoom";
-import { TONE_TILE } from "@/lib/tones";
+import { TONE_TEXT, TONE_TILE } from "@/lib/tones";
 
-// The platform owner's menu, in the admin console's look: always open,
-// never folded, 192px, the owner's pages in four groups (Biznes, Nazorat, Aloqa, Tizim)
-// under mono captions, each with its section's coloured icon tile; the open
-// page is lit in signal blue with a glowing edge. Waiting support chats and
-// renewal requests show as counts. One fixed size (it undoes the page
-// zoom, like the CRM's rail) and compact rows, so it fits one screen;
-// day/night lives in the person's menu.
+// The platform owner's menu, the same rail as a company's CRM (AppSidebar):
+// always folded, 72px, each page as its coloured glyph with a short name
+// under it, the four groups (Biznes, Nazorat, Aloqa, Tizim) parted by thin
+// lines, waiting support chats and renewal requests as a red count on the
+// glyph. One fixed size whatever the page zoom; the person's menu (theme,
+// language, profile, sign out) at the bottom. The phone's drawer lists the
+// same items with their full names (OwnerNav).
 
 const GROUPS = ["business", "control", "comms", "system"] as const;
+const SETTINGS = "/platform/settings";
 
 export function ownerNavItems(): NavItem[] {
   return NAV_ITEMS.filter((i) => i.platformOwnerOnly);
@@ -35,8 +37,52 @@ function isActive(item: NavItem, pathname: string) {
   return pathname === item.to || pathname.startsWith(item.to + "/");
 }
 
+function useOwnerCounts(): Record<string, number> {
+  const { data: inbox } = useOwnerInbox();
+  const { data: requests } = useSubscriptionRequestsRaw();
+  return {
+    // Companies waiting for an answer (the inbox groups by company).
+    "/platform/support": inbox?.stats?.waiting ?? 0,
+    "/platform/notifications": (requests ?? []).filter((r) => r.status === "pending").length,
+  };
+}
+
 export function OwnerSidebar({ onEditProfile }: { onEditProfile: () => void }) {
   const { t } = useI18n();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const items = ownerNavItems();
+  const counts = useOwnerCounts();
+
+  const railItem = (item: NavItem) => {
+    const active = isActive(item, pathname);
+    const count = counts[item.to] ?? 0;
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        title={t(`nav.${item.to}`)}
+        className={cn(
+          "group flex items-center transition-colors duration-150",
+          RAIL_ITEM,
+          active
+            ? "bg-sidebar-active font-bold text-sidebar-active-foreground shadow-soft"
+            : "font-semibold text-sidebar-foreground hover:bg-accent",
+        )}
+      >
+        <span className="relative">
+          <RailGlyph icon={item.icon} active={active} className={TONE_TEXT[item.tone]} />
+          {count > 0 && (
+            <span className="absolute -right-2.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9.5px] font-bold tabular-nums leading-none text-white ring-2 ring-background">
+              {count > 99 ? "99+" : count}
+            </span>
+          )}
+        </span>
+        <span className={RAIL_LABEL}>{railLabel(t, item.to)}</span>
+      </Link>
+    );
+  };
+  // Sozlamalar sits at the bottom, over the person's menu, as in the CRM.
+  const settings = items.find((i) => i.to === SETTINGS) ?? null;
 
   // Like the CRM's rail: one fixed size whatever the page zoom, so the
   // whole menu always fits the screen the same way.
@@ -45,28 +91,31 @@ export function OwnerSidebar({ onEditProfile }: { onEditProfile: () => void }) {
     zoom === 1 ? undefined : { zoom: 1 / zoom, height: `calc(100dvh * ${zoom})` };
 
   return (
-    <div className="relative hidden h-dvh w-[192px] shrink-0 lg:block phone:hidden" style={frame}>
-      <aside className="owner-sidebar absolute inset-0 flex flex-col border-r border-sidebar-border bg-sidebar">
-        <div className="flex h-12 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-3.5">
-          <Link to="/platform/companies" aria-label={t("app.name")} className="shrink-0">
-            <Logo className="h-7 w-7" />
+    <div className="relative hidden h-dvh w-[72px] shrink-0 lg:block phone:hidden" style={frame}>
+      <aside
+        data-app-rail
+        className="absolute inset-0 flex flex-col border-r border-sidebar-border bg-background"
+      >
+        <div className="flex h-14 shrink-0 items-center justify-center">
+          <Link to="/platform/companies" aria-label={t("app.name")} title={t("owner.badge")}>
+            <Logo className="h-9 w-9" />
           </Link>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-[15px] font-semibold leading-tight tracking-tight text-foreground">
-              {t("app.name")}
-            </p>
-            <p className="console-caption mt-0.5 flex items-center gap-1.5 !text-[9.5px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
-              {t("owner.badge")} panel
-            </p>
-          </div>
         </div>
-        <OwnerNav
-          compact
-          className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3 [scrollbar-width:none]"
-        />
-        <div className="shrink-0 border-t border-sidebar-border p-2">
-          <UserMenu collapsed={false} isAdmin={false} onEditProfile={onEditProfile} />
+        <nav className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-1.5 [scrollbar-width:none]">
+          {GROUPS.map((g, gi) => {
+            const list = items.filter((i) => i.ownerGroup === g && i.to !== SETTINGS);
+            if (list.length === 0) return null;
+            return (
+              <div key={g}>
+                {gi > 0 && <div className="mx-2 my-2.5 border-t border-sidebar-border" />}
+                <div className={RAIL_STACK}>{list.map(railItem)}</div>
+              </div>
+            );
+          })}
+        </nav>
+        <div className="shrink-0 border-t border-sidebar-border p-1.5">
+          {settings && <div className="mb-2">{railItem(settings)}</div>}
+          <UserMenu collapsed isAdmin={false} onEditProfile={onEditProfile} />
         </div>
       </aside>
     </div>
@@ -87,13 +136,7 @@ export function OwnerNav({
   const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = ownerNavItems();
-  const { data: inbox } = useOwnerInbox();
-  const { data: requests } = useSubscriptionRequestsRaw();
-  const counts: Record<string, number> = {
-    // Companies waiting for an answer (the inbox groups by company).
-    "/platform/support": inbox?.stats?.waiting ?? 0,
-    "/platform/notifications": (requests ?? []).filter((r) => r.status === "pending").length,
-  };
+  const counts = useOwnerCounts();
   return (
     <nav className={cn(compact ? "space-y-3.5" : "space-y-5", className)}>
       {GROUPS.map((g) => {
@@ -103,8 +146,8 @@ export function OwnerNav({
           <div key={g}>
             <p
               className={cn(
-                "console-caption px-2.5 !text-[10px]",
-                compact ? "pb-1 !text-[9px] !leading-[14px]" : "pb-1.5",
+                "px-2.5 text-[11px] font-bold uppercase tracking-wide text-sidebar-muted",
+                compact ? "pb-1" : "pb-1.5",
               )}
             >
               {t(`owner.group.${g}`)}
@@ -122,16 +165,10 @@ export function OwnerNav({
                         "group relative flex items-center gap-2.5 rounded-xl px-2 font-medium transition-colors",
                         compact ? "h-[34px] text-[13px]" : "h-10 text-[13.5px]",
                         active
-                          ? "bg-primary/[0.09] font-semibold text-foreground shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_22%,transparent)]"
+                          ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-soft"
                           : "text-sidebar-foreground hover:bg-accent hover:text-foreground",
                       )}
                     >
-                      {active && (
-                        <span
-                          aria-hidden
-                          className="absolute -left-2.5 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary shadow-[0_0_10px_var(--console-glow,var(--primary))]"
-                        />
-                      )}
                       <span
                         className={cn(
                           "grid shrink-0 place-items-center rounded-lg transition-colors",
@@ -147,7 +184,7 @@ export function OwnerNav({
                       </span>
                       <span className="min-w-0 flex-1 truncate">{t(`nav.${item.to}`)}</span>
                       {count > 0 && (
-                        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 font-mono text-[10.5px] font-bold tabular-nums text-white shadow-[0_0_10px_-2px_rgb(244_63_94/0.7)]">
+                        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 text-[10.5px] font-bold tabular-nums text-white">
                           {count > 99 ? "99+" : count}
                         </span>
                       )}

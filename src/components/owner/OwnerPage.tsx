@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import {
-  AdminConsoleHeader,
   FigureCard,
   FigureLine,
   IconTile,
   InfoTip,
+  PageHeader,
 } from "@/components/layout/Primitives";
 import { keysForText, useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/lib/nav";
@@ -20,12 +20,10 @@ import {
   valueStateClass,
 } from "@/components/layout/CardTools";
 
-// The owner panel's building blocks in the admin console's language (the
-// same look as a company's Admin panel): a header with the section's
-// coloured icon tile and a mono caption naming where it sits, stat tiles and
-// panels with the console's hairline edge, and segmented tabs whose live
-// option is lit in signal blue. Every owner page is built from these, so
-// the whole panel changes together.
+// The owner panel's building blocks, in the platform's own (CRM) look: the
+// page header with the section's coloured icon tile, figure cards, panels
+// and segmented tabs. Every owner page is built from these, so the whole
+// panel changes together.
 
 const TONES = {
   blue: "sky",
@@ -65,22 +63,15 @@ export function OwnerHeader({
   /** Defaults to the section's colour in the owner menu. */
   tone?: CardTone;
 }) {
-  const { t } = useI18n();
   const section = useOwnerSection();
-  const caption = [
-    t("owner.badge"),
-    section?.ownerGroup ? t(`owner.group.${section.ownerGroup}`) : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
   return (
-    <AdminConsoleHeader
+    <PageHeader
       icon={icon}
       tone={tone ?? (section?.tone as CardTone | undefined) ?? "primary"}
       title={title}
-      description={desc}
-      caption={caption}
+      {...(desc ? { description: desc } : {})}
       actions={actions}
+      back={false}
     />
   );
 }
