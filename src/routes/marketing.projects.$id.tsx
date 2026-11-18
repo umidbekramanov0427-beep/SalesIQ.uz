@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { combineSamples } from "@/lib/webinar-timeline";
 import {
   ArrowLeft,
   BarChart3,
@@ -228,9 +229,9 @@ function ProjectPage() {
           ) : (
             <ul className="divide-y divide-border">
               {webinars.map((w) => {
-                const vs = (wd?.samples ?? [])
-                  .filter((s) => s.webinar_id === w.id)
-                  .map((s) => s.viewers);
+                const vs = combineSamples(
+                  (wd?.samples ?? []).filter((s) => s.webinar_id === w.id),
+                ).map((p) => p.total);
                 return (
                   <li key={w.id}>
                     <Link

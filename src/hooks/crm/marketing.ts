@@ -180,7 +180,7 @@ export function useWebinars() {
     refetchInterval: 30_000,
     queryFn: async (): Promise<{
       rows: WebinarRow[];
-      samples: Pick<WebinarSampleRow, "webinar_id" | "at" | "viewers">[];
+      samples: Pick<WebinarSampleRow, "webinar_id" | "at" | "viewers" | "source">[];
       missing: boolean;
     }> => {
       const { data, error } = await supabase
@@ -197,7 +197,7 @@ export function useWebinars() {
       const { data: samples } = ids.length
         ? await supabase
             .from("marketing_webinar_samples")
-            .select("webinar_id, at, viewers")
+            .select("webinar_id, at, viewers, source")
             .in("webinar_id", ids)
             .limit(20_000)
         : { data: [] };

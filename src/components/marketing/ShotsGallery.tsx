@@ -251,7 +251,10 @@ function PairedRows({ list, onOpen }: { list: ShotRow[]; onOpen: (i: number) => 
             ? (p.youtube?.viewers ?? 0) + (p.telegram?.viewers ?? 0)
             : null;
         return (
-          <div key={p.at + i} className="grid gap-3 p-4 md:grid-cols-[120px_1fr_1fr]">
+          <div
+            key={p.at + i}
+            className="grid gap-3 p-4 md:grid-cols-[120px_minmax(0,340px)_minmax(0,340px)]"
+          >
             <div className="flex flex-row items-baseline gap-3 md:flex-col md:gap-1">
               <p className="text-[12px] font-semibold text-muted-foreground">
                 {t("mkt.shots.moment", { n: i + 1 })}

@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowLeft,
   Download,
   Flag,
+  Images,
+  ListChecks,
   Loader2,
   Pencil,
   Play,
+  Radio,
   Square,
-  Trash2,
-  Images,
+  TrendingDown,
   Users,
   Video,
 } from "lucide-react";
@@ -18,19 +20,33 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { ShotsGallery } from "@/components/marketing/ShotsGallery";
 import { Button } from "@/components/ui/button";
-import { WebinarChart } from "@/components/marketing/ViewersChart";
+import { SERIES, WebinarChart, eventName } from "@/components/marketing/ViewersChart";
+import {
+  EventsList,
+  LiveConsole,
+  ScenarioCard,
+  StageLossTable,
+} from "@/components/marketing/WebinarLive";
 import { StatusChip, WebinarDialog } from "@/components/marketing/WebinarParts";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import { downloadXlsx } from "@/lib/xlsx-write";
-import { MARK_KINDS, webinarStats, type Mark, type MarkKind } from "@/lib/webinars";
-import { EVENT_COLOR, combineSamples, isEventKind, type EventKind } from "@/lib/webinar-timeline";
-import { useWebinar, useWebinarMutations } from "@/hooks/use-crm-data";
+import {
+  combineSamples,
+  isEventKind,
+  peaks,
+  stageLosses,
+  totalAt,
+  type WebinarEvent,
+} from "@/lib/webinar-timeline";
+import { useChannels, useWebinar, useWebinarMutations } from "@/hooks/use-crm-data";
 
-// One webinar: the viewers line (YouTube counted every minute by itself;
-// Telegram typed in here), the host's marks -- intro, lesson, price,
-// offer, Q&A -- pressed during the stream, the peak and how many were in
-// the room at each mark. Excel for the report.
+// One webinar, streamed on YouTube and in a Telegram live at the same time:
+// the viewers of both and their sum minute by minute, the stream's events
+// (lesson start, Telegram live on, SMS, presentation, tariffs, timers, Q&A)
+// pressed on the live console or recorded by the server, how many were lost
+// between one event and the next, the scenario against what happened, and
+// the two streams' pictures side by side. Excel for the report.
 
 export const Route = createFileRoute("/marketing/webinars/$id")({
   head: () => ({ meta: [{ title: "Vebinar — SalesIQ Marketing" }] }),
@@ -39,16 +55,43 @@ export const Route = createFileRoute("/marketing/webinars/$id")({
 
 const hm = (iso: string) =>
   new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+const num = (n: number) => n.toLocaleString("ru-RU").replace(/\u00a0/g, " ");
 
 function WebinarPage() {
   const { t } = useI18n();
   const { id } = Route.useParams();
   const q = useWebinar(id);
   const m = useWebinarMutations();
+  const { data: channels } = useChannels();
   const [editing, setEditing] = useState(false);
   const [count, setCount] = useState("");
-  const [label, setLabel] = useState("");
   const w = q.data?.webinar;
+
+  const points = useMemo(
+    () =>
+      combineSamples(
+        (q.data?.samples ?? []).map((s) => ({ at: s.at, viewers: s.viewers, source: s.source })),
+      ),
+    [q.data?.samples],
+  );
+  const events: WebinarEvent[] = useMemo(
+    () =>
+      (q.data?.marks ?? [])
+        .filter((x) => isEventKind(x.kind))
+        .map((x) => ({
+          id: x.id,
+          at: x.at,
+          kind: x.kind as WebinarEvent["kind"],
+          seq: x.seq ?? null,
+          label: x.label,
+          auto: x.auto ?? false,
+          aiGuess: x.ai_guess ?? false,
+          confirmed: x.confirmed ?? true,
+          meta: (x.meta as WebinarEvent["meta"]) ?? null,
+        })),
+    [q.data?.marks],
+  );
+
   if (q.isLoading) {
     return (
       <div className="flex justify-center py-16">
@@ -61,28 +104,19 @@ function WebinarPage() {
       <p className="py-16 text-center text-sm text-muted-foreground">{t("mkt.wb.notFound")}</p>
     );
 
-  const samples = (q.data?.samples ?? []).map((s) => ({ at: s.at, viewers: s.viewers }));
-  const marks: Mark[] = (q.data?.marks ?? []).map((x) => ({
-    id: x.id,
-    at: x.at,
-    kind: x.kind as MarkKind,
-    label: x.label,
-  }));
-  const st = webinarStats(samples, marks);
-  const points = combineSamples(
-    (q.data?.samples ?? []).map((s) => ({ at: s.at, viewers: s.viewers, source: s.source })),
-  );
-  const events = (q.data?.marks ?? [])
-    .filter((x) => isEventKind(x.kind))
-    .map((x) => ({
-      id: x.id,
-      at: x.at,
-      kind: x.kind as EventKind,
-      seq: x.seq ?? null,
-      label: x.label,
-      confirmed: x.confirmed,
-    }));
-  const manual = w.platform !== "youtube" || !w.youtube_video_id;
+  const pk = peaks(points);
+  const totals = points.map((p) => p.total);
+  const avg = totals.length ? Math.round(totals.reduce((a, b) => a + b, 0) / totals.length) : null;
+  const last = points.at(-1)?.total ?? null;
+  const minutes =
+    points.length > 1
+      ? Math.round((Date.parse(points.at(-1)!.at) - Date.parse(points[0]!.at)) / 60_000)
+      : 0;
+  const hasYt = !!w.youtube_video_id;
+  const channel = (channels?.rows ?? []).find((c) => c.id === w.channel_id);
+  const hasTg = !!w.channel_id;
+  const auto = hasYt || (hasTg && !!channel?.track_live);
+  const startIso = w.starts_at ?? points[0]?.at ?? null;
 
   const setStatus = (status: "live" | "ended") =>
     m.save.mutate(
@@ -109,30 +143,89 @@ function WebinarPage() {
   }
 
   function exportXlsx() {
+    const { stages } = stageLosses(points, events);
     downloadXlsx(`vebinar-${w!.title.slice(0, 40)}.xlsx`, [
       {
         name: t("mkt.wb.sheetSummary"),
         rows: [
           [t("mkt.wb.title"), w!.title],
           [t("mkt.wb.registered"), w!.registrations],
-          [t("mkt.wb.peak"), st.peak?.viewers ?? null],
-          [t("mkt.wb.peakAt"), st.peak ? hm(st.peak.at) : null],
-          [t("mkt.wb.avg"), st.avg],
-          [t("mkt.wb.duration"), st.minutes],
+          [t("mkt.wb.peak"), pk.total?.viewers ?? null],
+          [t("mkt.wb.peakAt"), pk.total ? hm(pk.total.at) : null],
+          ["YouTube " + t("mkt.wb.peak").toLowerCase(), pk.youtube?.viewers ?? null],
+          ["Telegram " + t("mkt.wb.peak").toLowerCase(), pk.telegram?.viewers ?? null],
+          [t("mkt.wb.avg"), avg],
+          [t("mkt.wb.duration"), minutes],
           [],
-          [t("mkt.wb.mark"), t("mkt.wb.time"), t("mkt.wb.viewersShort")],
-          ...st.marks.map((x) => [x.label || t(`mkt.wb.mark.${x.kind}`), hm(x.at), x.viewers]),
+          [t("mkt.wb.event"), t("mkt.wb.time"), t("mkt.wb.viewersShort")],
+          ...[...events]
+            .sort((a, b) => a.at.localeCompare(b.at))
+            .map((e) => [eventName(t, e), hm(e.at), totalAt(points, e.at)]),
+          [],
+          [t("mkt.wb.stage"), t("mkt.wb.atStart"), t("mkt.wb.atEnd"), t("mkt.wb.change")],
+          ...stages.map((s) => [
+            `${eventName(t, s.from)} → ${s.to ? eventName(t, s.to) : t("mkt.wb.streamEnd")}`,
+            s.start,
+            s.end,
+            s.change,
+          ]),
         ],
       },
       {
         name: t("mkt.wb.sheetMinutes"),
         rows: [
-          [t("mkt.wb.time"), t("mkt.wb.viewersShort")],
-          ...samples.map((s) => [hm(s.at), s.viewers]),
+          [t("mkt.wb.time"), "YouTube", "Telegram", t("mkt.wb.total")],
+          ...points.map((p) => [hm(p.at), p.youtube, p.telegram, p.total]),
         ],
       },
     ]);
   }
+
+  const kpis: {
+    k: string;
+    v: string;
+    sub?: string | undefined;
+    color?: string;
+    strong?: boolean;
+  }[] = [
+    {
+      k: t("mkt.wb.peakTotal"),
+      v: pk.total ? num(pk.total.viewers) : "—",
+      sub: pk.total ? `★ ${hm(pk.total.at)}` : undefined,
+      strong: true,
+    },
+    ...(hasYt
+      ? [
+          {
+            k: "YouTube",
+            v: pk.youtube ? num(pk.youtube.viewers) : "—",
+            sub: pk.youtube ? t("mkt.wb.peakAtShort", { time: hm(pk.youtube.at) }) : undefined,
+            color: SERIES.youtube,
+          },
+        ]
+      : []),
+    ...(hasTg
+      ? [
+          {
+            k: "Telegram",
+            v: pk.telegram ? num(pk.telegram.viewers) : "—",
+            sub: pk.telegram ? t("mkt.wb.peakAtShort", { time: hm(pk.telegram.at) }) : undefined,
+            color: SERIES.telegram,
+          },
+        ]
+      : []),
+    { k: t("mkt.wb.avg"), v: avg != null ? num(avg) : "—" },
+    { k: t("mkt.wb.now"), v: last != null ? num(last) : "—" },
+    {
+      k: t("mkt.wb.registered"),
+      v: w.registrations != null ? num(w.registrations) : "—",
+      sub:
+        w.registrations && pk.total
+          ? t("mkt.wb.came", { pct: Math.round((pk.total.viewers / w.registrations) * 100) })
+          : undefined,
+    },
+    { k: t("mkt.wb.duration"), v: minutes ? t("mkt.wb.minutes", { n: minutes }) : "—" },
+  ];
 
   return (
     <div className="space-y-5">
@@ -147,7 +240,16 @@ function WebinarPage() {
         icon={Video}
         tone="violet"
         title={w.title}
-        description={`${t(`mkt.wb.platform.${w.platform}`)}${w.starts_at ? ` · ${new Date(w.starts_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : ""}`}
+        description={`${
+          [
+            hasYt ? "YouTube" : null,
+            hasTg
+              ? `Telegram${channel ? ` · ${channel.title || `@${channel.username}`}` : ""}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" + ") || t("mkt.wb.platform.other")
+        }${w.starts_at ? ` · ${new Date(w.starts_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : ""}`}
         actions={
           <>
             <StatusChip status={w.status} />
@@ -161,7 +263,7 @@ function WebinarPage() {
                 <Square className="h-4 w-4" /> {t("mkt.wb.end")}
               </Button>
             )}
-            <Button variant="outline" onClick={exportXlsx} disabled={!samples.length}>
+            <Button variant="outline" onClick={exportXlsx} disabled={!points.length}>
               <Download className="h-4 w-4" /> Excel
             </Button>
             <Button
@@ -175,41 +277,32 @@ function WebinarPage() {
         }
       />
 
-      {w.poll_error === "no_key" && !manual && (
+      {w.poll_error === "no_key" && hasYt && (
         <p className="flex items-start gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-800 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           {t("mkt.wb.noKey")}
         </p>
       )}
-      {w.poll_error && w.poll_error !== "no_key" && !manual && (
+      {w.poll_error && w.poll_error !== "no_key" && hasYt && (
         <p className="flex items-start gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-800 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           {t("mkt.wb.pollError")}: {w.poll_error}
         </p>
       )}
+      {hasTg && channel && !channel.track_live && (
+        <p className="flex items-start gap-2 rounded-lg bg-sky-500/10 px-3 py-2 text-[13px] text-sky-800 dark:text-sky-200">
+          <Radio className="mt-0.5 h-4 w-4 shrink-0" />
+          {t("mkt.wb.tgNotTracked")}
+        </p>
+      )}
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border lg:grid-cols-5">
-        {[
-          {
-            k: t("mkt.wb.peak"),
-            v: st.peak ? String(st.peak.viewers) : "—",
-            sub: st.peak ? hm(st.peak.at) : undefined,
-            strong: true,
-          },
-          { k: t("mkt.wb.avg"), v: st.avg != null ? String(st.avg) : "—" },
-          { k: t("mkt.wb.now"), v: st.last != null ? String(st.last) : "—" },
-          {
-            k: t("mkt.wb.registered"),
-            v: w.registrations != null ? String(w.registrations) : "—",
-            sub:
-              w.registrations && st.peak
-                ? t("mkt.wb.came", { pct: Math.round((st.peak.viewers / w.registrations) * 100) })
-                : undefined,
-          },
-          { k: t("mkt.wb.duration"), v: st.minutes ? t("mkt.wb.minutes", { n: st.minutes }) : "—" },
-        ].map((c) => (
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
+        {kpis.map((c) => (
           <div key={c.k} className="bg-card px-4 py-3.5">
-            <p className="text-[12px] text-muted-foreground">{c.k}</p>
+            <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+              {c.color && <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />}
+              {c.k}
+            </p>
             <p
               className={cn(
                 "mt-1 font-mono text-[22px] font-bold tabular-nums",
@@ -227,55 +320,19 @@ function WebinarPage() {
         icon={Users}
         tone="violet"
         title={t("mkt.wb.chartTitle")}
-        description={manual ? t("mkt.wb.chartManual") : t("mkt.wb.chartAuto")}
+        description={auto ? t("mkt.wb.chartBoth") : t("mkt.wb.chartManual")}
       >
         <WebinarChart points={points} events={events} />
       </SectionCard>
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]">
-        {/* During the stream: one tap for each moment, and the count when typed in. */}
+      <div className="grid items-start gap-5 xl:grid-cols-[1.15fr_1fr]">
         <SectionCard
           icon={Flag}
           tone="rose"
-          title={t("mkt.wb.liveTitle")}
-          description={t("mkt.wb.liveDesc")}
+          title={t("mkt.wb.consoleTitle")}
+          description={t("mkt.wb.consoleDesc")}
         >
-          <div className="flex flex-wrap gap-2">
-            {MARK_KINDS.map((k) => (
-              <button
-                key={k}
-                type="button"
-                disabled={m.addMark.isPending}
-                onClick={() =>
-                  m.addMark.mutate(
-                    {
-                      webinarId: w.id,
-                      kind: k,
-                      label: k === "custom" ? label.trim() || null : null,
-                    },
-                    {
-                      onSuccess: () => {
-                        setLabel("");
-                        toast.success(t("mkt.wb.marked", { name: t(`mkt.wb.mark.${k}`) }));
-                      },
-                      onError: (e) => toast.error(describeError(e, t("mkt.wb.saveFailed"))),
-                    },
-                  )
-                }
-                className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-3.5 text-[13px] font-semibold text-foreground"
-              >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: EVENT_COLOR[k] }} />
-                {t(`mkt.wb.mark.${k}`)}
-              </button>
-            ))}
-          </div>
-          <input
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            maxLength={120}
-            placeholder={t("mkt.wb.customPh")}
-            className="mt-2 h-9 w-full rounded-lg border border-border bg-input px-3 text-[13px] outline-none focus:border-primary"
-          />
+          <LiveConsole w={w} events={events} />
           <form
             className="mt-4 flex items-end gap-2 border-t border-border pt-4"
             onSubmit={(e) => {
@@ -285,7 +342,7 @@ function WebinarPage() {
           >
             <label className="flex-1 space-y-1">
               <span className="text-[12.5px] font-medium text-muted-foreground">
-                {manual ? t("mkt.wb.countNow") : t("mkt.wb.countBackup")}
+                {auto ? t("mkt.wb.countBackup") : t("mkt.wb.countNow")}
               </span>
               <input
                 inputMode="numeric"
@@ -304,55 +361,38 @@ function WebinarPage() {
         <SectionCard
           icon={Flag}
           tone="violet"
-          title={t("mkt.wb.marksTitle")}
-          description={t("mkt.wb.marksDesc")}
+          title={t("mkt.wb.eventsTitle")}
+          description={t("mkt.wb.eventsDesc")}
         >
-          {st.marks.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">{t("mkt.wb.noMarks")}</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {st.marks.map((x) => (
-                <li key={x.id} className="flex items-center gap-3 py-2.5">
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ background: EVENT_COLOR[x.kind] }}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-foreground">
-                    {x.label || t(`mkt.wb.mark.${x.kind}`)}
-                  </span>
-                  <span className="font-mono text-[12.5px] text-muted-foreground">{hm(x.at)}</span>
-                  <span className="w-[92px] text-right">
-                    <b className="font-mono text-[15px] tabular-nums text-foreground">
-                      {x.viewers ?? "—"}
-                    </b>
-                    {x.viewers != null && st.peak && (
-                      <span className="ml-1 text-[11.5px] text-muted-foreground">
-                        {Math.round((x.viewers / st.peak.viewers) * 100)}%
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => m.removeMark.mutate(x.id)}
-                    className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    aria-label={t("common.delete")}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <EventsList events={events} points={points} peak={pk.total?.viewers ?? null} />
         </SectionCard>
       </div>
-      {/* Proof pictures of this stream (every 5 min while live, or uploaded). */}
+
+      <SectionCard
+        icon={TrendingDown}
+        tone="rose"
+        title={t("mkt.wb.lossTitle")}
+        description={t("mkt.wb.lossDesc")}
+      >
+        <StageLossTable points={points} events={events} />
+      </SectionCard>
+
+      <SectionCard
+        icon={ListChecks}
+        tone="amber"
+        title={t("mkt.wb.planTitle")}
+        description={t("mkt.wb.planDesc")}
+      >
+        <ScenarioCard w={w} events={events} startIso={startIso} />
+      </SectionCard>
+
       <SectionCard
         icon={Images}
         tone="violet"
         title={t("mkt.shots.title")}
-        description={t("mkt.shots.desc")}
+        description={hasYt && hasTg ? t("mkt.shots.descPaired") : t("mkt.shots.desc")}
       >
-        <ShotsGallery webinarId={w.id} />
+        <ShotsGallery webinarId={w.id} paired={hasYt && hasTg} />
       </SectionCard>
       {editing && <WebinarDialog w={w} onClose={() => setEditing(false)} />}
     </div>

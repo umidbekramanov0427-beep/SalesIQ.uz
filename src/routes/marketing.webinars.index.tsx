@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { combineSamples } from "@/lib/webinar-timeline";
 import {
   Download,
   Loader2,
@@ -58,11 +59,12 @@ function WebinarsPage() {
   );
   const rows = scoped.filter((w) => status === "all" || w.status === status);
   const stats = (id: string) => {
-    const s = (q.data?.samples ?? []).filter((x) => x.webinar_id === id);
+    // YouTube and Telegram of one webinar are added minute by minute.
+    const s = combineSamples((q.data?.samples ?? []).filter((x) => x.webinar_id === id));
     if (!s.length) return null;
     return {
-      peak: Math.max(...s.map((x) => x.viewers)),
-      avg: Math.round(s.reduce((a, x) => a + x.viewers, 0) / s.length),
+      peak: Math.max(...s.map((x) => x.total)),
+      avg: Math.round(s.reduce((a, x) => a + x.total, 0) / s.length),
     };
   };
   const projectOf = (id: string | null) => f.projects.find((p) => p.id === id) ?? null;
