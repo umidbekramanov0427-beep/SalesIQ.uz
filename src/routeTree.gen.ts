@@ -170,6 +170,7 @@ import { Route as LeadsImportRouteImport } from './routes/leads.import'
 import { Route as LeadsImportSheetRouteImport } from './routes/leads.import-sheet'
 import { Route as LeadsMergeRouteImport } from './routes/leads.merge'
 import { Route as LeadsTrashRouteImport } from './routes/leads.trash'
+import { Route as MarketingApiBotRouteImport } from './routes/marketing-api.bot'
 import { Route as MarketingApiChannelAnalyticsRouteImport } from './routes/marketing-api.channel-analytics'
 import { Route as MarketingApiChannelsRouteImport } from './routes/marketing-api.channels'
 import { Route as MarketingApiMetaRouteImport } from './routes/marketing-api.meta'
@@ -331,6 +332,7 @@ import { Route as PlatformUsageOrgIdRouteImport } from './routes/platform.usage.
 import { Route as PlatformVisitSessionIdRouteImport } from './routes/platform.visit.$sessionId'
 import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
 import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
+import { Route as TelegramMarketingOrgIdRouteImport } from './routes/telegram.marketing.$orgId'
 import { Route as TelegramOrgOrgIdRouteImport } from './routes/telegram.org.$orgId'
 import { Route as ApiV1LeadsLeadIdRouteImport } from './routes/api.v1.leads.$leadId'
 import { Route as ApiV1LeadsLeadIdNotesRouteImport } from './routes/api.v1.leads.$leadId.notes'
@@ -1154,6 +1156,11 @@ const LeadsMergeRoute = LeadsMergeRouteImport.update({
 const LeadsTrashRoute = LeadsTrashRouteImport.update({
   id: '/leads/trash',
   path: '/leads/trash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketingApiBotRoute = MarketingApiBotRouteImport.update({
+  id: '/marketing-api/bot',
+  path: '/marketing-api/bot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketingApiChannelAnalyticsRoute =
@@ -2012,6 +2019,11 @@ const SubscriptionPaymentsPaymeWebhookRoute =
     path: '/subscription-payments/payme/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const TelegramMarketingOrgIdRoute = TelegramMarketingOrgIdRouteImport.update({
+  id: '/telegram/marketing/$orgId',
+  path: '/telegram/marketing/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TelegramOrgOrgIdRoute = TelegramOrgOrgIdRouteImport.update({
   id: '/telegram/org/$orgId',
   path: '/telegram/org/$orgId',
@@ -2189,6 +2201,7 @@ export interface FileRoutesByFullPath {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/bot': typeof MarketingApiBotRoute
   '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/meta': typeof MarketingApiMetaRoute
@@ -2348,6 +2361,7 @@ export interface FileRoutesByFullPath {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
+  '/telegram/marketing/$orgId': typeof TelegramMarketingOrgIdRoute
   '/telegram/org/$orgId': typeof TelegramOrgOrgIdRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
   '/marketing/channels/': typeof MarketingChannelsIndexRoute
@@ -2516,6 +2530,7 @@ export interface FileRoutesByTo {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/bot': typeof MarketingApiBotRoute
   '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/meta': typeof MarketingApiMetaRoute
@@ -2675,6 +2690,7 @@ export interface FileRoutesByTo {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
+  '/telegram/marketing/$orgId': typeof TelegramMarketingOrgIdRoute
   '/telegram/org/$orgId': typeof TelegramOrgOrgIdRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
   '/marketing/channels': typeof MarketingChannelsIndexRoute
@@ -2844,6 +2860,7 @@ export interface FileRoutesById {
   '/leads/import-sheet': typeof LeadsImportSheetRoute
   '/leads/merge': typeof LeadsMergeRoute
   '/leads/trash': typeof LeadsTrashRoute
+  '/marketing-api/bot': typeof MarketingApiBotRoute
   '/marketing-api/channel-analytics': typeof MarketingApiChannelAnalyticsRoute
   '/marketing-api/channels': typeof MarketingApiChannelsRoute
   '/marketing-api/meta': typeof MarketingApiMetaRoute
@@ -3003,6 +3020,7 @@ export interface FileRoutesById {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
+  '/telegram/marketing/$orgId': typeof TelegramMarketingOrgIdRoute
   '/telegram/org/$orgId': typeof TelegramOrgOrgIdRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
   '/marketing/channels/': typeof MarketingChannelsIndexRoute
@@ -3173,6 +3191,7 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/bot'
     | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
     | '/marketing-api/meta'
@@ -3332,6 +3351,7 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
+    | '/telegram/marketing/$orgId'
     | '/telegram/org/$orgId'
     | '/crm/leads/'
     | '/marketing/channels/'
@@ -3500,6 +3520,7 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/bot'
     | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
     | '/marketing-api/meta'
@@ -3659,6 +3680,7 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
+    | '/telegram/marketing/$orgId'
     | '/telegram/org/$orgId'
     | '/crm/leads'
     | '/marketing/channels'
@@ -3827,6 +3849,7 @@ export interface FileRouteTypes {
     | '/leads/import-sheet'
     | '/leads/merge'
     | '/leads/trash'
+    | '/marketing-api/bot'
     | '/marketing-api/channel-analytics'
     | '/marketing-api/channels'
     | '/marketing-api/meta'
@@ -3986,6 +4009,7 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
+    | '/telegram/marketing/$orgId'
     | '/telegram/org/$orgId'
     | '/crm/leads/'
     | '/marketing/channels/'
@@ -4087,6 +4111,7 @@ export interface RootRouteChildren {
   LeadsImportSheetRoute: typeof LeadsImportSheetRoute
   LeadsMergeRoute: typeof LeadsMergeRoute
   LeadsTrashRoute: typeof LeadsTrashRoute
+  MarketingApiBotRoute: typeof MarketingApiBotRoute
   MarketingApiChannelAnalyticsRoute: typeof MarketingApiChannelAnalyticsRoute
   MarketingApiChannelsRoute: typeof MarketingApiChannelsRoute
   MarketingApiMetaRoute: typeof MarketingApiMetaRoute
@@ -4204,6 +4229,7 @@ export interface RootRouteChildren {
   PlatformVisitSessionIdRoute: typeof PlatformVisitSessionIdRoute
   SubscriptionPaymentsClickWebhookRoute: typeof SubscriptionPaymentsClickWebhookRoute
   SubscriptionPaymentsPaymeWebhookRoute: typeof SubscriptionPaymentsPaymeWebhookRoute
+  TelegramMarketingOrgIdRoute: typeof TelegramMarketingOrgIdRoute
   TelegramOrgOrgIdRoute: typeof TelegramOrgOrgIdRoute
   CrmLeadsIndexRoute: typeof CrmLeadsIndexRoute
   MarketingChannelsIndexRoute: typeof MarketingChannelsIndexRoute
@@ -5339,6 +5365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadsTrashRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketing-api/bot': {
+      id: '/marketing-api/bot'
+      path: '/marketing-api/bot'
+      fullPath: '/marketing-api/bot'
+      preLoaderRoute: typeof MarketingApiBotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketing-api/channel-analytics': {
       id: '/marketing-api/channel-analytics'
       path: '/marketing-api/channel-analytics'
@@ -6466,6 +6499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscriptionPaymentsPaymeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/telegram/marketing/$orgId': {
+      id: '/telegram/marketing/$orgId'
+      path: '/telegram/marketing/$orgId'
+      fullPath: '/telegram/marketing/$orgId'
+      preLoaderRoute: typeof TelegramMarketingOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/telegram/org/$orgId': {
       id: '/telegram/org/$orgId'
       path: '/telegram/org/$orgId'
@@ -7011,6 +7051,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadsImportSheetRoute: LeadsImportSheetRoute,
   LeadsMergeRoute: LeadsMergeRoute,
   LeadsTrashRoute: LeadsTrashRoute,
+  MarketingApiBotRoute: MarketingApiBotRoute,
   MarketingApiChannelAnalyticsRoute: MarketingApiChannelAnalyticsRoute,
   MarketingApiChannelsRoute: MarketingApiChannelsRoute,
   MarketingApiMetaRoute: MarketingApiMetaRoute,
@@ -7128,6 +7169,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformVisitSessionIdRoute: PlatformVisitSessionIdRoute,
   SubscriptionPaymentsClickWebhookRoute: SubscriptionPaymentsClickWebhookRoute,
   SubscriptionPaymentsPaymeWebhookRoute: SubscriptionPaymentsPaymeWebhookRoute,
+  TelegramMarketingOrgIdRoute: TelegramMarketingOrgIdRoute,
   TelegramOrgOrgIdRoute: TelegramOrgOrgIdRoute,
   CrmLeadsIndexRoute: CrmLeadsIndexRoute,
   MarketingChannelsIndexRoute: MarketingChannelsIndexRoute,

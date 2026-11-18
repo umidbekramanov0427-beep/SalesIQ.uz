@@ -23,7 +23,8 @@ import {
 
 type EventIn = {
   at: string;
-  kind: "join" | "leave";
+  /** "request": a join request (channels that ask before letting in). */
+  kind: "join" | "leave" | "request";
   tgUserId: number;
   inviteLink?: string | null;
   inviteName?: string | null;
@@ -169,19 +170,28 @@ export async function handleChatMemberUpdate(u: ChatMemberUpdate): Promise<void>
 
 let botId: number | null = null;
 
-/** Whether the platform's bot is an admin of the chat (it then hears joins / leaves). */
-export async function botIsAdmin(chatId: number): Promise<boolean | null> {
-  const token = process.env["TELEGRAM_BOT_TOKEN"];
+const botIds = new Map<string, number>();
+
+/**
+ * Whether a bot is an admin of the chat (it then hears joins / leaves):
+ * the platform's bot, or -- with `token` -- the company's marketing bot.
+ */
+export async function botIsAdmin(chatId: number, token?: string): Promise<boolean | null> {
+  const own = !token;
+  token = token ?? process.env["TELEGRAM_BOT_TOKEN"];
   if (!token) return null;
   try {
-    if (botId == null) {
+    let id = own ? botId : (botIds.get(token) ?? null);
+    if (id == null) {
       const me = (await callTelegramMethod(token, "getMe", {})) as { id?: number } | null;
-      botId = me?.id ?? null;
+      id = me?.id ?? null;
+      if (own) botId = id;
+      else if (id != null) botIds.set(token, id);
     }
-    if (botId == null) return null;
+    if (id == null) return null;
     const m = (await callTelegramMethod(token, "getChatMember", {
       chat_id: chatId,
-      user_id: botId,
+      user_id: id,
     })) as { status?: string } | null;
     return m?.status === "administrator" || m?.status === "creator";
   } catch {

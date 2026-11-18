@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { runSpeedToLead } from "@/lib/speed-to-lead.server";
 import { runReminders } from "@/lib/reminders.server";
 import { pollTelegramLive, pollYoutubeWebinars } from "@/lib/marketing-live.server";
+import { runMarketingBotTick } from "@/lib/marketing-bot/tick.server";
 
 // POST /crm/speed-to-lead -- pg_cron, every minute (x-cron-secret): reminds
 // managers of fresh leads nobody has contacted yet and escalates to the
@@ -32,10 +33,16 @@ export const Route = createFileRoute("/crm/speed-to-lead")({
             console.error("[telegram-live]", err);
             return 0;
           });
+          // The marketing bot's alerts and after-webinar reports.
+          const marketingBot = await runMarketingBotTick().catch((err) => {
+            console.error("[marketing-bot]", err);
+            return 0;
+          });
           return Response.json({
             ok: true,
             webinars,
             telegramLive,
+            marketingBot,
             ...(await runSpeedToLead()),
             reminders: reminders.sent,
           });

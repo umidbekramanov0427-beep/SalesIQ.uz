@@ -732,3 +732,65 @@ export function useSiteCaptureForms() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["marketing_site"] }),
   });
 }
+
+/* ---- Marketing boti (src/lib/marketing-bot/) ---------------------------- */
+
+export type MarketingBotSettings = {
+  alerts: { start: boolean; tgStop: boolean; dropPct: number; peak: boolean; report: boolean };
+  autoApprove: boolean;
+};
+
+export type MarketingBotStatus = {
+  ready: boolean;
+  bot: {
+    username: string;
+    link: string;
+    connectedAt: string;
+    webhookOk: boolean;
+    webhookError: string | null;
+    settings: MarketingBotSettings;
+  } | null;
+  staff: { profileId: string; name: string; tgUsername: string | null; linkedAt: string }[];
+  me: { linked: boolean };
+  channels: {
+    id: string;
+    title: string;
+    username: string | null;
+    botAdmin: boolean | null;
+    invites: { id: string; name: string; link: string; joins: number; leaves: number }[];
+  }[];
+};
+
+/** Marketing -> Sozlash -> Bot: the bot, linked people, channels and invite links. */
+export function useMarketingBot() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["marketing_bot", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<MarketingBotStatus> => {
+      const res = await apiFetch("/marketing-api/bot");
+      const json = (await res.json().catch(() => ({}))) as MarketingBotStatus & { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Could not load the bot");
+      return json;
+    },
+  });
+}
+
+export function useMarketingBotAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: Record<string, unknown>) => {
+      const res = await apiFetch("/marketing-api/bot", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = (await res.json().catch(() => ({}))) as Record<string, unknown> & {
+        error?: string;
+      };
+      if (!res.ok) throw new Error(json.error ?? "Xatolik");
+      return json;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["marketing_bot"] }),
+  });
+}

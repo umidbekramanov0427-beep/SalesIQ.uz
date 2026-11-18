@@ -5,6 +5,7 @@ import { saveShot } from "@/lib/marketing-shots.server";
 import { botIsAdmin, syncChannelAccount } from "@/lib/channel-events.server";
 import { channelCheckDue, pairedShotDue } from "@/lib/marketing-rules";
 import { addAutoEvent, recordPeak, upsertSample } from "@/lib/webinar-events.server";
+import { marketingBot } from "@/lib/marketing-bot/bot.server";
 import { marketingRulesFor, rulesOf } from "@/lib/marketing-rules.server";
 import {
   SessionRevoked,
@@ -31,8 +32,19 @@ function botToken(): string | null {
   return process.env["TELEGRAM_BOT_TOKEN"] ?? null;
 }
 
-async function memberCount(chat: string | number): Promise<number> {
+async function memberCount(chat: string | number, fallback?: string | null): Promise<number> {
   const token = botToken();
+  if (!token && !fallback) throw new Error("TELEGRAM_BOT_TOKEN yo'q");
+  // A private channel only the company's marketing bot is in: its token.
+  if (fallback) {
+    const n = token
+      ? await callTelegramMethod(token, "getChatMemberCount", { chat_id: chat }).catch(() => null)
+      : null;
+    if (typeof n === "number") return n;
+    const m = await callTelegramMethod(fallback, "getChatMemberCount", { chat_id: chat });
+    if (typeof m !== "number") throw new Error("Telegram sonni bermadi");
+    return m;
+  }
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN yo'q");
   const n = await callTelegramMethod(token, "getChatMemberCount", { chat_id: chat });
   if (typeof n !== "number") throw new Error("Telegram sonni bermadi");
@@ -211,7 +223,8 @@ export async function refreshChannels(opts: { orgId?: string; id?: string } = {}
   let done = 0;
   for (const c of data) {
     try {
-      const members = await memberCount(c.chat_id ?? `@${c.username}`);
+      const mbot = await marketingBot(c.organization_id).catch(() => null);
+      const members = await memberCount(c.chat_id ?? `@${c.username}`, mbot?.token ?? null);
       await supabaseAdmin
         .from("marketing_channels")
         .update({ members, members_checked_at: new Date().toISOString(), last_error: null })
@@ -220,7 +233,21 @@ export async function refreshChannels(opts: { orgId?: string; id?: string } = {}
       done++;
       if (!analytics) continue;
       if (c.chat_id != null) {
-        const admin = await botIsAdmin(c.chat_id);
+        let admin = await botIsAdmin(c.chat_id);
+        if (!admin && mbot) {
+          const viaBot = await botIsAdmin(c.chat_id, mbot.token);
+          if (viaBot != null) {
+            await supabaseAdmin
+              .from("marketing_channels")
+              .update({ via_marketing_bot: viaBot })
+              .eq("id", c.id)
+              .then(
+                () => undefined,
+                () => undefined,
+              );
+            admin = viaBot || admin;
+          }
+        }
         if (admin != null) {
           await supabaseAdmin
             .from("marketing_channels")

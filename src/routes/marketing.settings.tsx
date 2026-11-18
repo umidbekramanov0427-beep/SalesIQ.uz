@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Activity,
+  Bot,
   Copy,
   FolderKanban,
   Globe,
@@ -23,17 +24,19 @@ import { cn } from "@/lib/utils";
 import { ProjectsBoard } from "@/components/marketing/ProjectsBoard";
 import { SourcesBoard } from "@/components/marketing/SourcesBoard";
 import { TrackingSettings } from "@/components/marketing/TrackingSettings";
+import { MarketingBotSettings } from "@/components/marketing/MarketingBotSettings";
 import { useMarketingFilters } from "@/components/marketing/MarketingFilters";
 
 // Marketing paneli -> Sozlash, in tabs: Loyihalar (projects: funnels + UTM
 // campaigns, pictures, archive), Manbalar (Telegram channels, the Telegram
-// account for live streams, the Meta ad account), Kuzatuv (picture interval,
+// account for live streams, the Meta ad account), Bot (the company's
+// marketing bot: alerts, live console, channel analytics, invite links), Kuzatuv (picture interval,
 // how often channels are re-read, what "leaving quickly" means), Jamoa (the
 // panel's address and who works in it) and UTM (how leads get their source
 // and campaign). Day / night and the language are in the person's tile at the
 // bottom of the panel's menu -- their one place.
 
-const TABS = ["projects", "sources", "tracking", "team", "utm"] as const;
+const TABS = ["projects", "sources", "bot", "tracking", "team", "utm"] as const;
 type Tab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/marketing/settings")({
@@ -71,6 +74,7 @@ function MarketingSettings() {
         options={[
           { value: "projects", label: t("mkt.set.projects"), icon: FolderKanban },
           { value: "sources", label: t("mkt.set.sources"), icon: PlugZap },
+          { value: "bot", label: t("mkt.set.bot"), icon: Bot },
           { value: "tracking", label: t("mkt.set.tracking"), icon: Activity },
           { value: "team", label: t("mkt.set.team"), icon: Users },
           { value: "utm", label: t("mkt.set.utm"), icon: Tags },
@@ -83,6 +87,7 @@ function MarketingSettings() {
         />
       )}
       {tab === "sources" && <SourcesBoard />}
+      {tab === "bot" && <MarketingBotSettings />}
       {tab === "tracking" && <TrackingSettings />}
       {tab === "team" && <TeamTab />}
       {tab === "utm" && <UtmTab />}

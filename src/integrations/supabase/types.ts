@@ -3379,6 +3379,12 @@ export type Database = {
           updated_at: string;
           utm: string | null;
           lead_number: number | null;
+          webinar_watched: boolean | null;
+          webinar_watched_source: string | null;
+          webinar_watched_at: string | null;
+          webinar_id: string | null;
+          qual_status: string | null;
+          not_qual_reason: string | null;
         };
         Insert: {
           address?: string | null;
@@ -3428,6 +3434,12 @@ export type Database = {
           updated_at?: string;
           utm?: string | null;
           lead_number?: number | null;
+          webinar_watched?: boolean | null;
+          webinar_watched_source?: string | null;
+          webinar_watched_at?: string | null;
+          webinar_id?: string | null;
+          qual_status?: string | null;
+          not_qual_reason?: string | null;
         };
         Update: {
           address?: string | null;
@@ -3477,6 +3489,12 @@ export type Database = {
           updated_at?: string;
           utm?: string | null;
           lead_number?: number | null;
+          webinar_watched?: boolean | null;
+          webinar_watched_source?: string | null;
+          webinar_watched_at?: string | null;
+          webinar_id?: string | null;
+          qual_status?: string | null;
+          not_qual_reason?: string | null;
         };
         Relationships: [
           {
@@ -5011,6 +5029,174 @@ export type Database = {
         };
         Relationships: [];
       };
+      marketing_bot_link_codes: {
+        Row: {
+          code: string;
+          organization_id: string;
+          profile_id: string;
+          expires_at: string;
+        };
+        Insert: {
+          code: string;
+          organization_id: string;
+          profile_id: string;
+          expires_at: string;
+        };
+        Update: {
+          code?: string;
+          organization_id?: string;
+          profile_id?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_bot_log: {
+        Row: {
+          organization_id: string;
+          key: string;
+          sent_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          key: string;
+          sent_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          key?: string;
+          sent_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_bot_staff: {
+        Row: {
+          organization_id: string;
+          profile_id: string;
+          chat_id: number;
+          tg_username: string | null;
+          linked_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          profile_id: string;
+          chat_id: number;
+          tg_username?: string | null;
+          linked_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          profile_id?: string;
+          chat_id?: number;
+          tg_username?: string | null;
+          linked_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_bots: {
+        Row: {
+          organization_id: string;
+          bot_user_id: number | null;
+          username: string;
+          token_sealed: string;
+          webhook_secret: string;
+          settings: Json;
+          connected_by: string | null;
+          connected_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          bot_user_id?: number | null;
+          username: string;
+          token_sealed: string;
+          webhook_secret: string;
+          settings?: Json;
+          connected_by?: string | null;
+          connected_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          bot_user_id?: number | null;
+          username?: string;
+          token_sealed?: string;
+          webhook_secret?: string;
+          settings?: Json;
+          connected_by?: string | null;
+          connected_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      marketing_channel_invites: {
+        Row: {
+          id: string;
+          organization_id: string;
+          channel_id: string;
+          name: string;
+          link: string;
+          join_request: boolean;
+          created_by: string | null;
+          created_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          channel_id: string;
+          name: string;
+          link: string;
+          join_request?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          channel_id?: string;
+          name?: string;
+          link?: string;
+          join_request?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
+      marketing_channel_posts: {
+        Row: {
+          channel_id: string;
+          message_id: number;
+          organization_id: string;
+          posted_at: string | null;
+          text: string | null;
+          reactions: Json;
+          reactions_total: number;
+          updated_at: string;
+        };
+        Insert: {
+          channel_id: string;
+          message_id: number;
+          organization_id: string;
+          posted_at?: string | null;
+          text?: string | null;
+          reactions?: Json;
+          reactions_total?: number;
+          updated_at?: string;
+        };
+        Update: {
+          channel_id?: string;
+          message_id?: number;
+          organization_id?: string;
+          posted_at?: string | null;
+          text?: string | null;
+          reactions?: Json;
+          reactions_total?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       marketing_channel_days: {
         Row: {
           channel_id: string;
@@ -5306,6 +5492,7 @@ export type Database = {
           tg_stats_at: string | null;
           tg_stats_error: string | null;
           admin_log_at: string | null;
+          via_marketing_bot: boolean;
         };
         Insert: {
           id?: string;
@@ -5329,6 +5516,7 @@ export type Database = {
           tg_stats_at?: string | null;
           tg_stats_error?: string | null;
           admin_log_at?: string | null;
+          via_marketing_bot?: boolean;
         };
         Update: {
           id?: string;
@@ -5352,6 +5540,7 @@ export type Database = {
           tg_stats_at?: string | null;
           tg_stats_error?: string | null;
           admin_log_at?: string | null;
+          via_marketing_bot?: boolean;
         };
         Relationships: [];
       };
