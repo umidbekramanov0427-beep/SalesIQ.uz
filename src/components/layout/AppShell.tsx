@@ -5,7 +5,7 @@ import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
-import { OwnerNav, OwnerSidebar } from "@/components/owner/OwnerSidebar";
+import { OwnerHubTabs, OwnerNav, OwnerSidebar } from "@/components/owner/OwnerSidebar";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
@@ -314,7 +314,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={`${pathname}|${orgGeneral?.date_format ?? ""}`}
               className="page-enter h-full w-full"
             >
-              {!pageAllowed ? <Navigate to={homePathFor(role)} replace /> : children}
+              {!pageAllowed ? (
+                <Navigate to={homePathFor(role)} replace />
+              ) : isPlatformOwner && pathname.startsWith("/platform") ? (
+                // An owner section's related pages as tabs at the top.
+                <>
+                  <OwnerHubTabs />
+                  {children}
+                </>
+              ) : (
+                children
+              )}
               {/* A real block, not just scroll-container padding -- two earlier
                 rounds of bumping this pane's pb-* (pb-16 -> pb-28 -> pb-36)
                 still read as the last card touching the viewport edge on a
