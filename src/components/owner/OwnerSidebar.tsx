@@ -185,24 +185,27 @@ export function OwnerHubTabs() {
   const at = ownerHubOf(pathname);
   if (!at || at.hub.tabs.length < 2) return null;
   return (
-    <div className="mb-4 flex justify-center phone:mb-3">
-      <div className="phone-tabs ctl-track inline-flex h-11 items-center gap-1 rounded-xl p-1">
-        {at.hub.tabs.map((tab) => {
-          const nav = NAV_ITEMS.find((i) => i.to === tab);
-          if (!nav) return null;
-          return (
-            <Link
-              key={tab}
-              to={tab}
-              aria-selected={at.tab === tab}
-              className="ctl-tab inline-flex h-full items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold"
-            >
-              <nav.icon className="h-4 w-4" />
-              {t(`nav.${tab}`)}
-              <CountDot n={counts[tab] ?? 0} />
-            </Link>
-          );
-        })}
+    // Pinned: it stays at the top while the page scrolls under it.
+    <div className="pointer-events-none sticky top-2 z-30 mb-4 flex justify-center phone:mb-3">
+      <div className="pointer-events-auto max-w-full rounded-xl shadow-[0_10px_28px_-14px_rgb(15_23_42/0.45)]">
+        <div className="phone-tabs ctl-track inline-flex h-11 items-center gap-1 rounded-xl p-1">
+          {at.hub.tabs.map((tab) => {
+            const nav = NAV_ITEMS.find((i) => i.to === tab);
+            if (!nav) return null;
+            return (
+              <Link
+                key={tab}
+                to={tab}
+                aria-selected={at.tab === tab}
+                className="ctl-tab inline-flex h-full items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold"
+              >
+                <nav.icon className="h-4 w-4" />
+                {t(`nav.${tab}`)}
+                <CountDot n={counts[tab] ?? 0} />
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

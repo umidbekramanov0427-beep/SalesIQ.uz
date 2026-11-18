@@ -36,7 +36,7 @@ const hub = (id: string, tabs: string[], extra?: Partial<OwnerHub>): OwnerHub =>
 /** The rail's sections, top group then bottom group; Sozlamalar sits apart at the bottom. */
 export const OWNER_HUBS: OwnerHub[][] = [
   [
-    hub("companies", ["/platform/companies", "/platform/users", "/platform/integrations"]),
+    hub("companies", ["/platform/companies", "/platform/users"]),
     hub("applications", ["/platform/applications"]),
     hub("support", ["/platform/support"]),
     hub("revenue", ["/platform/revenue", "/platform/notifications", "/platform/partners"]),

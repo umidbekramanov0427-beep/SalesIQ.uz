@@ -229,22 +229,6 @@ export function companyHealth(f: CompanyFacts): { level: Health; reasons: Health
   return { level, reasons: [...risk, ...watch] };
 }
 
-/** A company on the owner's "Xavf ostidagilar" list (/platform/at-risk). */
-export type AtRiskCompany = {
-  orgId: string;
-  name: string;
-  plan: string | null;
-  isTrial: boolean;
-  level: "watch" | "risk";
-  reasons: HealthReason[];
-  daysLeft: number | null;
-  users: number;
-  activeUsers: number;
-  idleDays: number | null;
-  leadId: string | null;
-  openTasks: number;
-};
-
 /** Owner tasks: due now, not done, not sent yet. */
 export function dueTasks<
   T extends { due_at: string | null; done_at: string | null; notified_at: string | null },

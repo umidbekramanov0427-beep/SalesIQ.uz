@@ -318,10 +318,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Navigate to={homePathFor(role)} replace />
               ) : isPlatformOwner && pathname.startsWith("/platform") ? (
                 // An owner section's related pages as tabs at the top.
-                <>
+                // Its own box (not the full-height page box) so the pinned
+                // tab row stays on top for the whole scroll.
+                <div>
                   <OwnerHubTabs />
                   {children}
-                </>
+                </div>
               ) : (
                 children
               )}

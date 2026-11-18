@@ -28,6 +28,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { SharedBotExtend } from "@/components/owner/SharedBotExtend";
 import { OrgActivity } from "@/components/owner/OrgActivity";
+import { OrgIntegrations } from "@/components/owner/OrgIntegrations";
 import { EditUserDialog } from "@/components/EditUserDialog";
 import {
   Dialog,
@@ -70,7 +71,24 @@ import {
 const ORG_ROLES = ["sotuv_menejeri", "amaliyotchi", "rop", "super_admin"] as const;
 type OrgRole = (typeof ORG_ROLES)[number];
 
+const ORG_SECTIONS = [
+  "activity",
+  "details",
+  "access",
+  "plan",
+  "freeze",
+  "modules",
+  "users",
+  "status",
+  "danger",
+] as const;
+
 export const Route = createFileRoute("/platform/organizations/$orgId")({
+  // ?section=status opens a section directly (e.g. the company's integrations).
+  validateSearch: (s: Record<string, unknown>): { section?: OrgSection } =>
+    (ORG_SECTIONS as readonly string[]).includes(String(s["section"]))
+      ? { section: s["section"] as OrgSection }
+      : {},
   head: () => ({
     meta: [{ title: "Company — SalesIQ" }],
   }),
@@ -289,8 +307,7 @@ function DeleteOrgDangerZone({ org }: { org: OrganizationRow }) {
   );
 }
 
-type OrgSection =
-  "activity" | "details" | "access" | "plan" | "freeze" | "modules" | "users" | "status" | "danger";
+type OrgSection = (typeof ORG_SECTIONS)[number];
 
 // One clickable card per area of the company; the chosen one opens below.
 function SectionTile({
@@ -343,7 +360,8 @@ function OrgDetailPage() {
   const queryClient = useQueryClient();
 
   const org = orgs?.find((o) => o.id === orgId);
-  const [section, setSection] = useState<OrgSection>("activity");
+  const search = Route.useSearch();
+  const [section, setSection] = useState<OrgSection>(search.section ?? "activity");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [plan, setPlan] = useState<string>("start_iq");
@@ -891,47 +909,7 @@ function OrgDetailPage() {
           </SectionCard>
         )}
 
-        {section === "status" && (
-          <SectionCard
-            icon={Activity}
-            tone="emerald"
-            title={t("orgcard.integrations")}
-            actions={
-              <Link
-                to="/platform/integrations"
-                search={{ org: org.id }}
-                className="text-sm font-semibold text-primary hover:underline"
-              >
-                {t("orgcard.manageIntegrations")}
-              </Link>
-            }
-          >
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t("platform.amocrmStatus")}</span>
-                {amoConnection ? (
-                  <Pill tone={amoConnection.last_sync_error ? "danger" : "success"}>
-                    {amoConnection.subdomain}
-                  </Pill>
-                ) : (
-                  <Pill tone="neutral">{t("platform.notConnected")}</Pill>
-                )}
-              </li>
-              {amoConnection?.last_synced_at && (
-                <li className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t("platform.lastSynced")}</span>
-                  <span className="text-foreground">{timeAgo(amoConnection.last_synced_at)}</span>
-                </li>
-              )}
-              <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t("platform.aiAgentsStatus")}</span>
-                <Pill tone={orgAiAgents.some((a) => a.active) ? "success" : "neutral"}>
-                  {orgAiAgents.filter((a) => a.active).length}/{orgAiAgents.length}
-                </Pill>
-              </li>
-            </ul>
-          </SectionCard>
-        )}
+        {section === "status" && <OrgIntegrations orgId={org.id} />}
 
         {section === "danger" && <DeleteOrgDangerZone org={org} />}
       </div>

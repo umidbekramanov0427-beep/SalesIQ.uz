@@ -202,7 +202,6 @@ import { Route as PlatformAnnouncementsRouteImport } from './routes/platform.ann
 import { Route as PlatformAnnouncementsApiRouteImport } from './routes/platform.announcements-api'
 import { Route as PlatformApplicationsRouteImport } from './routes/platform.applications'
 import { Route as PlatformApplicationsApiRouteImport } from './routes/platform.applications-api'
-import { Route as PlatformAtRiskRouteImport } from './routes/platform.at-risk'
 import { Route as PlatformBackupSettingsRouteImport } from './routes/platform.backup-settings'
 import { Route as PlatformBotRouteImport } from './routes/platform.bot'
 import { Route as PlatformBotsApiRouteImport } from './routes/platform.bots-api'
@@ -1322,11 +1321,6 @@ const PlatformApplicationsApiRoute = PlatformApplicationsApiRouteImport.update({
   path: '/platform/applications-api',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlatformAtRiskRoute = PlatformAtRiskRouteImport.update({
-  id: '/platform/at-risk',
-  path: '/platform/at-risk',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PlatformBackupSettingsRoute = PlatformBackupSettingsRouteImport.update({
   id: '/platform/backup-settings',
   path: '/platform/backup-settings',
@@ -2225,7 +2219,6 @@ export interface FileRoutesByFullPath {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
-  '/platform/at-risk': typeof PlatformAtRiskRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
@@ -2553,7 +2546,6 @@ export interface FileRoutesByTo {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
-  '/platform/at-risk': typeof PlatformAtRiskRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
@@ -2882,7 +2874,6 @@ export interface FileRoutesById {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
-  '/platform/at-risk': typeof PlatformAtRiskRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
@@ -3212,7 +3203,6 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
-    | '/platform/at-risk'
     | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/bots-api'
@@ -3540,7 +3530,6 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
-    | '/platform/at-risk'
     | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/bots-api'
@@ -3868,7 +3857,6 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
-    | '/platform/at-risk'
     | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/bots-api'
@@ -4128,7 +4116,6 @@ export interface RootRouteChildren {
   PlatformAnnouncementsApiRoute: typeof PlatformAnnouncementsApiRoute
   PlatformApplicationsRoute: typeof PlatformApplicationsRoute
   PlatformApplicationsApiRoute: typeof PlatformApplicationsApiRoute
-  PlatformAtRiskRoute: typeof PlatformAtRiskRoute
   PlatformBackupSettingsRoute: typeof PlatformBackupSettingsRoute
   PlatformBotRoute: typeof PlatformBotRoute
   PlatformBotsApiRoute: typeof PlatformBotsApiRoute
@@ -5574,13 +5561,6 @@ declare module '@tanstack/react-router' {
       path: '/platform/applications-api'
       fullPath: '/platform/applications-api'
       preLoaderRoute: typeof PlatformApplicationsApiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/platform/at-risk': {
-      id: '/platform/at-risk'
-      path: '/platform/at-risk'
-      fullPath: '/platform/at-risk'
-      preLoaderRoute: typeof PlatformAtRiskRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/backup-settings': {
@@ -7060,7 +7040,6 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformAnnouncementsApiRoute: PlatformAnnouncementsApiRoute,
   PlatformApplicationsRoute: PlatformApplicationsRoute,
   PlatformApplicationsApiRoute: PlatformApplicationsApiRoute,
-  PlatformAtRiskRoute: PlatformAtRiskRoute,
   PlatformBackupSettingsRoute: PlatformBackupSettingsRoute,
   PlatformBotRoute: PlatformBotRoute,
   PlatformBotsApiRoute: PlatformBotsApiRoute,

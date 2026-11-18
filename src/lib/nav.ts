@@ -251,14 +251,6 @@ export const NAV_ITEMS: NavItem[] = [
     platformOwnerOnly: true,
     ownerGroup: "system",
   },
-  {
-    label: "Integratsiya",
-    to: "/platform/integrations",
-    tone: "sky",
-    icon: Plug,
-    platformOwnerOnly: true,
-    ownerGroup: "system",
-  },
 
   {
     label: "Sozlamalar",

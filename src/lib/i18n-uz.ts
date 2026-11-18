@@ -9982,22 +9982,6 @@ const uz: Record<string, string> = {
   "orgcard.support": "Yozishmalar",
   "orgcard.noSupport": "Hali yozishma yo'q",
   "orgcard.openInbox": "Inbox'da ochish",
-  "risk.title": "Xavf ostidagilar",
-  "risk.desc": "Kirmay qo'ygan, muddati tugayotgan yoki muammosi bor kompaniyalar",
-  "risk.none": "Hozir xavf ostidagi kompaniya yo'q",
-  "risk.more": "Yana {n} ta",
-  "risk.less": "Kamroq",
-  "risk.active": "{a}/{n} faol",
-  "risk.idle": "{n} kun kirmagan",
-  "risk.daysLeft": "{n} kun qoldi",
-  "risk.ended": "{n} kun oldin tugagan",
-  "risk.task": "Vazifa",
-  "risk.taskTitle": "Bog'lanish: {name}",
-  "risk.taskSaved": "Vazifa qo'shildi",
-  "risk.due": "Muddat",
-  "risk.save": "Saqlash",
-  "risk.card": "Karta",
-  "risk.inbox": "Yozish",
 };
 
 export default uz;
