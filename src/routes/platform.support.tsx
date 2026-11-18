@@ -37,6 +37,8 @@ import { CompanyMark, HEALTH_DOT, PHASE_CHIP, StageChip } from "@/components/own
 import { renderMessageContent } from "@/components/ai/MessageContent";
 import { useOwnerInbox } from "@/hooks/use-crm-data";
 import { FixedPage } from "@/components/layout/FixedPage";
+import { QuickReplies } from "@/components/chat/QuickReplies";
+import { recentReplies } from "@/lib/quick-replies";
 import { PageTools } from "@/components/layout/PageTools";
 import { CARD, FEED_BG, QUIET, dayWord, stamp } from "@/components/lead/amo-utils";
 import {
@@ -968,6 +970,15 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
   const saveTpl = useInboxAction(
     () => void qc.invalidateQueries({ queryKey: ["owner_inbox_templates"] }),
   );
+  const { data: recent } = useQuery({
+    queryKey: ["owner_inbox_recent"],
+    staleTime: 30_000,
+    queryFn: async (): Promise<string[]> => {
+      const res = await apiFetch("/platform/inbox-api?recent=1");
+      if (!res.ok) return [];
+      return ((await res.json()) as { recent: string[] }).recent;
+    },
+  });
   // Uploads one file into the company's support folder, for the answer.
   const upload = (file: File, as?: string) =>
     uploadSupportFile(
@@ -1000,6 +1011,7 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
       att.clear();
       setRecorder(null);
       onSent();
+      void qc.invalidateQueries({ queryKey: ["owner_inbox_recent"] });
     } catch {
       /* the toast is shown by useInboxAction */
     } finally {
@@ -1160,11 +1172,24 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
                     <MessageSquareQuote className="h-4 w-4" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="end" side="top" className="w-[380px] p-2">
-                  <TemplateList
-                    list={tpl ?? []}
-                    onPick={(s) => setText((cur) => (cur ? `${cur}\n${s}` : s))}
-                    onSave={(list) => saveTpl.mutate({ action: "templates", list })}
+                <PopoverContent align="end" side="top" className="w-[400px] p-2">
+                  <QuickReplies
+                    pinned={(tpl ?? []).map((text, i) => ({ id: String(i), text }))}
+                    recent={recentReplies(recent ?? [], tpl ?? [])}
+                    busy={saveTpl.isPending}
+                    onPick={(s) => {
+                      setText((cur) => (cur ? `${cur}\n${s}` : s));
+                      areaRef.current?.focus();
+                    }}
+                    onPin={(v) =>
+                      saveTpl.mutate({ action: "templates", list: [...(tpl ?? []), v] })
+                    }
+                    onUnpin={(id) =>
+                      saveTpl.mutate({
+                        action: "templates",
+                        list: (tpl ?? []).filter((_, i) => String(i) !== id),
+                      })
+                    }
                   />
                 </PopoverContent>
               </Popover>
@@ -1190,65 +1215,6 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
             </div>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function TemplateList({
-  list,
-  onPick,
-  onSave,
-}: {
-  list: string[];
-  onPick: (s: string) => void;
-  onSave: (list: string[]) => void;
-}) {
-  const { t } = useI18n();
-  const [draft, setDraft] = useState("");
-  return (
-    <div>
-      <ul className="max-h-64 overflow-y-auto">
-        {list.map((s, i) => (
-          <li key={i} className="group flex items-start gap-1">
-            <button
-              type="button"
-              onClick={() => onPick(s)}
-              className="min-w-0 flex-1 rounded-lg px-2 py-1.5 text-left text-[12.5px] text-foreground hover:bg-muted"
-            >
-              <span className="line-clamp-2">{s}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onSave(list.filter((_, j) => j !== i))}
-              className="invisible p-1.5 text-subtle hover:text-rose-600 group-hover:visible"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </li>
-        ))}
-        {!list.length && (
-          <li className="px-2 py-2 text-[12px] text-subtle">{t("oinbox.noTemplates")}</li>
-        )}
-      </ul>
-      <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={t("oinbox.newTemplate")}
-          className="h-8 min-w-0 flex-1 rounded-lg border border-border bg-card px-2.5 text-[12.5px] outline-none focus:border-primary"
-        />
-        <button
-          type="button"
-          disabled={!draft.trim()}
-          onClick={() => {
-            onSave([...list, draft.trim()]);
-            setDraft("");
-          }}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-border disabled:opacity-40"
-        >
-          <Check className="h-4 w-4" />
-        </button>
       </div>
     </div>
   );

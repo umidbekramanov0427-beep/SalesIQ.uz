@@ -26,11 +26,24 @@ export const Route = createFileRoute("/platform/inbox-api")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        if (!(await requirePlatformOwner(request)))
-          return Response.json({ error: "Unauthorized" }, { status: 403 });
+        const ownerId = await requirePlatformOwner(request);
+        if (!ownerId) return Response.json({ error: "Unauthorized" }, { status: 403 });
         const url = new URL(request.url);
         if (url.searchParams.get("templates"))
           return Response.json({ templates: await loadTemplates() });
+        // This owner's own recent answers (Tayyor javoblar → So'nggi yuborilganlar).
+        if (url.searchParams.get("recent")) {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data } = await supabaseAdmin
+            .from("support_messages")
+            .select("text")
+            .eq("direction", "out")
+            .eq("sent_by", ownerId)
+            .neq("text", "")
+            .order("created_at", { ascending: false })
+            .limit(80);
+          return Response.json({ recent: (data ?? []).map((r) => r.text) });
+        }
         const key = url.searchParams.get("key");
         if (key) {
           if (!UUID.test(key.replace(/^u:/, "")))

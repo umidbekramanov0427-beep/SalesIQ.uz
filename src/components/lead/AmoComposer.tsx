@@ -11,6 +11,7 @@ import {
   Clock,
   Keyboard,
   Loader2,
+  MessageSquareQuote,
   Mic,
   Video,
   Paperclip,
@@ -41,6 +42,8 @@ import { VoiceRecorder } from "@/components/lead/VoiceRecorder";
 import { VideoRecorder } from "@/components/lead/VideoRecorder";
 import { EmojiPicker } from "@/components/lead/EmojiPicker";
 import { namedChatFile, PendingFile as KitPendingFile } from "@/components/chat/AttachmentKit";
+import { QuickReplies } from "@/components/chat/QuickReplies";
+import { recentReplies } from "@/lib/quick-replies";
 
 /** The lead composer's own frame colour around a waiting file. */
 function PendingFile(props: { file: File; onRemove: () => void }) {
@@ -71,6 +74,7 @@ import {
   useUploadLeadFile,
   type CrmLeadView,
   useChatTemplates,
+  useMyRecentChatReplies,
   useCreateChatTemplate,
   useDeleteChatTemplate,
 } from "@/hooks/use-crm-data";
@@ -467,6 +471,7 @@ export function Composer({
   const { data: igLink } = useLeadInstagramLink(lead.id);
   const upload = useUploadLeadFile();
   const templates = useTemplates(user?.organizationId);
+  const { data: recentSent } = useMyRecentChatReplies();
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -1155,6 +1160,37 @@ export function Composer({
                 >
                   <Save className="h-4 w-4" />
                 </button>
+              )}
+              {effectiveMode === "chat" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      title={t("qr.title")}
+                      aria-label={t("qr.title")}
+                      className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                      <MessageSquareQuote className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" side="top" className="amo-skin w-[400px] p-2">
+                    <QuickReplies
+                      pinned={templates.list.map((x) => ({ id: x.id, text: x.body }))}
+                      recent={recentReplies(
+                        recentSent ?? [],
+                        templates.list.map((x) => x.body),
+                      )}
+                      onPick={(v) => insert(v)}
+                      onPin={(v) =>
+                        void templates
+                          .add(v, "")
+                          .then(() => toast.success(t("amo.templateSaved")))
+                          .catch((e) => toast.error(describeError(e, t("amo.templateSaveFailed"))))
+                      }
+                      onUnpin={(id) => templates.remove(id)}
+                    />
+                  </PopoverContent>
+                </Popover>
               )}
               <Shortcuts mode={effectiveMode} />
               {effectiveMode !== "task" && <EmojiPicker onPick={insert} />}

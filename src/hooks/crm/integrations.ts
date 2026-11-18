@@ -2140,3 +2140,25 @@ export function useToggleInboxFavorite() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["inbox_marks"] }),
   });
 }
+
+/** The person's own recently sent chat answers (Tayyor javoblar → So'nggi yuborilganlar). */
+export function useMyRecentChatReplies(enabled = true) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["my_recent_chat_replies", user?.id],
+    enabled: enabled && !!user?.id,
+    staleTime: 30_000,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from("lead_telegram_messages")
+        .select("text")
+        .eq("sent_by", user!.id)
+        .eq("direction", "out")
+        .neq("text", "")
+        .order("created_at", { ascending: false })
+        .limit(80);
+      if (error) return [];
+      return (data ?? []).map((r) => r.text);
+    },
+  });
+}
