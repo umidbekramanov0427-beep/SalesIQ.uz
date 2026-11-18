@@ -215,6 +215,8 @@ function LeadsBoard() {
               </span>
             </p>
           </div>
+          {/* Equal room on both sides: the search sits in the middle of the bar. */}
+          <span className="flex-1 phone:hidden" />
           <div className="flex h-10 w-[340px] min-w-0 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 phone:order-last phone:w-full">
             <Search className="h-4 w-4 shrink-0 text-subtle" />
             <input
