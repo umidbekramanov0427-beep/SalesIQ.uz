@@ -13,6 +13,7 @@ import {
   ExternalLink,
   FileText,
   Headphones,
+  History as HistoryIcon,
   Link2,
   ListChecks,
   Loader2,
@@ -34,6 +35,7 @@ import {
 import { toast } from "sonner";
 import {
   CompanyMark,
+  StageChip,
   errText,
   LEADS_KEY,
   LostDialog,
@@ -48,6 +50,9 @@ import {
   type CompanyFacts,
 } from "@/components/owner/leads/CompanyFacts";
 import { apiFetch } from "@/lib/api";
+import { FixedPage } from "@/components/layout/FixedPage";
+import { BackIconButton } from "@/components/layout/BackButton";
+import { ConsoleTabs } from "@/components/owner/OwnerPage";
 import { useAuth } from "@/lib/auth";
 import { stageOf } from "@/lib/applications";
 import { callDay, PIPELINE_STAGES, STAGE_TONE, tashkentTime } from "@/lib/company-leads";
@@ -134,6 +139,7 @@ function LeadPage() {
   const qc = useQueryClient();
   const act = useLeadAction();
   const [lostOpen, setLostOpen] = useState(false);
+  const [pane, setPane] = useState<"history" | "tasks" | "call" | "issues">("history");
   const { data, isLoading } = useQuery({
     queryKey: ["owner-application", appId],
     queryFn: async (): Promise<Detail> => {
@@ -157,126 +163,154 @@ function LeadPage() {
   const app = data.app;
   const stage = stageOf(app.status);
   const title = app.company || app.name;
+  const idx = PIPELINE_STAGES.indexOf(stage as (typeof PIPELINE_STAGES)[number]);
+  const openTasks = data.tasks.filter((x) => !x.done_at).length;
+  const openIssues = data.notes.filter((n) => n.kind === "issue" && !n.resolved_at).length;
+  const setStage = (s: string) =>
+    s !== stage &&
+    act.mutate({ method: "PATCH", body: { id: app.id, status: s } }, { onSuccess: refresh });
+  const source =
+    t(`lead.src.${app.source}`) === `lead.src.${app.source}`
+      ? app.source
+      : t(`lead.src.${app.source}`);
 
   return (
-    <div className="w-full">
-      <Link
-        to="/platform/applications"
-        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> {t("lead.title")}
-      </Link>
-
-      {/* Hero: who, stage relay, health */}
-      <section className="mb-4 overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="flex flex-wrap items-center gap-4 px-5 pb-4 pt-5">
-          <CompanyMark name={title} size="lg" />
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[22px] font-bold tracking-tight text-foreground">
-              {title}
-            </h1>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
-              {app.company && <span>{app.name}</span>}
-              <CopyValue icon={Phone} value={app.phone} href={`tel:${app.phone}`} />
-              {app.email && (
-                <CopyValue icon={Mail} value={app.email} href={`mailto:${app.email}`} />
-              )}
-              <span className="text-subtle">
-                {t(`lead.src.${app.source}`) === `lead.src.${app.source}`
-                  ? app.source
-                  : t(`lead.src.${app.source}`)}{" "}
-                · {dt(app.created_at)}
-              </span>
-            </p>
+    // Two panes, like the CRM lead card: who the company is on the left,
+    // its history and work on the right.
+    <FixedPage className="flex-row phone:flex-col phone:overflow-y-auto">
+      <aside className="flex w-[400px] shrink-0 flex-col overflow-y-auto border-r border-border bg-card phone:w-full phone:overflow-visible phone:border-r-0">
+        <div className="border-b border-border px-5 pb-4 pt-4">
+          <div className="flex items-center gap-2">
+            <BackIconButton />
+            <span className="flex-1" />
+            {data.facts && <HealthBadge health={data.facts.health} />}
           </div>
-          {data.facts && <HealthBadge health={data.facts.health} />}
-          {stage !== "lost" ? (
-            <button
-              type="button"
-              onClick={() => setLostOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-rose-500/30 px-3 text-[12.5px] font-semibold text-rose-600 hover:bg-rose-500/10"
-            >
-              <XCircle className="h-4 w-4" /> {t("lead.markLost")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() =>
-                act.mutate(
-                  { method: "PATCH", body: { id: app.id, status: "taken" } },
-                  { onSuccess: refresh },
-                )
-              }
-              className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-semibold"
-            >
-              <RotateCcw className="h-4 w-4" /> {t("lead.reopen")}
-            </button>
-          )}
-        </div>
-        <div className="flex border-t border-border">
-          {PIPELINE_STAGES.map((s, i) => {
-            const idx = PIPELINE_STAGES.indexOf(stage as (typeof PIPELINE_STAGES)[number]);
-            const done = stage !== "lost" && i <= idx;
-            const current = s === stage;
-            return (
-              <button
-                key={s}
-                type="button"
-                disabled={act.isPending}
-                onClick={() =>
-                  s !== stage &&
-                  act.mutate(
-                    { method: "PATCH", body: { id: app.id, status: s } },
-                    { onSuccess: refresh },
-                  )
-                }
-                className={cn(
-                  "group relative flex min-w-0 flex-1 items-center justify-center gap-1.5 px-2 py-3 text-[12.5px] font-semibold transition-colors",
-                  i > 0 && "border-l border-border",
-                  current
-                    ? "text-white"
-                    : done
-                      ? "text-foreground hover:bg-muted/50"
-                      : "text-subtle hover:bg-muted/50 hover:text-foreground",
-                )}
-              >
-                {current && (
-                  <span
-                    className={cn("absolute inset-0 bg-gradient-to-r", STAGE_TONE[s].bar)}
-                    aria-hidden
-                  />
-                )}
-                {done && !current && (
-                  <span
-                    className={cn("absolute inset-x-0 bottom-0 h-0.5", STAGE_TONE[s].dot)}
-                    aria-hidden
-                  />
-                )}
-                <span className="relative flex items-center gap-1.5 truncate">
-                  {done && !current && <Check className="h-3.5 w-3.5" />}
-                  {t(`lead.st.${s}`)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {stage === "lost" && app.lost_reason && (
-          <p className="border-t border-border bg-rose-500/[0.06] px-5 py-2.5 text-[13px] text-rose-700 dark:text-rose-300">
-            {t("lead.lostBecause")}: {app.lost_reason}
-          </p>
-        )}
-      </section>
+          <div className="mt-4 flex items-center gap-3.5">
+            <CompanyMark name={title} size="lg" />
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-[20px] font-bold leading-tight tracking-tight text-foreground">
+                {title}
+              </h1>
+              <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+                {source} · {dt(app.created_at)}
+              </p>
+            </div>
+          </div>
 
-      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_300px] lg:grid-cols-[280px_minmax(0,1fr)]">
-        <Passport data={data} refresh={refresh} />
-        <Timeline data={data} refresh={refresh} />
-        <div className="space-y-4 lg:col-span-2 xl:col-span-1">
-          <CallCard app={app} refresh={refresh} />
-          <TasksCard data={data} refresh={refresh} />
-          <IssuesCard notes={data.notes} refresh={refresh} />
+          {/* The stages as one bar: click a segment to move the lead there. */}
+          <div className="mt-5">
+            <div className="flex items-center justify-between gap-2">
+              <StageChip stage={stage} />
+              {stage !== "lost" ? (
+                <button
+                  type="button"
+                  onClick={() => setLostOpen(true)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-semibold text-rose-600 transition-colors hover:bg-rose-500/10"
+                >
+                  <XCircle className="h-4 w-4" /> {t("lead.markLost")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setStage("taken")}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-semibold text-primary transition-colors hover:bg-primary/10"
+                >
+                  <RotateCcw className="h-4 w-4" /> {t("lead.reopen")}
+                </button>
+              )}
+            </div>
+            <div className="mt-2.5 flex gap-1">
+              {PIPELINE_STAGES.map((s, i) => (
+                <button
+                  key={s}
+                  type="button"
+                  title={t(`lead.st.${s}`)}
+                  aria-label={t(`lead.st.${s}`)}
+                  disabled={act.isPending}
+                  onClick={() => setStage(s)}
+                  className="group flex-1 py-1.5"
+                >
+                  <span
+                    className={cn(
+                      "block h-1.5 rounded-full transition-all group-hover:h-2",
+                      stage !== "lost" && i <= idx
+                        ? cn("bg-gradient-to-r", STAGE_TONE[s].bar)
+                        : "bg-muted group-hover:bg-muted-foreground/30",
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+            {stage === "lost" && app.lost_reason && (
+              <p className="mt-2 rounded-lg bg-rose-500/[0.08] px-3 py-2 text-[12.5px] text-rose-700 dark:text-rose-300">
+                {t("lead.lostBecause")}: {app.lost_reason}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <SideSection title={t("lead.contact")}>
+          <SideRow label={t("lead.person")}>{app.name}</SideRow>
+          <SideRow label={t("lead.phone")}>
+            <CopyValue icon={Phone} value={app.phone} href={`tel:${app.phone}`} />
+          </SideRow>
+          {app.email && (
+            <SideRow label="Email">
+              <CopyValue icon={Mail} value={app.email} href={`mailto:${app.email}`} />
+            </SideRow>
+          )}
+        </SideSection>
+
+        <SideSection title={t("lead.answers")}>
+          <SideRow label={t("lead.col.plan")}>
+            {app.plan ? PLAN_LABELS[normalizePlan(app.plan)] : "—"}
+          </SideRow>
+          <SideRow label={t("wiz.q1")}>{app.business || "—"}</SideRow>
+          <SideRow label={t("wiz.q2")}>{app.sales_reps || app.team_size || "—"}</SideRow>
+          <SideRow label={t("wiz.q3")}>
+            {app.current_tool ? t(`wiz.tool.${app.current_tool}`) : "—"}
+          </SideRow>
+          {app.message && (
+            <p className="mt-2 whitespace-pre-line rounded-lg bg-muted/50 px-3 py-2 text-[12.5px] text-foreground">
+              {app.message}
+            </p>
+          )}
+        </SideSection>
+
+        <div className="space-y-3 px-5 py-4">
+          <Passport data={data} refresh={refresh} companyOnly />
           <QuickActions data={data} />
         </div>
-      </div>
+      </aside>
+
+      <section className="flex min-w-0 flex-1 flex-col">
+        <div className="flex shrink-0 items-center border-b border-border bg-card px-5 py-2.5">
+          <ConsoleTabs
+            size="md"
+            value={pane}
+            onChange={setPane}
+            options={[
+              { value: "history", label: t("lead.pane.history"), icon: HistoryIcon },
+              { value: "tasks", label: t("lead.pane.tasks"), icon: ListChecks, count: openTasks },
+              { value: "call", label: t("lead.call"), icon: CalendarClock },
+              {
+                value: "issues",
+                label: t("lead.tl.issues"),
+                icon: AlertTriangle,
+                count: openIssues,
+              },
+            ]}
+          />
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 phone:p-3">
+          <div className="mx-auto max-w-3xl">
+            {pane === "history" && <Timeline data={data} refresh={refresh} />}
+            {pane === "tasks" && <TasksCard data={data} refresh={refresh} />}
+            {pane === "call" && <CallCard app={app} refresh={refresh} />}
+            {pane === "issues" && <IssuesCard notes={data.notes} refresh={refresh} />}
+          </div>
+        </div>
+      </section>
 
       <LostDialog
         open={lostOpen}
@@ -294,6 +328,25 @@ function LeadPage() {
           )
         }
       />
+    </FixedPage>
+  );
+}
+
+/** A flat section of the lead's left pane: a small caption over label / value rows. */
+function SideSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="border-b border-border px-5 py-4">
+      <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-subtle">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function SideRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 py-1.5 text-[13px]">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate text-right font-medium text-foreground">{children}</span>
     </div>
   );
 }
@@ -321,33 +374,46 @@ function CopyValue({ icon: Icon, value, href }: { icon: LucideIcon; value: strin
   );
 }
 
-function Passport({ data, refresh }: { data: Detail; refresh: () => void }) {
+function Passport({
+  data,
+  refresh,
+  companyOnly = false,
+}: {
+  data: Detail;
+  refresh: () => void;
+  /** Only the company part (the lead page's left pane shows the answers itself). */
+  companyOnly?: boolean;
+}) {
   const { t } = useI18n();
   const act = useLeadAction();
   const app = data.app;
   const f = data.facts;
   return (
     <div className="space-y-4">
-      <Card title={t("lead.answers")} icon={MessageSquareText}>
-        <Row label={t("lead.col.plan")}>
-          {app.plan ? PLAN_LABELS[normalizePlan(app.plan)] : "—"}
-        </Row>
-        <Row label={t("wiz.q1")}>{app.business || "—"}</Row>
-        <Row label={t("wiz.q2")}>{app.sales_reps || app.team_size || "—"}</Row>
-        <Row label={t("wiz.q3")}>{app.current_tool ? t(`wiz.tool.${app.current_tool}`) : "—"}</Row>
-        {app.message && (
-          <p className="mt-2 whitespace-pre-line rounded-lg bg-muted/50 px-3 py-2 text-[12.5px] text-foreground">
-            {app.message}
-          </p>
-        )}
-        {Object.keys(app.utm ?? {}).length > 0 && (
-          <p className="mt-2 break-all font-mono text-[10.5px] text-subtle">
-            {Object.entries(app.utm ?? {})
-              .map(([k, v]) => `${k}=${v}`)
-              .join("  ")}
-          </p>
-        )}
-      </Card>
+      {!companyOnly && (
+        <Card title={t("lead.answers")} icon={MessageSquareText}>
+          <Row label={t("lead.col.plan")}>
+            {app.plan ? PLAN_LABELS[normalizePlan(app.plan)] : "—"}
+          </Row>
+          <Row label={t("wiz.q1")}>{app.business || "—"}</Row>
+          <Row label={t("wiz.q2")}>{app.sales_reps || app.team_size || "—"}</Row>
+          <Row label={t("wiz.q3")}>
+            {app.current_tool ? t(`wiz.tool.${app.current_tool}`) : "—"}
+          </Row>
+          {app.message && (
+            <p className="mt-2 whitespace-pre-line rounded-lg bg-muted/50 px-3 py-2 text-[12.5px] text-foreground">
+              {app.message}
+            </p>
+          )}
+          {Object.keys(app.utm ?? {}).length > 0 && (
+            <p className="mt-2 break-all font-mono text-[10.5px] text-subtle">
+              {Object.entries(app.utm ?? {})
+                .map(([k, v]) => `${k}=${v}`)
+                .join("  ")}
+            </p>
+          )}
+        </Card>
+      )}
 
       {f ? (
         <CompanyFactsCard facts={f} />
@@ -458,9 +524,7 @@ function Timeline({ data, refresh }: { data: Detail; refresh: () => void }) {
             onClick={() => setFilter(f)}
             className={cn(
               "h-7 rounded-lg px-2.5 text-[12px] font-semibold",
-              filter === f
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:bg-muted",
+              filter === f ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted",
             )}
           >
             {t(`lead.tl.${f}`)}

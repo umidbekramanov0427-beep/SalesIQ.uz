@@ -2,7 +2,11 @@ import { useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
+  BarChart3,
   CalendarClock,
+  Rocket,
+  Sparkles,
+  Target,
   Inbox,
   ListChecks,
   Plus,
@@ -18,6 +22,7 @@ import { InfoTip } from "@/components/layout/InfoTip";
 import { BackIconButton } from "@/components/layout/BackButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FixedPage } from "@/components/layout/FixedPage";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AddLeadDialog,
   ago,
@@ -41,6 +46,7 @@ import {
 import { PLANS, PLAN_LABELS, normalizePlan } from "@/lib/plan-gating";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { TONE_TILE } from "@/lib/tones";
 
 // Owner -> Arizalar: the platform's own CRM of companies. Every company that
 // signs up (with its plan, three answers and the booked call), leaves the
@@ -120,6 +126,7 @@ function LeadsBoard() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<LeadFilter>(EMPTY);
   const [adding, setAdding] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [lostFor, setLostFor] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -137,6 +144,28 @@ function LeadsBoard() {
     );
   }, [all, q, filter, today]);
   const by = (s: string) => items.filter((a) => a.status === s);
+  const stats = useMemo(() => {
+    const month = today.slice(0, 7);
+    const won = all.filter((a) => a.status === "installed").length;
+    const lost = all.filter((a) => a.status === "lost").length;
+    return {
+      newToday: all.filter((a) => tashkentDay(a.created_at) === today).length,
+      callsToday: all.filter(
+        (a) => a.meeting_at && a.status !== "lost" && tashkentDay(a.meeting_at) === today,
+      ).length,
+      overdue: all.reduce((n, a) => n + a.overdue, 0),
+      tasks: all.reduce((n, a) => n + a.tasks, 0),
+      week: all.filter((a) => Date.now() - new Date(a.created_at).getTime() < 7 * 86_400_000)
+        .length,
+      issues: all.reduce((n, a) => n + a.issues, 0),
+      installedMonth: all.filter(
+        (a) =>
+          a.status === "installed" &&
+          tashkentDay(a.stage_changed_at ?? a.updated_at).slice(0, 7) === month,
+      ).length,
+      conv: won + lost ? Math.round((won / (won + lost)) * 100) : null,
+    };
+  }, [all, today]);
 
   function move(id: string, to: ApplicationStatus) {
     const lead = all.find((a) => a.id === id);
@@ -186,7 +215,7 @@ function LeadsBoard() {
               </span>
             </p>
           </div>
-          <div className="flex h-10 w-[380px] min-w-0 items-center gap-2 rounded-2xl border border-border bg-card pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 phone:order-last phone:w-full">
+          <div className="flex h-10 w-[340px] min-w-0 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 phone:order-last phone:w-full">
             <Search className="h-4 w-4 shrink-0 text-subtle" />
             <input
               value={q}
@@ -207,10 +236,20 @@ function LeadsBoard() {
             <span className="h-5 w-px shrink-0 bg-border" />
             <LeadsFilter value={filter} onChange={setFilter} />
           </div>
+          <span className="flex-1" />
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => setAnalyticsOpen(true)}
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3.5 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-accent"
+          >
+            <BarChart3 className="h-4 w-4 text-primary" />
+            {t("lead.analytics")}
+          </button>
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="ml-auto inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110"
+            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110"
           >
             <Plus className="h-4 w-4" />
             {t("lead.add")}
@@ -323,6 +362,72 @@ function LeadsBoard() {
         )}
       </div>
 
+      {/* Analytics: the board's figures in a window; a card filters the board to it. */}
+      <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
+        <DialogContent className="max-w-[1100px] gap-5" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" /> {t("lead.analytics")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {(
+              [
+                ["newToday", Sparkles, "sky", stats.newToday, { ...EMPTY, period: "today" }],
+                [
+                  "callsToday",
+                  CalendarClock,
+                  "amber",
+                  stats.callsToday,
+                  { ...EMPTY, call: "today" },
+                ],
+                ["overdue", ListChecks, "rose", stats.overdue, { ...EMPTY, work: "overdue" }],
+                ["tasks", ListChecks, "violet", stats.tasks, { ...EMPTY, work: "tasks" }],
+                ["issues", AlertTriangle, "amber", stats.issues, { ...EMPTY, work: "issues" }],
+                [
+                  "installed",
+                  Rocket,
+                  "emerald",
+                  stats.installedMonth,
+                  { ...EMPTY, stages: ["installed"] },
+                ],
+                ["week", Sparkles, "primary", stats.week, { ...EMPTY, period: "7" }],
+                ["conv", Target, "violet", stats.conv == null ? "—" : `${stats.conv}%`, null],
+              ] as const
+            ).map(([key, Icon, tone, value, f]) => (
+              <button
+                key={key}
+                type="button"
+                disabled={!f}
+                onClick={() => {
+                  if (!f) return;
+                  setFilter(f as LeadFilter);
+                  setAnalyticsOpen(false);
+                }}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 disabled:cursor-default disabled:hover:border-border"
+              >
+                <span
+                  className={cn(
+                    "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+                    TONE_TILE[tone],
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[24px] font-bold leading-none tabular-nums text-foreground">
+                    {value}
+                  </span>
+                  <span className="mt-1 block truncate text-[12.5px] text-muted-foreground">
+                    {t(`lead.kpi.${key}`)}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <StageRelay all={all} />
+        </DialogContent>
+      </Dialog>
       <AddLeadDialog open={adding} onClose={() => setAdding(false)} onCreated={open} />
       <LostDialog
         open={!!lostFor}
@@ -585,5 +690,47 @@ function LeadsFilter({
         )}
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** How many leads reached each stage and how many passed on to the next. */
+function StageRelay({ all }: { all: LeadItem[] }) {
+  const { t } = useI18n();
+  const order = PIPELINE_STAGES;
+  const reached = order.map(
+    (_, i) => all.filter((a) => order.indexOf(a.status as (typeof order)[number]) >= i).length,
+  );
+  const max = Math.max(1, reached[0] ?? 1);
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-subtle">
+        {t("lead.kpi.relay")}
+      </p>
+      <div className="grid gap-2.5">
+        {order.map((s, i) => {
+          const pass =
+            i > 0 && reached[i - 1] ? Math.round((reached[i]! / reached[i - 1]!) * 100) : null;
+          return (
+            <div key={s} className="flex items-center gap-3 text-[13px]">
+              <span className="w-[170px] shrink-0 truncate text-foreground">
+                {t(`lead.st.${s}`)}
+              </span>
+              <span className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                <span
+                  className={cn("block h-full rounded-full bg-gradient-to-r", STAGE_TONE[s].bar)}
+                  style={{ width: `${((reached[i] ?? 0) / max) * 100}%` }}
+                />
+              </span>
+              <span className="w-10 shrink-0 text-right font-semibold tabular-nums text-foreground">
+                {reached[i]}
+              </span>
+              <span className="w-12 shrink-0 text-right text-[12px] tabular-nums text-muted-foreground">
+                {pass == null ? "" : `${pass}%`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
