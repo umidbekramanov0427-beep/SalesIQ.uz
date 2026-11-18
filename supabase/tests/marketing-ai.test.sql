@@ -27,6 +27,18 @@ do $$ begin
   end;
 end $$;
 
+insert into leads (id, organization_id, name) values
+  ('50000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000d1', 'Ali');
+update leads set webinar_watched = true, webinar_watched_source = 'bot', qual_status = 'qualified'
+  where id = '50000000-0000-0000-0000-0000000000d1';
+do $$ begin
+  begin
+    update leads set not_qual_reason = 'bad' where id = '50000000-0000-0000-0000-0000000000d1';
+    assert false, 'unknown not-qualified reasons are refused';
+  exception when check_violation then null;
+  end;
+end $$;
+
 grant usage on schema auth to authenticated;
 grant select on profiles to authenticated;
 set local role authenticated;

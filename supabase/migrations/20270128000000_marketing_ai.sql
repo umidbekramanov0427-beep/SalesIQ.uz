@@ -16,6 +16,11 @@
 --    and cost, cached analyses, the recommendations being tracked, and the
 --    marketing chat. The AI tables are server-only: the browser goes through
 --    /marketing-ai/* routes.
+-- 4. A lead's qualification as the owner defined it: a qualified lead
+--    answered the phone AND watched the webinar (marked by the manager, by
+--    the client's "Men efirdaman" bot button, or by the AI from the call);
+--    a lead that is not qualified carries why (wrong number, no number, did
+--    not answer, did not watch, other).
 
 -- 1
 alter table public.marketing_webinar_samples
@@ -166,6 +171,28 @@ create table if not exists public.marketing_ai_chat_messages (
 );
 create index if not exists marketing_ai_chat_messages_chat_idx
   on public.marketing_ai_chat_messages (chat_id, created_at);
+
+-- 4
+alter table public.leads
+  add column if not exists webinar_watched boolean,
+  add column if not exists webinar_watched_source text,
+  add column if not exists webinar_watched_at timestamptz,
+  add column if not exists webinar_id uuid references public.marketing_webinars(id) on delete set null,
+  add column if not exists qual_status text,
+  add column if not exists not_qual_reason text;
+
+alter table public.leads drop constraint if exists leads_webinar_watched_source_check;
+alter table public.leads add constraint leads_webinar_watched_source_check
+  check (webinar_watched_source is null or webinar_watched_source in ('manager', 'bot', 'ai'));
+alter table public.leads drop constraint if exists leads_qual_status_check;
+alter table public.leads add constraint leads_qual_status_check
+  check (qual_status is null or qual_status in ('qualified', 'not_qualified'));
+alter table public.leads drop constraint if exists leads_not_qual_reason_check;
+alter table public.leads add constraint leads_not_qual_reason_check
+  check (not_qual_reason is null or not_qual_reason in
+    ('wrong_number', 'no_number', 'no_answer', 'no_webinar', 'other'));
+
+create index if not exists leads_webinar_idx on public.leads (webinar_id) where webinar_id is not null;
 
 do $$
 declare
