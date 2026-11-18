@@ -2114,6 +2114,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     notes: [
       {
+        uz: "Yordamchi bo'limlarga bosiladigan tugma-havola beradi: ustiga bosing — kerakli sahifa ochiladi. Hal qila olmasa, admin uchun «Operatorga yozish» (SalesIQ jamoasi bilan jonli chat), boshqalar uchun SalesIQ supportning Telegram havolasini ko'rsatadi.",
+        ru: "Помощник даёт ссылки-кнопки на разделы: нажмите — откроется нужная страница. Если не может помочь, админу показывает «Написать оператору» (живой чат с командой SalesIQ), остальным — Telegram поддержки SalesIQ.",
+        en: "The assistant gives button links to sections: click one to open the page. When it can't help, the admin gets “Write to an operator” (live chat with the SalesIQ team) and everyone else SalesIQ support's Telegram.",
+      },
+      {
+        uz: "«Operator» tabi faqat kompaniya adminiga ko'rinadi; menejer va ROP'larga faqat AI yordamchi.",
+        ru: "Вкладка «Оператор» видна только админу компании; менеджерам и РОП — только AI-помощник.",
+        en: "The Operator tab is only for the company admin; reps and heads of sales get the AI assistant only.",
+      },
+      {
         uz: "Yordamchi siz turgan sahifani biladi va shu sahifaning yo'riqnomasidan javob beradi.",
         ru: "Помощник знает, на какой вы странице, и отвечает по её инструкции.",
         en: "The assistant knows which page you're on and answers from that page's guide.",

@@ -5,6 +5,7 @@ import { loadOrgAccess } from "@/lib/org-access.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runChatRounds, type ChatEvent, type GeminiContent } from "@/lib/ai-chat-rounds.server";
+import { guideRules, pageIndex } from "@/lib/ai/platform-guide";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -959,6 +960,26 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           .eq("id", userId)
           .maybeSingle();
         const orgId = caller?.organization_id ?? null;
+        // Reps and heads use the assistant only when the company allows it
+        // (Admin -> Ruxsatlar: "Use AI assistant"); admins always may.
+        if (orgId && caller && caller.role !== "super_admin" && caller.role !== "platform_owner") {
+          const { data: perm } = await supabaseAdmin
+            .from("role_permissions")
+            .select("allowed")
+            .eq("organization_id", orgId)
+            .eq("role", caller.role)
+            .eq("action", "Use AI assistant")
+            .maybeSingle();
+          if (!perm?.allowed) {
+            return Response.json(
+              {
+                error:
+                  "AI yordamchidan foydalanish uchun ruxsat yo'q. Kompaniya adminiga murojaat qiling.",
+              },
+              { status: 403 },
+            );
+          }
+        }
 
         // Everything the prompt needs, fetched side by side instead of one
         // after another. Admin > AI agentlar > "Chat" (active + prompt) is
@@ -1031,7 +1052,7 @@ Other pages:
 
         let systemPrompt =
           introPrompt +
-          "\n\nWhen the user asks HOW to do something or WHERE a feature lives in the app (a navigation question), name the exact page and, when useful, give the numbered steps to get there — for example: '1. Open Sozlamalar (Settings) in the sidebar. 2. Click Biznes profili. 3. Fill in the form and press Saqlash.' Always include the page's path in parentheses so it's unambiguous, e.g. (/settings). Only reference pages from this list — never invent a path that isn't here:\n" +
+          "\n\nWhen the user asks HOW to do something or WHERE a feature lives in the app (a navigation question), name the exact page and, when useful, give the numbered steps to get there — for example: '1. Open Sozlamalar (Settings) in the sidebar. 2. Click Biznes profili. 3. Fill in the form and press Saqlash.' Always give the page as a markdown link so it becomes a button, e.g. [Sozlamalar](/settings). Only reference pages from this list — never invent a path that isn't here:\n" +
           NAV_GUIDE +
           "\n\nStep-by-step guides exist for every section (link them as [title](/help/<slug>) when the user wants the full guide):\n" +
           guideIndex +
@@ -1041,6 +1062,24 @@ Other pages:
             : "") +
           "\n\nBut when the user asks WHAT a number, rate, or fact actually IS (e.g. a funnel's conversion rate, who a lead's owner is, how many leads are in some stage, a contact's phone number, what tasks are open), you must answer with the real value itself, using your tools -- NEVER guess, invent, or answer from general knowledge, and never reply with only navigation instructions ('go check the Funnels page') when a tool can get you the actual answer. Guessing at platform data is a wrong answer, not a helpful one -- if no tool covers the question, say plainly that you don't have that data instead of making something up.\n\n" +
           "You also have tools to actually look things up and act, not just describe: search_leads, get_lead_detail, search_contacts, search_companies, list_tasks, get_team_performance, get_funnel_stats, create_my_task, add_lead_note, update_lead_stage. Use the search/get/list tools whenever the answer depends on real data you don't already have in this conversation: search_leads to find a deal by name/company (then get_lead_detail for its full info -- contact, notes, open tasks, past AI call analyses), search_contacts for a person by name/phone/email, search_companies for a client organization, list_tasks for what's actually open/overdue/done, get_team_performance for who's selling how much over a period, get_funnel_stats for funnel/stage numbers. Use create_my_task/add_lead_note/update_lead_stage whenever the user asks you to do something rather than just explain it (e.g. 'remind me to call Aziz tomorrow', 'add a note on the Akmal deal', 'move that lead to negotiation'). Never invent a lead_id/contact_id — call the matching search tool first if you don't already have the right id from earlier in this conversation, and if multiple results match, ask which one they mean instead of guessing. Whenever you mention a specific lead/contact/company, include the exact `path` the tool gave you for it verbatim in your reply (e.g. /crm/leads/3fa2...) so the chat can turn it into a clickable link -- never paraphrase or shorten that path. After a tool call succeeds, confirm plainly what you did.";
+        // The platform guide: every settings page it may link to, and where
+        // to send people when it can't solve something.
+        const [{ default: uzDict }, { data: contact }] = await Promise.all([
+          import("@/lib/i18n-uz"),
+          supabaseAdmin
+            .from("platform_settings")
+            .select("support_telegram, support_phone")
+            .eq("id", true)
+            .maybeSingle(),
+        ]);
+        systemPrompt +=
+          "\n\n" +
+          guideRules(caller?.role ?? null, {
+            telegram: contact?.support_telegram ?? null,
+            phone: contact?.support_phone ?? null,
+          }) +
+          "\n\nMore pages (settings and tools) you may link to:\n" +
+          pageIndex(uzDict);
         if (profile) {
           const context = [
             profile.company_name && `Company: ${profile.company_name}`,

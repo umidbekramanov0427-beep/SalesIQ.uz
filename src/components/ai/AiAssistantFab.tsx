@@ -6,7 +6,18 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Brain, Headset, Maximize2, Minimize2, Search, Send, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Brain,
+  Headset,
+  Lock,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Search,
+  Send,
+  X,
+} from "lucide-react";
 import { renderMessageContent } from "@/components/ai/MessageContent";
 import { AiOrbIcon } from "@/components/ai/AiOrbIcon";
 import { SupportChat } from "@/components/ai/SupportChat";
@@ -18,6 +29,8 @@ import {
   useSupportRealtime,
   useSupportUnread,
 } from "@/hooks/use-crm-data";
+import { useAuth } from "@/lib/auth";
+import { telegramLink } from "@/lib/ai/platform-guide";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -26,9 +39,12 @@ type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
 // The AI assistant on every page: a button (bottom right until the user
 // drags it elsewhere) that opens a small chat. It sends the page you're on, so "how do I…" is answered from
 // that page's guide. The full chat with history stays at /ai-assistant.
-// Its "Operator" tab is live support with the SalesIQ team (SupportChat);
-// people without the AI permission get only that tab. A red dot on the
-// button means the team answered; "Yordam" in the user menu opens the tab.
+// Its "Operator" tab is live support with the SalesIQ team (SupportChat)
+// and only the company admin (super admin) has it; everyone else gets the
+// AI, which guides them through the platform and, when it can't help, sends
+// them to SalesIQ support on Telegram (src/lib/ai/platform-guide.ts). A red
+// dot on the button means the team answered; "Yordam" in the user menu
+// opens the Operator tab (the AI for everyone else).
 
 /** Window event that opens the assistant on its Operator tab. */
 export const OPEN_SUPPORT_EVENT = "salesiq:open-support";
@@ -38,10 +54,27 @@ export function AiAssistantFab() {
   const { t } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const allowed = usePermission("Use AI assistant");
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin";
+  const adminRef = useRef(isAdmin);
+  adminRef.current = isAdmin;
   const chat = useAiAssistantChat();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("ai");
-  const activeTab: Tab = allowed ? tab : "operator";
+  const activeTab: Tab = isAdmin ? tab : "ai";
+  // SalesIQ's own support contact (the same one /billing shows).
+  const { data: contact } = useQuery({
+    queryKey: ["support_contact"],
+    enabled: open && !isAdmin,
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const res = await fetch("/api/pricing");
+      if (!res.ok) return null;
+      return telegramLink(
+        ((await res.json()) as { supportTelegram?: string | null }).supportTelegram,
+      );
+    },
+  });
   const support = useMySupportMessages(open && activeTab === "operator");
   const { unread, markSeen } = useSupportUnread(support.data);
   // The operator chat opened wide, and the search inside it.
@@ -97,7 +130,7 @@ export function AiAssistantFab() {
 
   useEffect(() => {
     const openSupport = () => {
-      setTab("operator");
+      setTab(adminRef.current ? "operator" : "ai");
       setOpen(true);
     };
     window.addEventListener(OPEN_SUPPORT_EVENT, openSupport);
@@ -122,8 +155,18 @@ export function AiAssistantFab() {
     const trimmed = text.trim();
     if (!trimmed || chat.isPending) return;
     const next = [...messages, { role: "user" as const, content: trimmed }];
-    setMessages(next);
     setInput("");
+    await ask(next);
+  }
+
+  /** The last question again, after an error. */
+  function retry() {
+    if (chat.isPending) return;
+    void ask(messages.filter((m) => !m.error));
+  }
+
+  async function ask(next: Msg[]) {
+    setMessages(next);
     try {
       const reply = await chat.mutateAsync({
         messages: next.filter((m) => !m.error).map(({ role, content }) => ({ role, content })),
@@ -270,7 +313,7 @@ export function AiAssistantFab() {
             </div>
           </div>
 
-          {allowed && (
+          {isAdmin && (
             <div role="tablist" className="flex gap-1 border-b border-border px-3 py-2">
               {(["ai", "operator"] as const).map((id) => (
                 <button
@@ -305,6 +348,23 @@ export function AiAssistantFab() {
 
           {activeTab === "operator" ? (
             <SupportChat page={pathname} onSeen={markSeen} search={supportSearch} />
+          ) : !allowed ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+                <Lock className="h-5 w-5" />
+              </span>
+              <p className="text-sm text-muted-foreground">{t("fab.noAccess")}</p>
+              {contact && (
+                <a
+                  href={contact}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-sky-500/12 px-3 text-[13px] font-semibold text-sky-700 dark:text-sky-300"
+                >
+                  <Send className="h-4 w-4" /> {t("fab.toSupport")}
+                </a>
+              )}
+            </div>
           ) : (
             <>
               <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -338,6 +398,37 @@ export function AiAssistantFab() {
                     {m.role === "assistant"
                       ? renderMessageContent(m.content, t("inbox.open"))
                       : m.content}
+                    {m.error && i === messages.length - 1 && (
+                      <span className="mt-2 flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={retry}
+                          className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-foreground shadow-sm hover:bg-accent"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" /> {t("fab.retry")}
+                        </button>
+                        {isAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => setTab("operator")}
+                            className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-emerald-700 shadow-sm hover:bg-accent dark:text-emerald-300"
+                          >
+                            <Headset className="h-3.5 w-3.5" /> {t("fab.toOperator")}
+                          </button>
+                        ) : (
+                          contact && (
+                            <a
+                              href={contact}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-sky-700 shadow-sm hover:bg-accent dark:text-sky-300"
+                            >
+                              <Send className="h-3.5 w-3.5" /> {t("fab.toSupport")}
+                            </a>
+                          )
+                        )}
+                      </span>
+                    )}
                   </div>
                 ))}
                 {draft && (
@@ -395,14 +486,8 @@ export function AiAssistantFab() {
         aria-expanded={open}
         className="relative grid h-12 w-12 touch-none cursor-grab select-none place-items-center rounded-full bg-primary text-primary-foreground shadow-elevated transition-transform duration-150 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
       >
-        {open ? (
-          <X className="h-6 w-6" />
-        ) : allowed ? (
-          <AiOrbIcon className="h-7 w-7" />
-        ) : (
-          <Headset className="h-6 w-6" />
-        )}
-        {unread && !(open && activeTab === "operator") && (
+        {open ? <X className="h-6 w-6" /> : <AiOrbIcon className="h-7 w-7" />}
+        {isAdmin && unread && !(open && activeTab === "operator") && (
           <span
             aria-label={t("support.newAnswer")}
             className="absolute right-0 top-0 h-3.5 w-3.5 rounded-full border-2 border-background bg-rose-500"

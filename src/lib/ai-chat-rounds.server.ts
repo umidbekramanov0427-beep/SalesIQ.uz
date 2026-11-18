@@ -15,12 +15,13 @@ export type ChatEvent =
   | { t: "done" }
   | { t: "error"; error: string };
 
-// Chat budget: a busy model fails over to the next one within seconds.
+// Chat budget: a busy model fails over to the next one within seconds; the
+// fallback model gets one more, longer wait before the chat shows "busy".
 const CHAT_GEMINI: { timeoutMs: number; retryDelaysMs: number[]; fallbackRetryDelaysMs: number[] } =
   {
     timeoutMs: 20_000,
     retryDelaysMs: [800],
-    fallbackRetryDelaysMs: [800],
+    fallbackRetryDelaysMs: [800, 2500],
   };
 
 /** Reads Gemini's server-sent events stream, one parsed JSON chunk at a time. */
