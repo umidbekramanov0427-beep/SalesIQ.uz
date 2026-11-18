@@ -1,6 +1,5 @@
 // The owner panel's menu: a few sections, each holding its related pages as
-// tabs across the top of the page (Kompaniyalar: companies, accounts,
-// integrations; Nazorat: visits, actions, errors ...). The pages keep their
+// tabs across the top of the page (Nazorat: visits, actions, errors ...). The pages keep their
 // own addresses; only the menu and the tab row are built from this.
 import { Gauge, Megaphone, type LucideIcon } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
@@ -36,7 +35,7 @@ const hub = (id: string, tabs: string[], extra?: Partial<OwnerHub>): OwnerHub =>
 /** The rail's sections, top group then bottom group; Sozlamalar sits apart at the bottom. */
 export const OWNER_HUBS: OwnerHub[][] = [
   [
-    hub("companies", ["/platform/companies", "/platform/users"]),
+    hub("companies", ["/platform/companies"]),
     hub("applications", ["/platform/applications"]),
     hub("support", ["/platform/support"]),
     hub("revenue", ["/platform/revenue", "/platform/notifications", "/platform/partners"]),

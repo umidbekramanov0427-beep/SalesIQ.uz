@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarClock,
+  Check,
   ChevronRight,
   Columns3,
   Inbox,
@@ -11,13 +12,17 @@ import {
   Plus,
   Rocket,
   Search,
+  SlidersHorizontal,
   Table2,
   Target,
   Users,
+  X,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
 import { OwnerEmpty } from "@/components/owner/OwnerPage";
+import { PageTools } from "@/components/layout/PageTools";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FixedPage } from "@/components/layout/FixedPage";
 import {
@@ -56,6 +61,10 @@ export const Route = createFileRoute("/platform/applications")({
 
 type View = "board" | "table";
 const SOURCES = ["all", "signup", "landing", "manual"] as const;
+
+// The toolbar's icon-only buttons, as on the CRM funnel (the name shows on hover).
+const ICON_BUTTON =
+  "grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:border-primary/40 hover:bg-accent";
 
 function LeadsBoard() {
   const { t, lang } = useI18n();
@@ -145,25 +154,65 @@ function LeadsBoard() {
 
   return (
     <FixedPage>
-      {/* One compact bar: the title, filters, views and actions. */}
-      <header className="shrink-0 space-y-2 border-b border-border bg-card px-4 py-2.5 phone:px-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-500/12 text-sky-700 dark:text-sky-300">
-            <Inbox className="h-[18px] w-[18px]" />
-          </span>
-          <h1 className="mr-2 text-[17px] font-bold tracking-tight text-foreground">
-            {t("lead.title")}
-          </h1>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+      {/* One row, the CRM funnel's toolbar: name and totals, search with its
+          filter, then the icon buttons and "Lid qo'shish". */}
+      <header className="shrink-0 border-b border-border bg-card px-4 py-2.5 phone:px-3">
+        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
+          <div className="flex min-w-0 shrink-0 items-center gap-3 pr-1">
+            <h1 className="flex items-center gap-1.5 text-[15px] font-extrabold uppercase tracking-wide text-foreground sm:text-base">
+              {t("lead.title")}
+              <PageTools size="sm" title={t("lead.title")} />
+            </h1>
+            <span className="h-7 w-px bg-border" />
+            <p className="flex items-baseline gap-1.5 whitespace-nowrap leading-none">
+              <span className="text-[13px] font-medium text-muted-foreground">
+                {t("pipeline.columnCount", { count: items.length })}:
+              </span>
+              <span className="text-[17px] font-extrabold tabular-nums tracking-tight text-foreground">
+                {money(items.reduce((x, a) => x + (a.amount ?? 0), 0))}
+              </span>
+            </p>
+          </div>
+          <div className="order-last flex w-full min-w-0 items-center lg:order-none lg:ml-3 lg:w-auto lg:flex-1">
+            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-card pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 sm:min-w-[260px]">
+              <Search className="h-4 w-4 shrink-0 text-subtle" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t("lead.search")}
+                className="h-full min-w-0 flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-subtle"
+              />
+              {q && (
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  aria-label={t("leadFilter.clearSearch")}
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-subtle hover:bg-accent hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <span className="h-5 w-px shrink-0 bg-border" />
+              <LeadsFilter
+                source={source}
+                onSource={setSource}
+                onlyCalls={onlyCalls}
+                onOnlyCalls={setOnlyCalls}
+              />
+            </div>
+          </div>
+          <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-1">
             <button
               type="button"
               aria-haspopup="dialog"
               onClick={() => setAnalytics(true)}
-              className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-semibold"
+              aria-label={t("lead.analytics")}
+              title={t("lead.analytics")}
+              className={ICON_BUTTON}
             >
-              <BarChart3 className="h-4 w-4" /> {t("lead.analytics")}
+              <BarChart3 className="h-[18px] w-[18px] text-primary" />
             </button>
-            <div className="ctl-track inline-flex rounded-xl p-1">
+            <div className="inline-flex h-10 shrink-0 items-center gap-0.5 rounded-2xl border border-border bg-card p-1">
               {(
                 [
                   ["board", Columns3],
@@ -173,59 +222,30 @@ function LeadsBoard() {
                 <button
                   key={v}
                   type="button"
-                  aria-selected={view === v}
+                  aria-label={t(`lead.view.${v}`)}
+                  title={t(`lead.view.${v}`)}
+                  aria-pressed={view === v}
                   onClick={() => setViewSaved(v)}
-                  className="ctl-tab inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-semibold"
+                  className={cn(
+                    "grid h-8 w-8 place-items-center rounded-xl transition-colors",
+                    view === v
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
                 >
-                  <Icon className="h-4 w-4" /> {t(`lead.view.${v}`)}
+                  <Icon className="h-4 w-4" />
                 </button>
               ))}
             </div>
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="ctl-lit inline-flex h-9 items-center gap-1.5 rounded-xl px-3.5 text-[13px] font-semibold"
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-3 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 sm:px-4"
             >
-              <Plus className="h-4 w-4" /> {t("lead.add")}
+              <Plus className="h-4 w-4" />
+              <span className="hidden xl:inline">{t("lead.add")}</span>
             </button>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-9 w-[280px] items-center gap-2 rounded-xl border border-border bg-surface px-3 focus-within:border-primary phone:w-full">
-            <Search className="h-4 w-4 text-subtle" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t("lead.search")}
-              className="h-full min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
-            />
-          </label>
-          <div className="ctl-track inline-flex rounded-xl p-1">
-            {SOURCES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                aria-selected={source === s}
-                onClick={() => setSource(s)}
-                className="ctl-tab h-7 rounded-lg px-2.5 text-[12px] font-semibold"
-              >
-                {t(`lead.src.${s}`)}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            aria-pressed={onlyCalls}
-            onClick={() => setOnlyCalls(!onlyCalls)}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[12px] font-semibold",
-              onlyCalls
-                ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                : "border-border bg-card text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <CalendarClock className="h-4 w-4" /> {t("lead.onlyCalls")}
-          </button>
         </div>
       </header>
 
@@ -685,5 +705,79 @@ function LeadsTable({ items, onOpen }: { items: LeadItem[]; onOpen: (id: string)
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** The search box's filter: where the lead came from, only booked calls. */
+function LeadsFilter({
+  source,
+  onSource,
+  onlyCalls,
+  onOnlyCalls,
+}: {
+  source: (typeof SOURCES)[number];
+  onSource: (s: (typeof SOURCES)[number]) => void;
+  onlyCalls: boolean;
+  onOnlyCalls: (v: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const count = (source !== "all" ? 1 : 0) + (onlyCalls ? 1 : 0);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={t("funnelFilter.button")}
+          className={cn(
+            "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-semibold transition-colors data-[state=open]:bg-primary/12 data-[state=open]:text-primary",
+            count > 0
+              ? "bg-primary/12 text-primary"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          <span className="sr-only">{t("funnelFilter.button")}</span>
+          {count > 0 && (
+            <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10.5px] font-bold text-primary-foreground">
+              {count}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-2">
+        <p className="px-2 pb-1.5 pt-1 text-[11px] font-bold uppercase tracking-wider text-subtle">
+          {t("lead.col.source")}
+        </p>
+        {SOURCES.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => onSource(s)}
+            className={cn(
+              "flex h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[13px] font-medium transition-colors",
+              source === s ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent",
+            )}
+          >
+            <span className="flex-1">{t(`lead.src.${s}`)}</span>
+            {source === s && <Check className="h-4 w-4" />}
+          </button>
+        ))}
+        <div className="my-1.5 h-px bg-border" />
+        <button
+          type="button"
+          onClick={() => onOnlyCalls(!onlyCalls)}
+          className={cn(
+            "flex h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[13px] font-medium transition-colors",
+            onlyCalls
+              ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+              : "text-foreground hover:bg-accent",
+          )}
+        >
+          <CalendarClock className="h-4 w-4" />
+          <span className="flex-1">{t("lead.onlyCalls")}</span>
+          {onlyCalls && <Check className="h-4 w-4" />}
+        </button>
+      </PopoverContent>
+    </Popover>
   );
 }

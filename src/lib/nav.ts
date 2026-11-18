@@ -13,8 +13,6 @@ import {
   Settings,
   ShieldCheck,
   Clock,
-  Users,
-  Plug,
   Bot,
   MonitorSmartphone,
   GraduationCap,
@@ -242,14 +240,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Bot,
     platformOwnerOnly: true,
     ownerGroup: "comms",
-  },
-  {
-    label: "Akkauntlar",
-    to: "/platform/users",
-    tone: "slate",
-    icon: Users,
-    platformOwnerOnly: true,
-    ownerGroup: "system",
   },
 
   {

@@ -13,7 +13,9 @@ import {
   Check,
   CheckCheck,
   ChevronRight,
-  Filter,
+  ChevronDown,
+  MessagesSquare,
+  SlidersHorizontal,
   Headset,
   Inbox,
   Loader2,
@@ -35,6 +37,8 @@ import { CompanyMark, HEALTH_DOT, PHASE_CHIP, StageChip } from "@/components/own
 import { renderMessageContent } from "@/components/ai/MessageContent";
 import { useOwnerInbox } from "@/hooks/use-crm-data";
 import { FixedPage } from "@/components/layout/FixedPage";
+import { PageTools } from "@/components/layout/PageTools";
+import { CARD, FEED_BG, QUIET, dayWord, stamp } from "@/components/lead/amo-utils";
 import {
   DropOverlay,
   PendingFile,
@@ -139,7 +143,8 @@ function OwnerInboxPage() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<OwnerInboxFilter>(EMPTY_OWNER_FILTER);
   const [selected, setSelected] = useState<string | null>(search.org ?? null);
-  const [infoOpen, setInfoOpen] = useState(true);
+  // The company's details take the list's place when its name is clicked (CRM Inbox).
+  const [infoOpen, setInfoOpen] = useState(false);
   // Phones show the list or the open conversation, one at a time.
   const [phoneChat, setPhoneChat] = useState(!!search.org);
   const [analytics, setAnalytics] = useState(false);
@@ -155,30 +160,43 @@ function OwnerInboxPage() {
     if (!selected && list[0]) setSelected(list[0].key);
   }, [list, selected]);
 
-  const presetOn = (p: (typeof OWNER_INBOX_PRESETS)[number]) =>
+  useEffect(() => setInfoOpen(false), [selected]);
+  // Under the search only "Javob kutmoqda" / "O'qilmagan"; the rest is in Filtrlar.
+  const quickOn = (p: "waiting" | "unread") =>
     JSON.stringify(presetFilter(p)) === JSON.stringify({ ...filter, text: "" });
+  const quick = (p: "waiting" | "unread") =>
+    setFilter(
+      quickOn(p)
+        ? { ...EMPTY_OWNER_FILTER, text: filter.text }
+        : { ...presetFilter(p), text: filter.text },
+    );
 
   return (
     <FixedPage className="flex-row bg-card">
-      {/* list */}
+      {/* The company's details, in the list's place (opened from the conversation's head). */}
+      {current && infoOpen && (
+        <InfoPane thread={current} width={listSize.width} onClose={() => setInfoOpen(false)} />
+      )}
+      {/* Conversations */}
       <aside
         style={{ width: listSize.width }}
         className={cn(
-          "relative flex shrink-0 flex-col border-r border-border phone:!w-full phone:border-r-0",
-          current && infoOpen && "lg:max-xl:hidden",
+          "relative flex shrink-0 flex-col border-r border-border bg-card phone:!w-full phone:border-r-0",
+          current && infoOpen && "hidden",
           phoneChat && current && "phone:hidden",
         )}
       >
         <div className="border-b border-border px-4 pb-3 pt-4">
-          <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/12 text-emerald-700 dark:text-emerald-300">
-              <Headset className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
+              <Headset className="h-[18px] w-[18px]" />
             </span>
             <div className="min-w-0 flex-1">
-              <h1 className="text-[16px] font-bold tracking-tight text-foreground">
+              <h1 className="flex items-center gap-2 text-[17px] font-bold leading-tight text-foreground">
                 {t("oinbox.title")}
+                <PageTools size="sm" title={t("oinbox.title")} />
               </h1>
-              <p className="text-[11.5px] text-muted-foreground">
+              <p className="text-[12px] text-muted-foreground">
                 {t("oinbox.summary", { all: all.length, waiting, unread })}
               </p>
             </div>
@@ -186,10 +204,11 @@ function OwnerInboxPage() {
               type="button"
               aria-haspopup="dialog"
               onClick={() => setAnalytics(true)}
+              aria-label={t("oinbox.analytics")}
               title={t("oinbox.analytics")}
-              className="ctl-soft inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-semibold"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border text-primary transition-colors hover:bg-accent"
             >
-              <BarChart3 className="h-4 w-4" /> {t("oinbox.analytics")}
+              <BarChart3 className="h-[18px] w-[18px]" />
             </button>
           </div>
           {/* Analytics: a window over the inbox, opened with its button. */}
@@ -240,57 +259,55 @@ function OwnerInboxPage() {
             </DialogContent>
           </Dialog>
           <div className="mt-3 flex gap-2">
-            <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-2.5 focus-within:border-primary">
-              <Search className="h-4 w-4 text-subtle" />
+            <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-background px-2.5 focus-within:border-primary">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 value={filter.text}
                 onChange={(e) => setFilter({ ...filter, text: e.target.value })}
                 placeholder={t("oinbox.search")}
-                className="h-full min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
+                className="min-w-0 flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
               />
             </label>
             <FilterPopover filter={filter} onChange={setFilter} />
           </div>
-          <div className="-mx-1 mt-2.5 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
-            {OWNER_INBOX_PRESETS.map((p) => (
+          <div className="mt-2.5 grid grid-cols-2 gap-1 rounded-lg bg-surface p-1">
+            {(["waiting", "unread"] as const).map((p) => (
               <button
                 key={p}
                 type="button"
-                onClick={() =>
-                  setFilter(
-                    presetOn(p)
-                      ? { ...EMPTY_OWNER_FILTER, text: filter.text }
-                      : { ...presetFilter(p), text: filter.text },
-                  )
-                }
+                onClick={() => quick(p)}
+                aria-pressed={quickOn(p)}
                 className={cn(
-                  "h-7 shrink-0 rounded-full border px-2.5 text-[11.5px] font-semibold transition-colors",
-                  presetOn(p)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground",
+                  "inline-flex h-8 items-center justify-center gap-1.5 rounded-md text-[13px] font-semibold transition-colors",
+                  quickOn(p)
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {t(`oinbox.preset.${p}`)}
-                {p === "waiting" && waiting > 0 && (
-                  <span className="ml-1 text-rose-600">{waiting}</span>
-                )}
-                {p === "unread" && unread > 0 && (
-                  <span className="ml-1 text-primary">{unread}</span>
+                {(p === "waiting" ? waiting : unread) > 0 && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 text-[11px] tabular-nums text-white",
+                      p === "waiting" ? "bg-rose-500" : "bg-primary",
+                    )}
+                  >
+                    {p === "waiting" ? waiting : unread}
+                  </span>
                 )}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
           {isLoading ? (
-            <p className="flex items-center gap-2 p-5 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2 p-5 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-            </p>
+            </li>
           ) : !list.length ? (
-            <div className="px-6 py-12 text-center">
-              <Inbox className="mx-auto h-8 w-8 text-subtle" />
-              <p className="mt-2 text-[13px] text-muted-foreground">{t("oinbox.empty")}</p>
-            </div>
+            <li className="px-6 py-16 text-center text-[13px] text-muted-foreground">
+              {t("oinbox.empty")}
+            </li>
           ) : (
             list.map((x) => (
               <ThreadRow
@@ -304,9 +321,9 @@ function OwnerInboxPage() {
               />
             ))
           )}
-        </div>
+        </ul>
       </aside>
-      <ResizeHandle label={t("amo.resize")} {...listSize.handle} />
+      {!(current && infoOpen) && <ResizeHandle label={t("amo.resize")} {...listSize.handle} />}
 
       {/* conversation */}
       {current ? (
@@ -321,10 +338,12 @@ function OwnerInboxPage() {
           onChanged={() => void qc.invalidateQueries({ queryKey: ["owner_inbox"] })}
         />
       ) : (
-        <div className="grid flex-1 place-items-center text-center phone:hidden">
+        <div className="grid flex-1 place-items-center bg-background p-8 text-center phone:hidden">
           <div>
-            <MessageSquareQuote className="mx-auto h-9 w-9 text-subtle" />
-            <p className="mt-2 text-[13.5px] text-muted-foreground">{t("oinbox.pick")}</p>
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <MessagesSquare className="h-7 w-7" />
+            </span>
+            <p className="mt-3 text-[15px] font-semibold text-foreground">{t("oinbox.pick")}</p>
           </div>
         </div>
       )}
@@ -342,81 +361,79 @@ function ThreadRow({
   onClick: () => void;
 }) {
   const { t } = useI18n();
-  const bold = x.unread > 0;
+  const unread = x.unread > 0;
+  const meta = [
+    x.plan ? PLAN_LABELS[normalizePlan(x.plan)] : null,
+    x.phase !== "none" ? t(`lead.phase.${x.phase}`) : null,
+    x.stage ? t(`lead.st.${x.stage}`) : null,
+  ].filter(Boolean);
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex w-full gap-3 border-b border-border/60 px-4 py-3 text-left transition-colors",
-        active ? "bg-primary/[0.07]" : "hover:bg-muted/50",
-      )}
-    >
-      <span className="relative">
-        <CompanyMark name={x.name} size="md" />
-        {x.status === "closed" && (
-          <span className="absolute -bottom-1 -right-1 grid h-4.5 w-4.5 place-items-center rounded-full border-2 border-card bg-muted text-subtle">
-            <Lock className="h-2.5 w-2.5" />
-          </span>
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors",
+          // Waiting for the owner's answer stands out light; answered ones sit darker.
+          active
+            ? "bg-primary/[0.08] shadow-[inset_3px_0_0_var(--primary)]"
+            : x.waitingSince
+              ? "bg-card hover:bg-accent/60"
+              : "bg-surface/80 hover:bg-accent/60",
         )}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-baseline gap-2">
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate text-[13.5px] text-foreground",
-              bold ? "font-bold" : "font-semibold",
-            )}
-          >
-            {x.name}
-          </span>
-          <span
-            className={cn(
-              "shrink-0 text-[11px] tabular-nums",
-              bold ? "font-semibold text-primary" : "text-subtle",
-            )}
-          >
-            {short(x.lastAt)}
-          </span>
-        </span>
-        <span
-          className={cn(
-            "mt-0.5 line-clamp-2 text-[12.5px] leading-snug",
-            bold ? "text-foreground" : "text-muted-foreground",
+      >
+        <span className="relative mt-0.5 shrink-0">
+          <CompanyMark name={x.name} size="md" />
+          {x.status === "closed" && (
+            <span className="absolute -bottom-0.5 -right-0.5 grid h-[18px] w-[18px] place-items-center rounded-full bg-card text-subtle ring-2 ring-card">
+              <Lock className="h-2.5 w-2.5" />
+            </span>
           )}
-        >
-          {x.lastAuthor && <span className="font-medium">{x.lastAuthor}: </span>}
-          {x.lastText}
         </span>
-        <span className="mt-1.5 flex flex-wrap items-center gap-1">
-          {x.phase !== "none" && (
+        <span className="min-w-0 flex-1">
+          <span className="flex items-baseline gap-2">
             <span
               className={cn(
-                "rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold",
-                PHASE_CHIP[x.phase],
+                "min-w-0 flex-1 truncate text-[14px] text-foreground",
+                unread ? "font-bold" : "font-semibold",
               )}
             >
-              {t(`lead.phase.${x.phase}`)}
+              {x.name}
             </span>
-          )}
-          {x.plan && (
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
-              {PLAN_LABELS[normalizePlan(x.plan)]}
+            <span
+              className={cn(
+                "shrink-0 text-[11.5px] tabular-nums",
+                unread ? "font-bold text-primary" : "text-muted-foreground",
+              )}
+            >
+              {short(x.lastAt)}
             </span>
-          )}
-          {x.waitingSince && (
-            <span className="rounded-md bg-rose-500/12 px-1.5 py-0.5 text-[10.5px] font-semibold text-rose-600">
-              {t("oinbox.waiting", { t: waitText(x.waitingSince, t) })}
+          </span>
+          <span className="mt-0.5 flex items-center gap-2">
+            <span
+              className={cn(
+                "min-w-0 flex-1 truncate text-[12.5px]",
+                unread ? "font-semibold text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {x.lastAuthor && `${x.lastAuthor}: `}
+              {x.lastText}
             </span>
-          )}
-          {x.unread > 0 && (
-            <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[10.5px] font-bold text-primary-foreground">
-              {x.unread}
+            {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />}
+            {x.waitingSince && (
+              <span className="shrink-0 rounded bg-amber-500/15 px-1 text-[10.5px] font-bold text-amber-700 dark:text-amber-300">
+                {t("oinbox.waiting", { t: waitText(x.waitingSince, t) })}
+              </span>
+            )}
+          </span>
+          {meta.length > 0 && (
+            <span className="mt-0.5 block truncate text-[11px] text-subtle">
+              {meta.join(" · ")}
             </span>
           )}
         </span>
-      </span>
-    </button>
+      </button>
+    </li>
   );
 }
 
@@ -469,16 +486,16 @@ function FilterPopover({
         <button
           type="button"
           className={cn(
-            "relative grid h-9 w-9 place-items-center rounded-xl border",
-            n
-              ? "border-primary text-primary"
-              : "border-border text-muted-foreground hover:text-foreground",
+            "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] font-semibold transition-colors data-[state=open]:border-primary/40 data-[state=open]:bg-primary/10 data-[state=open]:text-primary",
+            n > 0
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-border text-foreground hover:bg-accent",
           )}
-          aria-label={t("oinbox.filters")}
         >
-          <Filter className="h-4 w-4" />
+          <SlidersHorizontal className="h-4 w-4" />
+          {t("oinbox.filters")}
           {n > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+            <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10.5px] font-bold text-primary-foreground">
               {n}
             </span>
           )}
@@ -664,35 +681,60 @@ function Conversation({
     if (el && atBottom) el.scrollTop = el.scrollHeight;
   }, [msgs.length, atBottom]);
 
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
+  const shown = needle
+    ? msgs.filter((m) =>
+        `${m.text} ${m.author} ${m.file?.name ?? ""}`.toLowerCase().includes(needle),
+      )
+    : msgs;
+  // One card per day, as the CRM feed draws a conversation.
+  const days: { day: string; items: InboxMessage[] }[] = [];
+  for (const m of shown) {
+    const day = dayWord(new Date(m.created_at), t);
+    const last = days[days.length - 1];
+    if (last && last.day === day) last.items.push(m);
+    else days.push({ day, items: [m] });
+  }
+  const btn =
+    "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-semibold transition-colors disabled:opacity-50";
+
   return (
-    <>
-      <section className={cn("flex min-w-0 flex-1 flex-col", phoneHidden && "phone:hidden")}>
-        <header className="flex items-center gap-3 border-b border-border px-5 py-3 phone:px-3">
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label={t("common.back")}
-            className="hidden h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted phone:grid"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={onToggleInfo}
-            className="flex min-w-0 flex-1 items-center gap-3 text-left"
-          >
-            <CompanyMark name={thread.name} size="sm" />
-            <span className="min-w-0">
-              <span className="block truncate text-[14.5px] font-bold text-foreground">
-                {thread.name}
-              </span>
-              <span className="flex items-center gap-1 truncate text-[12px] text-muted-foreground">
-                <Users className="h-3.5 w-3.5" />
-                {thread.people.map((p) => p.name).join(", ")}
-              </span>
+    <section
+      className={cn(
+        "amo-skin flex min-w-0 flex-1 flex-col",
+        FEED_BG,
+        phoneHidden && "phone:hidden",
+      )}
+    >
+      {/* The conversation's head, as in the CRM Inbox: the company's name opens its details. */}
+      <div className="flex h-[52px] shrink-0 items-stretch border-b border-[var(--amo-divider)] bg-card">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label={t("common.back")}
+          className="hidden w-11 shrink-0 place-items-center text-muted-foreground hover:bg-accent phone:grid"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleInfo}
+          aria-expanded={infoOpen}
+          className="flex min-w-0 flex-1 items-center gap-3 px-5 text-left transition-colors hover:bg-accent/50 phone:px-2"
+        >
+          <CompanyMark name={thread.name} size="sm" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-bold text-primary">{thread.name}</span>
+            <span className="block truncate text-[12px] text-muted-foreground">
+              {thread.people.map((p) => p.name).join(", ")}
             </span>
-          </button>
-          {thread.stage && <StageChip stage={thread.stage} />}
+          </span>
+          <span className="shrink-0 rounded-md border border-border px-2 py-1 text-[12px] font-semibold text-muted-foreground phone:hidden">
+            {t(infoOpen ? "oinbox.hideInfo" : "oinbox.showInfo")}
+          </span>
+        </button>
+        <div className="flex shrink-0 items-center gap-1.5 pr-4 phone:pr-2">
           {thread.orgId && owners.length > 1 && (
             <select
               value={thread.assignedTo ?? ""}
@@ -704,7 +746,7 @@ function Conversation({
                 })
               }
               title={t("oinbox.assignee")}
-              className="h-9 max-w-[130px] rounded-xl border border-border bg-card px-2 text-[12.5px] font-semibold text-foreground outline-none phone:hidden"
+              className="h-8 max-w-[140px] rounded-md border border-border bg-card px-2 text-[12.5px] font-semibold text-foreground outline-none hover:bg-accent phone:hidden"
             >
               <option value="">{t("oinbox.noAssignee")}</option>
               {owners.map((o) => (
@@ -714,131 +756,191 @@ function Conversation({
               ))}
             </select>
           )}
-          {thread.orgId &&
-            (thread.status === "open" ? (
-              <button
-                type="button"
-                disabled={act.isPending}
-                onClick={() =>
-                  act.mutate({ action: "status", orgId: thread.orgId, status: "closed" })
-                }
-                className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-semibold"
-              >
-                <CheckCheck className="h-4 w-4" /> {t("oinbox.close")}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={act.isPending}
-                onClick={() =>
-                  act.mutate({ action: "status", orgId: thread.orgId, status: "open" })
-                }
-                className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-semibold"
-              >
-                <RotateCcw className="h-4 w-4" /> {t("oinbox.reopen")}
-              </button>
-            ))}
-        </header>
+          {thread.orgId && (
+            <button
+              type="button"
+              disabled={act.isPending}
+              onClick={() =>
+                act.mutate({
+                  action: "status",
+                  orgId: thread.orgId,
+                  status: thread.status === "open" ? "closed" : "open",
+                })
+              }
+              className={cn(
+                btn,
+                thread.status === "closed"
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : "border-border text-foreground hover:bg-accent",
+              )}
+            >
+              {thread.status === "open" ? (
+                <CheckCheck className="h-3.5 w-3.5" />
+              ) : (
+                <RotateCcw className="h-3.5 w-3.5" />
+              )}
+              {t(thread.status === "open" ? "oinbox.close" : "oinbox.reopen")}
+            </button>
+          )}
+        </div>
+      </div>
+      {/* Search in the conversation. */}
+      <div className="flex h-[48px] shrink-0 items-center gap-2 border-b border-[var(--amo-divider)] bg-[var(--amo-feed)] px-5 phone:px-3">
+        <Search className="h-4 w-4 shrink-0 text-subtle" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("oinbox.searchChat")}
+          className="h-full min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-subtle"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="grid h-7 w-7 place-items-center rounded text-subtle hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      <div className="relative min-h-0 flex-1">
         <div
           ref={scroller}
           onScroll={(e) => {
             const el = e.currentTarget;
             setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 60);
           }}
-          className="relative flex-1 space-y-2.5 overflow-y-auto bg-surface/50 px-5 py-4"
+          className="h-full overflow-y-auto px-4 pb-3 pt-2 phone:px-2"
         >
-          {msgs.map((m, i) => {
-            const day = new Date(m.created_at).toDateString();
-            const newDay = i === 0 || new Date(msgs[i - 1]!.created_at).toDateString() !== day;
-            const mine = m.direction === "out";
-            return (
-              <div key={m.id}>
-                {newDay && (
-                  <p className="my-3 text-center text-[11px] font-semibold text-subtle">
-                    {callDay(m.created_at, lang)}
-                  </p>
-                )}
-                <div className={cn("group flex", mine ? "justify-end" : "justify-start")}>
-                  <div
-                    className={cn(
-                      "max-w-[72%] rounded-2xl px-3.5 py-2 text-[13.5px] leading-relaxed shadow-sm",
-                      mine
-                        ? "rounded-br-md bg-primary text-primary-foreground"
-                        : "rounded-bl-md border border-border bg-card text-foreground",
-                    )}
-                  >
-                    <p
-                      className={cn(
-                        "mb-0.5 text-[11px] font-semibold",
-                        mine ? "text-primary-foreground/80" : "text-primary",
-                      )}
-                    >
-                      {m.author}
-                      {m.role && (
-                        <span className="font-normal text-muted-foreground">
-                          {" "}
-                          · {t(`lead.role.${m.role}`)}
-                        </span>
-                      )}
-                    </p>
-                    {m.file && (
-                      <div className={cn(m.text && "mb-1.5")}>
-                        <SupportFile messageId={m.id} file={m.file} />
-                      </div>
-                    )}
-                    {m.text && (
-                      <div className="whitespace-pre-wrap break-words [&_a]:font-semibold [&_a]:underline [&_a]:!text-current">
-                        {mine ? renderMessageContent(m.text, t("oinbox.open")) : m.text}
-                      </div>
-                    )}
-                    <p
-                      className={cn(
-                        "mt-1 flex items-center gap-2 text-[10.5px]",
-                        mine ? "text-primary-foreground/70" : "text-subtle",
-                      )}
-                    >
-                      {m.page && !mine && <span className="truncate font-mono">{m.page}</span>}
-                      <span className="ml-auto">{hm(m.created_at)}</span>
-                    </p>
-                  </div>
-                  {!mine && thread.orgId && (
-                    <button
-                      type="button"
-                      title={t("oinbox.asIssue")}
-                      onClick={() =>
-                        act.mutate(
-                          { action: "issue", orgId: thread.orgId, text: m.text },
-                          { onSuccess: () => toast.success(t("oinbox.issueSaved")) },
-                        )
-                      }
-                      className="invisible ml-1.5 self-center rounded-lg p-1.5 text-subtle hover:bg-amber-500/10 hover:text-amber-600 group-hover:visible"
-                    >
-                      <AlertTriangle className="h-4 w-4" />
-                    </button>
+          {days.map((d, di) => (
+            <div key={`${d.day}-${di}`}>
+              <div className="my-3 flex items-center gap-3">
+                <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
+                <span
+                  className={cn(
+                    "rounded-full px-3 py-1 text-[11.5px] font-medium text-muted-foreground",
+                    CARD,
                   )}
+                >
+                  {d.day}
+                </span>
+                <span className="h-px flex-1 bg-[var(--amo-box-line)]" />
+              </div>
+              <div className="my-2">
+                <div className="mx-2 h-[5px] rounded-t-xl border border-b-0 border-[var(--amo-box-line)] bg-[var(--amo-box)]" />
+                <div className={cn("rounded-xl px-5 pb-3 pt-3 phone:px-3", CARD)}>
+                  <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[var(--amo-soft)]">
+                    <Headset className="h-3.5 w-3.5 text-emerald-500" />
+                    {t("oinbox.channel")}
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    {d.items.map((m) => (
+                      <FeedMessage
+                        key={m.id}
+                        m={m}
+                        onIssue={
+                          thread.orgId && m.direction === "in"
+                            ? () =>
+                                act.mutate(
+                                  { action: "issue", orgId: thread.orgId, text: m.text },
+                                  { onSuccess: () => toast.success(t("oinbox.issueSaved")) },
+                                )
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
-            );
-          })}
-          {!atBottom && (
-            <button
-              type="button"
-              onClick={() =>
-                scroller.current?.scrollTo({
-                  top: scroller.current.scrollHeight,
-                  behavior: "smooth",
-                })
-              }
-              className="sticky bottom-0 ml-auto grid h-9 w-9 place-items-center rounded-full border border-border bg-card shadow-md"
-            >
-              <ArrowDown className="h-4 w-4" />
-            </button>
+            </div>
+          ))}
+          {!shown.length && (
+            <p className="py-16 text-center text-[13px] text-muted-foreground">
+              {needle ? t("chats.noneFound") : t("chats.noMessages")}
+            </p>
           )}
         </div>
-        <Composer thread={thread} onSent={refresh} />
-      </section>
-      {infoOpen && <InfoPane thread={thread} data={data} />}
-    </>
+        {!atBottom && (
+          <button
+            type="button"
+            onClick={() =>
+              scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" })
+            }
+            className="absolute bottom-3 right-5 grid h-9 w-9 place-items-center rounded-full border border-[var(--amo-box-line)] bg-card shadow-md"
+          >
+            <ArrowDown className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      <Composer thread={thread} onSent={refresh} />
+    </section>
+  );
+}
+
+/** One message in the day's card: the company's person on the left, the team on the right. */
+function FeedMessage({ m, onIssue }: { m: InboxMessage; onIssue?: (() => void) | undefined }) {
+  const { t } = useI18n();
+  const letter = (m.author.match(/\p{L}/u)?.[0] ?? "S").toUpperCase();
+  const avatar = (
+    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--amo-avatar)] text-[12px] font-bold text-[var(--amo-avatar-fg)]">
+      {letter}
+    </span>
+  );
+  if (m.direction === "out")
+    return (
+      <div className="flex items-end justify-end gap-2.5">
+        <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-out)] px-3 py-2 phone:max-w-[85%]">
+          <p className="text-[12px] text-[var(--amo-bubble-out-meta)]">
+            {stamp(m.created_at, t)} {m.author} <Check className="inline h-3 w-3" />{" "}
+            {t("amo.delivered")}
+          </p>
+          {m.file && (
+            <div className="mt-1.5">
+              <SupportFile messageId={m.id} file={m.file} />
+            </div>
+          )}
+          {m.text && (
+            <div className="mt-1 whitespace-pre-wrap break-words text-[14px] text-[var(--amo-bubble-out-fg)] [&_a]:font-semibold [&_a]:underline">
+              {renderMessageContent(m.text, t("oinbox.open"))}
+            </div>
+          )}
+        </div>
+        {avatar}
+      </div>
+    );
+  return (
+    <div className="group/msg flex items-start gap-2.5">
+      {avatar}
+      <div className="max-w-[70%] rounded-2xl bg-[var(--amo-bubble-in)] px-3 py-2 phone:max-w-[85%]">
+        <p className="text-[12px] text-[var(--amo-label)]">
+          {stamp(m.created_at, t)} {m.author}
+          {m.role && ` · ${t(`lead.role.${m.role}`)}`}
+        </p>
+        {m.file && (
+          <div className="mt-1.5">
+            <SupportFile messageId={m.id} file={m.file} />
+          </div>
+        )}
+        {m.text && (
+          <p className="mt-1 whitespace-pre-wrap break-words text-[14px] text-foreground">
+            {m.text}
+          </p>
+        )}
+        {m.page && (
+          <p className="mt-1 truncate font-mono text-[11px] text-[var(--amo-label)]">{m.page}</p>
+        )}
+      </div>
+      {onIssue && (
+        <button
+          type="button"
+          title={t("oinbox.asIssue")}
+          onClick={onIssue}
+          className="mt-1 rounded-lg p-1.5 text-subtle opacity-0 transition-opacity hover:bg-amber-500/10 hover:text-amber-600 group-hover/msg:opacity-100 focus-visible:opacity-100"
+        >
+          <AlertTriangle className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -850,6 +952,7 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
   const [recorder, setRecorder] = useState<"voice" | "video" | null>(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const areaRef = useRef<HTMLTextAreaElement>(null);
   const att = useAttachments();
   const drop = useFileDrop(att.addFiles);
   const send = useInboxAction(() => undefined);
@@ -904,76 +1007,65 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
     }
   }
   const submit = () => void deliver(text.trim(), att.files);
+  const person = thread.people.find((p) => p.id === to) ?? null;
+  // Opens (taller, with its buttons) on focus or once something is in it, as in the CRM.
+  const [focused, setFocused] = useState(false);
+  const open = focused || !!text || att.files.length > 0;
+  const iconBtn =
+    "grid h-9 w-9 place-items-center rounded-lg border border-border bg-background/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40";
   return (
-    <div {...drop.dropProps} className="relative border-t border-border bg-card p-3">
-      <DropOverlay show={drop.dragging} />
-      <div className="mb-2 flex items-center gap-2 text-[12px] text-muted-foreground">
-        <span>{t("oinbox.to")}</span>
-        <select
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          className="h-7 rounded-lg border border-border bg-card px-2 text-[12px] font-semibold text-foreground outline-none"
-        >
-          {thread.people.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-              {p.role ? ` · ${t(`lead.role.${p.role}`)}` : ""}
-            </option>
-          ))}
-        </select>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="ml-auto inline-flex h-7 items-center gap-1 rounded-lg px-2 font-semibold hover:bg-muted"
-            >
-              <MessageSquareQuote className="h-3.5 w-3.5" /> {t("oinbox.templates")}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-[380px] p-2">
-            <TemplateList
-              list={tpl ?? []}
-              onPick={(s) => setText((cur) => (cur ? `${cur}\n${s}` : s))}
-              onSave={(list) => saveTpl.mutate({ action: "templates", list })}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-      {att.files.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {att.files.map((f, i) => (
-            <PendingFile key={`${f.name}-${i}`} file={f} onRemove={() => att.remove(i)} />
-          ))}
-        </div>
-      )}
-      {recorder === "voice" ? (
-        <VoiceRecorder onSend={(f, as) => deliver("", [f], as)} onClose={() => setRecorder(null)} />
-      ) : recorder === "video" ? (
-        <VideoRecorder onSend={(f, as) => deliver("", [f], as)} onClose={() => setRecorder(null)} />
-      ) : (
-        <div className="flex items-end gap-2 rounded-2xl border border-border bg-surface px-3 py-2 focus-within:border-primary">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            aria-label={t("attach.file")}
-            title={t("attach.file")}
-            className="mb-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <Paperclip className="h-4 w-4" />
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            hidden
-            onChange={(e) => {
-              att.addFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
+    <div className="shrink-0 px-4 pb-4 pt-1 phone:px-2 phone:pb-2">
+      <div
+        {...drop.dropProps}
+        onClick={() => !open && areaRef.current?.focus()}
+        className={cn(
+          "relative rounded-xl transition-colors",
+          QUIET,
+          open && "!border-primary/60",
+          !open && "cursor-text",
+        )}
+      >
+        <DropOverlay show={drop.dragging} />
+        <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1 px-4 pt-3 text-[13.5px] leading-7">
+          <span className="text-primary underline underline-offset-2">{t("oinbox.reply")}</span>
+          <span className="text-muted-foreground">{t("amo.for")}</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+              >
+                {person?.name ?? "—"}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="top" className="amo-skin w-60 p-1">
+              {thread.people.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setTo(p.id)}
+                  className="flex w-full items-center justify-between gap-2 rounded px-2.5 py-1.5 text-left text-[13px] text-foreground hover:bg-accent"
+                >
+                  <span className="min-w-0 truncate">
+                    {p.name}
+                    {p.role && (
+                      <span className="text-muted-foreground"> · {t(`lead.role.${p.role}`)}</span>
+                    )}
+                  </span>
+                  {p.id === to && <Check className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+          <span className="text-muted-foreground">:</span>
           <textarea
+            ref={areaRef}
             value={text}
             onPaste={att.onPaste}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -981,45 +1073,124 @@ function Composer({ thread, onSent }: { thread: CompanyThread; onSent: () => voi
                 submit();
               }
             }}
-            rows={2}
-            placeholder={t("oinbox.ph")}
-            className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent text-[13.5px] outline-none placeholder:text-subtle"
+            rows={1}
+            placeholder={t("amo.typeHere")}
+            className={cn(
+              "min-w-[200px] flex-1 resize-none bg-transparent leading-7 text-foreground outline-none placeholder:text-subtle",
+              open ? "min-h-[84px]" : "min-h-[48px]",
+              recorder && "hidden",
+            )}
           />
-          {!text.trim() && !att.files.length && !busy ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setRecorder("voice")}
-                aria-label={t("attach.voice")}
-                title={t("attach.voice")}
-                className="grid h-10 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <Mic className="h-[18px] w-[18px]" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setRecorder("video")}
-                aria-label={t("attach.video")}
-                title={t("attach.video")}
-                className="grid h-10 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <VideoIcon className="h-[18px] w-[18px]" />
-              </button>
-            </>
-          ) : (
+        </div>
+        {att.files.length > 0 && !recorder && (
+          <div className="flex flex-wrap gap-2 px-4 pb-1 pt-2">
+            {att.files.map((f, i) => (
+              <PendingFile
+                key={`${f.name}-${i}`}
+                file={f}
+                onRemove={() => att.remove(i)}
+                className="border-[var(--amo-quiet-line)]"
+              />
+            ))}
+          </div>
+        )}
+        {recorder === "voice" ? (
+          <VoiceRecorder
+            onSend={(f, as) => deliver("", [f], as)}
+            onClose={() => setRecorder(null)}
+          />
+        ) : recorder === "video" ? (
+          <VideoRecorder
+            onSend={(f, as) => deliver("", [f], as)}
+            onClose={() => setRecorder(null)}
+          />
+        ) : (
+          <div className="flex items-center gap-2 px-4 pb-3 pt-1">
             <button
               type="button"
-              disabled={busy}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={submit}
-              className="ctl-lit grid h-10 w-10 shrink-0 place-items-center rounded-xl disabled:opacity-40"
-              aria-label={t("oinbox.send")}
+              disabled={busy || (!text.trim() && !att.files.length)}
+              className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-sm transition-[filter] hover:brightness-110 disabled:bg-muted disabled:text-muted-foreground"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {t("oinbox.send")}
             </button>
-          )}
-        </div>
-      )}
-      <p className="mt-1.5 text-[11px] text-subtle">{t("oinbox.hint")}</p>
+            <button
+              type="button"
+              title={t("attach.voice")}
+              aria-label={t("attach.voice")}
+              disabled={busy}
+              onClick={() => setRecorder("voice")}
+              className={iconBtn}
+            >
+              <Mic className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              title={t("attach.video")}
+              aria-label={t("attach.video")}
+              disabled={busy}
+              onClick={() => setRecorder("video")}
+              className={iconBtn}
+            >
+              <VideoIcon className="h-4 w-4" />
+            </button>
+            {(text || att.files.length > 0) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setText("");
+                  att.clear();
+                }}
+                className="h-9 rounded-lg px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                {t("amo.cancel")}
+              </button>
+            )}
+            <div className="ml-auto flex items-center gap-0.5">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    title={t("oinbox.templates")}
+                    aria-label={t("oinbox.templates")}
+                    className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    <MessageSquareQuote className="h-4 w-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" side="top" className="w-[380px] p-2">
+                  <TemplateList
+                    list={tpl ?? []}
+                    onPick={(s) => setText((cur) => (cur ? `${cur}\n${s}` : s))}
+                    onSave={(list) => saveTpl.mutate({ action: "templates", list })}
+                  />
+                </PopoverContent>
+              </Popover>
+              <button
+                type="button"
+                title={t("attach.file")}
+                aria-label={t("attach.file")}
+                onClick={() => fileRef.current?.click()}
+                className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                hidden
+                onChange={(e) => {
+                  att.addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1083,8 +1254,25 @@ function TemplateList({
   );
 }
 
-function InfoPane({ thread, data }: { thread: CompanyThread; data: ThreadData | undefined }) {
+function InfoPane({
+  thread,
+  width,
+  onClose,
+}: {
+  thread: CompanyThread;
+  width: number;
+  onClose: () => void;
+}) {
   const { t } = useI18n();
+  // The same query as the open conversation (shared cache).
+  const { data } = useQuery({
+    queryKey: ["owner_inbox_thread", thread.key],
+    queryFn: async (): Promise<ThreadData> => {
+      const res = await apiFetch(`/platform/inbox-api?key=${encodeURIComponent(thread.key)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+  });
   const f = data?.facts;
   const lead = data?.lead;
   const lastPaid = f?.payments.find((p) => p.status === "paid");
@@ -1095,7 +1283,21 @@ function InfoPane({ thread, data }: { thread: CompanyThread; data: ThreadData | 
     </div>
   );
   return (
-    <aside className="hidden w-[290px] shrink-0 flex-col overflow-y-auto border-l border-border lg:flex">
+    <aside
+      style={{ width }}
+      className="flex shrink-0 flex-col overflow-y-auto border-r border-border bg-card phone:!w-full"
+    >
+      <div className="flex h-[52px] shrink-0 items-center gap-2 border-b border-border px-3">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t("common.back")}
+          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <p className="text-[14px] font-semibold text-foreground">{t("oinbox.showInfo")}</p>
+      </div>
       <div className="border-b border-border p-4 text-center">
         <span className="mx-auto block w-fit">
           <CompanyMark name={thread.name} size="lg" />
