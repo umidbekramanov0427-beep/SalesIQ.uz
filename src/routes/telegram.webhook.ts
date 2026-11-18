@@ -6,11 +6,8 @@ import {
   staffWebhookSecret,
   withBot,
 } from "@/lib/bot-tokens.server";
-import { handleChatMemberUpdate, type ChatMemberUpdate } from "@/lib/channel-events.server";
+import { handleChatMemberUpdate } from "@/lib/channel-events.server";
 import crypto from "node:crypto";
-import { copyChatFile } from "@/lib/files-housekeeping.server";
-import { autoReplyToClient } from "@/lib/auto-reply.server";
-import { notifyClientMessage } from "@/lib/live-notifications.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
@@ -20,7 +17,6 @@ import {
   telegramWebhookSecret,
 } from "@/lib/telegram-report.server";
 import { handleSupportTelegramReply } from "@/lib/support.server";
-import { markFollowupsReplied } from "@/lib/followups.server";
 import { appUrl, isOwnerChat, opsBotToken } from "@/lib/ops/bot.server";
 import { parseOpsCommand } from "@/lib/ops/health";
 import { replyToOpsCommand } from "@/lib/ops/health.server";
@@ -32,61 +28,17 @@ import {
   type InternProfile,
 } from "@/lib/intern-mentor.server";
 import { internDay } from "@/lib/intern-roadmap";
-import { handleIncomingLeadMessage, startSalesbot } from "@/lib/automations/engine.server";
-import { salesbotIdFromStart } from "@/lib/salesbots/start-link";
+import { salesbotCodeFromStart, salesbotIdFromStart } from "@/lib/salesbots/start-link";
 import { handleTelegramLoginCallback, handleTelegramLoginStart } from "@/lib/telegram-login.server";
 import { getDefaultSalesbotId } from "@/lib/salesbots/default-bot.server";
-import { ingestLead, rememberLeadTelegram } from "@/lib/leads/lead-intake.server";
+import { ingestLead } from "@/lib/leads/lead-intake.server";
+
 import {
-  fileLabel,
-  incomingFile,
-  insertLeadChatMessage,
-  refreshChatPhoto,
-} from "@/lib/telegram/lead-chat.server";
-
-type TgFileField = { file_id?: string; file_name?: string; title?: string; performer?: string };
-
-type TelegramUpdate = {
-  chat_member?: ChatMemberUpdate;
-  callback_query?: {
-    id: string;
-    data?: string;
-    from?: { id?: number };
-    message?: { message_id?: number; chat?: { id?: number; type?: string } };
-  };
-  channel_post?: { chat?: { id?: number; title?: string }; text?: string };
-  message?: {
-    message_id?: number;
-    photo?: { file_id?: string }[];
-    document?: TgFileField;
-    video?: TgFileField;
-    video_note?: TgFileField;
-    sticker?: TgFileField & { emoji?: string };
-    animation?: TgFileField;
-    from?: { id?: number; first_name?: string; last_name?: string; username?: string };
-    contact?: {
-      phone_number?: string;
-      first_name?: string;
-      last_name?: string;
-      user_id?: number;
-    };
-    text?: string;
-    caption?: string;
-    location?: { latitude?: number; longitude?: number; horizontal_accuracy?: number };
-    forward_origin?: unknown;
-    forward_date?: number;
-    reply_to_message?: { message_id?: number };
-    voice?: TgFileField;
-    audio?: TgFileField;
-    chat?: {
-      id?: number;
-      type?: string;
-      title?: string;
-      first_name?: string;
-      username?: string;
-    };
-  };
-};
+  logIncomingLeadMessage,
+  redeemLeadCode,
+  startSalesbotChat,
+  type TelegramUpdate,
+} from "@/lib/telegram/client-chat.server";
 
 const CODE_RE = /[A-Z0-9]{8}/;
 const BIND_RE = /^\/bind[@\w]*\s+([A-Z0-9]{8})/i;
@@ -354,108 +306,6 @@ async function handleGroupBind(
   ).catch(() => undefined);
 }
 
-// Redeems a /telegram/link-lead code: binds this chat to the lead it was
-// generated for. A chat_id or lead_id already bound to something else is
-// dropped first (both columns are unique) so this never fails on a stale
-// previous link -- a customer switching phones, or a rep re-linking the
-// same lead, both just work.
-async function handleLeadCodeRedeem(
-  chatId: number,
-  chatFirstName: string | null,
-  chatUsername: string | null,
-  pending: { lead_id: string; organization_id: string },
-): Promise<void> {
-  await supabaseAdmin.from("lead_telegram_links").delete().eq("chat_id", chatId);
-  await supabaseAdmin.from("lead_telegram_links").delete().eq("lead_id", pending.lead_id);
-  const { error } = await supabaseAdmin.from("lead_telegram_links").insert({
-    organization_id: pending.organization_id,
-    lead_id: pending.lead_id,
-    chat_id: chatId,
-    chat_first_name: chatFirstName,
-    chat_username: chatUsername,
-  });
-  if (error) {
-    await sendTelegramMessage(chatId, "Ulashda xatolik yuz berdi. Qayta urinib ko'ring.").catch(
-      () => undefined,
-    );
-    return;
-  }
-  await supabaseAdmin.from("lead_telegram_link_codes").delete().eq("lead_id", pending.lead_id);
-  await rememberLeadTelegram(pending.organization_id, pending.lead_id, chatUsername).catch(
-    () => undefined,
-  );
-  await sendTelegramMessage(
-    chatId,
-    "✅ Ulandi! Endi yozgan xabarlaringiz to'g'ridan-to'g'ri kompaniya tizimiga tushadi.",
-  ).catch(() => undefined);
-}
-
-async function logIncomingLeadMessage(
-  link: {
-    lead_id: string;
-    organization_id: string;
-    chat_id: number;
-    photo_checked_at?: string | null;
-  },
-  message: NonNullable<TelegramUpdate["message"]>,
-): Promise<void> {
-  // Text, or a file (photo, document, audio, voice, video, sticker) with
-  // its caption -- everything the client sends shows in the lead's chat.
-  const text = (message.text ?? message.caption ?? "").trim();
-  const file = incomingFile(message);
-  if (!text && !file) return;
-  await insertLeadChatMessage({
-    organization_id: link.organization_id,
-    lead_id: link.lead_id,
-    direction: "in",
-    text,
-    tg_message_id: message.message_id ?? null,
-    file_kind: file?.kind ?? null,
-    file_id: file?.fileId ?? null,
-    file_name: file?.name ?? null,
-  });
-  // A salesbot may be waiting for exactly this answer. Only words answer
-  // it: a photo or song without a caption is not a name or a phone. The
-  // photo check runs alongside, so the bot's reply never waits on it.
-  await Promise.all([
-    refreshChatPhoto(link).catch(() => undefined),
-    markFollowupsReplied(link.lead_id).catch(() => undefined),
-    notifyClientMessage({
-      organizationId: link.organization_id,
-      leadId: link.lead_id,
-      channel: "telegram",
-      text: text || (file ? fileLabel(file.kind, file.name) : ""),
-    }).catch(() => undefined),
-    handleIncomingLeadMessage(
-      link.organization_id,
-      link.lead_id,
-      text,
-      file ? fileLabel(file.kind, file.name) : null,
-    ).catch(() => undefined),
-    // Admin → Fayllar: keep a copy of the file in our storage if the company wants.
-    file
-      ? copyChatFile({
-          organizationId: link.organization_id,
-          leadId: link.lead_id,
-          source: "telegram",
-          fileId: file.fileId,
-          fileName: file.name ?? null,
-          kind: file.kind,
-        }).catch(() => undefined)
-      : Promise.resolve(),
-    // After-hours message / auto-responders (Voronka sozlamalari).
-    autoReplyToClient({
-      organizationId: link.organization_id,
-      leadId: link.lead_id,
-      channel: "telegram",
-      text,
-      send: async (reply) => {
-        await sendTelegramMessage(link.chat_id, reply);
-      },
-    }).catch(() => undefined),
-  ]);
-}
-
 function internshipActive(intern: InternProfile | null): intern is InternProfile {
   if (!intern?.is_intern) return false;
   const day = internDay(intern.internship_start_date);
@@ -566,90 +416,6 @@ async function handleSharedContact(
   return true;
 }
 
-// "/start sb_<bot id>" -- someone opened a salesbot's public link (from an
-// ad, a website, an Instagram bio, or the admin testing it). They become a
-// lead of the bot's company -- or keep the lead their chat already has
-// there -- their chat is linked to it, and the bot starts the conversation.
-async function handleSalesbotStart(
-  chatId: number,
-  botId: string,
-  message: NonNullable<TelegramUpdate["message"]>,
-): Promise<void> {
-  const { data: bot } = await supabaseAdmin
-    .from("salesbots")
-    .select("id, organization_id, enabled, name")
-    .eq("id", botId)
-    .maybeSingle();
-  if (!bot || !bot.enabled) {
-    await sendTelegramMessage(chatId, "Bu bot hozir ishlamayapti.").catch(() => undefined);
-    return;
-  }
-
-  const { data: existing } = await supabaseAdmin
-    .from("lead_telegram_links")
-    .select("lead_id, organization_id")
-    .eq("chat_id", chatId)
-    .maybeSingle();
-
-  let leadId = existing?.organization_id === bot.organization_id ? existing.lead_id : null;
-  if (!leadId) {
-    const from = message.from;
-    const username = from?.username ?? message.chat?.username ?? null;
-    const name =
-      [from?.first_name, from?.last_name].filter(Boolean).join(" ").trim() ||
-      (username ? `@${username}` : "Telegram mijoz");
-    try {
-      const result = await ingestLead(bot.organization_id, {
-        name,
-        source: "Telegram bot",
-        duplicateSource: "webhook",
-        note: `${bot.name}${username ? ` · Telegram: @${username}` : ""}`,
-        tags: ["salesbot"],
-        telegram: username,
-      });
-      leadId = result.leadId;
-    } catch (err) {
-      console.error("[telegram webhook] salesbot lead failed", err);
-      await sendTelegramMessage(
-        chatId,
-        "Xatolik yuz berdi. Birozdan so'ng qaytadan urinib ko'ring.",
-      ).catch(() => undefined);
-      return;
-    }
-    // One chat talks to one lead at a time (both columns are unique).
-    await supabaseAdmin.from("lead_telegram_links").delete().eq("chat_id", chatId);
-    await supabaseAdmin.from("lead_telegram_links").delete().eq("lead_id", leadId);
-    await supabaseAdmin.from("lead_telegram_links").insert({
-      organization_id: bot.organization_id,
-      lead_id: leadId,
-      chat_id: chatId,
-      chat_first_name: message.chat?.first_name ?? null,
-      chat_username: message.chat?.username ?? null,
-    });
-  }
-
-  // The client's photo is looked up while the bot already greets them.
-  const [started] = await Promise.all([
-    startSalesbot(bot.organization_id, bot.id, leadId),
-    existing?.lead_id === leadId
-      ? Promise.resolve()
-      : refreshChatPhoto({ lead_id: leadId, chat_id: chatId }).catch(() => undefined),
-  ]);
-  if ("error" in started) {
-    await sendTelegramMessage(chatId, "Bu bot hozir ishlamayapti.").catch(() => undefined);
-  }
-}
-
-/**
- * The staff bot's greeting for a linked person. It also takes away the
- * reply keyboard older versions put under the chat.
- */
-async function sendStaffStart(chatId: number, name: string | null): Promise<void> {
-  await sendTelegramMessageWithMarkup(chatId, staffStartReply({ name }), {
-    remove_keyboard: true,
-  });
-}
-
 export const Route = createFileRoute("/telegram/webhook")({
   server: {
     handlers: {
@@ -687,6 +453,16 @@ export const Route = createFileRoute("/telegram/webhook")({
     },
   },
 });
+
+/**
+ * The staff bot's greeting for a linked person. It also takes away the
+ * reply keyboard older versions put under the chat.
+ */
+async function sendStaffStart(chatId: number, name: string | null): Promise<void> {
+  await sendTelegramMessageWithMarkup(chatId, staffStartReply({ name }), {
+    remove_keyboard: true,
+  });
+}
 
 async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<Response> {
   const update = (await request.json().catch(() => ({}))) as TelegramUpdate;
@@ -807,8 +583,13 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
   // A salesbot's public link -- before the lead-link check below, so
   // a chat that already talks to some lead can still start a bot.
   const salesbotId = salesbotIdFromStart(rawText);
-  if (salesbotId && update.message) {
-    await handleSalesbotStart(chatId, salesbotId, update.message);
+  const salesbotCode = salesbotCodeFromStart(rawText);
+  if ((salesbotId || salesbotCode) && update.message) {
+    await startSalesbotChat(
+      chatId,
+      salesbotId ? { id: salesbotId } : { code: salesbotCode! },
+      update.message,
+    );
     return Response.json({ ok: true });
   }
 
@@ -868,7 +649,7 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
   if (!linkedProfile && PLAIN_START_RE.test(rawText) && update.message) {
     const defaultBotId = await getDefaultSalesbotId();
     if (defaultBotId) {
-      await handleSalesbotStart(chatId, defaultBotId, update.message);
+      await startSalesbotChat(chatId, { id: defaultBotId }, update.message);
       return Response.json({ ok: true });
     }
   }
@@ -969,7 +750,7 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
       );
       return Response.json({ ok: true });
     }
-    await handleLeadCodeRedeem(
+    await redeemLeadCode(
       chatId,
       update.message?.chat?.first_name ?? null,
       update.message?.chat?.username ?? null,

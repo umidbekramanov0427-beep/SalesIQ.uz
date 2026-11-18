@@ -3,7 +3,7 @@ import { requirePlatformOwner } from "@/lib/auth.server";
 
 // Platforma -> Botlar: the platform's three Telegram bots.
 //   GET  -> { ready, bots: { client|staff|ops: { username, source, webhook, webhookError } },
-//             staffChats }
+//             staffChats, trialOrgs, orgBots }
 //   POST {kind, action: "reconnect"}  points the bot at our server again ->
 //        { ok, webhookError }.
 //   POST {kind: "staff" | "ops", token: string | null}  saves (checked with
@@ -34,10 +34,25 @@ export const Route = createFileRoute("/platform/bots-api")({
             ] as const;
           }),
         );
+        // Companies on the shared trial bot (still taking new clients) and
+        // companies with a bot of their own; zero before the migration.
+        const nowIso = new Date().toISOString();
+        const [trial, own] = await Promise.all([
+          supabaseAdmin
+            .from("organizations")
+            .select("id", { count: "exact", head: true })
+            .gt("shared_bot_until", nowIso),
+          supabaseAdmin.from("org_telegram_bots").select("organization_id", {
+            count: "exact",
+            head: true,
+          }),
+        ]);
         return Response.json({
           ready: !probe.error,
           bots: Object.fromEntries(entries),
           staffChats: probe.error ? 0 : await b.staffChatCount().catch(() => 0),
+          trialOrgs: trial.error ? 0 : (trial.count ?? 0),
+          orgBots: own.error ? 0 : (own.count ?? 0),
         });
       },
       POST: async ({ request }) => {

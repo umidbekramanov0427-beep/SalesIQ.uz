@@ -3,6 +3,7 @@
 // sends from the lead card, the client's profile photo and reactions on the
 // client's messages. Files stay on Telegram's side and are referred to by
 // file_id; the app streams them through /telegram/lead-file when shown.
+import { orgBot, tokenForChat } from "@/lib/bot-tokens.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type ChatFileKind =
@@ -103,8 +104,20 @@ function botToken(): string | null {
   return process.env["TELEGRAM_BOT_TOKEN"] ?? null;
 }
 
-async function telegram<T>(method: string, payload: Record<string, unknown>): Promise<T | null> {
-  const token = botToken();
+/** The bot this chat talks to: the company's own bot, else the shared one. */
+async function chatToken(chatId: number): Promise<string | null> {
+  try {
+    return (await tokenForChat(chatId)).token;
+  } catch {
+    return botToken();
+  }
+}
+
+async function telegram<T>(
+  method: string,
+  payload: Record<string, unknown>,
+  token: string | null = botToken(),
+): Promise<T | null> {
   if (!token) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
@@ -125,19 +138,30 @@ async function telegram<T>(method: string, payload: Record<string, unknown>): Pr
 /** Bots can download files up to 20 MB. */
 const MAX_DOWNLOAD = 20 * 1024 * 1024;
 
-/** The file's bytes from Telegram, or null (gone, too big, no bot token). */
+/**
+ * The file's bytes from Telegram, or null (gone, too big, no bot token). A
+ * file id belongs to the bot that received it: with `orgId`, the company's
+ * own bot is tried first, then the shared bot.
+ */
 export async function downloadChatFile(
   fileId: string,
+  orgId?: string | null,
 ): Promise<{ data: ArrayBuffer; path: string } | null> {
-  const token = botToken();
-  if (!token) return null;
-  const meta = await telegram<{ file_path?: string; file_size?: number }>("getFile", {
-    file_id: fileId,
-  });
-  if (!meta?.file_path || (meta.file_size ?? 0) > MAX_DOWNLOAD) return null;
-  const res = await fetch(`https://api.telegram.org/file/bot${token}/${meta.file_path}`);
-  if (!res.ok) return null;
-  return { data: await res.arrayBuffer(), path: meta.file_path };
+  const own = orgId ? await orgBot(orgId) : null;
+  for (const token of [own?.token ?? null, botToken()]) {
+    if (!token) continue;
+    const meta = await telegram<{ file_path?: string; file_size?: number }>(
+      "getFile",
+      { file_id: fileId },
+      token,
+    );
+    if (!meta?.file_path) continue;
+    if ((meta.file_size ?? 0) > MAX_DOWNLOAD) return null;
+    const res = await fetch(`https://api.telegram.org/file/bot${token}/${meta.file_path}`);
+    if (!res.ok) return null;
+    return { data: await res.arrayBuffer(), path: meta.file_path };
+  }
+  return null;
 }
 
 /** Content type for a downloaded file, by its kind and path. */
@@ -177,10 +201,11 @@ export async function refreshChatPhoto(link: {
 }): Promise<void> {
   const checked = link.photo_checked_at ? new Date(link.photo_checked_at).getTime() : 0;
   if (Date.now() - checked < 24 * 60 * 60 * 1000) return;
-  const photos = await telegram<{ photos?: { file_id: string }[][] }>("getUserProfilePhotos", {
-    user_id: link.chat_id,
-    limit: 1,
-  }).catch(() => null);
+  const photos = await telegram<{ photos?: { file_id: string }[][] }>(
+    "getUserProfilePhotos",
+    { user_id: link.chat_id, limit: 1 },
+    await chatToken(link.chat_id),
+  ).catch(() => null);
   const sizes = photos?.photos?.[0] ?? [];
   // Sizes come smallest first; the second (~160px) is enough for an avatar.
   const pick = sizes[Math.min(1, sizes.length - 1)] ?? null;
@@ -200,10 +225,10 @@ export async function setChatReaction(
   messageId: number,
   emoji: string | null,
 ): Promise<boolean> {
-  const done = await telegram<boolean>("setMessageReaction", {
-    chat_id: chatId,
-    message_id: messageId,
-    reaction: emoji ? [{ type: "emoji", emoji }] : [],
-  });
+  const done = await telegram<boolean>(
+    "setMessageReaction",
+    { chat_id: chatId, message_id: messageId, reaction: emoji ? [{ type: "emoji", emoji }] : [] },
+    await chatToken(chatId),
+  );
   return done === true;
 }

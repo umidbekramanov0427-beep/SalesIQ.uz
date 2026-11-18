@@ -44,7 +44,7 @@ export const Route = createFileRoute("/telegram/lead-file")({
             },
           });
         }
-        const file = await downloadChatFile(msg.file_id);
+        const file = await downloadChatFile(msg.file_id, caller.organizationId);
         if (!file) return Response.json({ error: "file_unavailable" }, { status: 404 });
         const name = msg.file_name || file.path.split("/").pop() || "file";
         return new Response(file.data, {

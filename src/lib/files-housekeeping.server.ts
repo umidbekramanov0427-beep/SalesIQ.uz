@@ -201,7 +201,7 @@ export async function copyChatFile(input: {
     data = got.data;
     type = got.type;
   } else {
-    const got = await downloadChatFile(input.fileId);
+    const got = await downloadChatFile(input.fileId, input.organizationId);
     if (!got) return;
     data = got.data;
     type = "application/octet-stream";

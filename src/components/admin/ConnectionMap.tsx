@@ -53,6 +53,7 @@ const MAP_FOLD_KEY = "salesiq.console.mapOpen";
 // always go first; at most one unconnected telephony provider is shown.
 const PREFERRED = [
   "amocrm",
+  "telegramBot",
   "telegramLink",
   "instagram",
   "payments",

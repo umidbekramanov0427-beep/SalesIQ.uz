@@ -1826,6 +1826,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      org_telegram_bots: {
+        Row: {
+          bot_user_id: number | null;
+          connected_at: string;
+          default_salesbot_id: string | null;
+          organization_id: string;
+          token_sealed: string;
+          updated_at: string;
+          username: string;
+          webhook_secret: string;
+        };
+        Insert: {
+          bot_user_id?: number | null;
+          connected_at?: string;
+          default_salesbot_id?: string | null;
+          organization_id: string;
+          token_sealed: string;
+          updated_at?: string;
+          username: string;
+          webhook_secret: string;
+        };
+        Update: {
+          bot_user_id?: number | null;
+          connected_at?: string;
+          default_salesbot_id?: string | null;
+          organization_id?: string;
+          token_sealed?: string;
+          updated_at?: string;
+          username?: string;
+          webhook_secret?: string;
+        };
+        Relationships: [];
+      };
       plan_milestones: {
         Row: {
           fact: number;
@@ -4060,6 +4093,7 @@ export type Database = {
       };
       lead_telegram_links: {
         Row: {
+          via_org_bot: boolean;
           chat_first_name: string | null;
           chat_id: number;
           chat_username: string | null;
@@ -4071,6 +4105,7 @@ export type Database = {
           photo_file_id: string | null;
         };
         Insert: {
+          via_org_bot?: boolean;
           chat_first_name?: string | null;
           chat_id: number;
           chat_username?: string | null;
@@ -4082,6 +4117,7 @@ export type Database = {
           photo_file_id?: string | null;
         };
         Update: {
+          via_org_bot?: boolean;
           chat_first_name?: string | null;
           chat_id?: number;
           chat_username?: string | null;
@@ -5310,6 +5346,7 @@ export type Database = {
       };
       organizations: {
         Row: {
+          shared_bot_until: string | null;
           active: boolean;
           created_at: string;
           created_by: string | null;
@@ -5328,6 +5365,7 @@ export type Database = {
           unlimited_seats: boolean;
         };
         Insert: {
+          shared_bot_until?: string | null;
           active?: boolean;
           created_at?: string;
           created_by?: string | null;
@@ -5346,6 +5384,7 @@ export type Database = {
           unlimited_seats?: boolean;
         };
         Update: {
+          shared_bot_until?: string | null;
           active?: boolean;
           created_at?: string;
           created_by?: string | null;
@@ -7362,6 +7401,7 @@ export type Database = {
       };
       salesbots: {
         Row: {
+          short_code: string | null;
           channel: string;
           created_at: string;
           created_by: string | null;
@@ -7377,6 +7417,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          short_code?: string | null;
           channel?: string;
           created_at?: string;
           created_by?: string | null;
@@ -7392,6 +7433,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          short_code?: string | null;
           channel?: string;
           created_at?: string;
           created_by?: string | null;

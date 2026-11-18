@@ -53,6 +53,7 @@ import {
   useAmoConnectionStatus,
   useDidoxStatus,
   useInstagramAccount,
+  useOrgBot,
   usePaymentMerchant,
   useFollowupSettings,
   useBitrix24ConnectionStatus,
@@ -159,6 +160,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   const sidebar = useSidebarConfig();
   const didox = useDidoxStatus();
   const instagram = useInstagramAccount(crmEnabled);
+  const orgBotState = useOrgBot(crmEnabled);
   const payments = usePaymentMerchant(crmEnabled);
   const followups = useFollowupSettings();
 
@@ -317,6 +319,14 @@ export function useAdminCatalog(): CatalogGroup[] {
   if (crmEnabled) {
     integrations.push(
       {
+        key: "telegramBot",
+        to: "/integrations/telegram-bot",
+        icon: Bot,
+        tone: "sky",
+        logo: { src: "/brand/telegram.svg" },
+        status: connected(orgBotState.isFetched, !!orgBotState.data?.bot),
+      },
+      {
         key: "telegramLink",
         to: "/daily-report-settings",
         icon: MessageSquareText,
@@ -424,7 +434,14 @@ export function useAdminCatalog(): CatalogGroup[] {
   // that talk to clients, the Telegram bot that sends staff their reports,
   // the Mini App -- in one "Botlar" section instead of spread over CRM and
   // integrations.
-  const BOT_KEYS = ["salesbots", "autoResponders", "followUps", "telegramLink", "telegramApp"];
+  const BOT_KEYS = [
+    "telegramBot",
+    "salesbots",
+    "autoResponders",
+    "followUps",
+    "telegramLink",
+    "telegramApp",
+  ];
   const bots: CatalogItem[] = [];
   for (const g of groups) {
     for (const key of BOT_KEYS) {

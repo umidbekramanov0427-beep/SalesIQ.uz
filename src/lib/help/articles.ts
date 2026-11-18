@@ -1950,6 +1950,82 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "telegram-bot",
+    group: "integrations",
+    open: "/integrations/telegram-bot",
+    title: { uz: "O'z Telegram botingiz", ru: "Свой Telegram-бот", en: "Your own Telegram bot" },
+    summary: {
+      uz: "Mijozlar kompaniyangiz nomidagi botga yozadi: lidlar, salesbot va javoblar shu bot orqali.",
+      ru: "Клиенты пишут боту с именем вашей компании: заявки, salesbot и ответы идут через него.",
+      en: "Clients write to a bot under your company's name: leads, salesbots and replies go through it.",
+    },
+    steps: [
+      {
+        uz: "Telegram'da **@BotFather**ni oching, **/newbot** yozing, botga nom va oxiri `bot` bilan tugaydigan username bering.",
+        ru: "Откройте **@BotFather** в Telegram, напишите **/newbot**, задайте имя и username, оканчивающийся на `bot`.",
+        en: "Open **@BotFather** in Telegram, send **/newbot**, give the bot a name and a username ending in `bot`.",
+      },
+      {
+        uz: "BotFather bergan tokenni (`123456789:AA...`) nusxalang.",
+        ru: "Скопируйте токен, который выдал BotFather (`123456789:AA...`).",
+        en: "Copy the token BotFather gives you (`123456789:AA...`).",
+      },
+      {
+        uz: "**Admin → Botlar → Telegram bot**da tokenni qo'ying va **Ulash**ni bosing.",
+        ru: "В **Админ → Боты → Telegram-бот** вставьте токен и нажмите **Подключить**.",
+        en: "In **Admin → Bots → Telegram bot** paste the token and press **Connect**.",
+      },
+      {
+        uz: "**Asosiy salesbot**ni tanlang: `t.me/<botingiz>` havolasini ochgan mijozga shu salesbot ishlaydi.",
+        ru: "Выберите **основной salesbot**: он запускается у клиента, открывшего `t.me/<ваш бот>`.",
+        en: "Pick the **main salesbot**: it runs for a client who opens `t.me/<your bot>`.",
+      },
+      {
+        uz: "**Sinash**ni bosib botga yozing — lid voronkada paydo bo'ladi, menejer javobi shu botdan boradi.",
+        ru: "Нажмите **Проверить** и напишите боту — заявка появится в воронке, ответ менеджера уйдёт через этого бота.",
+        en: "Press **Test** and write to the bot — the lead appears in the funnel and the manager's reply goes through it.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Umumiy sinov boti yangi mijozlarni faqat ro'yxatdan o'tgandan keyingi 14 kun qabul qiladi. Shundan keyin yangi lid va salesbot faqat o'z botingiz orqali ishlaydi; eski yozishmalar davom etadi.",
+        ru: "Общий пробный бот принимает новых клиентов только 14 дней после регистрации. Потом новые заявки и salesbot работают только через ваш бот; старые переписки продолжаются.",
+        en: "The shared trial bot takes new clients only for 14 days after sign-up. After that new leads and salesbots work only through your own bot; existing chats carry on.",
+      },
+      {
+        uz: "Token serverda shifrlangan holda saqlanadi va hech kimga ko'rsatilmaydi. Bot faqat mijozlar bilan ishlaydi — xodimlarga eslatma va hisobotlar xodimlar botidan boradi.",
+        ru: "Токен хранится на сервере в зашифрованном виде и никому не показывается. Бот работает только с клиентами — напоминания и отчёты сотрудникам идут из бота сотрудников.",
+        en: "The token is stored encrypted on the server and never shown. The bot talks only to clients — staff reminders and reports come from the staff bot.",
+      },
+    ],
+    faq: [
+      {
+        q: {
+          uz: "Salesbot havolasi qanday bo'ladi?",
+          ru: "Как выглядит ссылка на salesbot?",
+          en: "What does a salesbot link look like?",
+        },
+        a: {
+          uz: "Asosiy salesbot uchun oddiy `t.me/<botingiz>`, boshqalari uchun qisqa `t.me/<botingiz>?start=s_ab12cd`. Eski uzun havolalar ham ishlayveradi.",
+          ru: "Для основного salesbot — просто `t.me/<ваш бот>`, для остальных короткая `t.me/<ваш бот>?start=s_ab12cd`. Старые длинные ссылки тоже работают.",
+          en: "The main salesbot uses the plain `t.me/<your bot>`, the others a short `t.me/<your bot>?start=s_ab12cd`. Old long links keep working.",
+        },
+      },
+      {
+        q: {
+          uz: "Botni uzsam nima bo'ladi?",
+          ru: "Что будет, если отключить бота?",
+          en: "What happens if I disconnect the bot?",
+        },
+        a: {
+          uz: "Bot SalesIQ'dan ajratiladi, yozishmalar tarixi saqlanadi. Mijozlarga yangi xabar faqat ular boshqa bot orqali yozgan bo'lsa yetadi.",
+          ru: "Бот отключается от SalesIQ, история переписки сохраняется. Новые сообщения дойдут клиентам, только если они писали через другой бот.",
+          en: "The bot is detached from SalesIQ and the chat history stays. New messages reach clients only if they wrote through another bot.",
+        },
+      },
+    ],
+  },
+  {
     slug: "telegram-app",
     group: "integrations",
     open: "/integrations/telegram-app",

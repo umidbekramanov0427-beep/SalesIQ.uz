@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { orgBot } from "@/lib/bot-tokens.server";
+import { sharedBotUsername } from "@/lib/telegram/org-bot.server";
 import { requireOrgMember } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -59,8 +61,12 @@ export const Route = createFileRoute("/telegram/link-lead")({
           .eq("key", "telegram_bot")
           .maybeSingle();
         const config = (botSetting?.config ?? {}) as { username?: string };
+        // The client sends the code to the company's own bot when it has one,
+        // else to the shared bot.
+        const own = await orgBot(caller.organizationId);
+        const botUsername = own?.username ?? config.username ?? (await sharedBotUsername());
 
-        return Response.json({ code, botUsername: config.username ?? null, expiresAt });
+        return Response.json({ code, botUsername, expiresAt });
       },
     },
   },

@@ -33,6 +33,7 @@ import { Route as LeadScoreRouteImport } from './routes/lead-score'
 import { Route as LeadTasksRouteImport } from './routes/lead-tasks'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as OrgBotRouteImport } from './routes/org-bot'
 import { Route as PhoneRouteImport } from './routes/phone'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -223,6 +224,7 @@ import { Route as PlatformRevenueApiRouteImport } from './routes/platform.revenu
 import { Route as PlatformSalesbotsRouteImport } from './routes/platform.salesbots'
 import { Route as PlatformSessionsRouteImport } from './routes/platform.sessions'
 import { Route as PlatformSettingsRouteImport } from './routes/platform.settings'
+import { Route as PlatformSharedBotExtendRouteImport } from './routes/platform.shared-bot-extend'
 import { Route as PlatformSupportRouteImport } from './routes/platform.support'
 import { Route as PlatformSupportApiRouteImport } from './routes/platform.support-api'
 import { Route as PlatformUpdateUserRouteImport } from './routes/platform.update-user'
@@ -321,6 +323,7 @@ import { Route as PlatformUsageOrgIdRouteImport } from './routes/platform.usage.
 import { Route as PlatformVisitSessionIdRouteImport } from './routes/platform.visit.$sessionId'
 import { Route as SubscriptionPaymentsClickWebhookRouteImport } from './routes/subscription-payments.click.webhook'
 import { Route as SubscriptionPaymentsPaymeWebhookRouteImport } from './routes/subscription-payments.payme.webhook'
+import { Route as TelegramOrgOrgIdRouteImport } from './routes/telegram.org.$orgId'
 import { Route as ApiV1LeadsLeadIdRouteImport } from './routes/api.v1.leads.$leadId'
 import { Route as ApiV1LeadsLeadIdNotesRouteImport } from './routes/api.v1.leads.$leadId.notes'
 
@@ -442,6 +445,11 @@ const LoginRoute = LoginRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrgBotRoute = OrgBotRouteImport.update({
+  id: '/org-bot',
+  path: '/org-bot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PhoneRoute = PhoneRouteImport.update({
@@ -1421,6 +1429,11 @@ const PlatformSettingsRoute = PlatformSettingsRouteImport.update({
   path: '/platform/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformSharedBotExtendRoute = PlatformSharedBotExtendRouteImport.update({
+  id: '/platform/shared-bot-extend',
+  path: '/platform/shared-bot-extend',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformSupportRoute = PlatformSupportRouteImport.update({
   id: '/platform/support',
   path: '/platform/support',
@@ -1950,6 +1963,11 @@ const SubscriptionPaymentsPaymeWebhookRoute =
     path: '/subscription-payments/payme/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const TelegramOrgOrgIdRoute = TelegramOrgOrgIdRouteImport.update({
+  id: '/telegram/org/$orgId',
+  path: '/telegram/org/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1LeadsLeadIdRoute = ApiV1LeadsLeadIdRouteImport.update({
   id: '/$leadId',
   path: '/$leadId',
@@ -1986,6 +2004,7 @@ export interface FileRoutesByFullPath {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/org-bot': typeof OrgBotRoute
   '/phone': typeof PhoneRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -2173,6 +2192,7 @@ export interface FileRoutesByFullPath {
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/settings': typeof PlatformSettingsRoute
+  '/platform/shared-bot-extend': typeof PlatformSharedBotExtendRoute
   '/platform/support': typeof PlatformSupportRoute
   '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -2271,6 +2291,7 @@ export interface FileRoutesByFullPath {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
+  '/telegram/org/$orgId': typeof TelegramOrgOrgIdRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
   '/marketing/channels/': typeof MarketingChannelsIndexRoute
   '/marketing/webinars/': typeof MarketingWebinarsIndexRoute
@@ -2302,6 +2323,7 @@ export interface FileRoutesByTo {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/org-bot': typeof OrgBotRoute
   '/phone': typeof PhoneRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -2489,6 +2511,7 @@ export interface FileRoutesByTo {
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/settings': typeof PlatformSettingsRoute
+  '/platform/shared-bot-extend': typeof PlatformSharedBotExtendRoute
   '/platform/support': typeof PlatformSupportRoute
   '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -2587,6 +2610,7 @@ export interface FileRoutesByTo {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
+  '/telegram/org/$orgId': typeof TelegramOrgOrgIdRoute
   '/crm/leads': typeof CrmLeadsIndexRoute
   '/marketing/channels': typeof MarketingChannelsIndexRoute
   '/marketing/webinars': typeof MarketingWebinarsIndexRoute
@@ -2619,6 +2643,7 @@ export interface FileRoutesById {
   '/lead-tasks': typeof LeadTasksRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/org-bot': typeof OrgBotRoute
   '/phone': typeof PhoneRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -2806,6 +2831,7 @@ export interface FileRoutesById {
   '/platform/salesbots': typeof PlatformSalesbotsRoute
   '/platform/sessions': typeof PlatformSessionsRoute
   '/platform/settings': typeof PlatformSettingsRoute
+  '/platform/shared-bot-extend': typeof PlatformSharedBotExtendRoute
   '/platform/support': typeof PlatformSupportRoute
   '/platform/support-api': typeof PlatformSupportApiRoute
   '/platform/update-user': typeof PlatformUpdateUserRoute
@@ -2904,6 +2930,7 @@ export interface FileRoutesById {
   '/platform/visit/$sessionId': typeof PlatformVisitSessionIdRoute
   '/subscription-payments/click/webhook': typeof SubscriptionPaymentsClickWebhookRoute
   '/subscription-payments/payme/webhook': typeof SubscriptionPaymentsPaymeWebhookRoute
+  '/telegram/org/$orgId': typeof TelegramOrgOrgIdRoute
   '/crm/leads/': typeof CrmLeadsIndexRoute
   '/marketing/channels/': typeof MarketingChannelsIndexRoute
   '/marketing/webinars/': typeof MarketingWebinarsIndexRoute
@@ -2937,6 +2964,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/org-bot'
     | '/phone'
     | '/pricing'
     | '/privacy'
@@ -3124,6 +3152,7 @@ export interface FileRouteTypes {
     | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/settings'
+    | '/platform/shared-bot-extend'
     | '/platform/support'
     | '/platform/support-api'
     | '/platform/update-user'
@@ -3222,6 +3251,7 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
+    | '/telegram/org/$orgId'
     | '/crm/leads/'
     | '/marketing/channels/'
     | '/marketing/webinars/'
@@ -3253,6 +3283,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/org-bot'
     | '/phone'
     | '/pricing'
     | '/privacy'
@@ -3440,6 +3471,7 @@ export interface FileRouteTypes {
     | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/settings'
+    | '/platform/shared-bot-extend'
     | '/platform/support'
     | '/platform/support-api'
     | '/platform/update-user'
@@ -3538,6 +3570,7 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
+    | '/telegram/org/$orgId'
     | '/crm/leads'
     | '/marketing/channels'
     | '/marketing/webinars'
@@ -3569,6 +3602,7 @@ export interface FileRouteTypes {
     | '/lead-tasks'
     | '/login'
     | '/mcp'
+    | '/org-bot'
     | '/phone'
     | '/pricing'
     | '/privacy'
@@ -3756,6 +3790,7 @@ export interface FileRouteTypes {
     | '/platform/salesbots'
     | '/platform/sessions'
     | '/platform/settings'
+    | '/platform/shared-bot-extend'
     | '/platform/support'
     | '/platform/support-api'
     | '/platform/update-user'
@@ -3854,6 +3889,7 @@ export interface FileRouteTypes {
     | '/platform/visit/$sessionId'
     | '/subscription-payments/click/webhook'
     | '/subscription-payments/payme/webhook'
+    | '/telegram/org/$orgId'
     | '/crm/leads/'
     | '/marketing/channels/'
     | '/marketing/webinars/'
@@ -3886,6 +3922,7 @@ export interface RootRouteChildren {
   LeadTasksRoute: typeof LeadTasksRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
+  OrgBotRoute: typeof OrgBotRoute
   PhoneRoute: typeof PhoneRouteWithChildren
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -4004,6 +4041,7 @@ export interface RootRouteChildren {
   PlatformSalesbotsRoute: typeof PlatformSalesbotsRoute
   PlatformSessionsRoute: typeof PlatformSessionsRoute
   PlatformSettingsRoute: typeof PlatformSettingsRoute
+  PlatformSharedBotExtendRoute: typeof PlatformSharedBotExtendRoute
   PlatformSupportRoute: typeof PlatformSupportRoute
   PlatformSupportApiRoute: typeof PlatformSupportApiRoute
   PlatformUpdateUserRoute: typeof PlatformUpdateUserRoute
@@ -4061,6 +4099,7 @@ export interface RootRouteChildren {
   PlatformVisitSessionIdRoute: typeof PlatformVisitSessionIdRoute
   SubscriptionPaymentsClickWebhookRoute: typeof SubscriptionPaymentsClickWebhookRoute
   SubscriptionPaymentsPaymeWebhookRoute: typeof SubscriptionPaymentsPaymeWebhookRoute
+  TelegramOrgOrgIdRoute: typeof TelegramOrgOrgIdRoute
   CrmLeadsIndexRoute: typeof CrmLeadsIndexRoute
   MarketingChannelsIndexRoute: typeof MarketingChannelsIndexRoute
   MarketingWebinarsIndexRoute: typeof MarketingWebinarsIndexRoute
@@ -4234,6 +4273,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/org-bot': {
+      id: '/org-bot'
+      path: '/org-bot'
+      fullPath: '/org-bot'
+      preLoaderRoute: typeof OrgBotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/phone': {
@@ -5566,6 +5612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/shared-bot-extend': {
+      id: '/platform/shared-bot-extend'
+      path: '/platform/shared-bot-extend'
+      fullPath: '/platform/shared-bot-extend'
+      preLoaderRoute: typeof PlatformSharedBotExtendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/support': {
       id: '/platform/support'
       path: '/platform/support'
@@ -6252,6 +6305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscriptionPaymentsPaymeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/telegram/org/$orgId': {
+      id: '/telegram/org/$orgId'
+      path: '/telegram/org/$orgId'
+      fullPath: '/telegram/org/$orgId'
+      preLoaderRoute: typeof TelegramOrgOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/leads/$leadId': {
       id: '/api/v1/leads/$leadId'
       path: '/$leadId'
@@ -6721,6 +6781,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeadTasksRoute: LeadTasksRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
+  OrgBotRoute: OrgBotRoute,
   PhoneRoute: PhoneRouteWithChildren,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
@@ -6840,6 +6901,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformSalesbotsRoute: PlatformSalesbotsRoute,
   PlatformSessionsRoute: PlatformSessionsRoute,
   PlatformSettingsRoute: PlatformSettingsRoute,
+  PlatformSharedBotExtendRoute: PlatformSharedBotExtendRoute,
   PlatformSupportRoute: PlatformSupportRoute,
   PlatformSupportApiRoute: PlatformSupportApiRoute,
   PlatformUpdateUserRoute: PlatformUpdateUserRoute,
@@ -6897,6 +6959,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformVisitSessionIdRoute: PlatformVisitSessionIdRoute,
   SubscriptionPaymentsClickWebhookRoute: SubscriptionPaymentsClickWebhookRoute,
   SubscriptionPaymentsPaymeWebhookRoute: SubscriptionPaymentsPaymeWebhookRoute,
+  TelegramOrgOrgIdRoute: TelegramOrgOrgIdRoute,
   CrmLeadsIndexRoute: CrmLeadsIndexRoute,
   MarketingChannelsIndexRoute: MarketingChannelsIndexRoute,
   MarketingWebinarsIndexRoute: MarketingWebinarsIndexRoute,

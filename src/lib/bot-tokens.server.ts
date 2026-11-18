@@ -7,6 +7,9 @@
 //             saved in Platforma -> Botlar (sealed in platform_private, server-only).
 //   ops    -- talks to the platform owner (monitoring, alerts, backups).
 //             OPS_TELEGRAM_BOT_TOKEN or the saved token.
+// A company may also connect its own bot (org_telegram_bots, Integratsiyalar
+// -> Telegram bot): its clients talk to that bot, and every message to a
+// chat linked through it (lead_telegram_links.via_org_bot) goes through it.
 // Without a staff / ops token everything keeps going through the client
 // bot, as before. A person who linked Telegram through the staff bot is
 // remembered in telegram_chat_bots, so every later message to their chat
@@ -117,7 +120,7 @@ export async function saveBotToken(
 
 const meCache = new Map<string, { username: string | null; id: number | null; at: number }>();
 
-async function getMe(
+export async function getMe(
   token: string,
 ): Promise<{ username: string | null; id: number | null } | null> {
   try {
@@ -145,15 +148,104 @@ export async function botUsername(kind: BotKind): Promise<string | null> {
 
 /* ---- Which bot is speaking ------------------------------------------- */
 
-const scope = new AsyncLocalStorage<BotKind>();
+/** A company's own bot answering an update from its webhook. */
+export type OrgBotScope = { org: string; token: string };
+
+const scope = new AsyncLocalStorage<BotKind | OrgBotScope>();
 
 /** Runs `fn` as `kind`: replies inside a staff-bot update go through the staff bot. */
 export function withBot<T>(kind: BotKind, fn: () => Promise<T>): Promise<T> {
   return scope.run(kind, fn);
 }
 
+/** Runs `fn` as a company's own bot: replies inside its update go through it. */
+export function withOrgBot<T>(org: string, token: string, fn: () => Promise<T>): Promise<T> {
+  return scope.run({ org, token }, fn);
+}
+
 export function currentBot(): BotKind {
-  return scope.getStore() ?? "client";
+  const s = scope.getStore();
+  return typeof s === "string" ? s : "client";
+}
+
+/** The company whose own bot is answering this update, or null. */
+export function currentOrgBot(): string | null {
+  const s = scope.getStore();
+  return s && typeof s === "object" ? s.org : null;
+}
+
+/* ---- A company's own bot ---------------------------------------------- */
+
+export type OrgBot = {
+  organizationId: string;
+  token: string;
+  username: string;
+  webhookSecret: string;
+  defaultSalesbotId: string | null;
+};
+
+const orgBots = new Map<string, { bot: OrgBot | null; at: number }>();
+const ORG_TTL = 2 * 60_000;
+
+/** The company's own bot (cached two minutes), null when it has none. */
+export async function orgBot(orgId: string): Promise<OrgBot | null> {
+  const hit = orgBots.get(orgId);
+  if (hit && Date.now() - hit.at < ORG_TTL) return hit.bot;
+  let bot: OrgBot | null = null;
+  try {
+    const { data } = await supabaseAdmin
+      .from("org_telegram_bots")
+      .select("organization_id, username, token_sealed, webhook_secret, default_salesbot_id")
+      .eq("organization_id", orgId)
+      .maybeSingle();
+    const token = data ? openSecret(data.token_sealed) : null;
+    bot =
+      data && token
+        ? {
+            organizationId: data.organization_id,
+            token,
+            username: data.username,
+            webhookSecret: data.webhook_secret,
+            defaultSalesbotId: data.default_salesbot_id,
+          }
+        : null;
+  } catch {
+    // Before the migration: no company bots.
+  }
+  orgBots.set(orgId, { bot, at: Date.now() });
+  return bot;
+}
+
+/** Drops the cached company bot (after connecting, changing or removing it). */
+export function forgetOrgBot(orgId: string): void {
+  orgBots.delete(orgId);
+}
+
+const chatOrgs = new Map<number, { org: string | null; at: number }>();
+
+/** The company whose own bot this chat talks to, or null. */
+async function orgOfChat(chatId: number): Promise<string | null> {
+  const hit = chatOrgs.get(chatId);
+  if (hit && Date.now() - hit.at < CHAT_TTL) return hit.org;
+  let org: string | null = null;
+  try {
+    const { data } = await supabaseAdmin
+      .from("lead_telegram_links")
+      .select("organization_id, via_org_bot")
+      .eq("chat_id", chatId)
+      .maybeSingle();
+    const row = data as { organization_id: string; via_org_bot?: boolean } | null;
+    org = row?.via_org_bot ? row.organization_id : null;
+  } catch {
+    org = null;
+  }
+  chatOrgs.set(chatId, { org, at: Date.now() });
+  return org;
+}
+
+/** A chat was (re)linked: forget what bot it used. */
+export function forgetChatOrg(chatId: number): void {
+  chatOrgs.delete(chatId);
 }
 
 /** The secret Telegram sends with each staff-bot update (same webhook URL as the client bot). */
@@ -218,15 +310,25 @@ export async function forgetChatBot(chatId: number): Promise<void> {
 
 /**
  * The token for a message to `chatId`: the bot of the update being answered,
- * else the staff bot when that chat linked through it, else the client bot.
+ * else the company's own bot when the client talks to it, else the staff bot
+ * when that chat linked through it, else the client bot.
  */
 export async function tokenForChat(
   chatId: number,
 ): Promise<{ token: string; bot: BotKind; routed: boolean }> {
   const inScope = scope.getStore();
+  if (inScope && typeof inScope === "object") {
+    return { token: inScope.token, bot: "client", routed: false };
+  }
   if (inScope && inScope !== "client") {
     const t = botToken(inScope);
     if (t) return { token: t, bot: inScope, routed: false };
+  }
+  // A client who writes to the company's own bot hears back from it.
+  if (!inScope) {
+    const org = await orgOfChat(chatId);
+    const own = org ? await orgBot(org) : null;
+    if (own) return { token: own.token, bot: "client", routed: false };
   }
   if (!inScope && botToken("staff") && (await chatBot(chatId)) === "staff") {
     return { token: botToken("staff")!, bot: "staff", routed: true };
@@ -317,11 +419,7 @@ export async function ensureStaffBot(force = false): Promise<BotHookResult> {
     };
   }
   await call("setMyCommands", {
-    commands: [
-      { command: "start", description: "SalesIQ'ga ulash" },
-      { command: "keldim", description: "Ishni boshlash" },
-      { command: "ketdim", description: "Ishni tugatish" },
-    ],
+    commands: [{ command: "start", description: "SalesIQ'ga ulash" }],
   }).catch(() => undefined);
   staffReady = token;
   const hook = await botWebhook("staff");

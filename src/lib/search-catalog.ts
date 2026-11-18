@@ -121,6 +121,11 @@ export const SEARCH_CATALOG: CatalogItem[] = [
     keywords: "instagram direct инстаграм директ chat",
   },
   {
+    to: "/integrations/telegram-bot",
+    labelKey: "hub.item.telegramBot.title",
+    keywords: "telegram bot botfather token o'z boti свой бот телеграм",
+  },
+  {
     to: "/integrations/telegram-app",
     labelKey: "hub.item.telegramApp.title",
     keywords: "telegram mini app ilova телеграм",

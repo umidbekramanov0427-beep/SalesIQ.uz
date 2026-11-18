@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { SectionCard, Pill, ChannelActionButton, IconTile } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
+import { SharedBotExtend } from "@/components/owner/SharedBotExtend";
 import { EditUserDialog } from "@/components/EditUserDialog";
 import {
   Dialog,
@@ -733,6 +734,10 @@ function OrgDetailPage() {
                 {t("platform.grantPaidMonth")}
               </button>
             </div>
+            <SharedBotExtend
+              orgId={org.id}
+              until={(org as { shared_bot_until?: string | null }).shared_bot_until}
+            />
           </SectionCard>
         )}
 

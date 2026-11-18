@@ -4,6 +4,7 @@ import {
   ChevronRight,
   CreditCard,
   Instagram,
+  Bot,
   Mail,
   MessageSquareText,
   Send,
@@ -27,6 +28,7 @@ import {
 } from "@/components/integrations/IntegrationCards";
 import { InstagramCard } from "@/components/integrations/InstagramCard";
 import { PaymentsCard } from "@/components/integrations/PaymentsCard";
+import { OrgBotCard } from "@/components/integrations/OrgBotCard";
 import { usePermission } from "@/hooks/use-crm-data";
 import { useI18n } from "@/lib/i18n";
 
@@ -126,6 +128,13 @@ const PAGES: Record<string, Page> = {
     manageOnly: true,
     render: () => <PaymentsCard />,
   },
+  "telegram-bot": {
+    icon: Bot,
+    tone: "sky",
+    crmOnly: true,
+    manageOnly: true,
+    render: () => <OrgBotCard />,
+  },
   "telegram-app": {
     icon: Send,
     tone: "sky",
@@ -141,6 +150,7 @@ const ITEM_KEY: Record<string, string> = {
   sms: "sms",
   email: "email",
   webhook: "webhook",
+  "telegram-bot": "telegramBot",
   "telegram-app": "telegramApp",
   instagram: "instagram",
   payments: "payments",

@@ -40,7 +40,12 @@ import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import type { BotStep, MessageChannel } from "@/lib/automation-types";
-import { useLeadCustomFieldDefs, useCrmStages, useProfilesRaw } from "@/hooks/use-crm-data";
+import {
+  useLeadCustomFieldDefs,
+  useCrmStages,
+  useOrgBot,
+  useProfilesRaw,
+} from "@/hooks/use-crm-data";
 import {
   useDeleteSalesbot,
   useSalesbotRuns,
@@ -50,6 +55,7 @@ import {
   type SalesbotRow,
 } from "@/hooks/use-automations";
 import { copyText } from "@/lib/clipboard";
+import { SharedBotNotice } from "@/components/integrations/OrgBotCard";
 
 // Salesbots. A bot is an ordered list of steps run server-side
 // (lib/automations/engine.server.ts), started by a trigger, from a lead page,
@@ -570,6 +576,17 @@ function NewBotChooser({ onPick }: { onPick: (draft: SalesbotInput) => void }) {
 
 /* ------------------------------ page ------------------------------ */
 
+/** «The trial bot stops taking new clients in N days -- connect your own». */
+function SharedBotBanner() {
+  const { data } = useOrgBot();
+  if (!data?.ready) return null;
+  return (
+    <div className="mb-4">
+      <SharedBotNotice state={data} withLink />
+    </div>
+  );
+}
+
 function SalesbotsPage() {
   const { t } = useI18n();
   const { data: bots, isLoading } = useSalesbots();
@@ -612,6 +629,7 @@ function SalesbotsPage() {
   return (
     <>
       <PageHeader title={t("sb.title")} icon={Bot} tone="rose" description={t("sb.desc")} />
+      <SharedBotBanner />
       <div className="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
         <div className="space-y-1.5">
           <button

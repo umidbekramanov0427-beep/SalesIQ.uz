@@ -52,7 +52,9 @@ export const Route = createFileRoute("/telegram/lead-avatar")({
           .eq("lead_id", leadId)
           .eq("organization_id", caller.organizationId)
           .maybeSingle();
-        const file = link?.photo_file_id ? await downloadChatFile(link.photo_file_id) : null;
+        const file = link?.photo_file_id
+          ? await downloadChatFile(link.photo_file_id, caller.organizationId)
+          : null;
         if (!file) {
           const ig = await instagramAvatar(caller.organizationId, leadId).catch(() => null);
           return ig ?? Response.json({ error: "Not found" }, { status: 404 });

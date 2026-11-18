@@ -32,7 +32,13 @@ type BotState = {
   webhook: string | null;
   webhookError: string | null;
 };
-type Data = { ready: boolean; bots: Record<Kind, BotState>; staffChats: number };
+type Data = {
+  ready: boolean;
+  bots: Record<Kind, BotState>;
+  staffChats: number;
+  trialOrgs?: number;
+  orgBots?: number;
+};
 
 const META: Record<Kind, { icon: LucideIcon; tile: string; roles: string[] }> = {
   client: {
@@ -82,6 +88,8 @@ export function PlatformBotsCard() {
                 kind={k}
                 bot={data.bots[k]}
                 staffChats={data.staffChats}
+                trialOrgs={data.trialOrgs ?? 0}
+                orgBots={data.orgBots ?? 0}
                 canEdit={data.ready}
               />
             ))}
@@ -96,11 +104,15 @@ function BotCard({
   kind,
   bot,
   staffChats,
+  trialOrgs,
+  orgBots,
   canEdit,
 }: {
   kind: Kind;
   bot: BotState;
   staffChats: number;
+  trialOrgs: number;
+  orgBots: number;
   canEdit: boolean;
 }) {
   const { t } = useI18n();
@@ -255,6 +267,11 @@ function BotCard({
       </ul>
 
       <div className="mt-auto pt-4">
+        {kind === "client" && (
+          <p className="mb-2 text-[12px] font-medium text-foreground">
+            {t("pbots.clientCounts", { trial: trialOrgs, own: orgBots })}
+          </p>
+        )}
         {kind === "client" ? (
           <p className="text-[12px] leading-relaxed text-muted-foreground">
             {t("pbots.clientNote")}

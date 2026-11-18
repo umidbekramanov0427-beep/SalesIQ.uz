@@ -105,6 +105,8 @@ MIGRATIONS=(
   20270123000000_drop_attendance_payroll # twice
   20270124000000_nazorat_settings
   20270124000000_nazorat_settings # twice
+  20270125000000_org_bots
+  20270125000000_org_bots # twice
 )
 
 cleanup() { :; }
