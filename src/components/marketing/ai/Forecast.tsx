@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useMarketingAiQuery, type AiScope } from "@/hooks/use-crm-data";
 import type { AiForecasts } from "@/lib/marketing-ai/types";
 import type { Forecast } from "@/lib/marketing-ai/forecast";
-import { num, tashkentDay, useMoney } from "@/components/marketing/ai/shared";
+import { num, tashkentDay, useMoney, useMoneyShort } from "@/components/marketing/ai/shared";
 
 // AI tahlilchi -> Prognoz: the next four weeks from the last twelve, a
 // straight-line trend with a range -- only with 4+ full weeks of history,
@@ -14,6 +14,7 @@ import { num, tashkentDay, useMoney } from "@/components/marketing/ai/shared";
 export function AiForecastTab({ scope }: { scope: AiScope }) {
   const { t } = useI18n();
   const money = useMoney();
+  const short = useMoneyShort();
   const q = useMarketingAiQuery<AiForecasts>("forecast", {
     action: "forecast",
     scope: { project: scope.project, campaign: scope.campaign },
@@ -57,7 +58,7 @@ export function AiForecastTab({ scope }: { scope: AiScope }) {
                 <div className="flex items-center justify-between text-[12px] text-muted-foreground">
                   <span>
                     {t("ai.fc.trend", {
-                      v: c.money ? money(c.f.slope) : `${c.f.slope > 0 ? "+" : ""}${c.f.slope}`,
+                      v: c.money ? short(c.f.slope) : `${c.f.slope > 0 ? "+" : ""}${c.f.slope}`,
                     })}
                   </span>
                   <span
@@ -76,15 +77,15 @@ export function AiForecastTab({ scope }: { scope: AiScope }) {
                 <ul className="divide-y divide-border text-[13px]">
                   {c.f.next.map((n) => (
                     <li key={n.week} className="flex items-baseline gap-2 py-1.5">
-                      <span className="w-[86px] text-muted-foreground">
+                      <span className="w-[86px] shrink-0 text-muted-foreground">
                         {n.week.split("-").reverse().join(".")}
                       </span>
-                      <b className="flex-1 tabular-nums text-foreground">
-                        {c.money ? money(n.value) : num(n.value)}
+                      <b className="flex-1 whitespace-nowrap tabular-nums text-foreground">
+                        {c.money ? short(n.value) : num(n.value)}
                       </b>
-                      <span className="text-[11.5px] tabular-nums text-muted-foreground">
+                      <span className="whitespace-nowrap text-[11.5px] tabular-nums text-muted-foreground">
                         {c.money
-                          ? `${money(n.low)} – ${money(n.high)}`
+                          ? `${short(n.low)} – ${short(n.high)}`
                           : `${num(n.low)} – ${num(n.high)}`}
                       </span>
                     </li>

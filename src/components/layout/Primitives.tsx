@@ -581,6 +581,7 @@ export function StatCard({
   label,
   value,
   delta,
+  deltaLowerIsBetter = false,
   hint,
   tone = "default",
   info,
@@ -594,6 +595,8 @@ export function StatCard({
   label: string;
   value: string;
   delta?: number;
+  /** A cost figure (CPL, CAC): going down is the good direction. */
+  deltaLowerIsBetter?: boolean;
   hint?: string;
   // Every card sits on the same neutral surface; "danger" is the one
   // semantic exception kept: a red figure (not a red card) for a metric that
@@ -640,7 +643,7 @@ export function StatCard({
     >
       {delta !== undefined && (
         <FigureLine>
-          <FigureDelta value={delta} />
+          <FigureDelta value={delta} lowerIsBetter={deltaLowerIsBetter} />
         </FigureLine>
       )}
       {hint && <FigureLine className={cn(isDanger && "text-destructive/80")}>{hint}</FigureLine>}

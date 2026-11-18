@@ -29,6 +29,28 @@ export function useMoney() {
   };
 }
 
+/** Money for tight places: 15,4 mln so'm / $1,2 ming. */
+export function useMoneyShort() {
+  const rate = useContext(RateContext);
+  const { unit } = useCurrency();
+  return (uzs: number | null | undefined): string => {
+    if (uzs == null) return "—";
+    const v = unit === "USD" ? uzs / rate : uzs;
+    const a = Math.abs(v);
+    const one = (x: number) => (Math.round(x * 10) / 10).toString().replace(".", ",");
+    const body =
+      a >= 1e9
+        ? `${one(a / 1e9)} mlrd`
+        : a >= 1e6
+          ? `${one(a / 1e6)} mln`
+          : a >= 1e3
+            ? `${one(a / 1e3)} ming`
+            : String(Math.round(a));
+    const sign = v < 0 ? "-" : "";
+    return unit === "USD" ? `${sign}$${body}` : `${sign}${body} so'm`;
+  };
+}
+
 export const num = (n: number | null | undefined) => (n == null ? "—" : spaced(n));
 export const pct = (x: number | null | undefined, digits = 0) =>
   x == null ? "—" : `${(x * 100).toFixed(digits)}%`;

@@ -52,7 +52,10 @@ export function AiChatTab({ scope, m }: { scope: AiScope; m: Metrics }) {
   );
   const shown = chatId ? [...(msgs.data?.messages ?? []), ...local] : local;
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => end.current?.scrollIntoView({ block: "end" }), [shown.length, busy]);
+  useEffect(() => {
+    // scrollIntoView returns a promise in new browsers: never hand it to React.
+    end.current?.scrollIntoView({ block: "end" });
+  }, [shown.length, busy]);
 
   async function send(message: string) {
     if (!message.trim() || busy) return;
