@@ -9804,6 +9804,46 @@ const ru: Record<string, string> = {
   "workHours.saveFailed": "Не удалось сохранить",
   "hub.item.workHours.title": "Рабочее время",
   "hub.item.workHours.desc": "Дни и часы работы: для автоответа и планов",
+  "orgcard.activity": "Активность",
+  "orgcard.activityHint":
+    "\u0421\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a\u0438, \u043e\u043f\u043b\u0430\u0442\u044b, \u043e\u0448\u0438\u0431\u043a\u0438",
+  "orgcard.noFacts":
+    "\u0414\u0430\u043d\u043d\u044b\u0435 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u044b",
+  "orgcard.lead": "Лид в заявках",
+  "orgcard.openLead": "Открыть лид",
+  "orgcard.noLead":
+    "\u0423 \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0438 \u043d\u0435\u0442 \u043b\u0438\u0434\u0430 \u0432 \u0437\u0430\u044f\u0432\u043a\u0430\u0445",
+  "orgcard.openTasks":
+    "{n} \u043e\u0442\u043a\u0440\u044b\u0442\u044b\u0445 \u0437\u0430\u0434\u0430\u0447",
+  "orgcard.openIssues": "{n} проблем",
+  "orgcard.errors":
+    "\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0435 \u043e\u0448\u0438\u0431\u043a\u0438",
+  "orgcard.noErrors": "Ошибок нет",
+  "orgcard.support": "Переписка",
+  "orgcard.noSupport":
+    "\u041f\u0435\u0440\u0435\u043f\u0438\u0441\u043a\u0438 \u043f\u043e\u043a\u0430 \u043d\u0435\u0442",
+  "orgcard.openInbox":
+    "\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0432\u043e \u0432\u0445\u043e\u0434\u044f\u0449\u0438\u0445",
+  "risk.title": "Под риском",
+  "risk.desc":
+    "\u041a\u043e\u043c\u043f\u0430\u043d\u0438\u0438, \u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u043b\u0438 \u0437\u0430\u0445\u043e\u0434\u0438\u0442\u044c, \u0443 \u043a\u043e\u0442\u043e\u0440\u044b\u0445 \u0437\u0430\u043a\u0430\u043d\u0447\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0441\u0440\u043e\u043a \u0438\u043b\u0438 \u0435\u0441\u0442\u044c \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u044b",
+  "risk.none":
+    "\u0421\u0435\u0439\u0447\u0430\u0441 \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0439 \u043f\u043e\u0434 \u0440\u0438\u0441\u043a\u043e\u043c \u043d\u0435\u0442",
+  "risk.more": "Ещё {n}",
+  "risk.less": "Свернуть",
+  "risk.active": "{a}/{n} активны",
+  "risk.idle": "{n} дн. без входа",
+  "risk.daysLeft": "осталось {n} дн.",
+  "risk.ended":
+    "\u0437\u0430\u043a\u043e\u043d\u0447\u0438\u043b\u0441\u044f {n} \u0434\u043d. \u043d\u0430\u0437\u0430\u0434",
+  "risk.task": "Задача",
+  "risk.taskTitle": "Связаться: {name}",
+  "risk.taskSaved":
+    "\u0417\u0430\u0434\u0430\u0447\u0430 \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d\u0430",
+  "risk.due": "Срок",
+  "risk.save": "Сохранить",
+  "risk.card": "Карточка",
+  "risk.inbox": "Написать",
 };
 
 export default ru;

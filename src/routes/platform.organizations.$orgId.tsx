@@ -27,6 +27,7 @@ import { SectionCard, Pill, ChannelActionButton, IconTile } from "@/components/l
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { SharedBotExtend } from "@/components/owner/SharedBotExtend";
+import { OrgActivity } from "@/components/owner/OrgActivity";
 import { EditUserDialog } from "@/components/EditUserDialog";
 import {
   Dialog,
@@ -289,7 +290,7 @@ function DeleteOrgDangerZone({ org }: { org: OrganizationRow }) {
 }
 
 type OrgSection =
-  "details" | "access" | "plan" | "freeze" | "modules" | "users" | "status" | "danger";
+  "activity" | "details" | "access" | "plan" | "freeze" | "modules" | "users" | "status" | "danger";
 
 // One clickable card per area of the company; the chosen one opens below.
 function SectionTile({
@@ -342,7 +343,7 @@ function OrgDetailPage() {
   const queryClient = useQueryClient();
 
   const org = orgs?.find((o) => o.id === orgId);
-  const [section, setSection] = useState<OrgSection>("details");
+  const [section, setSection] = useState<OrgSection>("activity");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [plan, setPlan] = useState<string>("start_iq");
@@ -477,6 +478,13 @@ function OrgDetailPage() {
   const tiles: { id: OrgSection; icon: LucideIcon; tone: CardTone; title: string; hint: string }[] =
     [
       {
+        id: "activity",
+        icon: Activity,
+        tone: "emerald",
+        title: t("orgcard.activity"),
+        hint: t("orgcard.activityHint"),
+      },
+      {
         id: "details",
         icon: Info,
         tone: "primary",
@@ -562,7 +570,7 @@ function OrgDetailPage() {
         }
       />
 
-      <div className="phone-joined grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="phone-joined grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         {tiles.map((tile) => (
           <SectionTile
             key={tile.id}
@@ -577,6 +585,7 @@ function OrgDetailPage() {
       </div>
 
       <div className="mt-4">
+        {section === "activity" && <OrgActivity orgId={org.id} />}
         {section === "details" && (
           <>
             <SectionCard icon={Info} tone="primary" title={t("orgcard.details")}>

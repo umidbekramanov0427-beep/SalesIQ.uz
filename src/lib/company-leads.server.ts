@@ -13,6 +13,7 @@ import {
   parseMeetingSettings,
   tashkentDay,
   tashkentTime,
+  type AtRiskCompany,
   type MeetingSettings,
 } from "@/lib/company-leads";
 import { effectiveSeatLimit } from "@/lib/plan-gating";
@@ -412,4 +413,180 @@ export async function myMeeting(orgId: string): Promise<{ at: string; status: st
     .limit(1);
   if (error || !data?.[0]?.meeting_at) return null;
   return { at: data[0].meeting_at, status: data[0].status };
+}
+
+// ---------------------------------------------------------------- company card
+
+/** Kompaniyalar -> one company -> Faoliyat: its facts and its lead in Arizalar. */
+export async function loadOrgActivity(orgId: string): Promise<{
+  facts: LeadFacts | null;
+  lead: { id: string; status: string; openTasks: number; openIssues: number } | null;
+}> {
+  const { data: app } = await supabaseAdmin
+    .from("platform_applications")
+    .select("id, status")
+    .eq("organization_id", orgId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  let openIssues = 0;
+  let openTasks = 0;
+  if (app) {
+    const [issues, tasks] = await Promise.all([
+      supabaseAdmin
+        .from("platform_application_notes")
+        .select("id", { count: "exact", head: true })
+        .eq("application_id", app.id)
+        .eq("kind", "issue")
+        .is("resolved_at", null),
+      supabaseAdmin
+        .from("platform_lead_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", orgId)
+        .is("done_at", null),
+    ]);
+    openIssues = issues.count ?? 0;
+    openTasks = tasks.count ?? 0;
+  }
+  const facts = await loadLeadFacts(orgId, openIssues);
+  return { facts, lead: app ? { id: app.id, status: app.status, openTasks, openIssues } : null };
+}
+
+// ---------------------------------------------------------------- at risk
+
+/**
+ * Kompaniyalar -> "Xavf ostidagilar": companies whose health (the same
+ * judgement as the lead card) is "risk" or "watch", worst first. Companies
+ * that ended more than 30 days ago are left out -- they are history.
+ */
+export async function loadAtRisk(now = Date.now()): Promise<AtRiskCompany[]> {
+  const since30 = new Date(now - 30 * DAY).toISOString();
+  const [orgs, people, logins, apps, issues, tasks] = await Promise.all([
+    supabaseAdmin.from("organizations").select("*"),
+    supabaseAdmin.from("profiles").select("organization_id").neq("role", "platform_owner"),
+    supabaseAdmin
+      .from("user_login_events")
+      .select("organization_id, user_id, created_at")
+      .gte("created_at", since30)
+      .order("created_at", { ascending: false })
+      .limit(20_000),
+    supabaseAdmin
+      .from("platform_applications")
+      .select("id, organization_id, created_at")
+      .not("organization_id", "is", null),
+    supabaseAdmin
+      .from("platform_application_notes")
+      .select("application_id")
+      .eq("kind", "issue")
+      .is("resolved_at", null),
+    supabaseAdmin
+      .from("platform_lead_tasks")
+      .select("organization_id")
+      .is("done_at", null)
+      .not("organization_id", "is", null),
+  ]);
+  if (orgs.error) throw new Error(orgs.error.message);
+  const users = new Map<string, number>();
+  for (const p of people.data ?? [])
+    if (p.organization_id) users.set(p.organization_id, (users.get(p.organization_id) ?? 0) + 1);
+  const lastSeen = new Map<string, string>();
+  const active = new Map<string, Set<string>>();
+  const since7 = new Date(now - 7 * DAY).toISOString();
+  for (const l of logins.data ?? []) {
+    if (!l.organization_id) continue;
+    if (!lastSeen.has(l.organization_id)) lastSeen.set(l.organization_id, l.created_at);
+    if (l.user_id && l.created_at >= since7) {
+      const s = active.get(l.organization_id) ?? new Set<string>();
+      s.add(l.user_id);
+      active.set(l.organization_id, s);
+    }
+  }
+  const leadOf = new Map<string, string>();
+  const orgOfApp = new Map<string, string>();
+  for (const a of apps.data ?? []) {
+    if (!a.organization_id) continue;
+    orgOfApp.set(a.id, a.organization_id);
+    if (!leadOf.has(a.organization_id)) leadOf.set(a.organization_id, a.id);
+  }
+  const issuesOf = new Map<string, number>();
+  for (const n of issues.data ?? []) {
+    const o = n.application_id ? orgOfApp.get(n.application_id) : undefined;
+    if (o) issuesOf.set(o, (issuesOf.get(o) ?? 0) + 1);
+  }
+  const tasksOf = new Map<string, number>();
+  for (const t of tasks.data ?? [])
+    if (t.organization_id)
+      tasksOf.set(t.organization_id, (tasksOf.get(t.organization_id) ?? 0) + 1);
+
+  const out: AtRiskCompany[] = [];
+  for (const raw of orgs.data ?? []) {
+    const o = raw as typeof raw & {
+      extra_seats?: number | null;
+      unlimited_seats?: boolean | null;
+      frozen_at?: string | null;
+    };
+    const daysLeft = o.trial_ends_at
+      ? Math.ceil((new Date(o.trial_ends_at).getTime() - now) / DAY)
+      : null;
+    if (daysLeft != null && daysLeft < -30) continue;
+    const seen = lastSeen.get(o.id) ?? null;
+    const idleDays = seen ? Math.floor((now - new Date(seen).getTime()) / DAY) : null;
+    const n = users.get(o.id) ?? 0;
+    const activeUsers = active.get(o.id)?.size ?? 0;
+    const health = companyHealth({
+      activeUsers,
+      users: n,
+      seatLimit: effectiveSeatLimit(o.plan, o.extra_seats ?? 0, !!o.unlimited_seats),
+      daysLeft,
+      openIssues: issuesOf.get(o.id) ?? 0,
+      idleDays,
+      frozen: !!o.frozen_at,
+    });
+    if (health.level === "good") continue;
+    out.push({
+      orgId: o.id,
+      name: o.name,
+      plan: o.plan,
+      isTrial: !!o.is_trial,
+      level: health.level,
+      reasons: health.reasons,
+      daysLeft,
+      users: n,
+      activeUsers,
+      idleDays,
+      leadId: leadOf.get(o.id) ?? null,
+      openTasks: tasksOf.get(o.id) ?? 0,
+    });
+  }
+  return out.sort(
+    (a, b) =>
+      (a.level === b.level ? 0 : a.level === "risk" ? -1 : 1) ||
+      b.reasons.length - a.reasons.length ||
+      (a.daysLeft ?? 9999) - (b.daysLeft ?? 9999),
+  );
+}
+
+/** One click from the at-risk list: a task for the owner about a company. */
+export async function addCompanyTask(input: {
+  orgId: string;
+  title: string;
+  dueAt: string | null;
+  createdBy: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { data: app } = await supabaseAdmin
+    .from("platform_applications")
+    .select("id")
+    .eq("organization_id", input.orgId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const { error } = await supabaseAdmin.from("platform_lead_tasks").insert({
+    application_id: app?.id ?? null,
+    organization_id: input.orgId,
+    title: input.title,
+    due_at: input.dueAt,
+    audience: "owner",
+    created_by: input.createdBy,
+  });
+  return error ? { ok: false, error: error.message } : { ok: true };
 }

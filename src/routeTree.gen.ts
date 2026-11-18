@@ -202,6 +202,7 @@ import { Route as PlatformAnnouncementsRouteImport } from './routes/platform.ann
 import { Route as PlatformAnnouncementsApiRouteImport } from './routes/platform.announcements-api'
 import { Route as PlatformApplicationsRouteImport } from './routes/platform.applications'
 import { Route as PlatformApplicationsApiRouteImport } from './routes/platform.applications-api'
+import { Route as PlatformAtRiskRouteImport } from './routes/platform.at-risk'
 import { Route as PlatformBackupSettingsRouteImport } from './routes/platform.backup-settings'
 import { Route as PlatformBotRouteImport } from './routes/platform.bot'
 import { Route as PlatformBotsApiRouteImport } from './routes/platform.bots-api'
@@ -220,6 +221,7 @@ import { Route as PlatformLoginCodeSettingRouteImport } from './routes/platform.
 import { Route as PlatformMeetingSettingsRouteImport } from './routes/platform.meeting-settings'
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformOpsApiRouteImport } from './routes/platform.ops-api'
+import { Route as PlatformOrgFactsRouteImport } from './routes/platform.org-facts'
 import { Route as PlatformPartnersRouteImport } from './routes/platform.partners'
 import { Route as PlatformPartnersApiRouteImport } from './routes/platform.partners-api'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
@@ -1320,6 +1322,11 @@ const PlatformApplicationsApiRoute = PlatformApplicationsApiRouteImport.update({
   path: '/platform/applications-api',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformAtRiskRoute = PlatformAtRiskRouteImport.update({
+  id: '/platform/at-risk',
+  path: '/platform/at-risk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformBackupSettingsRoute = PlatformBackupSettingsRouteImport.update({
   id: '/platform/backup-settings',
   path: '/platform/backup-settings',
@@ -1413,6 +1420,11 @@ const PlatformNotificationsRoute = PlatformNotificationsRouteImport.update({
 const PlatformOpsApiRoute = PlatformOpsApiRouteImport.update({
   id: '/platform/ops-api',
   path: '/platform/ops-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformOrgFactsRoute = PlatformOrgFactsRouteImport.update({
+  id: '/platform/org-facts',
+  path: '/platform/org-facts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformPartnersRoute = PlatformPartnersRouteImport.update({
@@ -2213,6 +2225,7 @@ export interface FileRoutesByFullPath {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
+  '/platform/at-risk': typeof PlatformAtRiskRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
@@ -2231,6 +2244,7 @@ export interface FileRoutesByFullPath {
   '/platform/meeting-settings': typeof PlatformMeetingSettingsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
+  '/platform/org-facts': typeof PlatformOrgFactsRoute
   '/platform/partners': typeof PlatformPartnersRoute
   '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -2539,6 +2553,7 @@ export interface FileRoutesByTo {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
+  '/platform/at-risk': typeof PlatformAtRiskRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
@@ -2557,6 +2572,7 @@ export interface FileRoutesByTo {
   '/platform/meeting-settings': typeof PlatformMeetingSettingsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
+  '/platform/org-facts': typeof PlatformOrgFactsRoute
   '/platform/partners': typeof PlatformPartnersRoute
   '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -2866,6 +2882,7 @@ export interface FileRoutesById {
   '/platform/announcements-api': typeof PlatformAnnouncementsApiRoute
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
+  '/platform/at-risk': typeof PlatformAtRiskRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
@@ -2884,6 +2901,7 @@ export interface FileRoutesById {
   '/platform/meeting-settings': typeof PlatformMeetingSettingsRoute
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
+  '/platform/org-facts': typeof PlatformOrgFactsRoute
   '/platform/partners': typeof PlatformPartnersRoute
   '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -3194,6 +3212,7 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
+    | '/platform/at-risk'
     | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/bots-api'
@@ -3212,6 +3231,7 @@ export interface FileRouteTypes {
     | '/platform/meeting-settings'
     | '/platform/notifications'
     | '/platform/ops-api'
+    | '/platform/org-facts'
     | '/platform/partners'
     | '/platform/partners-api'
     | '/platform/payment-credentials'
@@ -3520,6 +3540,7 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
+    | '/platform/at-risk'
     | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/bots-api'
@@ -3538,6 +3559,7 @@ export interface FileRouteTypes {
     | '/platform/meeting-settings'
     | '/platform/notifications'
     | '/platform/ops-api'
+    | '/platform/org-facts'
     | '/platform/partners'
     | '/platform/partners-api'
     | '/platform/payment-credentials'
@@ -3846,6 +3868,7 @@ export interface FileRouteTypes {
     | '/platform/announcements-api'
     | '/platform/applications'
     | '/platform/applications-api'
+    | '/platform/at-risk'
     | '/platform/backup-settings'
     | '/platform/bot'
     | '/platform/bots-api'
@@ -3864,6 +3887,7 @@ export interface FileRouteTypes {
     | '/platform/meeting-settings'
     | '/platform/notifications'
     | '/platform/ops-api'
+    | '/platform/org-facts'
     | '/platform/partners'
     | '/platform/partners-api'
     | '/platform/payment-credentials'
@@ -4104,6 +4128,7 @@ export interface RootRouteChildren {
   PlatformAnnouncementsApiRoute: typeof PlatformAnnouncementsApiRoute
   PlatformApplicationsRoute: typeof PlatformApplicationsRoute
   PlatformApplicationsApiRoute: typeof PlatformApplicationsApiRoute
+  PlatformAtRiskRoute: typeof PlatformAtRiskRoute
   PlatformBackupSettingsRoute: typeof PlatformBackupSettingsRoute
   PlatformBotRoute: typeof PlatformBotRoute
   PlatformBotsApiRoute: typeof PlatformBotsApiRoute
@@ -4122,6 +4147,7 @@ export interface RootRouteChildren {
   PlatformMeetingSettingsRoute: typeof PlatformMeetingSettingsRoute
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformOpsApiRoute: typeof PlatformOpsApiRoute
+  PlatformOrgFactsRoute: typeof PlatformOrgFactsRoute
   PlatformPartnersRoute: typeof PlatformPartnersRoute
   PlatformPartnersApiRoute: typeof PlatformPartnersApiRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
@@ -5550,6 +5576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformApplicationsApiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/at-risk': {
+      id: '/platform/at-risk'
+      path: '/platform/at-risk'
+      fullPath: '/platform/at-risk'
+      preLoaderRoute: typeof PlatformAtRiskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/backup-settings': {
       id: '/platform/backup-settings'
       path: '/platform/backup-settings'
@@ -5674,6 +5707,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/ops-api'
       fullPath: '/platform/ops-api'
       preLoaderRoute: typeof PlatformOpsApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/org-facts': {
+      id: '/platform/org-facts'
+      path: '/platform/org-facts'
+      fullPath: '/platform/org-facts'
+      preLoaderRoute: typeof PlatformOrgFactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/partners': {
@@ -7020,6 +7060,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformAnnouncementsApiRoute: PlatformAnnouncementsApiRoute,
   PlatformApplicationsRoute: PlatformApplicationsRoute,
   PlatformApplicationsApiRoute: PlatformApplicationsApiRoute,
+  PlatformAtRiskRoute: PlatformAtRiskRoute,
   PlatformBackupSettingsRoute: PlatformBackupSettingsRoute,
   PlatformBotRoute: PlatformBotRoute,
   PlatformBotsApiRoute: PlatformBotsApiRoute,
@@ -7038,6 +7079,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformMeetingSettingsRoute: PlatformMeetingSettingsRoute,
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformOpsApiRoute: PlatformOpsApiRoute,
+  PlatformOrgFactsRoute: PlatformOrgFactsRoute,
   PlatformPartnersRoute: PlatformPartnersRoute,
   PlatformPartnersApiRoute: PlatformPartnersApiRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,

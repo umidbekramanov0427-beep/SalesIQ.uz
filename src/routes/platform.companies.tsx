@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { CreateOrgDialog } from "@/components/platform/CreateOrgDialog";
+import { AtRiskPanel } from "@/components/owner/AtRiskPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCompanyDirectory,
@@ -279,6 +280,8 @@ function CompaniesPage() {
         desc={t("pc.desc")}
         actions={<CreateOrgDialog />}
       />
+
+      <AtRiskPanel />
 
       {data && (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
