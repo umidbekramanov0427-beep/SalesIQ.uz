@@ -213,6 +213,7 @@ import { Route as PlatformDeleteOrganizationRouteImport } from './routes/platfor
 import { Route as PlatformDeleteUserRouteImport } from './routes/platform.delete-user'
 import { Route as PlatformEnterCompanyRouteImport } from './routes/platform.enter-company'
 import { Route as PlatformErrorsRouteImport } from './routes/platform.errors'
+import { Route as PlatformInboxApiRouteImport } from './routes/platform.inbox-api'
 import { Route as PlatformInsightsRouteImport } from './routes/platform.insights'
 import { Route as PlatformIntegrationsRouteImport } from './routes/platform.integrations'
 import { Route as PlatformLoginCodeSettingRouteImport } from './routes/platform.login-code-setting'
@@ -1375,6 +1376,11 @@ const PlatformErrorsRoute = PlatformErrorsRouteImport.update({
   path: '/platform/errors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformInboxApiRoute = PlatformInboxApiRouteImport.update({
+  id: '/platform/inbox-api',
+  path: '/platform/inbox-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformInsightsRoute = PlatformInsightsRouteImport.update({
   id: '/platform/insights',
   path: '/platform/insights',
@@ -2200,6 +2206,7 @@ export interface FileRoutesByFullPath {
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/enter-company': typeof PlatformEnterCompanyRoute
   '/platform/errors': typeof PlatformErrorsRoute
+  '/platform/inbox-api': typeof PlatformInboxApiRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
@@ -2522,6 +2529,7 @@ export interface FileRoutesByTo {
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/enter-company': typeof PlatformEnterCompanyRoute
   '/platform/errors': typeof PlatformErrorsRoute
+  '/platform/inbox-api': typeof PlatformInboxApiRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
@@ -2845,6 +2853,7 @@ export interface FileRoutesById {
   '/platform/delete-user': typeof PlatformDeleteUserRoute
   '/platform/enter-company': typeof PlatformEnterCompanyRoute
   '/platform/errors': typeof PlatformErrorsRoute
+  '/platform/inbox-api': typeof PlatformInboxApiRoute
   '/platform/insights': typeof PlatformInsightsRoute
   '/platform/integrations': typeof PlatformIntegrationsRouteWithChildren
   '/platform/login-code-setting': typeof PlatformLoginCodeSettingRoute
@@ -3169,6 +3178,7 @@ export interface FileRouteTypes {
     | '/platform/delete-user'
     | '/platform/enter-company'
     | '/platform/errors'
+    | '/platform/inbox-api'
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/login-code-setting'
@@ -3491,6 +3501,7 @@ export interface FileRouteTypes {
     | '/platform/delete-user'
     | '/platform/enter-company'
     | '/platform/errors'
+    | '/platform/inbox-api'
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/login-code-setting'
@@ -3813,6 +3824,7 @@ export interface FileRouteTypes {
     | '/platform/delete-user'
     | '/platform/enter-company'
     | '/platform/errors'
+    | '/platform/inbox-api'
     | '/platform/insights'
     | '/platform/integrations'
     | '/platform/login-code-setting'
@@ -4067,6 +4079,7 @@ export interface RootRouteChildren {
   PlatformDeleteUserRoute: typeof PlatformDeleteUserRoute
   PlatformEnterCompanyRoute: typeof PlatformEnterCompanyRoute
   PlatformErrorsRoute: typeof PlatformErrorsRoute
+  PlatformInboxApiRoute: typeof PlatformInboxApiRoute
   PlatformInsightsRoute: typeof PlatformInsightsRoute
   PlatformIntegrationsRoute: typeof PlatformIntegrationsRouteWithChildren
   PlatformLoginCodeSettingRoute: typeof PlatformLoginCodeSettingRoute
@@ -5575,6 +5588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformErrorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/inbox-api': {
+      id: '/platform/inbox-api'
+      path: '/platform/inbox-api'
+      fullPath: '/platform/inbox-api'
+      preLoaderRoute: typeof PlatformInboxApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/platform/insights': {
       id: '/platform/insights'
       path: '/platform/insights'
@@ -6951,6 +6971,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformDeleteUserRoute: PlatformDeleteUserRoute,
   PlatformEnterCompanyRoute: PlatformEnterCompanyRoute,
   PlatformErrorsRoute: PlatformErrorsRoute,
+  PlatformInboxApiRoute: PlatformInboxApiRoute,
   PlatformInsightsRoute: PlatformInsightsRoute,
   PlatformIntegrationsRoute: PlatformIntegrationsRouteWithChildren,
   PlatformLoginCodeSettingRoute: PlatformLoginCodeSettingRoute,
