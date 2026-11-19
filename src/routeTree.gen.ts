@@ -58,6 +58,7 @@ import { Route as AccountLoginEventRouteImport } from './routes/account.login-ev
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
 import { Route as AccountMyMeetingRouteImport } from './routes/account.my-meeting'
 import { Route as AccountOnlineRouteImport } from './routes/account.online'
+import { Route as AccountPasswordResetRouteImport } from './routes/account.password-reset'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
 import { Route as AdminAiOverviewRouteImport } from './routes/admin.ai-overview'
@@ -584,6 +585,11 @@ const AccountMyMeetingRoute = AccountMyMeetingRouteImport.update({
 const AccountOnlineRoute = AccountOnlineRouteImport.update({
   id: '/account/online',
   path: '/account/online',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountPasswordResetRoute = AccountPasswordResetRouteImport.update({
+  id: '/account/password-reset',
+  path: '/account/password-reset',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountSessionEventsRoute = AccountSessionEventsRouteImport.update({
@@ -2102,6 +2108,7 @@ export interface FileRoutesByFullPath {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
+  '/account/password-reset': typeof AccountPasswordResetRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2433,6 +2440,7 @@ export interface FileRoutesByTo {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
+  '/account/password-reset': typeof AccountPasswordResetRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2765,6 +2773,7 @@ export interface FileRoutesById {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
+  '/account/password-reset': typeof AccountPasswordResetRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -3098,6 +3107,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/my-meeting'
     | '/account/online'
+    | '/account/password-reset'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3429,6 +3439,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/my-meeting'
     | '/account/online'
+    | '/account/password-reset'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3760,6 +3771,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/my-meeting'
     | '/account/online'
+    | '/account/password-reset'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -4092,6 +4104,7 @@ export interface RootRouteChildren {
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
   AccountMyMeetingRoute: typeof AccountMyMeetingRoute
   AccountOnlineRoute: typeof AccountOnlineRoute
+  AccountPasswordResetRoute: typeof AccountPasswordResetRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
   AnnouncementsActiveRoute: typeof AnnouncementsActiveRoute
   ApiPricingRoute: typeof ApiPricingRoute
@@ -4605,6 +4618,13 @@ declare module '@tanstack/react-router' {
       path: '/account/online'
       fullPath: '/account/online'
       preLoaderRoute: typeof AccountOnlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/password-reset': {
+      id: '/account/password-reset'
+      path: '/account/password-reset'
+      fullPath: '/account/password-reset'
+      preLoaderRoute: typeof AccountPasswordResetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/session-events': {
@@ -7048,6 +7068,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountLoginFailedRoute: AccountLoginFailedRoute,
   AccountMyMeetingRoute: AccountMyMeetingRoute,
   AccountOnlineRoute: AccountOnlineRoute,
+  AccountPasswordResetRoute: AccountPasswordResetRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
   AnnouncementsActiveRoute: AnnouncementsActiveRoute,
   ApiPricingRoute: ApiPricingRoute,
