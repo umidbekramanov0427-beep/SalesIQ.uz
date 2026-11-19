@@ -23,10 +23,8 @@ import {
   ChartSpline,
   LayoutGrid,
   ListOrdered,
-  PhoneCall,
   RectangleHorizontal,
   Table2,
-  Timer,
   Users,
   Wallet,
   type LucideIcon,
@@ -52,7 +50,6 @@ import {
   type MetricInput,
   type Unit,
 } from "@/lib/home-metrics";
-import { RailGlyph } from "@/components/layout/RailGlyph";
 import { FigureCard, FigureLine, InfoTip, type CardTone } from "@/components/layout/Primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -651,14 +648,7 @@ function MiniChart({
 }
 
 /** The six figure cards of the overview, in order (each is its own board widget). */
-export const KPI_IDS = [
-  "newLeads",
-  "revenue",
-  "firstContact",
-  "attempts",
-  "cycle",
-  "conversion",
-] as const;
+export const KPI_IDS = ["newLeads", "revenue", "cycle", "conversion"] as const;
 export type KpiId = (typeof KPI_IDS)[number];
 
 function KpiGrid({
@@ -696,24 +686,6 @@ function KpiGrid({
       info: t("home2.kpiRevenueInfo"),
       base: o.revenue,
       baseSub: t("home2.kpiRevenueSub", { n: o.revenue.deals }),
-    },
-    {
-      id: "firstContact",
-      icon: Timer,
-      tone: "amber",
-      label: t("home2.kpiFirstContact"),
-      info: t("home2.kpiFirstContactInfo"),
-      base: o.firstContactHours,
-      baseSub: t("home2.kpiFirstContactSub"),
-    },
-    {
-      id: "attempts",
-      icon: PhoneCall,
-      tone: "sky",
-      label: t("home2.kpiAttempts"),
-      info: t("home2.kpiAttemptsInfo"),
-      base: o.attemptsToContact,
-      baseSub: t("home2.kpiAttemptsSub"),
     },
     {
       id: "cycle",

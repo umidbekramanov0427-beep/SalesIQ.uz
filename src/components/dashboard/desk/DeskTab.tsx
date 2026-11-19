@@ -4,7 +4,6 @@ import {
   GitBranch,
   Download,
   Loader2,
-  Pencil,
   Percent,
   Filter,
   LineChart,
@@ -14,28 +13,16 @@ import {
   Receipt,
   Repeat2,
   ShoppingCart,
-  Target,
   TrendingUp,
   UserPlus,
   Wallet,
 } from "lucide-react";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
-import {
-  useDesk,
-  useMyOrganization,
-  useOrgGeneralSettings,
-  useProfilesRaw,
-  useSalesPlans,
-  useSaveSalesPlan,
-} from "@/hooks/use-crm-data";
-import { useAuth } from "@/lib/auth";
+import { useDesk, useMyOrganization, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { useCurrency } from "@/lib/currency";
 import { change, deskPeriod, type DeskData, type DeskPreset } from "@/lib/desk";
 import { useI18n } from "@/lib/i18n";
-import { monthKey, planProgress, shiftMonth } from "@/lib/sales-plan";
 import { cn, describeError } from "@/lib/utils";
 import { downloadXlsx } from "@/lib/xlsx-write";
 import {
@@ -74,7 +61,6 @@ const DESK_DEFAULTS: BoardLayout = {
     "newClients",
     "repeat",
     "conversion",
-    "plan",
     "channels",
     "sources",
     "dynamics",
@@ -89,7 +75,6 @@ const DESK_DEFAULTS: BoardLayout = {
     newClients: 4,
     repeat: 4,
     conversion: 4,
-    plan: 4,
     channels: 12,
     sources: 12,
     dynamics: 12,
@@ -122,19 +107,16 @@ export function DeskTab({
   extra?: { widgets: BoardWidget[]; layout: BoardLayout };
 }) {
   const { t } = useI18n();
-  const { user: me } = useAuth();
   const { format } = useCurrency();
   const { data: org } = useMyOrganization();
   // Sozlamalar → Umumiy: the company's own logo, as in the sidebar.
   const { data: orgGeneral } = useOrgGeneralSettings();
   const companyLogo = orgGeneral?.company_logo_url ?? null;
-  const canPlan = me?.role === "super_admin" || me?.role === "rop" || me?.role === "platform_owner";
 
   const [preset, setPresetState] = useState<DeskPreset>("month");
   const [custom, setCustom] = useState<{ from: string; to: string } | undefined>();
   const [funnel, setFunnel] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [planOpen, setPlanOpen] = useState(false);
   useEffect(() => {
     try {
       const p = localStorage.getItem(PRESET_STORE) as DeskPreset | null;
@@ -394,14 +376,6 @@ export function DeskTab({
           ),
         },
         {
-          id: "plan",
-          title: t("desk.plan"),
-          icon: Target,
-          tone: "amber",
-          sizes: KPI_SIZES,
-          node: <PlanCard d={d} canEdit={canPlan} onEdit={() => setPlanOpen(true)} />,
-        },
-        {
           id: "channels",
           title: t("desk.channels"),
           icon: Radio,
@@ -541,14 +515,6 @@ export function DeskTab({
           />
         </>
       )}
-
-      {canPlan && (
-        <PlanDialog
-          open={planOpen}
-          onOpenChange={setPlanOpen}
-          month={d?.plan.month ?? monthKey(new Date())}
-        />
-      )}
     </div>
   );
 }
@@ -621,215 +587,5 @@ function RangePicker({
         </button>
       </PopoverContent>
     </Popover>
-  );
-}
-
-function PlanCard({ d, canEdit, onEdit }: { d: DeskData; canEdit: boolean; onEdit: () => void }) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const p = planProgress(d.plan.team, d.plan.fact, d.plan.month);
-  const pen = canEdit ? (
-    <button
-      type="button"
-      onClick={onEdit}
-      aria-label={t("desk.planEdit")}
-      className="grid h-6 w-6 place-items-center rounded-[4px] text-muted-foreground hover:bg-accent hover:text-primary"
-    >
-      <Pencil className="h-3.5 w-3.5" />
-    </button>
-  ) : null;
-  if (!(d.plan.team > 0)) {
-    return (
-      <DeskKpi
-        tipKey="desk.plan"
-        label={t("desk.plan")}
-        icon={Target}
-        tone="amber"
-        titleExtra={pen}
-        value={<span className="text-[17px]">{t("desk.noPlan")}</span>}
-        prevText={canEdit ? t("desk.noPlanHint") : undefined}
-      />
-    );
-  }
-  const pct = p.pct ?? 0;
-  return (
-    <DeskKpi
-      tipKey="desk.plan"
-      label={t("desk.plan")}
-      icon={Target}
-      tone="amber"
-      titleExtra={pen}
-      rawValue={pct}
-      value={
-        <span>
-          {pct}%{" "}
-          <span className="text-[14px] font-semibold text-muted-foreground">
-            · {format(d.plan.fact)}
-          </span>
-        </span>
-      }
-      prevText={t("desk.planLine", {
-        plan: format(d.plan.team),
-        forecast: format(p.forecast),
-        day: format(p.perDayNeeded),
-      })}
-    >
-      <span className="mt-2 block h-2 overflow-hidden rounded-full bg-muted">
-        <span
-          className={cn(
-            "block h-full rounded-full",
-            p.status === "behind" ? "bg-amber-500" : "bg-emerald-500",
-          )}
-          style={{ width: `${Math.min(100, pct)}%` }}
-        />
-      </span>
-    </DeskKpi>
-  );
-}
-
-/** «Oylik sotuv plani»: the month, the team's plan and each manager's. */
-function PlanDialog({
-  open,
-  onOpenChange,
-  month: initialMonth,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  month: string;
-}) {
-  const { t } = useI18n();
-  const [month, setMonth] = useState(initialMonth);
-  const { data: plans } = useSalesPlans(month);
-  const { data: profiles = [] } = useProfilesRaw();
-  const save = useSaveSalesPlan();
-  const [team, setTeam] = useState("");
-  const [people, setPeople] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
-  const staff = profiles.filter((p) => p.role === "sotuv_menejeri" || p.role === "rop");
-  useEffect(() => {
-    if (open) setMonth(initialMonth);
-  }, [open, initialMonth]);
-  useEffect(() => {
-    if (!open) return;
-    const teamRow = (plans ?? []).find((p) => !p.profile_id);
-    setTeam(teamRow ? String(Number(teamRow.target_amount)) : "");
-    const m: Record<string, string> = {};
-    for (const p of plans ?? [])
-      if (p.profile_id) m[p.profile_id] = String(Number(p.target_amount));
-    setPeople(m);
-  }, [open, plans]);
-  const months = Array.from({ length: 6 }, (_, k) => shiftMonth(monthKey(new Date()), k - 3));
-  const num = (v: string) => Number(v.replace(/\D/g, "")) || 0;
-  const sumPeople = Object.values(people).reduce((a, v) => a + num(v), 0);
-
-  async function submit() {
-    setBusy(true);
-    try {
-      const rows = (plans ?? []).map((p) => p);
-      const deals = (id: string | null) =>
-        Number(rows.find((r) => (r.profile_id ?? null) === id)?.target_deals ?? 0);
-      await save.mutateAsync({
-        month,
-        profileId: null,
-        targetAmount: num(team),
-        targetDeals: deals(null),
-      });
-      for (const p of staff) {
-        const before = Number(rows.find((r) => r.profile_id === p.id)?.target_amount ?? 0);
-        const v = num(people[p.id] ?? "");
-        if (v !== before)
-          await save.mutateAsync({
-            month,
-            profileId: p.id,
-            targetAmount: v,
-            targetDeals: deals(p.id),
-          });
-      }
-      toast.success(t("desk.planSaved"));
-      onOpenChange(false);
-    } catch (e) {
-      toast.error(
-        (e as Error).message === "MIGRATION_PENDING"
-          ? t("desk.planPending")
-          : describeError(e, t("desk.failed")),
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const input =
-    "h-10 w-full rounded-[6px] border border-border bg-background px-3 text-[14px] tabular-nums outline-none focus:border-primary phone:text-base";
-  return (
-    <Dialog open={open} onOpenChange={(v) => !busy && onOpenChange(v)}>
-      <DialogContent className="max-w-md">
-        <DialogTitle>{t("desk.planTitle")}</DialogTitle>
-        <label className="block text-[13px] font-semibold text-foreground">
-          {t("desk.planMonth")}
-          <select
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className={cn(input, "mt-1.5")}
-          >
-            {months.map((m) => (
-              <option key={m} value={m}>
-                {m.slice(0, 7)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-[13px] font-semibold text-foreground">
-          {t("desk.planTeam")}
-          <input
-            value={team}
-            onChange={(e) => setTeam(e.target.value)}
-            inputMode="numeric"
-            placeholder={sumPeople ? String(sumPeople) : t("desk.planExample")}
-            className={cn(input, "mt-1.5")}
-          />
-        </label>
-        <div>
-          <p className="text-[13px] font-semibold text-foreground">{t("desk.planPeople")}</p>
-          <ul className="mt-1.5 max-h-64 space-y-1.5 overflow-y-auto">
-            {staff.length === 0 && (
-              <li className="text-[12.5px] text-muted-foreground">{t("desk.noManagers")}</li>
-            )}
-            {staff.map((p) => (
-              <li key={p.id} className="flex items-center gap-3">
-                <span className="min-w-0 flex-1 truncate text-[13px]">
-                  {p.full_name || p.email}
-                </span>
-                <input
-                  value={people[p.id] ?? ""}
-                  onChange={(e) => setPeople((m) => ({ ...m, [p.id]: e.target.value }))}
-                  inputMode="numeric"
-                  placeholder="0"
-                  className="h-9 w-40 rounded-[6px] border border-border bg-background px-2.5 text-right text-[13px] tabular-nums outline-none focus:border-primary phone:text-base"
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="mt-1 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void submit()}
-            disabled={busy}
-            className="ctl-lit inline-flex h-10 items-center gap-2 rounded-[6px] px-4 text-[13px] font-semibold disabled:opacity-50"
-          >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("common.save")}
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-            className="ctl-soft inline-flex h-10 items-center rounded-[6px] px-4 text-[13px] font-semibold"
-          >
-            {t("common.cancel")}
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

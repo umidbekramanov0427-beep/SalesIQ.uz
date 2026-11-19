@@ -1,4 +1,3 @@
-import { CollectedPaymentsCard } from "./CollectedPaymentsCard";
 import { useAuth } from "@/lib/auth";
 import { FirstStepsCard } from "./FirstStepsCard";
 import { MyMeetingCard } from "./MyMeetingCard";
@@ -12,19 +11,12 @@ import { appRoleOf } from "@/lib/nav";
 import { lazy, Suspense, useMemo, useState, type ReactNode } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import {
-  AlertTriangle,
   ArrowLeftRight,
-  PhoneCall,
-  Timer,
   Users,
-  ChartColumnBig,
-  ClipboardList,
   LayoutDashboard,
-  LayoutGrid,
   ListChecks,
   Phone,
   Trophy,
-  Wallet,
   Workflow,
   type LucideIcon,
 } from "lucide-react";
@@ -44,8 +36,6 @@ import type { CardTone } from "@/lib/tones";
 import {
   DashboardFilterRow,
   type FilterSet,
-  DashboardKpiCards,
-  PeriodAttentionRow,
   usePeriodRanges,
 } from "@/components/dashboard/DashboardBlocks";
 import { ReportExportDialog } from "@/components/dashboard/ReportExportDialog";
@@ -56,7 +46,6 @@ import {
   CONV_METRIC_META,
   ConversionMetricCard,
 } from "@/components/dashboard/ConversionMetricsCards";
-import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/lib/i18n";
@@ -65,7 +54,6 @@ import {
   useAccessRules,
   useFunnelNames,
   useMyOrganization,
-  usePeriodStats,
   usePermission,
   useProfilesRaw,
   useVisibleOwnerIds,
@@ -76,11 +64,6 @@ import type { DeskView } from "@/components/dashboard/desk/DeskTab";
 const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
 );
-const Charts = {
-  ConversionQualityChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({ default: m.ConversionQualityChart })),
-  ),
-};
 
 // Ish stoli carries the charts library; it loads on its own.
 const DeskTab = lazy(() =>
@@ -105,8 +88,6 @@ const TAB_FILTERS: Record<Exclude<HomeTab, "rating" | "overview">, FilterSet> = 
 // What the overview shows before anyone arranges it (the page as it was).
 const KPI_WIDGETS: { id: KpiId; label: string; icon: LucideIcon; tone: CardTone }[] = [
   { id: "newLeads", label: "home2.kpiLeads", icon: Users, tone: "primary" },
-  { id: "firstContact", label: "home2.kpiFirstContact", icon: Timer, tone: "amber" },
-  { id: "attempts", label: "home2.kpiAttempts", icon: PhoneCall, tone: "sky" },
   { id: "cycle", label: "home2.kpiCycle", icon: ArrowLeftRight, tone: "violet" },
 ];
 const KPI_WIDGET_IDS = KPI_WIDGETS.map((k) => `kpi:${k.id}`);
@@ -117,10 +98,6 @@ const BOARD_DEFAULTS: BoardLayout = {
     ...KPI_WIDGET_IDS,
     "tasks",
     "calls",
-    "dailyWork",
-    "payments",
-    "kpiCards",
-    "attention",
   ],
   size: {
     ...Object.fromEntries(KPI_WIDGET_IDS.map((id) => [id, 4 as const])),
@@ -303,12 +280,6 @@ export function HomePage() {
     () => ({ ownerIds: null, from: ov.range.from, to: ov.range.to }),
     [ov.range.from, ov.range.to],
   );
-  const periodTab = tab === "overview";
-  const periodStats = usePeriodStats(periodTab ? ov.range : null, periodTab ? ov.prevRange : null, {
-    funnel: ov.funnel,
-    teamId: null,
-    operatorId: null,
-  });
   // The reports' period: the page's own date pick (30 days by default).
   const reportRange = reportPeriod(period.range);
 
@@ -348,48 +319,10 @@ export function HomePage() {
       sizes: [4, 6, 8, 12],
       node: <HomeOverviewPart part="calls" {...overviewProps} />,
     },
-    {
-      id: "dailyWork",
-      title: t("board.w.dailyWork"),
-      icon: ClipboardList,
-      tone: "amber",
-      sizes: [4, 6, 8, 12],
-      node: <DailyWorkCard />,
-    },
-    {
-      id: "payments",
-      title: t("board.w.payments"),
-      icon: Wallet,
-      tone: "emerald",
-      sizes: [4, 6, 8, 12],
-      node: <CollectedPaymentsCard funnel={ov.funnel} dateRange={ov.range} />,
-    },
-    {
-      id: "kpiCards",
-      title: t("board.w.kpiCards"),
-      icon: LayoutGrid,
-      tone: "sky",
-      sizes: [6, 8, 12],
-      node: <DashboardKpiCards funnel={ov.funnel} scope={ovScope} />,
-    },
-    {
-      id: "attention",
-      title: t("board.w.attention"),
-      icon: AlertTriangle,
-      tone: "amber",
-      sizes: [6, 8, 12],
-      node: <PeriodAttentionRow stats={periodStats} funnel={ov.funnel} />,
-    },
   ];
 
-  // Konversiya as a board: the four rates, the quality chart and (with
-  // Analitika open) the sales and win-loss reports' cards one by one.
-  const salesReport = useReportItems(
-    "sales",
-    reportRange,
-    funnel,
-    tab === "conversion" && analyticsOpen,
-  );
+  // Konversiya as a board: the four rates and (with Analitika open) the
+  // win-loss report's cards one by one.
   const winLossReport = useReportItems(
     "winloss",
     reportRange,
@@ -404,20 +337,7 @@ export function HomePage() {
       tone: CONV_METRIC_META[k].tone,
       node: <ConversionMetricCard metric={k} funnel={funnel} scope={statsScope} />,
     })),
-    {
-      id: "conv:chart",
-      title: t("board.w.conversionChart"),
-      icon: ChartColumnBig,
-      tone: "violet",
-      span: 12,
-      sizes: [6, 8, 12],
-      node: (
-        <Suspense fallback={<ChartSkeleton height={340} />}>
-          <Charts.ConversionQualityChart funnel={funnel} />
-        </Suspense>
-      ),
-    },
-    ...(analyticsOpen ? [...salesReport.items, ...winLossReport.items] : []),
+    ...(analyticsOpen ? winLossReport.items : []),
   ];
 
   // The tabs on the left, the tab's filters on the right of the same row.
@@ -522,7 +442,7 @@ export function HomePage() {
           </>
         ) : (
           <div>
-            {salesReport.notice}
+            {winLossReport.notice}
             <CardBoard boardKey="home.conversion" items={conversionItems} />
           </div>
         )}

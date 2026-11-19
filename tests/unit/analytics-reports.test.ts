@@ -1,6 +1,5 @@
 import {
   parseRange,
-  salesAnalysis,
   summaryByOwner,
   winLoss,
   type ALead,
@@ -68,26 +67,6 @@ const leads: ALead[] = [
 ];
 
 describe("Analitika reports", () => {
-  it("sales analysis: new, won, lost, conversion, check, cycle and stage passes", () => {
-    const events = [
-      { lead_id: "1", stage_id: "new", entered_at: "2026-10-05T10:00:00.000Z" },
-      { lead_id: "5", stage_id: "new", entered_at: "2026-10-05T10:00:00.000Z" },
-      { lead_id: "2", stage_id: "new", entered_at: "2026-10-05T10:00:00.000Z" },
-      { lead_id: "3", stage_id: "new", entered_at: "2026-10-05T10:00:00.000Z" },
-      { lead_id: "5", stage_id: "talk", entered_at: "2026-10-06T10:00:00.000Z" },
-      { lead_id: "1", stage_id: "talk", entered_at: "2026-10-06T10:00:00.000Z" },
-    ];
-    const s = salesAnalysis(leads, stages, events, R);
-    expect(s.newLeads).toBe(4);
-    expect(s.won).toEqual({ count: 2, sum: 4000 });
-    expect(s.lost).toEqual({ count: 1, sum: 500 });
-    expect(s.conversion).toBe(66.7);
-    expect(s.avgCheck).toBe(2000);
-    expect(s.avgCycleDays).toBe(6);
-    expect(s.stages.map((x) => x.name)).toEqual(["Yangi", "Suhbat", "Sotildi", "Yo'qotildi"]);
-    expect(s.stages[1]).toMatchObject({ entered: 2, now: 1, nowSum: 2000, passRate: 50 });
-  });
-
   it("summary per manager sorts by won sum and keeps activity counts", () => {
     const rows = summaryByOwner(leads, stages, R, { calls: new Map([["a", 7]]) });
     expect(rows[0]).toMatchObject({ ownerId: "b", won: 1, wonSum: 3000, conversion: 100 });

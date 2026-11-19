@@ -1,6 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
-  salesAnalysis,
   summaryByOwner,
   winLoss,
   type ActivityEvent,
@@ -8,7 +7,6 @@ import {
   type ActivityKind,
   type ALead,
   type AStage,
-  type AStageEvent,
   type Range,
 } from "@/lib/analytics-reports";
 
@@ -147,7 +145,6 @@ export async function gatherAnalytics(
       probability: s.probability,
       quality: s.lead_quality,
     }));
-  const stageIds = stages.map((s) => s.id);
   const owners = v.owners ? [...v.owners] : null;
 
   const leadsRes = funnel
@@ -231,12 +228,6 @@ export async function gatherAnalytics(
     ),
   ]);
 
-  const stageSet = new Set(stageIds);
-  const leadIds = new Set(leads.map((l) => l.id));
-  const events: AStageEvent[] = moves.rows.filter(
-    (e) => stageSet.has(e.stage_id) && leadIds.has(e.lead_id),
-  );
-
   // Who did what: a lead counts for its owner, a stage move for the lead's
   // owner at the time, a note / task / call / message for whoever did it.
   const acts: ActivityEvent[] = [];
@@ -263,7 +254,6 @@ export async function gatherAnalytics(
     funnel,
     scope: v.scope ?? "all",
     people: v.people,
-    sales: salesAnalysis(leads, stages, events, r),
     summary: summaryByOwner(leads, stages, r, {
       tasksDone: countBy("tasks"),
       calls: countBy("calls"),

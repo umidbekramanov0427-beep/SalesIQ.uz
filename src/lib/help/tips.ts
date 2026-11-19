@@ -1130,18 +1130,6 @@ export const TIPS: Record<string, Tip> = {
       en: "Won deals' total ÷ their count.",
     },
   },
-  "an.cycle": {
-    what: {
-      uz: "Lid yaratilgandan sotuvgacha o'rtacha kunlar.",
-      ru: "Среднее число дней от лида до продажи.",
-      en: "Average days from a lead to a sale.",
-    },
-    calc: {
-      uz: "Yutilgan lidlar bo'yicha (yutilgan sana − yaratilgan sana) o'rtachasi.",
-      ru: "Среднее (дата выигрыша − дата создания).",
-      en: "The average of (won date − created date).",
-    },
-  },
   "fin.cac": {
     what: {
       uz: "Bitta sotuvga ketgan xarajat.",
@@ -1644,31 +1632,6 @@ export const TIPS: Record<string, Tip> = {
       uz: "Ular bilan gaplashing yoki rejani qayta ko'rib chiqing.",
       ru: "Поговорите с ними или пересмотрите план.",
       en: "Talk to them or review the plan.",
-    },
-  },
-  "dash.card.potentialSales": {
-    what: {
-      uz: "Kutilayotgan sotuvlar soni va summasi.",
-      ru: "Ожидаемое число и сумма продаж.",
-      en: "Expected number and value of sales.",
-    },
-    calc: {
-      uz: "Lidlar × kutilgan konversiya (standart 15%) × o'rtacha chek.",
-      ru: "Лиды × ожидаемая конверсия (15% по умолчанию) × средний чек.",
-      en: "Leads × expected conversion (15% by default) × average deal.",
-    },
-    act: {
-      uz: "Konversiya foizini ⚙️ orqali o'zgartiring.",
-      ru: "Измените процент конверсии в ⚙️.",
-      en: "Change the conversion rate in ⚙️.",
-    },
-  },
-  "dash.card.lostLeads": {
-    what: { uz: "Yo'qotilgan lidlar soni.", ru: "Число потерянных лидов.", en: "Lost leads." },
-    act: {
-      uz: "⚙️ orqali chegara qo'ying — oshsa karta qizil bo'ladi.",
-      ru: "Задайте предел в ⚙️ — при превышении карточка покраснеет.",
-      en: "Set a limit in ⚙️ — past it the card turns red.",
     },
   },
   "amocrm.statLeads": {

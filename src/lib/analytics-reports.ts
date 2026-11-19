@@ -1,6 +1,5 @@
 // Analitika (amoCRM's "Аналитика"): the reports computed from plain rows,
 // so the rules are unit-tested and the server only gathers data.
-//   salesAnalysis  -- Анализ продаж: the funnel stage by stage for a period
 //   summaryByOwner -- Сводный отчёт: one row per manager
 //   winLoss        -- Win-Loss: why leads were lost, where wins come from
 
@@ -36,126 +35,15 @@ export type AStage = {
   /** The stage's «Lid sifati» (Voronka sozlamalari): qualified / junk. */
   quality?: string | null;
 };
-export type AStageEvent = { lead_id: string; stage_id: string; entered_at: string };
 
 const inRange = (iso: string | null | undefined, r: Range) => !!iso && iso >= r.from && iso < r.to;
 const money = (n: number | null | undefined) => Number(n) || 0;
-const DAY = 86_400_000;
 const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10 : 0);
 
 /** Won/lost in the period: the lead sits in a won/lost stage it entered in the period. */
 function closedIn(lead: ALead, stage: AStage | undefined, r: Range): "won" | "lost" | null {
   if (!stage || !inRange(lead.stage_changed_at, r)) return null;
   return stage.is_won ? "won" : stage.is_lost ? "lost" : null;
-}
-
-export type SalesAnalysis = {
-  stages: {
-    id: string;
-    name: string;
-    kind: "open" | "won" | "lost";
-    entered: number;
-    now: number;
-    nowSum: number;
-    /** % of the leads that entered the previous open stage that also entered this one. */
-    passRate: number | null;
-  }[];
-  newLeads: number;
-  won: { count: number; sum: number };
-  lost: { count: number; sum: number };
-  conversion: number;
-  avgCheck: number;
-  avgCycleDays: number | null;
-  /**
-   * Leads of the period that reached a stage marked «Sifatli» / «Chiqindi»;
-   * null when no stage of the funnel is marked.
-   */
-  quality: { qualified: number; junk: number } | null;
-};
-
-export function salesAnalysis(
-  leads: ALead[],
-  stages: AStage[],
-  events: AStageEvent[],
-  r: Range,
-): SalesAnalysis {
-  const byId = new Map(stages.map((s) => [s.id, s]));
-  const ordered = [...stages].sort(
-    (a, b) =>
-      Number(a.is_won || a.is_lost) - Number(b.is_won || b.is_lost) || a.position - b.position,
-  );
-  const enteredBy = new Map<string, Set<string>>();
-  for (const e of events) {
-    if (!inRange(e.entered_at, r)) continue;
-    const set = enteredBy.get(e.stage_id) ?? new Set<string>();
-    set.add(e.lead_id);
-    enteredBy.set(e.stage_id, set);
-  }
-  const nowCount = new Map<string, { n: number; sum: number }>();
-  for (const l of leads) {
-    if (!l.stage_id) continue;
-    const c = nowCount.get(l.stage_id) ?? { n: 0, sum: 0 };
-    c.n += 1;
-    c.sum += money(l.budget);
-    nowCount.set(l.stage_id, c);
-  }
-  let prevOpen: number | null = null;
-  const rows = ordered.map((s) => {
-    const entered = enteredBy.get(s.id)?.size ?? 0;
-    const kind = s.is_won ? "won" : s.is_lost ? "lost" : "open";
-    const passRate = kind === "open" && prevOpen !== null ? pct(entered, prevOpen) : null;
-    if (kind === "open") prevOpen = entered;
-    return {
-      id: s.id,
-      name: s.name,
-      kind,
-      entered,
-      now: nowCount.get(s.id)?.n ?? 0,
-      nowSum: nowCount.get(s.id)?.sum ?? 0,
-      passRate,
-    } as SalesAnalysis["stages"][number];
-  });
-
-  const newLeads = leads.filter((l) => inRange(l.created_at, r)).length;
-  const won = { count: 0, sum: 0 };
-  const lost = { count: 0, sum: 0 };
-  let cycleDays = 0;
-  for (const l of leads) {
-    const c = closedIn(l, l.stage_id ? byId.get(l.stage_id) : undefined, r);
-    if (c === "won") {
-      won.count += 1;
-      won.sum += money(l.budget);
-      cycleDays += (Date.parse(l.stage_changed_at!) - Date.parse(l.created_at)) / DAY;
-    } else if (c === "lost") {
-      lost.count += 1;
-      lost.sum += money(l.budget);
-    }
-  }
-  const marked = (q: string) => new Set(stages.filter((s) => s.quality === q).map((s) => s.id));
-  const qualifiedIds = marked("qualified");
-  const junkIds = marked("junk");
-  let quality: SalesAnalysis["quality"] = null;
-  if (qualifiedIds.size || junkIds.size) {
-    const reached = (ids: Set<string>) => {
-      const out = new Set<string>();
-      for (const e of events)
-        if (ids.has(e.stage_id) && inRange(e.entered_at, r)) out.add(e.lead_id);
-      for (const l of leads)
-        if (l.stage_id && ids.has(l.stage_id) && inRange(l.created_at, r)) out.add(l.id);
-      return out.size;
-    };
-    quality = { qualified: reached(qualifiedIds), junk: reached(junkIds) };
-  }
-  return {
-    stages: rows,
-    newLeads,
-    quality,
-    won,
-    lost,
-    conversion: pct(won.count, won.count + lost.count),
-    avgCheck: won.count ? Math.round(won.sum / won.count) : 0,
-    avgCycleDays: won.count ? Math.round((cycleDays / won.count) * 10) / 10 : null,
-  };
 }
 
 export type OwnerRow = {
@@ -299,7 +187,6 @@ export type AnalyticsData = {
   funnel: string | null;
   scope: "all" | "group" | "own";
   people: { id: string; name: string; role: string | null }[];
-  sales: SalesAnalysis;
   summary: OwnerRow[];
   winLoss: WinLoss;
   truncated: boolean;
