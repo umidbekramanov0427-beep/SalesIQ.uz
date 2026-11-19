@@ -5,6 +5,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   BrainCircuit,
+  ChevronsUpDown,
   LayoutDashboard,
   Laptop,
   LogOut,
@@ -303,6 +304,12 @@ function PersonTile({ wide = false }: { wide?: boolean }) {
   const { t, lang, setLang } = useI18n();
   const { mode, setMode } = useTheme();
   const { user, signOut } = useAuth();
+  const [first = "…", ...others] = (user?.name ?? "").trim().split(/\s+/).filter(Boolean);
+  const rest = others.join(" ");
+  // A long word (Abdurahmonov) a touch smaller, so it fits whole.
+  const nameSize = [first, ...others].some((w) => w.length > 10)
+    ? "text-[11.5px]"
+    : "text-[13.5px]";
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -310,24 +317,25 @@ function PersonTile({ wide = false }: { wide?: boolean }) {
           <button
             type="button"
             aria-label={t("userMenu.open")}
+            title={user?.email ?? undefined}
             className="flex w-full items-center gap-2 rounded-2xl bg-accent px-2 py-2.5 text-left transition-colors hover:bg-accent/70"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-[12.5px] font-bold text-primary">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/15 text-[12px] font-bold text-primary">
               {user?.initials ?? "?"}
             </span>
-            {/* The whole name: on a second line when it doesn't fit, never
-                cut ("Umidbek Ram..."); the e-mail under it. */}
-            <span className="min-w-0 flex-1">
-              <span className="block break-words text-[13.5px] font-semibold leading-tight text-foreground">
-                {user?.name ?? "…"}
+            {/* First name, the rest under it (both bold) -- never cut; the
+                e-mail is at the top of the menu this opens. */}
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className={cn("block break-words font-semibold text-foreground", nameSize)}>
+                {first}
               </span>
-              <span
-                className="mt-0.5 block truncate text-[11.5px] text-muted-foreground"
-                title={user?.email ?? undefined}
-              >
-                {user?.email ?? ""}
-              </span>
+              {rest && (
+                <span className={cn("block break-words font-semibold text-foreground", nameSize)}>
+                  {rest}
+                </span>
+              )}
             </span>
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           </button>
         ) : (
           <button
