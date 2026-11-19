@@ -16,8 +16,6 @@ import {
   Bell,
   ChevronDown,
   ChevronsUpDown,
-  ChevronsLeft,
-  Command,
   Headset,
   Laptop,
   Lock,
@@ -85,7 +83,8 @@ type Props = {
   // Funnels and the lead card: a slim icon-only rail, so the board and the
   // lead get the screen.
   compact?: boolean;
-  onToggle: () => void;
+  /** Unused: the rail never opens wide (kept for callers). */
+  onToggle?: () => void;
   isAdmin: boolean;
   isPlatformOwner: boolean;
 };
@@ -554,7 +553,6 @@ export function AppSidebar({
   collapsed: collapsedProp,
   onEditProfile,
   compact = false,
-  onToggle,
   isAdmin,
   isPlatformOwner,
 }: Props) {
@@ -865,40 +863,6 @@ export function AppSidebar({
             <div className={collapsed ? "mt-2.5" : "mt-1.5"}>
               <UserMenu collapsed={collapsed} isAdmin={isAdmin} onEditProfile={onEditProfile} />
             </div>
-
-            {/* On the rail: opens the menu, right under the user card. */}
-            {collapsed && (
-              <button
-                type="button"
-                onClick={onToggle}
-                aria-label={t("nav.expand")}
-                title={`${t("nav.expand")} · ⌘B`}
-                className="group mx-auto mt-1.5 flex h-6 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
-              >
-                <ChevronsLeft className="h-3.5 w-3.5 rotate-180 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            )}
-
-            <button
-              onClick={onToggle}
-              className={cn(
-                "mt-1 flex w-full items-center gap-2 rounded-[14px] px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-accent hover:text-foreground",
-                collapsed && "hidden",
-              )}
-            >
-              <ChevronsLeft
-                className={cn(
-                  "h-4 w-4 transition-transform duration-300",
-                  collapsed && "rotate-180",
-                )}
-              />
-              {!collapsed && <span>{t("nav.collapse")}</span>}
-              {!collapsed && (
-                <span className="ml-auto flex items-center gap-0.5 text-[11px] text-subtle">
-                  <Command className="h-3 w-3" />B
-                </span>
-              )}
-            </button>
           </div>
         </aside>
       </div>

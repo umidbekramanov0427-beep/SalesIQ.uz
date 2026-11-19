@@ -111,12 +111,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   });
   recordVisit(historyIndex, pathname);
 
-  // The sidebar is the slim icon rail on every page -- on arrival, after a
-  // refresh, after a click -- so the working area gets the width. Hovering
-  // an icon names the section; the toggle (or ⌘B) peeks the full menu open
-  // until the next navigation.
-  const [peek, setPeek] = useState(false);
-  useEffect(() => setPeek(false), [pathname]);
+  // The sidebar is the slim icon rail, always -- the owner wants it fixed:
+  // it never opens wide (no toggle, no ⌘B). Hovering an icon names the
+  // section.
 
   useEffect(() => setSearchOpen(false), [pathname]);
   useEffect(() => {
@@ -126,11 +123,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         setSearchQuery("");
         setSearchOpen((o) => !o);
         return;
-      }
-      if (e.key === "Escape") setPeek(false);
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        setPeek((p) => !p);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -162,25 +154,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           <OwnerSidebar onEditProfile={() => setProfileOpen(true)} />
         ) : (
           <AppSidebar
-            collapsed={!peek}
-            compact={!peek}
-            onToggle={() => setPeek((p) => !p)}
+            collapsed
+            compact
             onOpenSearch={openSearch}
             onEditProfile={() => setProfileOpen(true)}
             isAdmin={isAdmin}
             isPlatformOwner={isPlatformOwner}
           />
         )}
-        {/* The opened menu floats over the page (the page never shifts);
-            a click beside it or Esc folds it back. */}
-        {peek && (
-          <div
-            aria-hidden
-            className="fixed inset-0 z-[35] bg-foreground/10 phone:hidden"
-            onClick={() => setPeek(false)}
-          />
-        )}
-
         {mobileOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div
