@@ -3,12 +3,11 @@ import { useAuthSkin } from "@/components/auth/auth-skins";
 import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton";
 import { cn } from "@/lib/utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, AtSign, KeyRound, Loader2, Lock, Mail } from "lucide-react";
+import { ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { currentDeviceId } from "@/lib/device-id";
-import { RESEND_AFTER_SEC, normalizeCode, parseLogin } from "@/lib/password-reset";
 import {
   AuthBackdrop,
   GlassCard,
@@ -80,7 +79,6 @@ function LoginPage() {
     consumeSeatBlockedMessage,
     signIn,
     signInWithGoogle,
-    resetPassword,
     updatePassword,
   } = useAuth();
   const { t } = useI18n();
@@ -111,22 +109,6 @@ function LoginPage() {
   const [googleBusy, setGoogleBusy] = useState(false);
 
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotSent, setForgotSent] = useState(false);
-  const [forgotBusy, setForgotBusy] = useState(false);
-  const [forgotError, setForgotError] = useState("");
-  // The Telegram code step (after "send"): the code, the new password twice
-  // and the "send again" countdown.
-  const [forgotStep, setForgotStep] = useState<"ask" | "code">("ask");
-  const [resetCode, setResetCode] = useState("");
-  const [resetPw, setResetPw] = useState("");
-  const [resetPw2, setResetPw2] = useState("");
-  const [resendIn, setResendIn] = useState(0);
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const id = window.setTimeout(() => setResendIn((s) => s - 1), 1000);
-    return () => window.clearTimeout(id);
-  }, [resendIn]);
 
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
@@ -182,100 +164,6 @@ function LoginPage() {
     // in the hash).
   }
 
-  async function resetApi(body: Record<string, string>) {
-    const res = await fetch("/account/password-reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return (await res.json().catch(() => ({}))) as {
-      ok?: boolean;
-      error?: string;
-      fallback?: string;
-      email?: string;
-      triesLeft?: number;
-    };
-  }
-
-  // Step 1: a code to the person's Telegram (the old e-mail link only
-  // until the server is ready for codes).
-  async function sendCode(again = false) {
-    const login = parseLogin(forgotEmail);
-    if (!login) {
-      setForgotError(t("login.reset.invalidLogin"));
-      return;
-    }
-    setForgotBusy(true);
-    setForgotError("");
-    try {
-      const r = await resetApi({ action: "send", login: forgotEmail });
-      if (r.fallback === "email") {
-        if (login.kind !== "email") {
-          setForgotError(t("login.reset.invalidLogin"));
-          return;
-        }
-        const result = await resetPassword(forgotEmail);
-        if (!result.ok) setForgotError(authErrorMessage(result.error, t));
-        else setForgotSent(true);
-        return;
-      }
-      if (r.error === "rate") return setForgotError(t("login.rateLimited"));
-      if (!r.ok) return setForgotError(t("login.reset.invalidLogin"));
-      setForgotStep("code");
-      setResendIn(RESEND_AFTER_SEC);
-      if (again) toast.success(t("login.reset.resent"));
-    } catch {
-      setForgotError(t("login.networkError"));
-    } finally {
-      setForgotBusy(false);
-    }
-  }
-
-  async function onForgotSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    await sendCode();
-  }
-
-  // Step 2: the code and the new password; then straight in.
-  async function onCodeSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!normalizeCode(resetCode)) return setForgotError(t("login.reset.invalidCode"));
-    if (resetPw.length < 8) return setForgotError(t("login.shortPassword"));
-    if (resetPw !== resetPw2) return setForgotError(t("login.passwordMismatch"));
-    setForgotBusy(true);
-    setForgotError("");
-    try {
-      const r = await resetApi({
-        action: "verify",
-        login: forgotEmail,
-        code: resetCode,
-        password: resetPw,
-      });
-      if (!r.ok || !r.email) {
-        if (r.error === "bad_code")
-          setForgotError(t("login.reset.badCode", { n: String(r.triesLeft ?? 0) }));
-        else if (r.error === "password_short") setForgotError(t("login.shortPassword"));
-        else if (r.error === "invalid") setForgotError(t("login.reset.invalidCode"));
-        else setForgotError(t("login.reset.expired"));
-        return;
-      }
-      toast.success(t("login.passwordUpdated"));
-      const signed = await signIn(r.email, resetPw);
-      if (!signed.ok) {
-        setForgotOpen(false);
-        setForgotStep("ask");
-        setEmail(r.email);
-        setErrors({ form: authErrorMessage(signed.error, t) });
-        return;
-      }
-      goAfterAuth();
-    } catch {
-      setForgotError(t("login.networkError"));
-    } finally {
-      setForgotBusy(false);
-    }
-  }
-
   async function onRecoverySubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (newPassword.length < 8) {
@@ -329,14 +217,7 @@ function LoginPage() {
     <button
       type="button"
       onClick={() => {
-        setForgotEmail(email);
         setForgotOpen(true);
-        setForgotSent(false);
-        setForgotError("");
-        setForgotStep("ask");
-        setResetCode("");
-        setResetPw("");
-        setResetPw2("");
       }}
       className={cn("text-[13px] font-semibold hover:underline", skin.link)}
     >
@@ -391,100 +272,17 @@ function LoginPage() {
           </form>
         ) : forgotOpen ? (
           <div className="space-y-4">
-            <GlassHeading
-              title={t("login.forgotPassword")}
-              sub={forgotStep === "ask" && !forgotSent ? t("login.reset.desc") : undefined}
-            />
-            {forgotSent ? (
-              <div className="rounded-xl border border-[#4d86ff]/30 bg-[#4d86ff]/10 p-4 text-center text-sm">
-                {t("login.forgotSent", { email: forgotEmail })}
-              </div>
-            ) : forgotStep === "ask" ? (
-              <form onSubmit={onForgotSubmit} noValidate className="space-y-4">
-                <GlassField
-                  label={t("login.reset.login")}
-                  icon={AtSign}
-                  type="text"
-                  autoComplete="username"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                />
-                {forgotError && <GlassError>{forgotError}</GlassError>}
-                <GlassSubmit busy={forgotBusy}>
-                  {forgotBusy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("login.reset.send")}
-                </GlassSubmit>
-              </form>
-            ) : (
-              <form onSubmit={onCodeSubmit} noValidate className="space-y-4">
-                <div className="rounded-xl border border-[#4d86ff]/30 bg-[#4d86ff]/10 px-4 py-3 text-[13px] leading-relaxed">
-                  {t("login.reset.codeSent")}
-                </div>
-                <GlassField
-                  label={t("login.reset.code")}
-                  icon={KeyRound}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={7}
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value)}
-                />
-                <GlassField
-                  label={t("login.newPassword")}
-                  icon={Lock}
-                  type="password"
-                  autoComplete="new-password"
-                  value={resetPw}
-                  onChange={(e) => setResetPw(e.target.value)}
-                />
-                <GlassField
-                  label={t("login.newPasswordConfirm")}
-                  icon={Lock}
-                  type="password"
-                  autoComplete="new-password"
-                  value={resetPw2}
-                  onChange={(e) => setResetPw2(e.target.value)}
-                />
-                {forgotError && <GlassError>{forgotError}</GlassError>}
-                <GlassSubmit busy={forgotBusy}>
-                  {forgotBusy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("login.updatePassword")}
-                </GlassSubmit>
-                <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
-                  <button
-                    type="button"
-                    disabled={resendIn > 0 || forgotBusy}
-                    onClick={() => void sendCode(true)}
-                    className={cn(
-                      "font-semibold enabled:hover:underline disabled:opacity-60",
-                      skin.link,
-                    )}
-                  >
-                    {resendIn > 0
-                      ? t("login.reset.resendIn", { s: String(resendIn) })
-                      : t("login.reset.resend")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForgotStep("ask");
-                      setForgotError("");
-                    }}
-                    className={cn("font-medium hover:underline", skin.muted)}
-                  >
-                    {t("login.reset.otherLogin")}
-                  </button>
-                </div>
-              </form>
-            )}
+            <GlassHeading title={t("login.forgotPassword")} />
+            {/* No self-service reset: the company gives logins and
+                passwords, and its super admin sets a new one. */}
+            <div className="space-y-2 rounded-xl border border-[#4d86ff]/30 bg-[#4d86ff]/10 px-4 py-3.5 text-[13.5px] leading-relaxed">
+              <p>{t("login.askAdmin")}</p>
+              <p className={skin.muted}>{t("login.askAdminOwner")}</p>
+            </div>
             <button
               type="button"
               onClick={() => {
                 setForgotOpen(false);
-                setForgotSent(false);
-                setForgotError("");
-                setForgotStep("ask");
               }}
               className={cn("block w-full text-center text-sm font-medium", skin.muted)}
             >
