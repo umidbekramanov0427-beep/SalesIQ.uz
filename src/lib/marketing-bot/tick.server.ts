@@ -4,6 +4,7 @@
 // the webinar goes on, the audience fell sharply, a new peak -- and the
 // report once a webinar has ended. Each alert is sent once (marketing_bot_log).
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { reportDue } from "@/lib/webinar-auto-state";
 import { alertOnce, marketingBot, marketingBotOrgs } from "@/lib/marketing-bot/bot.server";
 import { webinarTimeline } from "@/lib/marketing-bot/handlers.server";
 import { consoleKeyboard, dropAlert, escapeHtml, reportText } from "@/lib/marketing-bot/logic";
@@ -73,7 +74,13 @@ export async function runMarketingBotTick(now = new Date()): Promise<number> {
             `⚠️ <b>Telegram efir to'xtadi</b> — ${title}\nYouTube davom etmoqda. Oxirgi Telegram soni: ${fmt(lastTg.telegram ?? 0)}`,
           ));
       }
-    } else if (w.status === "ended" && a.report && points.length > 1) {
+    } else if (
+      w.status === "ended" &&
+      a.report &&
+      points.length > 1 &&
+      // A few minutes' wait: a stream back on reopens the webinar first.
+      reportDue(w.ended_at, now)
+    ) {
       sent += +(await alertOnce(
         w.organization_id,
         `report:${w.id}`,

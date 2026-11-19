@@ -5,6 +5,16 @@ import { saveShot } from "@/lib/marketing-shots.server";
 import { botIsAdmin, syncChannelAccount } from "@/lib/channel-events.server";
 import { channelCheckDue, pairedShotDue } from "@/lib/marketing-rules";
 import { addAutoEvent, recordPeak, upsertSample } from "@/lib/webinar-events.server";
+import {
+  REOPEN_MIN,
+  canReopen,
+  endedAt,
+  endsWithTelegram,
+  endsWithYoutube,
+  silentTooLong,
+  streamSilent,
+  youtubeState,
+} from "@/lib/webinar-auto-state";
 import { marketingBot } from "@/lib/marketing-bot/bot.server";
 import { marketingRulesFor, rulesOf } from "@/lib/marketing-rules.server";
 import {
@@ -293,7 +303,27 @@ type YtItem = {
   };
 };
 
-/** Every minute: the current viewers of each live (or about to start) YouTube webinar. */
+/** The time of a webinar's newest automatic count (of one source, or either). */
+async function lastSampleAt(
+  webinarId: string,
+  source?: "youtube" | "telegram",
+): Promise<string | null> {
+  const q = supabaseAdmin
+    .from("marketing_webinar_samples")
+    .select("at")
+    .eq("webinar_id", webinarId)
+    .in("source", source ? [source] : ["youtube", "telegram"]);
+  const { data, error } = await q.order("at", { ascending: false }).limit(1).maybeSingle();
+  if (error) return null;
+  return data?.at ?? null;
+}
+
+/**
+ * Every minute: the current viewers of each live (or about to start)
+ * YouTube webinar. Its state follows the broadcast (webinar-auto-state):
+ * live from the broadcast's start, ended with it -- unless its Telegram
+ * stream is still on air, then it ends when Telegram stops.
+ */
 export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
   const soon = new Date(now.getTime() + 15 * 60_000).toISOString();
   const { data } = await supabaseAdmin
@@ -304,8 +334,9 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
     .neq("status", "ended")
     .not("youtube_video_id", "is", null)
     .limit(200);
+  // Also one with a link but no time: YouTube knows when it starts.
   const due = (data ?? []).filter(
-    (w) => w.status === "live" || (w.starts_at != null && w.starts_at <= soon),
+    (w) => w.status === "live" || w.starts_at == null || w.starts_at <= soon,
   );
   if (!due.length) return 0;
   const rules = await marketingRulesFor(due.map((w) => w.organization_id));
@@ -352,40 +383,60 @@ export async function pollYoutubeWebinars(now = new Date()): Promise<number> {
           .eq("id", w.id);
         continue;
       }
-      if (lsd?.actualEndTime) {
+      const state = youtubeState(lsd);
+      if (state === "ended") {
+        // Over on YouTube. Still on air in Telegram: the webinar stays live
+        // and ends once Telegram stops (checked again every minute).
+        const lastTg = w.channel_id ? await lastSampleAt(w.id, "telegram") : null;
+        if (!endsWithYoutube({ tracksTelegram: !!w.channel_id, lastTelegramAt: lastTg, now }))
+          continue;
         await supabaseAdmin
           .from("marketing_webinars")
-          .update({ status: "ended", ended_at: lsd.actualEndTime, poll_error: null })
+          .update({
+            status: "ended",
+            ended_at: endedAt(lsd?.actualEndTime, lastTg) ?? now.toISOString(),
+            poll_error: null,
+          })
           .eq("id", w.id);
         continue;
       }
-      if (lsd?.concurrentViewers != null) {
-        const viewers = Number(lsd.concurrentViewers) || 0;
+      if (state === "live") {
+        const viewers = lsd?.concurrentViewers != null ? Number(lsd.concurrentViewers) || 0 : null;
         const at = new Date(Math.floor(now.getTime() / 60_000) * 60_000).toISOString();
-        await upsertSample({
-          webinar_id: w.id,
-          organization_id: w.organization_id,
-          at,
-          viewers,
-          source: "youtube",
-        });
+        // YouTube came on just now: the webinar wasn't live yet, or it was
+        // (Telegram first) but YouTube had no count in the last minutes.
+        const prevYt = viewers != null ? await lastSampleAt(w.id, "youtube") : null;
+        const ytStarted = w.status !== "live" || (viewers != null && streamSilent(prevYt, now));
+        if (viewers != null) {
+          await upsertSample({
+            webinar_id: w.id,
+            organization_id: w.organization_id,
+            at,
+            viewers,
+            source: "youtube",
+          });
+        }
         await supabaseAdmin
           .from("marketing_webinars")
           .update({
             status: "live",
+            ended_at: null,
             poll_error: null,
-            ...(w.starts_at ? {} : { starts_at: lsd.actualStartTime ?? at }),
+            ...(w.starts_at && w.status === "live"
+              ? {}
+              : { starts_at: lsd?.actualStartTime ?? at }),
           })
           .eq("id", w.id);
-        await recordPeak(w.id, now).catch(() => undefined);
-        if (w.status !== "live") {
+        if (viewers != null) await recordPeak(w.id, now).catch(() => undefined);
+        if (ytStarted) {
           await addAutoEvent({
             webinarId: w.id,
             orgId: w.organization_id,
             kind: "yt_live_on",
-            at: lsd.actualStartTime ? new Date(lsd.actualStartTime) : now,
+            at: w.status !== "live" && lsd?.actualStartTime ? new Date(lsd.actualStartTime) : now,
           }).catch(() => false);
         }
+        if (viewers == null) continue;
         saved++;
         // Every few minutes: the stream's current frame as proof. Cutting
         // a frame takes up to a minute, so it is not waited for.
@@ -488,12 +539,18 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
         .limit(1)
         .maybeSingle();
       if (!state.live) {
-        // A YouTube webinar is closed by YouTube; a Telegram-only one here.
-        if (open && !open.youtube_video_id) {
-          await supabaseAdmin
-            .from("marketing_webinars")
-            .update({ status: "ended", ended_at: now.toISOString() })
-            .eq("id", open.id);
+        // A webinar with a YouTube broadcast is closed by YouTube's poller
+        // (which waits for Telegram); a Telegram-only one here, once the
+        // stream has been off for a few minutes (one missed look isn't the end).
+        if (open) {
+          const lastTg = await lastSampleAt(open.id, "telegram");
+          if (
+            endsWithTelegram({ youtubeOpen: !!open.youtube_video_id, lastTelegramAt: lastTg, now })
+          )
+            await supabaseAdmin
+              .from("marketing_webinars")
+              .update({ status: "ended", ended_at: endedAt(lastTg) ?? now.toISOString() })
+              .eq("id", open.id);
         }
         continue;
       }
@@ -517,6 +574,28 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
             .update({ status: "live", poll_error: null })
             .eq("id", planned.id);
           webinar = { ...planned, status: "live" };
+        }
+      }
+      if (!webinar) {
+        // The stream came back a few minutes after it stopped: the same
+        // webinar goes on instead of a new one.
+        const { data: recent } = await supabaseAdmin
+          .from("marketing_webinars")
+          .select("*")
+          .eq("organization_id", c.organization_id)
+          .eq("channel_id", c.id)
+          .eq("status", "ended")
+          .is("archived_at", null)
+          .gte("ended_at", new Date(now.getTime() - REOPEN_MIN * 60_000).toISOString())
+          .order("ended_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (recent && canReopen(recent.ended_at, now)) {
+          await supabaseAdmin
+            .from("marketing_webinars")
+            .update({ status: "live", ended_at: null, poll_error: null })
+            .eq("id", recent.id);
+          webinar = { ...recent, status: "live", ended_at: null };
         }
       }
       if (!webinar) {
@@ -605,4 +684,33 @@ export async function pollTelegramLive(now = new Date()): Promise<number> {
     }
   }
   return saved;
+}
+
+/**
+ * Every minute, after the pollers: a live webinar whose streams have all
+ * been silent for half an hour (the Telegram account dropped, the end
+ * signal was lost) is closed at its last count. One whose YouTube link is
+ * failing to answer is left to YouTube, and one counted by hand is never
+ * touched (only automatic counts are looked at).
+ */
+export async function closeSilentWebinars(now = new Date()): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from("marketing_webinars")
+    .select("id, youtube_video_id, poll_error")
+    .eq("status", "live")
+    .is("archived_at", null)
+    .limit(200);
+  let closed = 0;
+  for (const w of data ?? []) {
+    if (w.youtube_video_id && w.poll_error) continue;
+    const last = await lastSampleAt(w.id);
+    if (!silentTooLong(last, now)) continue;
+    await supabaseAdmin
+      .from("marketing_webinars")
+      .update({ status: "ended", ended_at: last })
+      .eq("id", w.id)
+      .eq("status", "live");
+    closed++;
+  }
+  return closed;
 }
