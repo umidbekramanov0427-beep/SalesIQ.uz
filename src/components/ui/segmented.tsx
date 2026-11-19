@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
@@ -14,6 +15,7 @@ export function Segmented<T extends string>({
   className,
   sticky = false,
   centered = false,
+  trailing,
 }: {
   value: T;
   onChange: (value: T) => void;
@@ -26,6 +28,8 @@ export function Segmented<T extends string>({
    * border, soft shadow) with the chosen tab in the brand colour.
    */
   centered?: boolean;
+  /** The page's filters, on the right of the tabs (the tabs then sit left). */
+  trailing?: ReactNode;
 }) {
   // The admin console's segmented control: a hairline track, the chosen
   // segment raised one step with its own hairline (as the hub's filter).
@@ -63,6 +67,27 @@ export function Segmented<T extends string>({
       ))}
     </div>
   );
+  // A page's tabs with its filters: the tabs on the left, the filters on the
+  // right of the same row.
+  if (trailing) {
+    const row = (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {control}
+        <div className="min-w-0">{trailing}</div>
+      </div>
+    );
+    if (!sticky) return <div className={className}>{row}</div>;
+    return (
+      <div
+        className={cn(
+          "sticky -top-4 z-20 -mx-4 bg-background/75 px-4 py-2.5 backdrop-blur-xl backdrop-saturate-150 md:-mx-6 md:px-6 phone:-top-3 phone:-mx-3 phone:px-3",
+          className,
+        )}
+      >
+        {row}
+      </div>
+    );
+  }
   if (!sticky) {
     return centered ? (
       <div className={cn("flex justify-center", className)}>{control}</div>

@@ -9,7 +9,7 @@ import {
 } from "@/components/analytics/AnalyticsReports";
 import { canOpenSection } from "@/lib/access-rules";
 import { appRoleOf } from "@/lib/nav";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState, type ReactNode } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -420,18 +420,37 @@ export function HomePage() {
     ...(analyticsOpen ? [...salesReport.items, ...winLossReport.items] : []),
   ];
 
-  const tabsNode = (
+  // The tabs on the left, the tab's filters on the right of the same row.
+  const tabsRow = (filters?: ReactNode) => (
     <Segmented
       sticky
       centered
       className="mb-5"
       value={tab}
       onChange={setTab}
+      trailing={filters}
       options={tabs.map((key) => ({
         value: key,
         label: t(`home.tab.${key}`),
         icon: TAB_ICONS[key],
       }))}
+    />
+  );
+  const conversionFilters = (
+    <DashboardFilterRow
+      show={TAB_FILTERS.conversion}
+      funnel={funnel}
+      onFunnelChange={setFunnel}
+      teamId={teamId || null}
+      onTeamChange={(v) => setTeamId(v ?? "")}
+      operatorId={operatorId || null}
+      onOperatorChange={(v) => setOperatorId(v ?? "")}
+      dateFilter={dateFilter}
+      onDateFilterChange={setDateFilter}
+      funnelNames={funnelNames}
+      rops={rops}
+      operators={operators}
+      extra={saveButton}
     />
   );
 
@@ -446,13 +465,13 @@ export function HomePage() {
           <Suspense
             fallback={
               <>
-                {tabsNode}
+                {tabsRow()}
                 <Loading />
               </>
             }
           >
             <DeskTab
-              tabs={tabsNode}
+              renderTabs={tabsRow}
               onView={setDeskView}
               extra={{ widgets: boardWidgets, layout: BOARD_DEFAULTS }}
             />
@@ -486,7 +505,7 @@ export function HomePage() {
       <MyMeetingCard />
       <FirstStepsCard />
 
-      {tabsNode}
+      {tabsRow(tab === "conversion" ? conversionFilters : undefined)}
 
       {/* Keyed by tab so switching tabs plays .tab-enter (styles.css). */}
       <div key={tab} className="tab-enter">
@@ -502,30 +521,10 @@ export function HomePage() {
             )}
           </>
         ) : (
-          <>
-            <DashboardFilterRow
-              show={TAB_FILTERS[tab]}
-              funnel={funnel}
-              onFunnelChange={setFunnel}
-              teamId={teamId || null}
-              onTeamChange={(v) => setTeamId(v ?? "")}
-              operatorId={operatorId || null}
-              onOperatorChange={(v) => setOperatorId(v ?? "")}
-              dateFilter={dateFilter}
-              onDateFilterChange={setDateFilter}
-              funnelNames={funnelNames}
-              rops={rops}
-              operators={operators}
-              extra={saveButton}
-            />
-
-            {tab === "conversion" && (
-              <div className="mt-5">
-                {salesReport.notice}
-                <CardBoard boardKey="home.conversion" items={conversionItems} />
-              </div>
-            )}
-          </>
+          <div>
+            {salesReport.notice}
+            <CardBoard boardKey="home.conversion" items={conversionItems} />
+          </div>
         )}
       </div>
     </>

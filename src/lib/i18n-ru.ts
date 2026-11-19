@@ -9719,6 +9719,7 @@ const ru: Record<string, string> = {
   "mkt.exp.conversion": "Конверсия %",
   "desk.mainFigures": "Основные показатели",
   "desk.funnelLabel": "Воронка:",
+  "desk.periodTile": "ПЕРИОД",
   "desk.allFunnels": "Все воронки",
   "desk.preset.today": "Сегодня",
   "desk.preset.week": "Неделя",

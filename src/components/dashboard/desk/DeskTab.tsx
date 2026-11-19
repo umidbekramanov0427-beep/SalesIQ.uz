@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CalendarRange,
+  GitBranch,
   Download,
   Loader2,
   Pencil,
@@ -21,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FilterTile, TileOption } from "@/components/filters/FilterTile";
 import {
   useDesk,
   useMyOrganization,
@@ -108,11 +110,12 @@ export type DeskView = {
 };
 
 export function DeskTab({
-  tabs,
+  renderTabs,
   onView,
   extra,
 }: {
-  tabs: ReactNode;
+  /** The page's tab row, with these filters on its right. */
+  renderTabs: (filters: ReactNode) => ReactNode;
   /** Told whenever the period or funnel changes. */
   onView?: (v: DeskView) => void;
   /** More cards on the same board, after the desk's own. */
@@ -441,6 +444,52 @@ export function DeskTab({
       ]
     : [];
 
+  // The tab's filters, in the same card as the other tabs' filters: the
+  // period and the funnel as filter tiles, then the board's own buttons.
+  const filters = (
+    <div className="phone-joined flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-2.5 shadow-soft phone:[--phone-cell:140px] phone:[&_svg]:hidden">
+      <FilterTile
+        icon={CalendarRange}
+        label={t("desk.periodTile")}
+        active={preset !== "month"}
+        value={preset === "range" ? periodText : t(`desk.preset.${preset}`)}
+      >
+        {PRESETS.filter((p) => p !== "range").map((p) => (
+          <TileOption
+            key={p}
+            label={t(`desk.preset.${p}`)}
+            active={preset === p}
+            onClick={() => setPreset(p)}
+          />
+        ))}
+      </FilterTile>
+      <RangePicker
+        active={preset === "range"}
+        value={custom ?? { from: period.from, to: period.to }}
+        onApply={(v) => {
+          setCustom(v);
+          setPreset("range");
+        }}
+      />
+      <FilterTile
+        icon={GitBranch}
+        label={t("leadAnalytics.funnelLabel")}
+        active={!!funnel}
+        value={funnel ?? t("desk.allFunnels")}
+      >
+        <TileOption label={t("desk.allFunnels")} active={!funnel} onClick={() => setFunnel(null)} />
+        {(d?.funnels ?? []).map((f) => (
+          <TileOption key={f} label={f} active={funnel === f} onClick={() => setFunnel(f)} />
+        ))}
+      </FilterTile>
+      {!editing && <BoardCustomizeButton onClick={() => setEditing(true)} />}
+      <button type="button" className={btn} onClick={() => d && exportXlsx(d)} disabled={!d}>
+        <Download className="h-4 w-4" />
+        {t("desk.export")}
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {/* One row: the company (small, top left) and, on the right, the
@@ -469,59 +518,9 @@ export function DeskTab({
             </p>
           </div>
         </div>
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <div
-            role="tablist"
-            className="ctl-track inline-flex items-center gap-0.5 rounded-xl p-0.5"
-          >
-            {PRESETS.map((p) =>
-              p === "range" ? (
-                <RangePicker
-                  key={p}
-                  active={preset === "range"}
-                  value={custom ?? { from: period.from, to: period.to }}
-                  onApply={(v) => {
-                    setCustom(v);
-                    setPreset("range");
-                  }}
-                />
-              ) : (
-                <button
-                  key={p}
-                  type="button"
-                  role="tab"
-                  aria-selected={preset === p}
-                  data-state={preset === p ? "active" : "inactive"}
-                  onClick={() => setPreset(p)}
-                  className="ctl-tab h-8 rounded-lg px-3 text-[13px] font-semibold"
-                >
-                  {t(`desk.preset.${p}`)}
-                </button>
-              ),
-            )}
-          </div>
-          <select
-            value={funnel ?? ""}
-            onChange={(e) => setFunnel(e.target.value || null)}
-            aria-label={t("desk.funnelLabel")}
-            className="ctl-soft h-9 max-w-[200px] rounded-xl px-3 text-[13px] font-semibold outline-none"
-          >
-            <option value="">{t("desk.allFunnels")}</option>
-            {(d?.funnels ?? []).map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-          {!editing && <BoardCustomizeButton onClick={() => setEditing(true)} />}
-          <button type="button" className={btn} onClick={() => d && exportXlsx(d)} disabled={!d}>
-            <Download className="h-4 w-4" />
-            {t("desk.export")}
-          </button>
-        </div>
       </header>
 
-      {tabs}
+      {renderTabs(filters)}
 
       {error && !d ? (
         <p className="surface-card px-4 py-10 text-center text-[13px] text-muted-foreground">
@@ -584,7 +583,7 @@ function RangePicker({
           role="tab"
           aria-selected={active}
           data-state={active ? "active" : "inactive"}
-          className="ctl-tab inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold"
+          className="ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-foreground data-[state=active]:text-primary"
         >
           <CalendarRange className="h-3.5 w-3.5" />
           {t("desk.preset.range")}

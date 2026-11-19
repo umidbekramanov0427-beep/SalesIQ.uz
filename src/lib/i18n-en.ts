@@ -9697,6 +9697,7 @@ export const en: Record<string, string> = {
   "mkt.exp.conversion": "Conversion %",
   "desk.mainFigures": "Main figures",
   "desk.funnelLabel": "Funnel:",
+  "desk.periodTile": "PERIOD",
   "desk.allFunnels": "All funnels",
   "desk.preset.today": "Today",
   "desk.preset.week": "Week",

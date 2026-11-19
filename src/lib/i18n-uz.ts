@@ -9890,6 +9890,7 @@ const uz: Record<string, string> = {
   "mkt.exp.conversion": "Konversiya %",
   "desk.mainFigures": "Asosiy ko'rsatkichlar",
   "desk.funnelLabel": "Voronka:",
+  "desk.periodTile": "DAVR",
   "desk.allFunnels": "Barcha voronkalar",
   "desk.preset.today": "Bugun",
   "desk.preset.week": "Hafta",
