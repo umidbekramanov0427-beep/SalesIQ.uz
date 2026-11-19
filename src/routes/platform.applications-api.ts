@@ -269,6 +269,49 @@ export const Route = createFileRoute("/platform/applications-api")({
         const b = (await request.json().catch(() => ({}))) as Record<string, unknown>;
         const action = typeof b["action"] === "string" ? b["action"] : "";
 
+        // Platforma -> Xatoliklar: an error a company ran into becomes an open
+        // issue on that company's lead card (its newest application).
+        if (action === "issueFromError") {
+          const errorId = str(b["errorId"], 40);
+          if (!UUID.test(errorId)) return Response.json({ error: "BAD_ID" }, { status: 400 });
+          const { data: err } = await db
+            .from("error_logs")
+            .select("organization_id, message, route, created_at, source")
+            .eq("id", errorId)
+            .maybeSingle();
+          if (!err?.organization_id)
+            return Response.json({ error: "Bu xato kompaniyaga bog'lanmagan" }, { status: 400 });
+          const { data: app } = await db
+            .from("platform_applications")
+            .select("id")
+            .eq("organization_id", err.organization_id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (!app)
+            return Response.json(
+              { error: "Bu kompaniyaning Arizalarda kartasi yo'q" },
+              { status: 404 },
+            );
+          const count = Math.max(1, Math.min(9999, Number(b["count"]) || 1));
+          const body = [
+            `Xato: ${err.message.slice(0, 1500)}`,
+            err.route ? `Sahifa: ${err.route}` : null,
+            `Turi: ${err.source} · ${count} marta · oxirgisi ${err.created_at.slice(0, 16).replace("T", " ")} UTC`,
+          ]
+            .filter(Boolean)
+            .join("\n");
+          const { error } = await db.from("platform_application_notes").insert({
+            application_id: app.id,
+            kind: "issue",
+            body,
+            created_by: ownerId,
+          });
+          if (error) return fail(error);
+          await touch(app.id);
+          return Response.json({ ok: true, appId: app.id });
+        }
+
         if (action === "task") {
           const appId = str(b["id"], 40);
           if (!UUID.test(appId)) return Response.json({ error: "BAD_ID" }, { status: 400 });
