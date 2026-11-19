@@ -125,9 +125,10 @@ export const RAIL_ITEM =
 export const RAIL_STACK = "space-y-1.5";
 export const RAIL_LABEL = "block w-full truncate whitespace-nowrap text-[9.5px] leading-[12px]";
 // The rail's two key tiles -- search at the top, the person at the bottom --
-// share one look: a soft gradient card holding just the glyph.
+// share one look: a plain card (the platform's colours, no tint) holding
+// just the glyph.
 export const RAIL_TILE =
-  "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-[18px] bg-gradient-to-br from-primary/15 via-sky-500/10 to-violet-500/20 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition-all hover:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_55%,transparent),0_6px_16px_-6px_color-mix(in_oklab,var(--primary)_60%,transparent)]";
+  "group mx-auto flex h-[44px] w-[50px] flex-col items-center justify-center gap-1 rounded-[18px] bg-card text-foreground shadow-[inset_0_0_0_1px_var(--border),0_1px_2px_rgb(16_24_40/0.05)] transition-colors hover:bg-muted";
 export function NotificationBell({
   rail = false,
   mobile = false,
