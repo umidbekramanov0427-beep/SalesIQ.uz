@@ -23,18 +23,21 @@ export type AnnouncementRow = {
   starts_at: string;
   ends_at: string | null;
   active: boolean;
+  /** Only companies on these plans (empty / null = every plan). */
+  plans?: string[] | null;
 };
 
 /** Whether this announcement is meant for this company right now. */
 export function announcementApplies(
   a: AnnouncementRow,
-  org: { id: string; phase: OrgPhase },
+  org: { id: string; phase: OrgPhase; plan?: string | null },
   now: Date = new Date(),
 ): boolean {
   if (!a.active) return false;
   const t = now.getTime();
   if (new Date(a.starts_at).getTime() > t) return false;
   if (a.ends_at && new Date(a.ends_at).getTime() <= t) return false;
+  if (a.plans?.length && !(org.plan && a.plans.includes(org.plan))) return false;
   switch (a.audience) {
     case "all":
       return true;
@@ -52,7 +55,7 @@ export function announcementApplies(
 /** The banners a person sees: applicable, not dismissed, warnings first, newest first. */
 export function visibleAnnouncements(
   rows: AnnouncementRow[],
-  org: { id: string; phase: OrgPhase },
+  org: { id: string; phase: OrgPhase; plan?: string | null },
   dismissed: Set<string>,
   now: Date = new Date(),
 ): AnnouncementRow[] {

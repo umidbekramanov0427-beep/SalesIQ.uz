@@ -17,7 +17,7 @@ export const Route = createFileRoute("/announcements/active")({
           supabaseAdmin
             .from("platform_announcements")
             .select(
-              "id, title, body, kind, audience, org_ids, link_url, link_label, dismissible, starts_at, ends_at, active",
+              "id, title, body, kind, audience, org_ids, plans, link_url, link_label, dismissible, starts_at, ends_at, active",
             )
             .eq("active", true)
             .order("starts_at", { ascending: false })
@@ -36,9 +36,25 @@ export const Route = createFileRoute("/announcements/active")({
         if (error || !org) return Response.json({ items: [] });
         const items = visibleAnnouncements(
           rows ?? [],
-          { id: org.id, phase: orgPhase(org) },
+          { id: org.id, phase: orgPhase(org), plan: org.plan },
           new Set((closed ?? []).map((d) => d.announcement_id)),
         ).slice(0, 3);
+        // Who saw it (Owner -> E'lonlar shows the count); once per person.
+        if (items.length)
+          await supabaseAdmin
+            .from("platform_announcement_views")
+            .upsert(
+              items.map((a) => ({
+                announcement_id: a.id,
+                user_id: member.id,
+                organization_id: member.organizationId,
+              })),
+              { onConflict: "announcement_id,user_id", ignoreDuplicates: true },
+            )
+            .then(
+              () => undefined,
+              () => undefined,
+            );
         return Response.json(
           {
             items: items.map((a) => ({

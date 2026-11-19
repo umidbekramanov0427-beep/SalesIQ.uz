@@ -14,6 +14,7 @@ import { AnnouncementStrip, KIND_LOOK } from "@/components/announcements/Announc
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import { ANNOUNCEMENT_KINDS, AUDIENCES } from "@/lib/announcements";
+import { PLANS, PLAN_LABELS } from "@/lib/plan-gating";
 import { apiFetch } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,9 @@ type Row = {
   telegram_sent_at: string | null;
   created_at: string;
   dismissed: number;
+  plans?: string[] | null;
+  views?: number;
+  viewOrgs?: number;
 };
 type Data = { ready: boolean; items: Row[]; companies: { id: string; name: string }[] };
 
@@ -56,9 +60,16 @@ const EMPTY = {
   linkUrl: "",
   linkLabel: "",
   endsAt: "",
+  /** datetime-local, Tashkent; empty = now. */
+  startsAt: "",
+  plans: [] as string[],
   dismissible: true,
   telegram: false,
 };
+
+/** A start time more than a minute ahead (Tashkent datetime-local). */
+const isScheduled = (local: string) =>
+  !!local && Date.parse(`${local}:00+05:00`) > Date.now() + 60_000;
 
 const field =
   "h-9 w-full rounded-lg border border-border bg-background px-3 text-[13px] text-foreground outline-none transition-colors placeholder:text-subtle focus:border-primary";
@@ -104,7 +115,9 @@ function AnnouncementsPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...form,
-          endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:00`).toISOString() : null,
+          endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:00+05:00`).toISOString() : null,
+          startsAt: form.startsAt ? new Date(`${form.startsAt}:00+05:00`).toISOString() : null,
+          telegram: form.telegram && !isScheduled(form.startsAt),
         }),
       });
       const j = (await res.json().catch(() => ({}))) as { error?: string; telegramSent?: number };
@@ -169,6 +182,7 @@ function AnnouncementsPage() {
         : t("ann.nCompanies", { n: String(a.org_ids.length) })
       : t(`ann.aud.${a.audience}`);
 
+  const scheduled = isScheduled(form.startsAt);
   const canSend = form.title.trim() && (form.audience !== "orgs" || form.orgIds.length > 0);
 
   return (
@@ -264,9 +278,11 @@ function AnnouncementsPage() {
                         >
                           {live
                             ? t("ann.live")
-                            : a.active && a.ends_at
-                              ? t("ann.ended")
-                              : t("ann.off")}
+                            : a.active && new Date(a.starts_at).getTime() > Date.now()
+                              ? t("ann.scheduled")
+                              : a.active && a.ends_at
+                                ? t("ann.ended")
+                                : t("ann.off")}
                         </span>
                       </div>
                       {a.body && (
@@ -277,6 +293,14 @@ function AnnouncementsPage() {
                       <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-subtle">
                         <span>{t(`ann.kind.${a.kind}`)}</span>
                         <span>· {audienceText(a)}</span>
+                        {a.plans && a.plans.length > 0 && (
+                          <span>
+                            ·{" "}
+                            {a.plans
+                              .map((p) => PLAN_LABELS[p as keyof typeof PLAN_LABELS] ?? p)
+                              .join(", ")}
+                          </span>
+                        )}
                         <span>
                           · {fmt(a.starts_at)}
                           {a.ends_at ? ` – ${fmt(a.ends_at)}` : ""}
@@ -284,6 +308,9 @@ function AnnouncementsPage() {
                         {a.telegram_sent_at && (
                           <span>· {t("ann.tgCount", { n: String(a.telegram_sent_count) })}</span>
                         )}
+                        <span className="font-semibold text-foreground">
+                          · {t("ann.seen", { n: String(a.views ?? 0), o: String(a.viewOrgs ?? 0) })}
+                        </span>
                         {a.dismissed > 0 && (
                           <span>· {t("ann.closedCount", { n: String(a.dismissed) })}</span>
                         )}
@@ -410,6 +437,38 @@ function AnnouncementsPage() {
               )}
             </div>
 
+            <div>
+              <p className="mb-1.5 text-[12px] font-semibold text-muted-foreground">
+                {t("ann.plans")}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {PLANS.map((p) => {
+                  const on = form.plans.includes(p);
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() =>
+                        set("plans", on ? form.plans.filter((x) => x !== p) : [...form.plans, p])
+                      }
+                      className={cn(
+                        "h-8 rounded-full border px-3 text-[12.5px] font-semibold transition-colors",
+                        on
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {PLAN_LABELS[p]}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-[11.5px] text-subtle">
+                {form.plans.length ? t("ann.plansOnly") : t("ann.plansAll")}
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               <input
                 className={field}
@@ -426,7 +485,16 @@ function AnnouncementsPage() {
               />
             </div>
             <label className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
-              <span className="shrink-0">{t("ann.until")}</span>
+              <span className="w-[92px] shrink-0">{t("ann.from")}</span>
+              <input
+                type="datetime-local"
+                className={cn(field, "h-8")}
+                value={form.startsAt}
+                onChange={(e) => set("startsAt", e.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+              <span className="w-[92px] shrink-0">{t("ann.until")}</span>
               <input
                 type="date"
                 className={cn(field, "h-8")}
@@ -448,9 +516,15 @@ function AnnouncementsPage() {
               <label className="flex items-center gap-3 px-3 py-2.5">
                 <span className="min-w-0 flex-1 text-[12.5px]">
                   <span className="block font-semibold text-foreground">{t("ann.telegram")}</span>
-                  <span className="text-subtle">{t("ann.telegramHint")}</span>
+                  <span className="text-subtle">
+                    {scheduled ? t("ann.telegramScheduled") : t("ann.telegramHint")}
+                  </span>
                 </span>
-                <Switch checked={form.telegram} onCheckedChange={(v) => set("telegram", v)} />
+                <Switch
+                  checked={form.telegram && !scheduled}
+                  disabled={scheduled}
+                  onCheckedChange={(v) => set("telegram", v)}
+                />
               </label>
             </div>
 
@@ -487,7 +561,11 @@ function AnnouncementsPage() {
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              {form.telegram ? t("ann.publishTg") : t("ann.publish")}
+              {scheduled
+                ? t("ann.schedule")
+                : form.telegram
+                  ? t("ann.publishTg")
+                  : t("ann.publish")}
             </button>
           </div>
         </OwnerPanel>

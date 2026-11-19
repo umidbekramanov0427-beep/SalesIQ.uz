@@ -59,3 +59,19 @@ describe("announcements", () => {
     ).toBe("📣 <b>Yangilik: &lt;b&gt;</b>\n\na &amp; b");
   });
 });
+
+describe("announcements by plan and start time", () => {
+  it("shows a plan-limited one only to companies on those plans", () => {
+    const a = row({ plans: ["analyst_iq", "master_iq"] });
+    expect(announcementApplies(a, { ...org, plan: "master_iq" }, now)).toBe(true);
+    expect(announcementApplies(a, { ...org, plan: "start_iq" }, now)).toBe(false);
+    expect(announcementApplies(a, { ...org, plan: null }, now)).toBe(false);
+    expect(announcementApplies(row({ plans: [] }), { ...org, plan: "start_iq" }, now)).toBe(true);
+    expect(announcementApplies(row({ plans: null }), org, now)).toBe(true);
+  });
+  it("waits for a scheduled start", () => {
+    const a = row({ starts_at: "2026-11-05T12:00:00Z" });
+    expect(announcementApplies(a, org, now)).toBe(false);
+    expect(announcementApplies(a, org, new Date("2026-11-05T12:00:01Z"))).toBe(true);
+  });
+});

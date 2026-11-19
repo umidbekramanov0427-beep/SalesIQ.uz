@@ -27,15 +27,27 @@ export const Route = createFileRoute("/platform/announcements-api")({
         if (!(await requirePlatformOwner(request)))
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const [{ data, error }, { data: dismissals }, { data: orgs }] = await Promise.all([
-          supabaseAdmin
-            .from("platform_announcements")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(200),
-          supabaseAdmin.from("platform_announcement_dismissals").select("announcement_id"),
-          supabaseAdmin.from("organizations").select("id, name").order("name"),
-        ]);
+        const [{ data, error }, { data: dismissals }, { data: orgs }, { data: views }] =
+          await Promise.all([
+            supabaseAdmin
+              .from("platform_announcements")
+              .select("*")
+              .order("created_at", { ascending: false })
+              .limit(200),
+            supabaseAdmin.from("platform_announcement_dismissals").select("announcement_id"),
+            supabaseAdmin.from("organizations").select("id, name").order("name"),
+            supabaseAdmin
+              .from("platform_announcement_views")
+              .select("announcement_id, organization_id")
+              .limit(50_000),
+          ]);
+        const seen = new Map<string, { people: number; orgs: Set<string> }>();
+        for (const v of views ?? []) {
+          const s = seen.get(v.announcement_id) ?? { people: 0, orgs: new Set<string>() };
+          s.people++;
+          if (v.organization_id) s.orgs.add(v.organization_id);
+          seen.set(v.announcement_id, s);
+        }
         const companies = (orgs ?? []).map((o) => ({ id: o.id, name: o.name }));
         if (error) return Response.json({ ready: false, items: [], companies });
         const closed = new Map<string, number>();
@@ -44,7 +56,12 @@ export const Route = createFileRoute("/platform/announcements-api")({
         return Response.json({
           ready: true,
           companies,
-          items: (data ?? []).map((a) => ({ ...a, dismissed: closed.get(a.id) ?? 0 })),
+          items: (data ?? []).map((a) => ({
+            ...a,
+            dismissed: closed.get(a.id) ?? 0,
+            views: seen.get(a.id)?.people ?? 0,
+            viewOrgs: seen.get(a.id)?.orgs.size ?? 0,
+          })),
         });
       },
 
@@ -70,6 +87,17 @@ export const Route = createFileRoute("/platform/announcements-api")({
         const linkUrl = str(b["linkUrl"], 500);
         const endsAt =
           typeof b["endsAt"] === "string" && b["endsAt"] ? (b["endsAt"] as string) : null;
+        const { PLANS } = await import("@/lib/plan-gating");
+        const plans = Array.isArray(b["plans"])
+          ? [
+              ...new Set(
+                (b["plans"] as unknown[]).filter((x): x is string => PLANS.includes(x as never)),
+              ),
+            ]
+          : [];
+        const startMs = typeof b["startsAt"] === "string" ? Date.parse(b["startsAt"]) : NaN;
+        const startsAt = Number.isFinite(startMs) ? new Date(startMs).toISOString() : null;
+        const scheduled = !!startsAt && startMs > Date.now() + 60_000;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: created, error } = await supabaseAdmin
@@ -84,6 +112,8 @@ export const Route = createFileRoute("/platform/announcements-api")({
             link_label: str(b["linkLabel"], 60) || null,
             dismissible: b["dismissible"] !== false,
             ends_at: endsAt,
+            plans: plans.length ? plans : null,
+            ...(startsAt ? { starts_at: startsAt } : {}),
             created_by: ownerId,
           })
           .select("*")
@@ -92,13 +122,15 @@ export const Route = createFileRoute("/platform/announcements-api")({
           return Response.json({ error: error?.message ?? "SAVE_FAILED" }, { status: 500 });
 
         let sent = 0;
-        if (b["telegram"] === true) {
+        // A scheduled announcement is not sent to Telegram now (it isn't shown yet).
+        if (b["telegram"] === true && !scheduled) {
           // The matching companies' owners with a linked Telegram.
           const { orgPhase } = await import("@/lib/org-access");
           const { data: orgs } = await supabaseAdmin
             .from("organizations")
             .select("id, plan, active, trial_ends_at, is_trial");
           const target = (orgs ?? [])
+            .filter((o) => !plans.length || plans.includes(o.plan ?? ""))
             .filter((o) =>
               audience === "all"
                 ? true
