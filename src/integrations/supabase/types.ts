@@ -4052,6 +4052,9 @@ export type Database = {
           refunded_at: string | null;
           refunded_by: string | null;
           reminded_at: string | null;
+          receipt_no: number | null;
+          noted_at: string | null;
+          budgeted_at: string | null;
           note: string | null;
           created_by: string | null;
           created_at: string;
@@ -4077,6 +4080,9 @@ export type Database = {
           refunded_at?: string | null;
           refunded_by?: string | null;
           reminded_at?: string | null;
+          receipt_no?: number | null;
+          noted_at?: string | null;
+          budgeted_at?: string | null;
           note?: string | null;
           created_by?: string | null;
           created_at?: string;
@@ -4102,6 +4108,9 @@ export type Database = {
           refunded_at?: string | null;
           refunded_by?: string | null;
           reminded_at?: string | null;
+          receipt_no?: number | null;
+          noted_at?: string | null;
+          budgeted_at?: string | null;
           note?: string | null;
           created_by?: string | null;
           created_at?: string;
@@ -4178,6 +4187,7 @@ export type Database = {
           file_kind: string | null;
           file_name: string | null;
           reaction: string | null;
+          send_error: string | null;
           tg_message_id: number | null;
           via_profile_id: string | null;
         };
@@ -4195,6 +4205,7 @@ export type Database = {
           file_kind?: string | null;
           file_name?: string | null;
           reaction?: string | null;
+          send_error?: string | null;
           tg_message_id?: number | null;
           via_profile_id?: string | null;
         };
@@ -4212,6 +4223,7 @@ export type Database = {
           file_kind?: string | null;
           file_name?: string | null;
           reaction?: string | null;
+          send_error?: string | null;
           tg_message_id?: number | null;
           via_profile_id?: string | null;
         };

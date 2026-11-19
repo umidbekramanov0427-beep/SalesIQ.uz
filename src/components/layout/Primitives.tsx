@@ -331,6 +331,8 @@ export function PageHeader({
   icon,
   tone = "primary",
   back = true,
+  caption,
+  summary,
 }: {
   title: string;
   description?: string;
@@ -339,6 +341,10 @@ export function PageHeader({
   tone?: CardTone;
   /** false hides the "Orqaga" chip (it is on every page by default). */
   back?: boolean;
+  /** A small uppercase line over the title ("PUL QAYTARISH · NOYABR 2026"). */
+  caption?: string | undefined;
+  /** A line under the title instead of the description ("Mas'ul: ..."). */
+  summary?: ReactNode;
 }) {
   const roomy = useContext(SettingsDensity);
   const admin = useContext(AdminLook);
@@ -360,6 +366,8 @@ export function PageHeader({
         <AdminConsoleHeader
           title={title}
           description={description}
+          summary={summary}
+          caption={caption}
           icon={icon}
           tone={tone}
           actions={
@@ -385,6 +393,7 @@ export function PageHeader({
             </span>
           )}
           <div className="min-w-0 [overflow-wrap:anywhere]">
+            {caption && <p className="console-caption mb-1">{caption}</p>}
             <h1
               className={cn(
                 "flex flex-wrap items-center gap-x-2.5 gap-y-1 font-display font-semibold leading-tight tracking-tight text-foreground",
@@ -394,7 +403,10 @@ export function PageHeader({
               <span>{title}</span>
               <PageTools title={title} description={description} />
             </h1>
-            {description && (
+            {summary ? (
+              <p className="mt-1.5 text-[13.5px] text-muted-foreground">{summary}</p>
+            ) : null}
+            {!summary && description && (
               <p
                 className={cn(
                   "max-w-2xl text-muted-foreground phone:line-clamp-2",

@@ -162,6 +162,9 @@ describe("refund settings and analytics", () => {
       beforeDays: 3,
       afterDays: 7,
       remind: true,
+      groupText: "",
+      autoNote: true,
+      autoBudget: true,
     });
     expect(parseRefundRules({ beforeDays: 0, afterDays: 400, remind: false })).toMatchObject({
       beforeDays: 1,
@@ -330,6 +333,119 @@ describe("refund timing", () => {
       overdue: 1,
       overdueAmount: 200,
       avgAmount: 163,
+    });
+  });
+});
+
+describe("receipt numbers, Jarayon and the figures", () => {
+  const base = {
+    id: "1",
+    organization_id: "o",
+    lead_id: "L",
+    client_name: "Aziza",
+    phone: null,
+    amount: 1000,
+    paid_amount: null,
+    card_number: "8600495473316023",
+    card_holder: null,
+    reason: null,
+    stage: "before" as const,
+    status: "pending" as const,
+    receipt_path: null,
+    receipt_name: null,
+    notified_at: null,
+    notify_error: null,
+    refunded_at: null,
+    refunded_by: null,
+    note: null,
+    created_by: null,
+    created_at: "2026-11-18T10:00:00Z",
+    receipt_no: null,
+    noted_at: null,
+    budgeted_at: null,
+  };
+  const rules = { beforeDays: 3, afterDays: 7 };
+  const now = new Date("2026-11-19T10:00:00Z");
+
+  it("writes receipt numbers with three digits", async () => {
+    const { receiptCode } = await import("@/lib/refunds");
+    expect(receiptCode(1)).toBe("#001");
+    expect(receiptCode(42)).toBe("#042");
+    expect(receiptCode(1234)).toBe("#1234");
+    expect(receiptCode(null)).toBe("");
+  });
+
+  it("fills the company's texts, HTML-safe for the group", async () => {
+    const { fillRefundTemplate, clientRefundText, DEFAULT_REFUND_RULES, groupRefundText } =
+      await import("@/lib/refunds");
+    const v = {
+      name: "Ali <B>",
+      amountText: "1 000 so'm",
+      no: 7,
+      card: "8600495473316023",
+      link: "https://x.uz/crm/leads/1",
+    };
+    expect(fillRefundTemplate("Chek {raqam}: {mijoz}, {summa}, {karta} {nima}", v)).toBe(
+      "Chek #007: Ali <B>, 1 000 so'm, 8600 4954 7331 6023 {nima}",
+    );
+    expect(fillRefundTemplate("{mijoz} {havola}", v, { html: true })).toBe(
+      'Ali &lt;B&gt; <a href="https://x.uz/crm/leads/1">CRM\'da ochish</a>',
+    );
+    expect(clientRefundText(DEFAULT_REFUND_RULES, "Ali", "1 so'm", 3)).toContain(
+      "Chek raqami: #003.",
+    );
+    const standard = groupRefundText({ ...v, stage: "before", notified: false });
+    expect(standard).toContain("Pul qaytarildi · chek #007");
+    expect(groupRefundText({ ...v, stage: "before", notified: true }, "№ {raqam}")).toBe("№ #007");
+  });
+
+  it("follows the five steps, red when the bot could not send", async () => {
+    const { refundSteps, refundStepCount } = await import("@/lib/refunds");
+    expect(refundStepCount(refundSteps(base))).toEqual({ done: 0, total: 5 });
+    const done = {
+      ...base,
+      status: "refunded" as const,
+      receipt_path: "p",
+      notified_at: "t",
+      noted_at: "t",
+      budgeted_at: "t",
+    };
+    expect(refundStepCount(refundSteps(done))).toEqual({ done: 5, total: 5 });
+    const blocked = { ...done, notified_at: null, notify_error: "Forbidden: bot was blocked" };
+    expect(refundSteps(blocked).sent).toBe("failed");
+    expect(refundSteps({ ...blocked, notify_error: "off" }).sent).toBe("todo");
+    const noLead = { ...done, lead_id: null, noted_at: null, budgeted_at: null };
+    expect(refundStepCount(refundSteps(noLead))).toEqual({ done: 3, total: 3 });
+  });
+
+  it("puts overdue, unsent and cardless refunds under Muammoli", async () => {
+    const { refundBucket, refundProblem } = await import("@/lib/refunds");
+    expect(refundBucket(base, rules, now)).toBe("pending");
+    expect(refundBucket({ ...base, created_at: "2026-11-10T10:00:00Z" }, rules, now)).toBe(
+      "problem",
+    );
+    expect(refundProblem({ ...base, card_number: null }, rules, now)).toEqual({ kind: "no_card" });
+    const sentFail = { ...base, status: "refunded" as const, notify_error: "blocked" };
+    expect(refundBucket(sentFail, rules, now)).toBe("problem");
+    expect(refundBucket({ ...sentFail, notified_at: "t" }, rules, now)).toBe("refunded");
+    expect(refundBucket({ ...base, status: "cancelled" as const }, rules, now)).toBe("cancelled");
+  });
+
+  it("adds up the four figures", async () => {
+    const { refundKpis } = await import("@/lib/refunds");
+    const k = refundKpis([
+      { status: "refunded", amount: 600, paid_amount: 1000 },
+      { status: "pending", amount: 400, paid_amount: null },
+      { status: "cancelled", amount: 999, paid_amount: 999 },
+    ]);
+    expect(k).toEqual({
+      received: 1400,
+      toRefund: 1000,
+      refunded: 600,
+      onCard: 800,
+      left: 400,
+      pct: 60,
+      clients: 2,
     });
   });
 });

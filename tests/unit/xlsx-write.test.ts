@@ -26,4 +26,36 @@ describe("xlsx writer", () => {
     expect(text).toContain('<c r="B2"><v>3</v></c>');
     expect(text).toContain("Oʻzbek");
   });
+
+  it("writes a styled sheet: header row with a filter, merged title, links", () => {
+    const bytes = buildXlsx([
+      {
+        name: "Pul qaytarish",
+        header: 1,
+        merges: ["A1:C1"],
+        widths: [6, 20, 12],
+        rows: [
+          [{ v: "Hisobot", s: "title" }],
+          [
+            { v: "#", s: "head" },
+            { v: "Mijoz", s: "head" },
+            { v: "Summa", s: "head" },
+          ],
+          [
+            { v: 1, s: "center" },
+            { v: "Ochish", s: "link", href: 'https://x.uz/a?b="c"' },
+            { v: 1500000, s: "money" },
+          ],
+        ],
+      },
+    ]);
+    const text = new TextDecoder().decode(bytes);
+    expect(text).toContain('<autoFilter ref="A2:C3"/>');
+    expect(text).toContain('<mergeCell ref="A1:C1"/>');
+    expect(text).toContain('<pane ySplit="2" topLeftCell="A3"');
+    expect(text).toContain('<c r="C3" s="4"><v>1500000</v></c>');
+    expect(text).toContain('HYPERLINK("https://x.uz/a?b=""c""","Ochish")');
+    expect(text).toContain("_xlnm._FilterDatabase");
+    expect(text).toContain('<col min="2" max="2" width="20" customWidth="1"/>');
+  });
 });

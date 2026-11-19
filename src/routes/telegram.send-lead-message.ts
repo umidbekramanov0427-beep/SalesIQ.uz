@@ -45,10 +45,7 @@ export const Route = createFileRoute("/telegram/send-lead-message")({
         const text = typeof body.text === "string" ? body.text.trim() : "";
         const rawFiles = (Array.isArray(body.files) ? body.files : []) as RawFile[];
         if (!leadId || (!text && rawFiles.length === 0)) {
-          return Response.json(
-            { error: "Xabar matni yoki fayl kerak." },
-            { status: 400 },
-          );
+          return Response.json({ error: "Xabar matni yoki fayl kerak." }, { status: 400 });
         }
         if (rawFiles.length > MAX_FILES) {
           return Response.json(
@@ -136,6 +133,22 @@ export const Route = createFileRoute("/telegram/send-lead-message")({
           }
         } catch (err) {
           const message = err instanceof Error ? err.message : "Could not send the message.";
+          // The client blocked the bot (or Telegram refused): the message
+          // stays in the lead's chat with a red "!" and the reason, so the
+          // manager sees what did not arrive and sends it by hand.
+          await insertLeadChatMessage({
+            ...base,
+            text: text || files.map((f) => f.name).join(", "),
+            ...(files.length
+              ? {
+                  file_name: files
+                    .map((f) => f.name)
+                    .join(", ")
+                    .slice(0, 200),
+                }
+              : {}),
+            send_error: message.slice(0, 300),
+          }).catch(() => undefined);
           return Response.json({ error: message }, { status: 502 });
         }
         return Response.json({ ok: true });

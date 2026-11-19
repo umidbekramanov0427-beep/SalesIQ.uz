@@ -78,6 +78,8 @@ export type LeadChatRow = {
   channel?: "telegram" | "instagram";
   /** The platform's own message id (Instagram mid), for de-duplication. */
   ext_message_id?: string | null;
+  /** Why the bot could not deliver it (the client blocked the bot...): shown with a red "!". */
+  send_error?: string | null;
 };
 
 /**
@@ -94,7 +96,7 @@ export async function insertLeadChatMessage(row: LeadChatRow): Promise<void> {
     organization_id: row.organization_id,
     lead_id: row.lead_id,
     direction: row.direction,
-    text: [label, row.text].filter(Boolean).join("\n"),
+    text: [row.send_error ? "⚠️ Yuborilmadi" : "", label, row.text].filter(Boolean).join("\n"),
     sent_by: row.sent_by ?? null,
   });
   if (again) throw again;

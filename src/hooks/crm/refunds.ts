@@ -29,7 +29,11 @@ export function useRefunds() {
   });
 }
 
-export type RefundLeadInfo = { funnel: string | null; owner_id: string | null };
+export type RefundLeadInfo = {
+  funnel: string | null;
+  owner_id: string | null;
+  stream: string | null;
+};
 
 /** Funnel and responsible manager of the refunds' leads (for the filters and analytics). */
 export function useRefundLeads(leadIds: string[]) {
@@ -44,9 +48,10 @@ export function useRefundLeads(leadIds: string[]) {
       for (let i = 0; i < ids.length; i += 200) {
         const { data } = await supabase
           .from("leads")
-          .select("id, funnel, owner_id")
+          .select("id, funnel, owner_id, stream")
           .in("id", ids.slice(i, i + 200));
-        for (const l of data ?? []) map.set(l.id, { funnel: l.funnel, owner_id: l.owner_id });
+        for (const l of data ?? [])
+          map.set(l.id, { funnel: l.funnel, owner_id: l.owner_id, stream: l.stream ?? null });
       }
       return map;
     },

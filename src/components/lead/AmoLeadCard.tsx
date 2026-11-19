@@ -183,6 +183,8 @@ type ChatMsg = {
   fileKind: string | null;
   fileName: string | null;
   reaction: string | null;
+  /** The bot could not deliver it (the client blocked the bot...). */
+  failed: string | null;
 };
 
 type FeedItem =
@@ -2489,6 +2491,7 @@ function useFeed(lead: CrmLeadView) {
         fileKind: m.file_id ? (m.file_kind ?? "document") : null,
         fileName: m.file_name ?? null,
         reaction: m.reaction ?? null,
+        failed: m.send_error ?? null,
       };
       const last = block?.messages[block.messages.length - 1];
       if (
@@ -2835,15 +2838,33 @@ function ChatBlock({
               <div key={m.id} className="flex items-end justify-end gap-2.5">
                 <div
                   className={cn(
-                    "max-w-[70%]",
+                    "relative max-w-[70%]",
                     bareMedia(m)
                       ? "flex flex-col items-end"
                       : "rounded-2xl bg-[var(--amo-bubble-out)] px-3 py-2",
+                    m.failed && "ring-1 ring-destructive/50",
                   )}
                 >
+                  {/* Not delivered (the client blocked the bot): a red "!" on the corner. */}
+                  {m.failed && (
+                    <span
+                      title={m.failed}
+                      className="absolute -left-2 -top-2 grid h-5 w-5 place-items-center rounded-full bg-destructive text-[12px] font-bold leading-none text-destructive-foreground ring-2 ring-card"
+                    >
+                      !
+                    </span>
+                  )}
                   <p className="text-[12px] text-[var(--amo-bubble-out-meta)]">
                     {stamp(m.at, t)} {m.sentBy ?? (instagram ? t("ig.fromApp") : t("amo.robot"))}{" "}
-                    <Check className="inline h-3 w-3" /> {t("amo.delivered")}
+                    {m.failed ? (
+                      <span className="font-semibold text-destructive" title={m.failed}>
+                        {t("amo.notSent")}
+                      </span>
+                    ) : (
+                      <>
+                        <Check className="inline h-3 w-3" /> {t("amo.delivered")}
+                      </>
+                    )}
                   </p>
                   {m.fileKind && (
                     <div className="mt-1.5">

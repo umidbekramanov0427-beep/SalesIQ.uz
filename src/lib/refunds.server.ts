@@ -1,3 +1,7 @@
+import { execFile } from "node:child_process";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sanitizeFileName } from "@/lib/lead-files.server";
 import {
@@ -11,6 +15,8 @@ import {
   clientRefundText,
   groupRefundText,
   parseRefundRules,
+  receiptCode,
+  refundNoteText,
   refundDue,
   refundNeedsReminder,
   type RefundRow,
@@ -18,10 +24,12 @@ import {
 } from "@/lib/refunds";
 import { companyOrigin } from "@/lib/subdomain";
 
-// Pul qaytarish on the server: the receipt of the transfer goes into the
-// private lead-files storage, the refund is marked refunded, and the bot
-// sends the receipt to the client's Telegram chat (when the lead has one)
-// with "Pulingiz qaytarildi" -- logged in the lead's chat like any message.
+// Pul qaytarish on the server. Uploading the transfer's receipt does the
+// whole Jarayon by itself: the receipt goes into the private lead-files
+// storage and gets the company's next number (#001...), the refund is marked
+// refunded, the bot sends the receipt as a picture (a PDF's first page) to
+// the client's Telegram chat and to the company's refunds group, the lead
+// gets the note "Pul qaytarildi ... chek #001" and its budget goes to 0.
 
 const BUCKET = "lead-files";
 export const MAX_RECEIPT_BYTES = 10 * 1024 * 1024;
@@ -43,12 +51,93 @@ const money = (n: number) =>
     .toLocaleString("ru-RU")
     .replace(/\u00a0/g, " ")} so'm`;
 
+const missingColumn = (msg: string) => /column|schema cache|does not exist/i.test(msg);
+
+/**
+ * The receipt's number in the company: the next one after the highest given
+ * so far (#001 for the first). A refund keeps its number when its receipt is
+ * uploaded again. Null before migration 20270130000000.
+ */
+async function assignReceiptNo(orgId: string, refundId: string): Promise<number | null> {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const { data: own, error: ownErr } = await supabaseAdmin
+      .from("lead_refunds")
+      .select("receipt_no")
+      .eq("id", refundId)
+      .maybeSingle();
+    if (ownErr) return null;
+    if (own?.receipt_no != null) return own.receipt_no;
+    const { data: top } = await supabaseAdmin
+      .from("lead_refunds")
+      .select("receipt_no")
+      .eq("organization_id", orgId)
+      .not("receipt_no", "is", null)
+      .order("receipt_no", { ascending: false })
+      .limit(1);
+    const next = (top?.[0]?.receipt_no ?? 0) + 1;
+    const { data: set, error } = await supabaseAdmin
+      .from("lead_refunds")
+      .update({ receipt_no: next })
+      .eq("id", refundId)
+      .is("receipt_no", null)
+      .select("receipt_no");
+    if (!error && set?.length) return next;
+    // Taken by another receipt at the same moment: try the next number.
+    if (error && !/duplicate|unique/i.test(error.message)) return null;
+  }
+  return null;
+}
+
+/** A PDF receipt's first page as a PNG (poppler's pdftoppm), so Telegram shows it as a picture. */
+async function pdfFirstPage(data: Uint8Array): Promise<Uint8Array | null> {
+  const dir = await mkdtemp(join(tmpdir(), "receipt-"));
+  try {
+    const input = join(dir, "in.pdf");
+    await writeFile(input, data);
+    await new Promise<void>((resolve, reject) =>
+      execFile(
+        "pdftoppm",
+        ["-png", "-r", "150", "-f", "1", "-l", "1", "-singlefile", input, join(dir, "out")],
+        { timeout: 20_000 },
+        (err) => (err ? reject(err) : resolve()),
+      ),
+    );
+    return new Uint8Array(await readFile(join(dir, "out.png")));
+  } catch {
+    return null;
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  }
+}
+
+/** The receipt as Telegram should show it: a picture when it can be one, else the file. */
+async function receiptForTelegram(
+  file: File,
+  data: Uint8Array,
+  code: string,
+): Promise<{ kind: "photo" | "document"; name: string; type: string; data: Uint8Array }> {
+  const kind = telegramFileKind(file.type, file.name);
+  if (kind === "photo") return { kind, name: file.name, type: file.type, data };
+  if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+    const png = await pdfFirstPage(data);
+    if (png) {
+      return {
+        kind: "photo",
+        name: `chek${code ? "-" + code.slice(1) : ""}.png`,
+        type: "image/png",
+        data: png,
+      };
+    }
+  }
+  return { kind: "document", name: file.name, type: file.type, data };
+}
+
 export async function settleRefund(
   orgId: string,
   refundId: string,
   actorId: string,
   file: File,
-): Promise<{ notified: boolean; notifyError: string | null }> {
+): Promise<{ notified: boolean; notifyError: string | null; receiptNo: number | null }> {
   const { data: row } = await supabaseAdmin
     .from("lead_refunds")
     .select("*")
@@ -76,6 +165,7 @@ export async function settleRefund(
       .catch(() => undefined);
   }
 
+  // Jarayon 1-2: the money went out and the receipt is in.
   const now = new Date().toISOString();
   const { error } = await supabaseAdmin
     .from("lead_refunds")
@@ -90,6 +180,9 @@ export async function settleRefund(
     .eq("id", refundId);
   if (error) throw error;
 
+  const receiptNo = await assignReceiptNo(orgId, refundId);
+  const code = receiptCode(receiptNo);
+
   const { data: settings } = await supabaseAdmin
     .from("org_general_settings")
     .select("*")
@@ -97,9 +190,11 @@ export async function settleRefund(
     .maybeSingle();
   const rules = parseRefundRules((settings as { refund_rules?: unknown } | null)?.refund_rules);
   const amountText = money(Number(refund.amount) || 0);
-  const kind = telegramFileKind(file.type, file.name);
+  const tgFile = await receiptForTelegram(file, data, code);
 
-  // The client's chat with the bot, when the lead has one.
+  // Jarayon 3: the receipt to the client's chat with the bot. When the bot
+  // cannot reach them (blocked it), the message still stays in the lead's
+  // chat, marked with the reason -- a person sends it by hand.
   let notifyError: string | null = null;
   if (!rules.notifyClient) notifyError = "off";
   else if (!refund.lead_id) notifyError = "no_lead";
@@ -112,26 +207,24 @@ export async function settleRefund(
       .maybeSingle();
     if (!link?.chat_id) notifyError = "no_telegram";
     else {
-      const text = clientRefundText(rules, refund.client_name, amountText);
+      const text = clientRefundText(rules, refund.client_name, amountText, receiptNo);
+      let fileId: string | null = null;
       try {
-        const fileId = await sendTelegramFile(
-          Number(link.chat_id),
-          { kind, name: file.name, type: file.type, data },
-          text,
-        );
-        await insertLeadChatMessage({
-          organization_id: orgId,
-          lead_id: refund.lead_id,
-          direction: "out",
-          text,
-          sent_by: actorId,
-          file_kind: kind,
-          file_id: fileId,
-          file_name: file.name,
-        }).catch(() => undefined);
+        fileId = await sendTelegramFile(Number(link.chat_id), tgFile, text);
       } catch (err) {
         notifyError = err instanceof Error ? err.message.slice(0, 300) : "send_failed";
       }
+      await insertLeadChatMessage({
+        organization_id: orgId,
+        lead_id: refund.lead_id,
+        direction: "out",
+        text,
+        sent_by: actorId,
+        ...(fileId
+          ? { file_kind: tgFile.kind, file_id: fileId, file_name: tgFile.name }
+          : { file_name: tgFile.name }),
+        ...(notifyError ? { send_error: notifyError } : {}),
+      }).catch(() => undefined);
     }
   }
   await supabaseAdmin
@@ -139,8 +232,49 @@ export async function settleRefund(
     .update(notifyError ? { notify_error: notifyError } : { notified_at: now, notify_error: null })
     .eq("id", refundId);
 
-  // The company's refunds group: the receipt with who, how much and a link
-  // straight into the CRM. Only a group the company itself bound.
+  // Jarayon 5 then 4: the lead's budget to 0, and the note that says so.
+  if (refund.lead_id) {
+    let budgetText: string | null = null;
+    if (rules.autoBudget && !refund.budgeted_at) {
+      const { data: lead } = await supabaseAdmin
+        .from("leads")
+        .select("budget, expected_revenue")
+        .eq("id", refund.lead_id)
+        .eq("organization_id", orgId)
+        .maybeSingle();
+      if (lead) {
+        const before = Number(lead.budget) || Number(lead.expected_revenue) || 0;
+        const { error: budgetErr } = await supabaseAdmin
+          .from("leads")
+          .update({ budget: 0, expected_revenue: 0 })
+          .eq("id", refund.lead_id)
+          .eq("organization_id", orgId);
+        if (!budgetErr) {
+          budgetText = money(before);
+          await markStep(refundId, { budgeted_at: now });
+        } else console.error("[refunds] budget", budgetErr.message);
+      }
+    }
+    if (rules.autoNote && !refund.noted_at) {
+      const { error: noteErr } = await supabaseAdmin.from("lead_activities").insert({
+        organization_id: orgId,
+        lead_id: refund.lead_id,
+        type: "note",
+        created_by: actorId,
+        content: refundNoteText({
+          no: receiptNo,
+          amountText,
+          card: refund.card_number,
+          budgetText,
+        }),
+      });
+      if (!noteErr) await markStep(refundId, { noted_at: now });
+      else console.error("[refunds] note", noteErr.message);
+    }
+  }
+
+  // The company's refunds group: the receipt (as a picture) with its number
+  // and the company's caption. Only a group the company itself bound.
   if (rules.notifyGroup && rules.chatId != null) {
     const { data: bound } = await supabaseAdmin
       .from("telegram_bound_chats")
@@ -156,29 +290,39 @@ export async function settleRefund(
       const origin = companyOrigin(
         (org as { subdomain?: string | null } | null)?.subdomain ?? null,
       );
-      const caption = groupRefundText({
-        name: refund.client_name,
-        phone: refund.phone,
-        amountText,
-        card: refund.card_number,
-        holder: refund.card_holder,
-        reason: refund.reason,
-        stage: refund.stage,
-        by: actor?.full_name || actor?.email || null,
-        link: refund.lead_id
-          ? `${origin}/crm/leads/${refund.lead_id}`
-          : `${origin}/refunds?focus=${refund.id}`,
-        notified: !notifyError,
-      });
-      await sendTelegramFile(
-        Number(rules.chatId),
-        { kind: kind === "photo" ? "photo" : "document", name: file.name, type: file.type, data },
-        caption,
-        { html: true },
-      ).catch((err) => console.error("[refunds] group send failed", err));
+      const caption = groupRefundText(
+        {
+          no: receiptNo,
+          name: refund.client_name,
+          phone: refund.phone,
+          amountText,
+          card: refund.card_number,
+          holder: refund.card_holder,
+          reason: refund.reason,
+          stage: refund.stage,
+          by: actor?.full_name || actor?.email || null,
+          link: refund.lead_id
+            ? `${origin}/crm/leads/${refund.lead_id}`
+            : `${origin}/refunds?focus=${refund.id}`,
+          notified: !notifyError,
+        },
+        rules.groupText,
+      );
+      await sendTelegramFile(Number(rules.chatId), tgFile, caption, { html: true }).catch((err) =>
+        console.error("[refunds] group send failed", err),
+      );
     }
   }
-  return { notified: !notifyError, notifyError };
+  return { notified: !notifyError, notifyError, receiptNo };
+}
+
+/** Records a Jarayon step; quietly nothing before migration 20270130000000. */
+async function markStep(
+  refundId: string,
+  patch: { noted_at?: string; budgeted_at?: string },
+): Promise<void> {
+  const { error } = await supabaseAdmin.from("lead_refunds").update(patch).eq("id", refundId);
+  if (error && !missingColumn(error.message)) console.error("[refunds] step", error.message);
 }
 
 export async function receiptUrl(orgId: string, refundId: string): Promise<string | null> {

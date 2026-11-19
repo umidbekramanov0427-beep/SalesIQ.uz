@@ -29,7 +29,20 @@ export type RefundRow = {
   note: string | null;
   created_by: string | null;
   created_at: string;
+  /** The receipt's number in the company (#001, #002...), from migration 20270130000000. */
+  receipt_no?: number | null;
+  /** Jarayon 4: the lead got the note "Pul qaytarildi ... chek #001". */
+  noted_at?: string | null;
+  /** Jarayon 5: the lead's budget was set to 0. */
+  budgeted_at?: string | null;
 };
+
+/** "#001" -- the receipt's number as the group, the client and the table show it. */
+export function receiptCode(n: number | null | undefined): string {
+  return n == null || !Number.isFinite(n)
+    ? ""
+    : `#${String(Math.max(0, Math.round(n))).padStart(3, "0")}`;
+}
 
 /** Digits only; null unless it looks like a bank card (12-19 digits). */
 export function cleanCardNumber(raw: string | null | undefined): string | null {
@@ -100,11 +113,13 @@ export function refundSummary(
 }
 
 /** The message the bot sends with the receipt. */
-export function refundMessage(name: string, amountText: string): string {
+export function refundMessage(name: string, amountText: string, no?: number | null): string {
   const who = name.trim() ? `, ${name.trim()}` : "";
+  const code = receiptCode(no);
   return (
     `Assalomu alaykum${who}!\n\n` +
     `Pulingiz qaytarildi: ${amountText}.\n` +
+    (code ? `Chek raqami: ${code}.\n` : "") +
     `To'lov cheki ilova qilindi. Savollaringiz bo'lsa, shu yerga yozing.`
   );
 }
@@ -299,6 +314,12 @@ export type RefundRules = {
   afterDays: number;
   /** Remind the responsible manager and the admins as the deadline nears and passes. */
   remind: boolean;
+  /** The group's caption under the receipt; placeholders as in REFUND_TEMPLATE_VARS. Empty = the standard one. */
+  groupText: string;
+  /** Jarayon 4: add the note "Pul qaytarildi ... chek #001" to the lead. */
+  autoNote: boolean;
+  /** Jarayon 5: set the lead's budget to 0 once the money is back. */
+  autoBudget: boolean;
 };
 
 export const DEFAULT_REFUND_RULES: RefundRules = {
@@ -309,6 +330,9 @@ export const DEFAULT_REFUND_RULES: RefundRules = {
   beforeDays: 3,
   afterDays: 7,
   remind: true,
+  groupText: "",
+  autoNote: true,
+  autoBudget: true,
 };
 
 export function parseRefundRules(raw: unknown): RefundRules {
@@ -322,6 +346,9 @@ export function parseRefundRules(raw: unknown): RefundRules {
     beforeDays: days(o["beforeDays"], DEFAULT_REFUND_RULES.beforeDays),
     afterDays: days(o["afterDays"], DEFAULT_REFUND_RULES.afterDays),
     remind: o["remind"] !== false,
+    groupText: typeof o["groupText"] === "string" ? o["groupText"].slice(0, 1000) : "",
+    autoNote: o["autoNote"] !== false,
+    autoBudget: o["autoBudget"] !== false,
   };
 }
 
@@ -374,29 +401,98 @@ export function refundNeedsReminder(
   return !r.reminded_at || now.getTime() - new Date(r.reminded_at).getTime() >= 20 * 3_600_000;
 }
 
-/** The client's message: the company's own text (with {name}, {amount}) or the standard one. */
-export function clientRefundText(rules: RefundRules, name: string, amountText: string): string {
-  if (!rules.clientText.trim()) return refundMessage(name, amountText);
-  return rules.clientText.replace(/\{name\}/g, name.trim()).replace(/\{amount\}/g, amountText);
+/** What a receipt's messages can say; each placeholder in both spellings. */
+export type RefundTemplateVars = {
+  name: string;
+  amountText: string;
+  no?: number | null | undefined;
+  phone?: string | null;
+  card?: string | null;
+  holder?: string | null;
+  reason?: string | null;
+  by?: string | null;
+  link?: string | null;
+};
+
+/** The placeholders the settings list under the message boxes. */
+export const REFUND_TEMPLATE_VARS = [
+  "{raqam}",
+  "{mijoz}",
+  "{summa}",
+  "{telefon}",
+  "{karta}",
+  "{egasi}",
+  "{sabab}",
+  "{xodim}",
+  "{havola}",
+] as const;
+
+/**
+ * The company's own text with the placeholders filled in. With html the
+ * text and the values are escaped (Telegram HTML) and {havola} becomes a link.
+ */
+export function fillRefundTemplate(
+  tpl: string,
+  v: RefundTemplateVars,
+  opts: { html?: boolean } = {},
+): string {
+  const e = (x: string) => (opts.html ? esc(x) : x);
+  const values: Record<string, string> = {
+    raqam: receiptCode(v.no),
+    number: receiptCode(v.no),
+    mijoz: v.name.trim(),
+    name: v.name.trim(),
+    summa: v.amountText,
+    amount: v.amountText,
+    telefon: v.phone ?? "",
+    phone: v.phone ?? "",
+    karta: formatCard(v.card),
+    card: formatCard(v.card),
+    egasi: v.holder ?? "",
+    holder: v.holder ?? "",
+    sabab: v.reason ?? "",
+    reason: v.reason ?? "",
+    xodim: v.by ?? "",
+  };
+  return e(tpl).replace(/\{([a-z]+)\}/g, (all, key: string) => {
+    if (key === "havola" || key === "link") {
+      if (!v.link) return "";
+      return opts.html ? `<a href="${esc(v.link)}">CRM'da ochish</a>` : v.link;
+    }
+    return key in values ? e(values[key]!) : all;
+  });
+}
+
+/** The client's message: the company's own text (with the placeholders) or the standard one. */
+export function clientRefundText(
+  rules: RefundRules,
+  name: string,
+  amountText: string,
+  no?: number | null,
+): string {
+  if (!rules.clientText.trim()) return refundMessage(name, amountText, no);
+  return fillRefundTemplate(rules.clientText, { name, amountText, no });
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** The group's caption (HTML): who, how much, to which card, and the link into the CRM. */
-export function groupRefundText(r: {
-  name: string;
-  phone: string | null;
-  amountText: string;
-  card: string | null;
-  holder: string | null;
-  reason: string | null;
-  stage: RefundStage;
-  by: string | null;
-  link: string;
-  notified: boolean;
-}): string {
+/**
+ * The group's caption under the receipt (Telegram HTML): the company's own
+ * text, or the standard one -- the receipt's number, who, how much, to
+ * which card, and the link into the CRM.
+ */
+export function groupRefundText(
+  r: RefundTemplateVars & {
+    link: string;
+    stage: RefundStage;
+    notified: boolean;
+  },
+  template = "",
+): string {
+  if (template.trim()) return fillRefundTemplate(template, r, { html: true });
+  const code = receiptCode(r.no);
   const lines = [
-    "💸 <b>Pul qaytarildi</b>",
+    `💸 <b>Pul qaytarildi${code ? ` · chek ${code}` : ""}</b>`,
     "",
     `👤 ${esc(r.name)}`,
     r.phone ? `📞 ${esc(r.phone)}` : null,
@@ -410,6 +506,152 @@ export function groupRefundText(r: {
     `🔗 <a href="${esc(r.link)}">CRM'da ochish</a>`,
   ];
   return lines.filter((l): l is string => l !== null).join("\n");
+}
+
+/** The lead's note once the money is back (Jarayon 4). */
+export function refundNoteText(v: {
+  no: number | null;
+  amountText: string;
+  card: string | null;
+  budgetBefore?: number | null;
+  budgetText?: string | null;
+}): string {
+  const code = receiptCode(v.no);
+  return [
+    `💸 Pul qaytarildi: ${v.amountText}${code ? `, chek ${code}` : ""}.`,
+    v.card ? `Karta: ${formatCard(v.card)}.` : null,
+    v.budgetText ? `Byudjet 0 qilindi (oldin: ${v.budgetText}).` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/* ---- Jarayon: the five steps of a refund ------------------------------- */
+
+export const REFUND_STEPS = ["paid", "receipt", "sent", "noted", "budget"] as const;
+export type RefundStepKey = (typeof REFUND_STEPS)[number];
+/** done; todo; failed (the bot could not send it -- do it by hand); na (no lead to do it on). */
+export type RefundStepState = "done" | "todo" | "failed" | "na";
+
+/** Why the bot did not send the receipt, when that needs a person (not "switched off"). */
+export function refundSendFailed(
+  r: Pick<RefundRow, "status" | "notified_at" | "notify_error">,
+): boolean {
+  return r.status === "refunded" && !r.notified_at && !!r.notify_error && r.notify_error !== "off";
+}
+
+export function refundSteps(
+  r: Pick<
+    RefundRow,
+    | "status"
+    | "receipt_path"
+    | "notified_at"
+    | "notify_error"
+    | "lead_id"
+    | "noted_at"
+    | "budgeted_at"
+  >,
+): Record<RefundStepKey, RefundStepState> {
+  const paid = r.status === "refunded";
+  const lead = !!r.lead_id;
+  return {
+    paid: paid ? "done" : "todo",
+    receipt: r.receipt_path ? "done" : "todo",
+    sent: r.notified_at ? "done" : refundSendFailed(r) ? "failed" : "todo",
+    noted: r.noted_at ? "done" : lead ? "todo" : "na",
+    budget: r.budgeted_at ? "done" : lead ? "todo" : "na",
+  };
+}
+
+/** "4/5": the steps done out of the ones that apply. */
+export function refundStepCount(steps: Record<RefundStepKey, RefundStepState>): {
+  done: number;
+  total: number;
+} {
+  const list = REFUND_STEPS.map((k) => steps[k]).filter((s) => s !== "na");
+  return { done: list.filter((s) => s === "done").length, total: list.length };
+}
+
+/* ---- Muammoli: what needs a person ------------------------------------- */
+
+export type RefundProblem =
+  { kind: "overdue"; days: number } | { kind: "not_sent"; error: string } | { kind: "no_card" };
+
+/** The one thing wrong with a refund, if anything (most urgent first). */
+export function refundProblem(
+  r: Pick<
+    RefundRow,
+    "status" | "created_at" | "stage" | "card_number" | "notified_at" | "notify_error"
+  >,
+  rules: Pick<RefundRules, "beforeDays" | "afterDays">,
+  now: Date = new Date(),
+): RefundProblem | null {
+  if (r.status === "cancelled") return null;
+  if (r.status === "pending") {
+    const due = refundDue(r, rules, now);
+    if (due.kind === "overdue") return { kind: "overdue", days: due.days };
+    if (!r.card_number) return { kind: "no_card" };
+    return null;
+  }
+  return refundSendFailed(r) ? { kind: "not_sent", error: r.notify_error ?? "" } : null;
+}
+
+/** The tab a refund sits in: Muammoli takes it out of Kutilmoqda / Qaytarilgan. */
+export type RefundBucket = "pending" | "refunded" | "problem" | "cancelled";
+
+export function refundBucket(
+  r: Parameters<typeof refundProblem>[0],
+  rules: Pick<RefundRules, "beforeDays" | "afterDays">,
+  now: Date = new Date(),
+): RefundBucket {
+  if (r.status === "cancelled") return "cancelled";
+  if (refundProblem(r, rules, now)) return "problem";
+  return r.status;
+}
+
+/* ---- The four figures over the table ----------------------------------- */
+
+export type RefundKpis = {
+  /** What these clients paid (paid amount, else the refund's amount). */
+  received: number;
+  /** What must go back (every refund not cancelled). */
+  toRefund: number;
+  /** What already went back. */
+  refunded: number;
+  /** Still on the company's card: received minus what went back. */
+  onCard: number;
+  /** Still to send back. */
+  left: number;
+  /** Share of toRefund already sent back, 0-100. */
+  pct: number;
+  clients: number;
+};
+
+export function refundKpis(
+  rows: Pick<RefundRow, "status" | "amount" | "paid_amount">[],
+): RefundKpis {
+  let received = 0;
+  let toRefund = 0;
+  let refunded = 0;
+  let clients = 0;
+  for (const r of rows) {
+    if (r.status === "cancelled") continue;
+    clients += 1;
+    const amount = Number(r.amount) || 0;
+    const paid = r.paid_amount == null ? amount : Number(r.paid_amount) || 0;
+    received += paid;
+    toRefund += amount;
+    if (r.status === "refunded") refunded += amount;
+  }
+  return {
+    received,
+    toRefund,
+    refunded,
+    onCard: received - refunded,
+    left: toRefund - refunded,
+    pct: toRefund ? Math.round((refunded / toRefund) * 100) : 0,
+    clients,
+  };
 }
 
 /* ---- Analytics -------------------------------------------------------- */

@@ -1428,6 +1428,59 @@ export const TIPS: Record<string, Tip> = {
       en: "Left a phone ÷ visitors × 100%.",
     },
   },
+  "refund.kReceived": {
+    what: {
+      uz: "Pul qaytarish so'ragan mijozlar to'lagan jami summa.",
+      ru: "Сколько всего заплатили клиенты, запросившие возврат.",
+      en: "What the clients asking for a refund paid in total.",
+    },
+    calc: {
+      uz: "Har qatorda «To'lagan» summasi (bo'lmasa qaytariladigan summa); bekor qilinganlarsiz.",
+      ru: "По каждой строке «Оплатил» (если нет — сумма возврата); без отменённых.",
+      en: "Each row's paid amount (else the refund amount); without cancelled.",
+    },
+  },
+  "refund.kToRefund": {
+    what: {
+      uz: "Mijozlarga qaytarilishi kerak bo'lgan jami pul.",
+      ru: "Сколько всего нужно вернуть клиентам.",
+      en: "Everything that must go back to the clients.",
+    },
+    calc: {
+      uz: "Barcha qaytarishlar summasi, bekor qilinganlarsiz.",
+      ru: "Сумма всех возвратов, без отменённых.",
+      en: "All refunds' amounts, without cancelled.",
+    },
+  },
+  "refund.kRefunded": {
+    what: {
+      uz: "Chek yuklanib, qaytarib bo'lingan pul; chiziq — bajarilish foizi.",
+      ru: "Уже возвращённые деньги (с чеком); полоса — процент выполнения.",
+      en: "Money already paid back (receipt uploaded); the bar is the share done.",
+    },
+    calc: {
+      uz: "Qaytarilgan ÷ qaytarilishi kerak × 100%.",
+      ru: "Возвращено ÷ нужно вернуть × 100%.",
+      en: "Refunded ÷ to refund × 100%.",
+    },
+    act: {
+      uz: "Foiz past bo'lsa — «Muammoli» tabidagi kechikkanlardan boshlang.",
+      ru: "Если процент низкий — начните с просроченных во вкладке «Проблемные».",
+      en: "If it is low, start with the overdue ones under Problems.",
+    },
+  },
+  "refund.kOnCard": {
+    what: {
+      uz: "Shu mijozlardan olingan puldan hozir kartada qolgani.",
+      ru: "Сколько из полученных денег сейчас остаётся на карте.",
+      en: "How much of the money received is still on the card.",
+    },
+    calc: {
+      uz: "Jami olingan − qaytarilgan.",
+      ru: "Всего получено − возвращено.",
+      en: "Total received − refunded.",
+    },
+  },
   "refund.sumTotal": {
     what: {
       uz: "Davrdagi pul qaytarish so'rovlari.",

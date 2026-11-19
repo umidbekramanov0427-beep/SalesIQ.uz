@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { AlarmClock, Check, Copy, Loader2, Send, Settings2, Users } from "lucide-react";
+import { AlarmClock, Check, Copy, ListChecks, Loader2, Send, Settings2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
-import { refundMessage, type RefundRules } from "@/lib/refunds";
+import { REFUND_TEMPLATE_VARS, refundMessage, type RefundRules } from "@/lib/refunds";
 import type { Json } from "@/integrations/supabase/types";
 import {
   useLinkTelegramGroup,
@@ -15,9 +15,56 @@ import {
   useUpdateOrgGeneralSettings,
 } from "@/hooks/use-crm-data";
 
-// Pul qaytarish -> Sozlash: the Telegram group or channel that gets every
-// receipt (with the client's name, phone and a link into the CRM), whether
-// the client gets it from the bot, and the client's message.
+// Pul qaytarish -> Sozlash: the deadlines, the Telegram group or channel
+// that gets every receipt (as a picture, numbered #001...) and the caption
+// under it, whether the client gets it from the bot and the client's
+// message, and which steps happen by themselves once the receipt is in.
+
+/** The placeholders under a message box; a tap adds one at the end. */
+function TemplateVars({ onAdd, disabled }: { onAdd: (v: string) => void; disabled?: boolean }) {
+  const { t } = useI18n();
+  return (
+    <div className="mt-1.5">
+      <p className="text-[11.5px] text-muted-foreground">{t("refund.templateVars")}</p>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {REFUND_TEMPLATE_VARS.map((v) => (
+          <button
+            key={v}
+            type="button"
+            disabled={disabled}
+            onClick={() => onAdd(v)}
+            title={t(`refund.var.${v.slice(1, -1)}`)}
+            className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11.5px] text-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SwitchRow({
+  title,
+  hint,
+  checked,
+  onChange,
+}: {
+  title: string;
+  hint: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3">
+      <span>
+        <span className="block text-[13.5px] font-semibold text-foreground">{title}</span>
+        <span className="block text-[12px] text-muted-foreground">{hint}</span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </label>
+  );
+}
 
 export function RefundSettingsButton() {
   const { t } = useI18n();
@@ -215,6 +262,26 @@ function RefundSettingsSheet({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
+            <p className="console-caption mb-2">{t("refund.groupCaptionTitle")}</p>
+            <textarea
+              value={d.groupText}
+              disabled={!d.notifyGroup}
+              onChange={(e) => setD((x) => ({ ...x, groupText: e.target.value }))}
+              rows={7}
+              maxLength={1000}
+              placeholder={t("refund.groupCaptionPlaceholder")}
+              className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-[13.5px] outline-none focus:border-primary disabled:opacity-50"
+            />
+            <p className="mt-1 text-[11.5px] text-muted-foreground">
+              {t("refund.groupCaptionHint")}
+            </p>
+            <TemplateVars
+              disabled={!d.notifyGroup}
+              onAdd={(v) => setD((x) => ({ ...x, groupText: `${x.groupText}${v}` }))}
+            />
+          </section>
+
+          <section>
             <p className="console-caption mb-2">{t("refund.clientTitle")}</p>
             <label className="mb-2 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border px-3.5 py-3">
               <span>
@@ -236,10 +303,35 @@ function RefundSettingsSheet({ onClose }: { onClose: () => void }) {
               onChange={(e) => setD((x) => ({ ...x, clientText: e.target.value }))}
               rows={5}
               maxLength={1000}
-              placeholder={refundMessage("{name}", "{amount}")}
+              placeholder={refundMessage("{mijoz}", "{summa}", 1).replace("#001", "{raqam}")}
               className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-[13.5px] outline-none focus:border-primary disabled:opacity-50"
             />
-            <p className="mt-1 text-[11.5px] text-muted-foreground">{t("refund.clientVars")}</p>
+            <TemplateVars
+              disabled={!d.notifyClient}
+              onAdd={(v) => setD((x) => ({ ...x, clientText: `${x.clientText}${v}` }))}
+            />
+          </section>
+
+          <section>
+            <p className="console-caption mb-2 flex items-center gap-1.5">
+              <ListChecks className="h-3.5 w-3.5" />
+              {t("refund.autoTitle")}
+            </p>
+            <p className="mb-2 text-[12px] text-muted-foreground">{t("refund.autoHint")}</p>
+            <div className="space-y-2">
+              <SwitchRow
+                title={t("refund.autoNote")}
+                hint={t("refund.autoNoteHint")}
+                checked={d.autoNote}
+                onChange={(v) => setD((x) => ({ ...x, autoNote: v }))}
+              />
+              <SwitchRow
+                title={t("refund.autoBudget")}
+                hint={t("refund.autoBudgetHint")}
+                checked={d.autoBudget}
+                onChange={(v) => setD((x) => ({ ...x, autoBudget: v }))}
+              />
+            </div>
           </section>
 
           <div className="flex justify-end gap-2 border-t border-border pt-4">
