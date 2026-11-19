@@ -333,6 +333,7 @@ export function PageHeader({
   back = true,
   caption,
   summary,
+  guide = true,
 }: {
   title: string;
   description?: string;
@@ -345,6 +346,8 @@ export function PageHeader({
   caption?: string | undefined;
   /** A line under the title instead of the description ("Mas'ul: ..."). */
   summary?: ReactNode;
+  /** false: no "Qo'llanma" button on this page. */
+  guide?: boolean;
 }) {
   const roomy = useContext(SettingsDensity);
   const admin = useContext(AdminLook);
@@ -373,7 +376,7 @@ export function PageHeader({
           actions={
             <>
               {actions}
-              <GuideButton />
+              {guide && <GuideButton />}
             </>
           }
         />
@@ -420,7 +423,7 @@ export function PageHeader({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {actions}
-          <GuideButton />
+          {guide && <GuideButton />}
         </div>
       </div>
     </>

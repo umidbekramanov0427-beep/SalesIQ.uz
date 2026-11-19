@@ -80,10 +80,8 @@ function RefundsPage() {
   // Everything by default: a refund that was just paid back stays in view,
   // marked done, instead of jumping to another tab.
   const [filter, setFilter] = useState<Filter>("all");
-  const [stage, setStage] = useState<"all" | "before" | "after">("all");
   const [query, setQuery] = useState("");
   const [funnel, setFunnel] = useState("");
-  const [stream, setStream] = useState("");
   const [operator, setOperator] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -111,13 +109,10 @@ function RefundsPage() {
   );
   const funnels = [...new Set(rows.map(funnelOf).filter((f): f is string => !!f))].sort();
   const operators = [...new Set(rows.map(operatorOf).filter((o): o is string => !!o))];
-  const streams = [...new Set(rows.map(streamOf).filter((f): f is string => !!f))].sort();
 
   // Everything but the status: the cards, the analytics and the counts follow it.
   const scoped = rows.filter((r) => {
-    if (stage !== "all" && r.stage !== stage) return false;
     if (funnel && funnelOf(r) !== funnel) return false;
-    if (stream && streamOf(r) !== stream) return false;
     if (operator && operatorOf(r) !== operator) return false;
     const day = new Date(new Date(r.created_at).getTime() + 5 * 3_600_000)
       .toISOString()
@@ -152,7 +147,7 @@ function RefundsPage() {
     .sort(
       (a, b) => ORDER[bucketOf(a)] - ORDER[bucketOf(b)] || b.created_at.localeCompare(a.created_at),
     );
-  const filtered = !!(funnel || stream || operator || from || to || stage !== "all" || query);
+  const filtered = !!(funnel || operator || from || to || query);
 
   // Who pays the money back: whoever uploaded receipts here, most first.
   const responsible = (() => {
@@ -193,6 +188,7 @@ function RefundsPage() {
     <div className="space-y-5">
       <PageHeader
         back={false}
+        guide={false}
         icon={Undo2}
         tone="rose"
         caption={`${t("refund.title")} · ${period}`}
@@ -242,10 +238,10 @@ function RefundsPage() {
       {/* The whole picture: how many asked, what is left to pay, what went back. */}
       <RefundKpiCards k={kpis} />
 
-      <div className="surface-card overflow-hidden">
-        {/* The status tabs, then search and the filters on one line. */}
-        <div className="flex flex-wrap items-center gap-2.5 p-3">
-          <div className="ctl-track flex flex-wrap gap-1 rounded-xl p-1 phone:w-full">
+      <div className="surface-card overflow-hidden !rounded-[12px]">
+        {/* The status tabs, then search and the filters -- one line. */}
+        <div className="flex flex-wrap items-center gap-2 p-3 xl:flex-nowrap">
+          <div className="ctl-track flex shrink-0 flex-wrap gap-0.5 rounded-xl p-[3px] xl:flex-nowrap phone:w-full">
             {(["all", "pending", "refunded", "problem", "cancelled"] as const)
               .filter((f) => f !== "cancelled" || counts.cancelled > 0 || filter === "cancelled")
               .map((f) => (
@@ -254,12 +250,12 @@ function RefundsPage() {
                   type="button"
                   onClick={() => setFilter(f)}
                   aria-selected={filter === f}
-                  className="ctl-tab inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-[14px] font-medium"
+                  className="ctl-tab inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-[13.5px] font-medium"
                 >
                   {t(`refund.tab.${f}`)}
                   <span
                     className={cn(
-                      "min-w-[22px] rounded-full px-1.5 py-px text-center text-[12px] font-bold tabular-nums",
+                      "min-w-[20px] rounded-full px-1.5 text-center text-[11.5px] font-bold leading-[18px] tabular-nums",
                       f === "pending"
                         ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
                         : f === "refunded"
@@ -274,9 +270,9 @@ function RefundsPage() {
                 </button>
               ))}
           </div>
-          <div className="flex flex-1 flex-wrap items-center justify-end gap-2 phone:grid phone:grid-cols-2">
-            <label className="flex h-10 min-w-[230px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary phone:col-span-2 phone:min-w-0 sm:max-w-[320px]">
-              <Search className="h-4 w-4 text-muted-foreground" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 xl:flex-nowrap phone:grid phone:grid-cols-2">
+            <label className="flex h-10 min-w-[130px] flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 focus-within:border-primary phone:col-span-2 phone:min-w-0 sm:max-w-[300px]">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -284,14 +280,6 @@ function RefundsPage() {
                 className="h-full min-w-0 flex-1 bg-transparent text-[14px] outline-none"
               />
             </label>
-            {streams.length > 0 && (
-              <FilterSelect
-                label={t("refund.fStream")}
-                value={stream}
-                onChange={setStream}
-                options={streams.map((f) => ({ value: f, label: f }))}
-              />
-            )}
             {(funnels.length > 1 || funnel) && (
               <FilterSelect
                 label={t("refund.fFunnel")}
@@ -306,15 +294,6 @@ function RefundsPage() {
               onChange={setOperator}
               options={operators.map((o) => ({ value: o, label: nameOf.get(o) ?? "—" }))}
             />
-            <FilterSelect
-              label={t("refund.fStage")}
-              value={stage === "all" ? "" : stage}
-              onChange={(v) => setStage((v || "all") as "all" | "before" | "after")}
-              options={(["before", "after"] as const).map((s) => ({
-                value: s,
-                label: t(`refund.stage.${s}`),
-              }))}
-            />
             <DateRangeFilter
               from={from}
               to={to}
@@ -328,14 +307,12 @@ function RefundsPage() {
                 type="button"
                 onClick={() => {
                   setFunnel("");
-                  setStream("");
                   setOperator("");
                   setFrom("");
                   setTo("");
-                  setStage("all");
                   setQuery("");
                 }}
-                className="h-10 rounded-xl px-3 text-[13px] font-semibold text-primary hover:bg-primary/8"
+                className="h-10 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold text-primary hover:bg-primary/8"
               >
                 {t("refund.fReset")}
               </button>
@@ -412,7 +389,7 @@ function FilterSelect({
   return (
     <label
       className={cn(
-        "relative flex h-10 items-center gap-1.5 rounded-xl border px-3 text-[13.5px] phone:min-w-0",
+        "relative flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-xl border px-2.5 text-[13.5px] phone:min-w-0",
         value ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30",
       )}
     >

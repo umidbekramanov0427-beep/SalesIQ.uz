@@ -90,7 +90,12 @@ function KpiCard({
   const chrome = useCardChrome({ tipKey, label, value });
   if (chrome.hidden) return null;
   return (
-    <div className={cn("surface-card flex flex-col px-5 py-4", cardStateClass(chrome.state))}>
+    <div
+      className={cn(
+        "surface-card flex flex-col !rounded-[12px] px-5 py-4",
+        cardStateClass(chrome.state),
+      )}
+    >
       <div className="flex items-center gap-2.5">
         <span
           className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", TONE_TILE[tone])}
@@ -649,16 +654,20 @@ function ReceiptCell({ r, canSettle }: { r: RefundRow; canSettle: boolean }) {
         {input}
         <button
           type="button"
+          title={t("refund.uploadReceipt")}
+          aria-label={t("refund.uploadReceipt")}
           onClick={() => fileRef.current?.click()}
           disabled={receipt.isPending}
-          className="ctl-soft inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-[12.5px] font-semibold disabled:opacity-60"
+          className={cn(
+            "grid h-10 w-10 place-items-center rounded-xl transition-transform hover:scale-105 disabled:pointer-events-none",
+            TONE_TILE.primary,
+          )}
         >
           {receipt.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-[18px] w-[18px] animate-spin" />
           ) : (
-            <Upload className="h-3.5 w-3.5" />
+            <Upload className="h-[18px] w-[18px]" />
           )}
-          {t("refund.uploadShort")}
         </button>
       </>
     );
