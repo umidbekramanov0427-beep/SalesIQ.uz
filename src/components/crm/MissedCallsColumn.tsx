@@ -15,7 +15,7 @@ export function MissedCallsColumn({ funnelLeadIds }: { funnelLeadIds: Set<string
   if (items.length === 0) return null;
   return (
     <section className="flex w-[86vw] max-w-[290px] shrink-0 flex-col sm:w-[290px]">
-      <header className="px-1 pb-2 pt-1 text-center">
+      <header data-stage-head className="px-1 pb-2 pt-1 text-center">
         <h2 className="truncate text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
           {t("missedCol.title")}
         </h2>

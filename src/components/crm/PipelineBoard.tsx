@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { Check, CircleCheck, CircleX, Trash2 } from "lucide-react";
@@ -210,6 +218,7 @@ export function PipelineBoard({
   const sortItems = (items: CrmLeadView[]) => sortLikeBoard(items, sortBy);
 
   const panRef = useRef<HTMLDivElement>(null);
+  useStickyStageHeads(panRef);
   function startPan(e: React.PointerEvent<HTMLDivElement>) {
     const el = panRef.current;
     const target = e.target as HTMLElement;
@@ -264,7 +273,7 @@ export function PipelineBoard({
                 over === s.id && "bg-primary/[0.06] ring-1 ring-primary/30",
               )}
             >
-              <header className="group/col relative px-1 pb-2 pt-1 text-center">
+              <header data-stage-head className="group/col relative px-1 pb-2 pt-1 text-center">
                 {selection && items.length > 0 && (
                   <Tick
                     checked={items.every((l) => selection.ids.has(l.id))}
@@ -509,4 +518,46 @@ function Tick({
       <Check className="h-3.5 w-3.5" strokeWidth={3} />
     </button>
   );
+}
+
+/**
+ * Like amoCRM: once the board is scrolled up under the page's pinned bar,
+ * the stage names stay at the top instead of leaving the screen. The board
+ * scrolls sideways by itself, which keeps CSS position: sticky from reaching
+ * the page's own scroll, so the heads ([data-stage-head]) are moved down by
+ * the distance scrolled past the bar (--board-stick, styles.css) -- and
+ * still slide sideways with their columns.
+ */
+function useStickyStageHeads(ref: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const board = ref.current;
+    const scroller = board?.closest("main");
+    if (!board || !scroller) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const bar = scroller.querySelector<HTMLElement>("[data-funnel-bar]");
+      const line = (bar ?? scroller).getBoundingClientRect()[bar ? "bottom" : "top"];
+      const box = board.getBoundingClientRect();
+      const head = board.querySelector<HTMLElement>("[data-stage-head]");
+      const most = Math.max(0, box.height - (head?.offsetHeight ?? 0) - 24);
+      const shift = Math.round(Math.min(most, Math.max(0, line - box.top)));
+      board.style.setProperty("--board-stick", `${shift}px`);
+      board.toggleAttribute("data-stuck", shift > 0);
+    };
+    const later = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    scroller.addEventListener("scroll", later, { passive: true });
+    window.addEventListener("resize", later);
+    const ro = new ResizeObserver(later);
+    ro.observe(board);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      scroller.removeEventListener("scroll", later);
+      window.removeEventListener("resize", later);
+      ro.disconnect();
+    };
+  }, [ref]);
 }

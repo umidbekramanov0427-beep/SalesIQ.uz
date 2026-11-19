@@ -2677,3 +2677,18 @@ main.studio {
     animation: none;
   }
 }
+
+/* Funnel board (PipelineBoard): the stage names stay under the page's pinned
+   bar while the cards scroll up, as in amoCRM. --board-stick is how far the
+   board has gone under the bar; the heads are moved down by it and, while
+   stuck, get the page's ground so cards pass under them. */
+[data-stage-head] {
+  position: relative;
+  z-index: 6;
+  transform: translateY(var(--board-stick, 0px));
+}
+[data-stuck] [data-stage-head] {
+  background-color: var(--canvas);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 8px 10px -10px rgb(16 24 40 / 0.35);
+}

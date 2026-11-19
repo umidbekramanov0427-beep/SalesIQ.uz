@@ -1215,6 +1215,7 @@ function FunnelDetail({
           so the toolbar reads as one row above the board. */}
       <div
         ref={setHeadEl}
+        data-funnel-bar
         className="sticky -top-4 z-10 -mx-4 -mt-4 mb-3 border-b border-border bg-card px-4 pb-2.5 pt-2.5 sm:mb-4 md:-mx-6 md:px-6 phone:-top-3 phone:-mx-3 phone:px-3"
       >
         <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
