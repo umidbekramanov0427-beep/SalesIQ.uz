@@ -1,5 +1,4 @@
 import { SettingsLayout, StudioLook } from "@/components/layout/Primitives";
-import { PageRuntime } from "@/components/layout/PageTools";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
@@ -30,9 +29,7 @@ import { isPlatformHost, panelFromHost } from "@/lib/subdomain";
 import { useMyOrganization } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { RAIL_ITEM, RAIL_LABEL, RAIL_STACK, RAIL_TILE } from "@/components/layout/AppSidebar";
-import { railLabel } from "@/lib/nav";
-import { RailGlyph } from "@/components/layout/RailGlyph";
+import { RAIL_TILE } from "@/components/layout/AppSidebar";
 import { useBrowserZoom } from "@/lib/browser-zoom";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { LANGS, LANG_FLAGS, LANG_SHORT, type Lang } from "@/lib/i18n";
@@ -500,7 +497,6 @@ export function MarketingShell({ children }: { children: ReactNode }) {
             data-page-root
             className="studio flex-1 overflow-y-auto overflow-x-hidden px-4 pb-16 pt-6 md:px-7 phone:px-3 phone:pb-[calc(76px+env(safe-area-inset-bottom))] phone:pt-3"
           >
-            <PageRuntime rootRef={mainRef} />
             <div key={pathname} className="page-enter w-full">
               <StudioLook.Provider value={{ eyebrow }}>
                 <SettingsLayout variant="studio" gutter={false}>

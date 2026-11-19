@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CardTools, cardStateClass, useCardChrome } from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { TONE_TILE, type CardTone } from "@/lib/tones";
@@ -87,15 +87,9 @@ function KpiCard({
   value: string;
   children?: ReactNode;
 }) {
-  const chrome = useCardChrome({ tipKey, label, value });
-  if (chrome.hidden) return null;
+  const chrome = useCardChrome({ tipKey, label });
   return (
-    <div
-      className={cn(
-        "surface-card flex flex-col !rounded-[12px] px-5 py-4",
-        cardStateClass(chrome.state),
-      )}
-    >
+    <div className={cn("surface-card flex flex-col !rounded-[12px] px-5 py-4")}>
       <div className="flex items-center gap-2.5">
         <span
           className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", TONE_TILE[tone])}

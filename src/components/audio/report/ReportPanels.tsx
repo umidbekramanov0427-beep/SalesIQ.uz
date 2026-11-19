@@ -1,11 +1,5 @@
 import { lazy, Suspense, useMemo, type ReactNode } from "react";
-import {
-  CardTools,
-  HiddenCard,
-  cardStateClass,
-  useCardChrome,
-  valueStateClass,
-} from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 import { FigureCard, FigureLine } from "@/components/layout/Primitives";
 import { InfoTip } from "@/components/layout/InfoTip";
 import {
@@ -28,7 +22,7 @@ import { GRADES, gradeCounts, gradeOf, type Grade } from "@/lib/call-grade";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { GradeLetter, SheetHeading, Stamp } from "./ReportControls";
-import { formatClock, formatDuration, formatWhen } from "./report-utils";
+import { formatClock, formatWhen } from "./report-utils";
 
 const PickupHoursChart = lazy(() => import("./PickupHoursChart"));
 
@@ -208,8 +202,7 @@ function TabelCell({
   icon: LucideIcon;
   tone: CardTone;
 }) {
-  const chrome = useCardChrome({ label, value });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
+  const chrome = useCardChrome({ label });
   return (
     <FigureCard
       icon={icon}
@@ -217,8 +210,7 @@ function TabelCell({
       label={label}
       tools={<CardTools chrome={chrome} label={label} text={sub} />}
       value={value}
-      valueClassName={valueStateClass(chrome.state)}
-      className={cn(className, cardStateClass(chrome.state))}
+      className={cn(className)}
     >
       <FigureLine>{sub}</FigureLine>
     </FigureCard>

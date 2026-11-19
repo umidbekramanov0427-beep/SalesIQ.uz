@@ -1,11 +1,5 @@
 import { useMemo } from "react";
-import {
-  CardTools,
-  HiddenCard,
-  cardStateClass,
-  useCardChrome,
-  valueStateClass,
-} from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 import { BadgeCheck, CircleDollarSign, PhoneCall, Users, type LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FigureCard } from "@/components/layout/Primitives";
@@ -57,8 +51,7 @@ function MetricCard({
   info: string;
   loading: boolean;
 }) {
-  const chrome = useCardChrome({ label: title, value: `${rate.pct}%` });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={title} />;
+  const chrome = useCardChrome({ label: title });
   return (
     <FigureCard
       icon={Icon}
@@ -66,8 +59,7 @@ function MetricCard({
       label={title}
       tools={<CardTools chrome={chrome} label={title} text={info} />}
       value={loading ? <Skeleton className="mt-1 h-8 w-24" /> : <FitText>{rate.pct}%</FitText>}
-      valueClassName={cn(TONE_TEXT[tone], valueStateClass(chrome.state))}
-      className={cardStateClass(chrome.state)}
+      valueClassName={cn(TONE_TEXT[tone])}
     >
       <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
         <div

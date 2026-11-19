@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { PageRuntime } from "@/components/layout/PageTools";
 import { canOpenSection } from "@/lib/access-rules";
 import { useAccessRules, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { OwnerNav, OwnerSidebar } from "@/components/owner/OwnerSidebar";
-import { OWNER_HUBS, ownerHubOf } from "@/lib/owner-hubs";
+import { OWNER_HUBS } from "@/lib/owner-hubs";
 import { MobileTabBar, MobileTopBar } from "./MobileNav";
 import { PhoneProvider } from "@/components/phone/PhoneProvider";
 import { IncomingCallPopup } from "@/components/phone/IncomingCallPopup";
@@ -287,7 +286,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             data-page-root
             className="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-6 phone:px-3 phone:pb-[calc(76px+env(safe-area-inset-bottom))] phone:pt-3"
           >
-            <PageRuntime rootRef={mainRef} />
             {/* Keyed by path so each page plays its entrance (.page-enter in
                 styles.css) once, when it is opened. */}
             {/* The date format is part of the key: a page drawn before the

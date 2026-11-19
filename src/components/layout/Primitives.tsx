@@ -2,13 +2,7 @@ import { createContext, useContext, type ComponentType, type ReactNode } from "r
 import { GuideButton } from "@/components/help/GuideButton";
 import { BackButton } from "@/components/layout/BackButton";
 import { InfoTip } from "@/components/layout/InfoTip";
-import {
-  CardTools,
-  HiddenCard,
-  cardStateClass,
-  useCardChrome,
-  valueStateClass,
-} from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 import { PageTools } from "@/components/layout/PageTools";
 import {
   AlertTriangle,
@@ -31,7 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { TONE_TEXT, TONE_TILE, type CardTone } from "@/lib/tones";
+import { TONE_TILE, type CardTone } from "@/lib/tones";
 import { keysForText, useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useOrgAccess } from "@/lib/use-org-access";
@@ -537,7 +531,7 @@ export function AdminConsoleHeader({
 
 // ---- Figure cards ------------------------------------------------------------
 // Every figure card has Ish stoli's shape (the owner's pick): a colored icon
-// tile with the card's tools ("!", gear) across from it, the name in clear
+// tile with the card's tools ("!") across from it, the name in clear
 // 14px, a large figure, then its lines (change, the period before, hints)
 // in 13px -- nothing smaller. StatCard, DeskKpi and the pages' own figure
 // cards all draw through FigureCard so they read as one family.
@@ -559,11 +553,11 @@ export function FigureCard({
   label: ReactNode;
   /** Beside the name (a pencil, a badge). */
   labelExtra?: ReactNode;
-  /** Top right: the card's "!" and gear (CardTools) or its own buttons. */
+  /** Top right: the card's "!" (CardTools) or its own buttons. */
   tools?: ReactNode;
   value: ReactNode;
   valueClassName?: string;
-  /** cardStateClass(...) and the like. */
+  /** Extra classes for the card. */
   className?: string;
   /** Inside another card: a quieter surface. */
   nested?: boolean;
@@ -687,7 +681,6 @@ export function StatCard({
   icon,
   iconTone = "primary",
   tipKey,
-  gear = true,
   extraTools,
   meter,
 }: {
@@ -707,10 +700,8 @@ export function StatCard({
   emphasize?: boolean;
   icon?: LucideIcon;
   iconTone?: CardTone;
-  /** The label's i18n key: the card's explainer and settings follow it. */
+  /** The label's i18n key: the card's explainer follows it. */
   tipKey?: string | undefined;
-  /** false: no company gear (the card brings its own settings in extraTools). */
-  gear?: boolean;
   /** The card's own controls, beside its "!". */
   extraTools?: ReactNode;
   /** A 0-100 level drawn as the studio desk's fader (a "40%" hint draws one by itself). */
@@ -725,25 +716,17 @@ export function StatCard({
   const tip = useTipText(info, undefined, label);
   const admin = useContext(AdminLook);
   const nestedStat = useContext(InsideSectionCard);
-  const chrome = useCardChrome({ tipKey, label, value });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
+  const chrome = useCardChrome({ tipKey, label });
   return (
     <FigureCard
       icon={icon ?? ChartNoAxesColumn}
       tone={isDanger ? "rose" : iconTone}
       label={label}
       tools={
-        <CardTools
-          chrome={chrome}
-          label={label}
-          text={info ? tip : undefined}
-          gear={gear}
-          extra={extraTools}
-        />
+        <CardTools chrome={chrome} label={label} text={info ? tip : undefined} extra={extraTools} />
       }
       value={<FitText>{value}</FitText>}
-      valueClassName={cn(isDanger && "text-destructive", valueStateClass(chrome.state))}
-      className={cardStateClass(chrome.state)}
+      valueClassName={cn(isDanger && "text-destructive")}
       nested={admin && nestedStat}
     >
       {delta !== undefined && (

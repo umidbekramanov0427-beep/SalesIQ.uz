@@ -1,12 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CardBoard } from "@/components/dashboard/HomeBoard";
-import {
-  CardTools,
-  HiddenCard,
-  cardStateClass,
-  useCardChrome,
-  valueStateClass,
-} from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 import { funnelOpen } from "@/lib/access-rules";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +13,6 @@ import {
   Archive,
   Undo2,
   Building2,
-  ChevronDown,
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
@@ -46,14 +39,12 @@ import {
   FigureLine,
   PageHeader,
   SectionCard,
-  StatCard,
   Pill,
   PageLoader,
   type CardTone,
 } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TagChip } from "@/components/crm/tag-editor";
-import { LeadPhoneChip, TemperatureChip } from "@/components/crm/lead-badges";
 import {
   EMPTY_LEAD_FILTERS,
   FunnelSearchFilter,
@@ -590,8 +581,7 @@ function DayStat({
   tone: string;
   icon: LucideIcon;
 }) {
-  const chrome = useCardChrome({ label, value });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
+  const chrome = useCardChrome({ label });
   return (
     <FigureCard
       icon={icon}
@@ -599,8 +589,7 @@ function DayStat({
       label={label}
       tools={<CardTools chrome={chrome} label={label} />}
       value={value}
-      valueClassName={cn(tone, valueStateClass(chrome.state))}
-      className={cardStateClass(chrome.state)}
+      valueClassName={cn(tone)}
     />
   );
 }
@@ -638,8 +627,7 @@ function FunnelMetric({
   tone: keyof typeof METRIC_TONE;
 }) {
   const c = METRIC_TONE[tone];
-  const chrome = useCardChrome({ label, value });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
+  const chrome = useCardChrome({ label });
   return (
     <FigureCard
       icon={Icon}
@@ -647,8 +635,6 @@ function FunnelMetric({
       label={label}
       tools={<CardTools chrome={chrome} label={label} text={info} />}
       value={<FitText>{value}</FitText>}
-      valueClassName={valueStateClass(chrome.state)}
-      className={cardStateClass(chrome.state)}
     >
       {progress !== undefined && (
         <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-muted">

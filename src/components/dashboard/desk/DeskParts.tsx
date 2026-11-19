@@ -1,12 +1,6 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import {
-  CardTools,
-  HiddenCard,
-  cardStateClass,
-  useCardChrome,
-  valueStateClass,
-} from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 import {
   FigureCard,
   FigureDelta,
@@ -14,7 +8,6 @@ import {
   SectionCard,
   type CardTone,
 } from "@/components/layout/Primitives";
-import { cn } from "@/lib/utils";
 
 // Ish stoli's and Telefon's building blocks, on the platform's own
 // primitives: a figure card (StatCard) and a titled block (SectionCard).
@@ -49,8 +42,7 @@ export function DeskKpi({
   titleExtra?: ReactNode;
   children?: ReactNode;
 }) {
-  const chrome = useCardChrome({ tipKey, label, value: rawValue });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
+  const chrome = useCardChrome({ tipKey, label });
   return (
     <FigureCard
       icon={icon}
@@ -59,8 +51,6 @@ export function DeskKpi({
       labelExtra={titleExtra}
       tools={<CardTools chrome={chrome} label={label} />}
       value={value}
-      valueClassName={valueStateClass(chrome.state)}
-      className={cardStateClass(chrome.state)}
     >
       {children}
       {change !== undefined && (

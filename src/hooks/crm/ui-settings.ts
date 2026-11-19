@@ -9,10 +9,10 @@ import { compactCallSettings, parseCallSettings, type CallSettings } from "@/lib
 import { useOrgGeneralSettings } from "./settings";
 import { usePlatformSettings } from "./duplicates-billing";
 
-// The company's card and page settings (⚙️, src/lib/ui-settings.ts): read
-// by every card and page, changed by its super admin / head of sales. On
-// the owner panel's pages they are the platform's own (platform_settings),
-// changed by the platform owner.
+// The company's own settings in ui_settings (src/lib/ui-settings.ts: client
+// message notifications, call settings), changed by its super admin / head
+// of sales. On the owner panel's pages they are the platform's own
+// (platform_settings), changed by the platform owner.
 
 export type UiSettingsScope = "org" | "platform";
 
@@ -94,13 +94,6 @@ export function useUiSettings(): {
     },
     saving: mutation.isPending,
   };
-}
-
-/** A save error's message: the database update not run yet, or the error itself. */
-export function uiSaveErrorKey(err: unknown): "pending" | "other" {
-  const m =
-    err instanceof Error ? err.message : String((err as { message?: string })?.message ?? "");
-  return /ui_settings/.test(m) ? "pending" : "other";
 }
 
 /** Admin → Qo'ng'iroq sozlamalari (src/lib/call-settings.ts), from ui_settings.phone. */

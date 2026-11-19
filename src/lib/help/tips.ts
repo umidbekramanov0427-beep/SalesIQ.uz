@@ -20,9 +20,9 @@ export const TIPS: Record<string, Tip> = {
       en: "Figures come from the CRM's leads, deals and calls for the chosen period and funnel; a rep sees only their own.",
     },
     act: {
-      uz: "Tablar: Umumiy (asosiy ko'rsatkichlar, plan/fakt, kanallar, menejerlar, vazifalar, qo'ng'iroqlar), Reyting, Konversiya. Har bir kartaning ⚙️ belgisidan maqsad va ko'rinishni sozlang.",
-      ru: "Вкладки: Общее (основные показатели, план/факт, каналы, менеджеры, задачи, звонки), Рейтинг, Конверсия. Цель и вид карточки — через её ⚙️.",
-      en: "Tabs: Overview (main figures, plan vs actual, channels, managers, tasks, calls), Rating, Conversion. Set a card's goal and view from its ⚙️.",
+      uz: "Tablar: Umumiy (asosiy ko'rsatkichlar, plan/fakt, kanallar, menejerlar, vazifalar, qo'ng'iroqlar), Reyting, Konversiya. Kartalarni «Panelni sozlash» bilan joylashtiring.",
+      ru: "Вкладки: Общее (основные показатели, план/факт, каналы, менеджеры, задачи, звонки), Рейтинг, Конверсия. Карточки расставляются кнопкой «Настроить панель».",
+      en: "Tabs: Overview (main figures, plan vs actual, channels, managers, tasks, calls), Rating, Conversion. Arrange the cards with «Customize».",
     },
   },
   "nav:/funnels": {
@@ -1152,11 +1152,6 @@ export const TIPS: Record<string, Tip> = {
       uz: "Reklama xarajati ÷ yangi lidlar.",
       ru: "Расход на рекламу ÷ новые лиды.",
       en: "Ad spend ÷ new leads.",
-    },
-    act: {
-      uz: "⚙️ orqali chegara qo'ying: lid narxi oshib ketsa karta qizil bo'ladi.",
-      ru: "Задайте порог в ⚙️: если цена лида выросла — карточка покраснеет.",
-      en: "Set a limit in ⚙️ so the card turns red when leads get too expensive.",
     },
   },
   "fin.spend": {

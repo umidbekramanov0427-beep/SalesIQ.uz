@@ -1,5 +1,4 @@
 import { SettingsLayout } from "@/components/layout/Primitives";
-import { PageRuntime } from "@/components/layout/PageTools";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
@@ -59,7 +58,6 @@ export function FocusShell({ children }: { children: ReactNode }) {
         data-page-root
         className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-16 pt-5 md:px-6 phone:px-3 phone:pb-8 phone:pt-3"
       >
-        <PageRuntime rootRef={mainRef} />
         <div key={pathname} className="page-enter w-full">
           <SettingsLayout variant="admin" gutter={false}>
             {children}

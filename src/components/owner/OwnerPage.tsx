@@ -12,13 +12,7 @@ import { keysForText, useI18n } from "@/lib/i18n";
 import { NAV_ITEMS } from "@/lib/nav";
 import type { CardTone } from "@/lib/tones";
 import { cn } from "@/lib/utils";
-import {
-  CardTools,
-  HiddenCard,
-  cardStateClass,
-  useCardChrome,
-  valueStateClass,
-} from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 
 // The owner panel's building blocks, in the platform's own (CRM) look: the
 // page header with the section's coloured icon tile, figure cards, panels
@@ -101,9 +95,7 @@ export function OwnerStat({
   const chrome = useCardChrome({
     tipKey,
     label,
-    value: typeof value === "string" || typeof value === "number" ? value : undefined,
   });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
   return (
     <FigureCard
       icon={icon}
@@ -111,8 +103,6 @@ export function OwnerStat({
       label={label}
       tools={<CardTools chrome={chrome} label={label} text={info} />}
       value={value}
-      valueClassName={valueStateClass(chrome.state)}
-      className={cardStateClass(chrome.state)}
     >
       {note && <FigureLine className="truncate">{note}</FigureLine>}
     </FigureCard>

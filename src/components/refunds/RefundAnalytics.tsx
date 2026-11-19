@@ -1,11 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  CardTools,
-  HiddenCard,
-  cardStateClass,
-  useCardChrome,
-  valueStateClass,
-} from "@/components/layout/CardTools";
+import { CardTools, useCardChrome } from "@/components/layout/CardTools";
 import {
   AlarmClock,
   BarChart3,
@@ -222,10 +216,9 @@ function Kpi({
   meter?: number | null;
   alert?: boolean;
 }) {
-  const chrome = useCardChrome({ label, value });
-  if (chrome.hidden) return <HiddenCard chrome={chrome} label={label} />;
+  const chrome = useCardChrome({ label });
   return (
-    <div className={cn("surface-card flex items-start gap-3.5 p-4", cardStateClass(chrome.state))}>
+    <div className={cn("surface-card flex items-start gap-3.5 p-4")}>
       <span
         className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", TONE_TILE[tone])}
       >
@@ -240,7 +233,6 @@ function Kpi({
           className={cn(
             "mt-0.5 truncate text-[24px] font-bold leading-tight tracking-tight tabular-nums",
             alert ? "text-rose-600 dark:text-rose-400" : "text-foreground",
-            valueStateClass(chrome.state),
           )}
         >
           {value}

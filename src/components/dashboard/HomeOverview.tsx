@@ -14,32 +14,22 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ArrowLeftRight, ChartPie, Users, Wallet, type LucideIcon } from "lucide-react";
+type CardView = "card" | "chart" | "list";
+/** A card's options, each at its default (the per-card ⚙️ was removed). */
+type HomeCardDefaults = {
+  formula?: string;
+  view?: string;
+  compare?: boolean;
+  target?: number | null;
+  group?: "auto" | "day" | "week" | "month";
+  showDeals?: boolean;
+  limit?: number;
+  filter?: string;
+  hide?: string[];
+  rate?: number;
+};
 import {
-  ArrowLeftRight,
-  CircleGauge,
-  ChartBarBig,
-  ChartColumn,
-  ChartPie,
-  ChartSpline,
-  LayoutGrid,
-  ListOrdered,
-  RectangleHorizontal,
-  Table2,
-  Users,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
-import {
-  CardSettingsButton,
-  OptionList,
-  SettingSection,
-  TargetInput,
-  ToggleRow,
-  ViewPicker,
-} from "@/components/dashboard/CardSettings";
-import { useCardSettings, type CardView } from "@/lib/home-card-settings";
-import {
-  METRIC_FORMULAS,
   computeMetric,
   defaultFormula,
   formulaUnit,
@@ -349,15 +339,6 @@ function useFormatUnit() {
   };
 }
 
-const UNIT_KEY: Record<Unit, string> = {
-  count: "cardset.unit.count",
-  money: "cardset.unit.money",
-  hours: "cardset.unit.hours",
-  times: "cardset.unit.times",
-  days: "cardset.unit.days",
-  pct: "cardset.unit.pct",
-};
-
 const MS_DAY = 24 * 60 * 60 * 1000;
 const shortDate = (fromMs: number, i: number, lang: string) => {
   const d = new Date(fromMs + i * MS_DAY);
@@ -400,7 +381,7 @@ function MetricCard({
   const { t } = useI18n();
   const fmtUnit = useFormatUnit();
   const { data: profiles } = useProfilesRaw();
-  const { settings, update, reset, changed } = useCardSettings(`kpi.${def.id}`);
+  const settings: HomeCardDefaults = {};
   const formula = isFormula(def.id, settings.formula) ? settings.formula! : defaultFormula(def.id);
   const isDefault = formula === defaultFormula(def.id);
   const view = (["card", "chart", "list"] as const).includes(settings.view as CardView)
@@ -429,52 +410,6 @@ function MetricCard({
   const value = fmtUnit(unit, kpi.value);
   const valueClass = goal ? (goal.met ? "text-success" : "text-destructive") : "text-foreground";
 
-  const settingsPanel = (
-    <CardSettingsButton title={def.label} changed={changed} onReset={reset} className="h-6 w-6">
-      <SettingSection label={t("cardset.formula")}>
-        <OptionList
-          value={formula}
-          onChange={(v) => update({ formula: v === defaultFormula(def.id) ? undefined : v })}
-          options={METRIC_FORMULAS[def.id].map((f) => ({
-            value: f as string,
-            label: t(`cardset.f.${def.id}.${f}`),
-            desc: t(`cardset.f.${def.id}.${f}.desc`),
-          }))}
-        />
-      </SettingSection>
-      <SettingSection label={t("cardset.view")}>
-        <ViewPicker
-          value={view}
-          onChange={(v) => update({ view: v === "card" ? undefined : v })}
-          options={[
-            { value: "card", label: t("cardset.view.card"), icon: RectangleHorizontal },
-            { value: "chart", label: t("cardset.view.chart"), icon: ChartColumn },
-            { value: "list", label: t("cardset.view.people"), icon: ListOrdered },
-          ]}
-        />
-      </SettingSection>
-      <SettingSection
-        label={t("cardset.rule")}
-        hint={t(low ? "cardset.targetLow" : "cardset.targetHigh")}
-      >
-        <TargetInput
-          key={target ?? "none"}
-          value={target}
-          unit={t(UNIT_KEY[unit])}
-          onChange={(v) => update({ target: v })}
-        />
-        <div className="mt-3">
-          <ToggleRow
-            label={t("cardset.compare")}
-            hint={t("cardset.compareHint")}
-            checked={compare}
-            onChange={(v) => update({ compare: v ? undefined : false })}
-          />
-        </div>
-      </SettingSection>
-    </CardSettingsButton>
-  );
-
   const goalBar = goal && (
     <div className="mt-2">
       <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -499,9 +434,7 @@ function MetricCard({
         <>
           <InfoTip className="shrink-0" text={isDefault ? def.info : t(`${fKey}.desc`)} />
           {/* The card's settings show while the pointer is on the card. */}
-          <span className="opacity-0 transition-opacity duration-75 group-focus-within:opacity-100 group-hover:opacity-100 phone:opacity-100">
-            {settingsPanel}
-          </span>
+          <span className="opacity-0 transition-opacity duration-75 group-focus-within:opacity-100 group-hover:opacity-100 phone:opacity-100"></span>
         </>
       }
       value={<span className="block truncate">{value}</span>}
@@ -755,7 +688,7 @@ function groupDaily(
 function RevenueChart({ o }: { o: Overview }) {
   const { t, lang } = useI18n();
   const { format, formatCompact } = useCurrency();
-  const { settings, update, reset, changed } = useCardSettings("revenueChart");
+  const settings: HomeCardDefaults = {};
   const group: Group = settings.group ?? "auto";
   const view = (["chart", "bars", "table"] as const).find((v) => v === settings.view) ?? "chart";
   const showDeals = settings.showDeals ?? true;
@@ -782,50 +715,6 @@ function RevenueChart({ o }: { o: Overview }) {
     return String(d.getDate());
   };
   const met = (v: number) => target != null && v >= target;
-
-  const settingsPanel = (
-    <CardSettingsButton title={t("home2.revenueTitle")} changed={changed} onReset={reset}>
-      <SettingSection label={t("cardset.view")}>
-        <ViewPicker
-          value={view}
-          onChange={(v) => update({ view: v === "chart" ? undefined : v })}
-          options={[
-            { value: "chart", label: t("cardset.view.area"), icon: ChartSpline },
-            { value: "bars", label: t("cardset.view.bars"), icon: ChartColumn },
-            { value: "table", label: t("cardset.view.table"), icon: Table2 },
-          ]}
-        />
-      </SettingSection>
-      <SettingSection label={t("cardset.group")} hint={t("cardset.groupHint")}>
-        <OptionList
-          value={group}
-          onChange={(v) => update({ group: v === "auto" ? undefined : v })}
-          options={(["auto", "day", "week", "month"] as const).map((g) => ({
-            value: g,
-            label: t(`cardset.group.${g}`),
-          }))}
-        />
-      </SettingSection>
-      {view !== "table" && (
-        <SettingSection label={t("cardset.extra")}>
-          <ToggleRow
-            label={t("cardset.showDeals")}
-            hint={t("cardset.showDealsHint")}
-            checked={showDeals}
-            onChange={(v) => update({ showDeals: v ? undefined : false })}
-          />
-        </SettingSection>
-      )}
-      <SettingSection label={t("cardset.rule")} hint={t("cardset.planHint")}>
-        <TargetInput
-          key={target ?? "none"}
-          value={target}
-          unit={t("cardset.unit.money")}
-          onChange={(v) => update({ target: v })}
-        />
-      </SettingSection>
-    </CardSettingsButton>
-  );
 
   const tooltip = (
     <Tooltip
@@ -904,7 +793,6 @@ function RevenueChart({ o }: { o: Overview }) {
               {t("home2.legendDeals")}
             </span>
           )}
-          {settingsPanel}
         </div>
       </div>
 
@@ -1064,7 +952,7 @@ const TODAY_FILTERS = ["all", "overdue", "today"] as const;
 
 function TodayColumn() {
   const { t } = useI18n();
-  const { settings, update, reset, changed } = useCardSettings("todayTasks");
+  const settings: HomeCardDefaults = {};
   const limit = [6, 10, 15].includes(settings.limit ?? 0) ? settings.limit! : 6;
   const filter = TODAY_FILTERS.find((f) => f === settings.filter) ?? "all";
   const { data, isLoading } = useTodayTasks(limit, filter);
@@ -1082,30 +970,6 @@ function TodayColumn() {
             {t("home2.overdueN", { n: overdue })}
           </span>
         )}
-        <CardSettingsButton title={t("home2.todayTitle")} changed={changed} onReset={reset}>
-          <SettingSection label={t("cardset.show")}>
-            <OptionList
-              value={filter}
-              onChange={(v) => update({ filter: v === "all" ? undefined : v })}
-              options={TODAY_FILTERS.map((f) => ({
-                value: f,
-                label: t(`cardset.today.${f}`),
-                desc: t(`cardset.today.${f}.desc`),
-              }))}
-            />
-          </SettingSection>
-          <SettingSection label={t("cardset.limit")}>
-            <ViewPicker
-              value={String(limit)}
-              onChange={(v) => update({ limit: v === "6" ? undefined : Number(v) })}
-              options={[6, 10, 15].map((n) => ({
-                value: String(n),
-                label: t("cardset.limitN", { n }),
-                icon: ListOrdered,
-              }))}
-            />
-          </SettingSection>
-        </CardSettingsButton>
       </div>
       <p className="mt-0.5 text-[12.5px] text-subtle">
         {t("home2.todaySub", { n: data?.total ?? 0 })}
@@ -1252,7 +1116,7 @@ function Ring({ pct, color, label }: { pct: number | null; color: string; label:
 
 function TaskDiscipline({ o }: { o: Overview }) {
   const { t } = useI18n();
-  const { settings, update, reset, changed } = useCardSettings("taskDiscipline");
+  const settings: HomeCardDefaults = {};
   const view = (["tiles", "rings", "list"] as const).find((v) => v === settings.view) ?? "tiles";
   const hidden = new Set(settings.hide ?? []);
   const target = settings.target ?? null;
@@ -1300,46 +1164,6 @@ function TaskDiscipline({ o }: { o: Overview }) {
           <h3 className="text-base font-bold text-foreground">{t("home2.discTitle")}</h3>
           <p className="mt-0.5 text-[12.5px] text-subtle">{t("home2.discDesc")}</p>
         </div>
-        <CardSettingsButton title={t("home2.discTitle")} changed={changed} onReset={reset}>
-          <SettingSection label={t("cardset.view")}>
-            <ViewPicker
-              value={view}
-              onChange={(v) => update({ view: v === "tiles" ? undefined : v })}
-              options={[
-                { value: "tiles", label: t("cardset.view.tiles"), icon: LayoutGrid },
-                { value: "rings", label: t("cardset.view.rings"), icon: CircleGauge },
-                { value: "list", label: t("cardset.view.list"), icon: ListOrdered },
-              ]}
-            />
-          </SettingSection>
-          <SettingSection label={t("cardset.metrics")} hint={t("cardset.metricsHint")}>
-            <div className="space-y-2.5">
-              {DISC_KEYS.map((k) => (
-                <ToggleRow
-                  key={k}
-                  label={items[k].label}
-                  checked={!hidden.has(k)}
-                  onChange={(v) => {
-                    const next = new Set(hidden);
-                    if (v) next.delete(k);
-                    else next.add(k);
-                    // Keep at least one number on the card.
-                    if (next.size >= DISC_KEYS.length) return;
-                    update({ hide: [...next] });
-                  }}
-                />
-              ))}
-            </div>
-          </SettingSection>
-          <SettingSection label={t("cardset.rule")} hint={t("cardset.onTimeHint")}>
-            <TargetInput
-              key={target ?? "none"}
-              value={target}
-              unit="%"
-              onChange={(v) => update({ target: v })}
-            />
-          </SettingSection>
-        </CardSettingsButton>
       </div>
 
       {view === "tiles" && (
@@ -1403,7 +1227,7 @@ function TaskDiscipline({ o }: { o: Overview }) {
 
 function CallTypes({ o }: { o: Overview }) {
   const { t } = useI18n();
-  const { settings, update, reset, changed } = useCardSettings("callTypes");
+  const settings: HomeCardDefaults = {};
   const view = (["donut", "bars", "list"] as const).find((v) => v === settings.view) ?? "donut";
   const c = o.callTypes;
   const parts = [
@@ -1436,22 +1260,6 @@ function CallTypes({ o }: { o: Overview }) {
           <h3 className="text-base font-bold text-foreground">{t("home2.ctTitle")}</h3>
           <p className="mt-0.5 text-[12.5px] text-subtle">{t("home2.ctDesc")}</p>
         </div>
-        <CardSettingsButton title={t("home2.ctTitle")} changed={changed} onReset={reset}>
-          <SettingSection label={t("cardset.view")}>
-            <ViewPicker
-              value={view}
-              onChange={(v) => update({ view: v === "donut" ? undefined : v })}
-              options={[
-                { value: "donut", label: t("cardset.view.donut"), icon: ChartPie },
-                { value: "bars", label: t("cardset.view.hbars"), icon: ChartBarBig },
-                { value: "list", label: t("cardset.view.list"), icon: ListOrdered },
-              ]}
-            />
-          </SettingSection>
-          <SettingSection label={t("cardset.formula")}>
-            <p className="text-[12px] leading-snug text-subtle">{t("cardset.callTypesHow")}</p>
-          </SettingSection>
-        </CardSettingsButton>
       </div>
 
       {view === "donut" && (
