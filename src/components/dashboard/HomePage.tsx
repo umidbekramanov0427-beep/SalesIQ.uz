@@ -14,21 +14,16 @@ import { getRouteApi } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowLeftRight,
-  ChartPie,
   PhoneCall,
   Timer,
   Users,
   BriefcaseBusiness,
-  CalendarCheck,
   ChartColumnBig,
-  ChartSpline,
   ClipboardList,
   LayoutDashboard,
   LayoutGrid,
   ListChecks,
   Phone,
-  Target,
-  TrendingUp,
   Trophy,
   Wallet,
   Workflow,
@@ -37,7 +32,6 @@ import {
 import {
   GreetingHeader,
   HomeOverviewPart,
-  KPI_IDS,
   type KpiId,
   PeriodSegment,
 } from "@/components/dashboard/HomeOverview";
@@ -64,7 +58,6 @@ import {
   CONV_METRICS,
   CONV_METRIC_META,
   ConversionMetricCard,
-  ConversionMetricsCards,
 } from "@/components/dashboard/ConversionMetricsCards";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,11 +79,6 @@ const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
 );
 const Charts = {
-  MonthlyRevenueTrendChart: lazy(() =>
-    import("@/components/dashboard/Charts").then((m) => ({
-      default: m.MonthlyRevenueTrendChart,
-    })),
-  ),
   ConversionQualityChart: lazy(() =>
     import("@/components/dashboard/Charts").then((m) => ({ default: m.ConversionQualityChart })),
   ),
@@ -121,13 +109,11 @@ const TAB_FILTERS: Record<Exclude<HomeTab, "rating" | "desk">, FilterSet> = {
 // What the overview shows before anyone arranges it (the page as it was).
 const KPI_WIDGETS: { id: KpiId; label: string; icon: LucideIcon; tone: CardTone }[] = [
   { id: "newLeads", label: "home2.kpiLeads", icon: Users, tone: "primary" },
-  { id: "revenue", label: "home2.kpiRevenue", icon: Wallet, tone: "emerald" },
   { id: "firstContact", label: "home2.kpiFirstContact", icon: Timer, tone: "amber" },
   { id: "attempts", label: "home2.kpiAttempts", icon: PhoneCall, tone: "sky" },
   { id: "cycle", label: "home2.kpiCycle", icon: ArrowLeftRight, tone: "violet" },
-  { id: "conversion", label: "home2.kpiConversion", icon: ChartPie, tone: "rose" },
 ];
-const KPI_WIDGET_IDS = KPI_IDS.map((id) => `kpi:${id}`);
+const KPI_WIDGET_IDS = KPI_WIDGETS.map((k) => `kpi:${k.id}`);
 // The old single KPI row of a saved layout becomes the six cards in its place.
 const BOARD_ALIASES: Record<string, string[]> = { kpis: KPI_WIDGET_IDS };
 
@@ -135,20 +121,15 @@ const BOARD_DEFAULTS: BoardLayout = {
   order: [
     // Three cards a row (two rows), then Bugun beside the revenue chart.
     ...KPI_WIDGET_IDS,
-    "revenue",
-    "today",
     "tasks",
     "calls",
     "dailyWork",
     "payments",
     "kpiCards",
     "attention",
-    "trend",
   ],
   size: {
     ...Object.fromEntries(KPI_WIDGET_IDS.map((id) => [id, 4 as const])),
-    revenue: 8,
-    today: 4,
     tasks: 6,
     calls: 6,
   },
@@ -347,22 +328,6 @@ export function HomePage() {
       node: <HomeOverviewPart part={`kpi:${k.id}`} {...overviewProps} />,
     })),
     {
-      id: "revenue",
-      title: t("board.w.revenue"),
-      icon: TrendingUp,
-      tone: "emerald",
-      sizes: [4, 6, 8, 12],
-      node: <HomeOverviewPart part="revenue" {...overviewProps} />,
-    },
-    {
-      id: "today",
-      title: t("board.w.today"),
-      icon: CalendarCheck,
-      tone: "sky",
-      sizes: [3, 4, 6, 8, 12],
-      node: <HomeOverviewPart part="today" {...overviewProps} />,
-    },
-    {
       id: "tasks",
       title: t("board.w.tasks"),
       icon: ListChecks,
@@ -409,38 +374,6 @@ export function HomePage() {
       tone: "amber",
       sizes: [6, 8, 12],
       node: <PeriodAttentionRow stats={periodStats} funnel={funnel} />,
-    },
-    {
-      id: "trend",
-      title: t("board.w.trend"),
-      icon: ChartSpline,
-      tone: "primary",
-      sizes: [4, 6, 8, 12],
-      node: (
-        <Suspense fallback={<ChartSkeleton />}>
-          <Charts.MonthlyRevenueTrendChart funnel={funnel} />
-        </Suspense>
-      ),
-    },
-    {
-      id: "conversionMetrics",
-      title: t("board.w.conversionMetrics"),
-      icon: Target,
-      tone: "violet",
-      sizes: [6, 8, 12],
-      node: <ConversionMetricsCards funnel={funnel} scope={statsScope} />,
-    },
-    {
-      id: "conversionChart",
-      title: t("board.w.conversionChart"),
-      icon: ChartColumnBig,
-      tone: "violet",
-      sizes: [4, 6, 8, 12],
-      node: (
-        <Suspense fallback={<ChartSkeleton height={340} />}>
-          <Charts.ConversionQualityChart funnel={funnel} />
-        </Suspense>
-      ),
     },
   ];
 
