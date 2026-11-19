@@ -51,17 +51,6 @@ import {
 } from "./DeskBlocks";
 import { DeskKpi } from "./DeskParts";
 import {
-  HOME_VARIANTS,
-  VariantA,
-  VariantB,
-  VariantC,
-  VariantD,
-  type HomeVariant,
-  type VariantProps,
-} from "./HomeVariants";
-
-const VARIANT_STORE = "salesiq.home.variant";
-import {
   BoardCustomizeButton,
   HomeBoard,
   type BoardLayout,
@@ -131,25 +120,6 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
   const [editing, setEditing] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  // Trial layouts of the desk (HomeVariants): the chosen one is remembered here.
-  const [variant, setVariantState] = useState<HomeVariant>("current");
-  useEffect(() => {
-    try {
-      const v = localStorage.getItem(VARIANT_STORE) as HomeVariant | null;
-      if (v && HOME_VARIANTS.includes(v)) setVariantState(v);
-    } catch {
-      /* private window */
-    }
-  }, []);
-  function setVariant(v: HomeVariant) {
-    setVariantState(v);
-    setEditing(false);
-    try {
-      localStorage.setItem(VARIANT_STORE, v);
-    } catch {
-      /* private window */
-    }
-  }
   useEffect(() => {
     try {
       const p = localStorage.getItem(PRESET_STORE) as DeskPreset | null;
@@ -532,9 +502,7 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
               </option>
             ))}
           </select>
-          {!editing && variant === "current" && (
-            <BoardCustomizeButton onClick={() => setEditing(true)} />
-          )}
+          {!editing && <BoardCustomizeButton onClick={() => setEditing(true)} />}
           <button
             type="button"
             className={btn}
@@ -562,25 +530,6 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
 
       {tabs}
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <span className="text-[13px] font-semibold text-muted-foreground">{t("homev.view")}</span>
-        <div role="tablist" className="ctl-track inline-flex flex-wrap gap-0.5 rounded-xl p-0.5">
-          {HOME_VARIANTS.map((v) => (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={variant === v}
-              data-state={variant === v ? "active" : "inactive"}
-              onClick={() => setVariant(v)}
-              className="ctl-tab h-8 rounded-lg px-3 text-[13px] font-semibold"
-            >
-              {t(`homev.v.${v}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {error && !d ? (
         <p className="surface-card px-4 py-10 text-center text-[13px] text-muted-foreground">
           {describeError(error, t("desk.failed"))}
@@ -590,30 +539,15 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        (() => {
-          const vp: VariantProps = {
-            d,
-            revenueLabel,
-            periodText,
-            prevText,
-            canPlan,
-            onEditPlan: () => setPlanOpen(true),
-            onPickFunnel: setFunnel,
-          };
-          if (variant === "a") return <VariantA {...vp} />;
-          if (variant === "b") return <VariantB {...vp} />;
-          if (variant === "c") return <VariantC {...vp} />;
-          if (variant === "d") return <VariantD {...vp} />;
-          return (
-            <HomeBoard
-              boardKey="desk"
-              widgets={boardWidgets}
-              defaults={DESK_DEFAULTS}
-              editing={editing}
-              onEditingChange={setEditing}
-            />
-          );
-        })()
+        <>
+          <HomeBoard
+            boardKey="desk"
+            widgets={boardWidgets}
+            defaults={DESK_DEFAULTS}
+            editing={editing}
+            onEditingChange={setEditing}
+          />
+        </>
       )}
 
       {canPlan && (
