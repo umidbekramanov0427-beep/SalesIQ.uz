@@ -5,6 +5,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   BrainCircuit,
+  ChevronsUpDown,
   LayoutDashboard,
   Laptop,
   LogOut,
@@ -310,18 +311,20 @@ function PersonTile({ wide = false }: { wide?: boolean }) {
           <button
             type="button"
             aria-label={t("userMenu.open")}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors hover:bg-accent"
+            title={user?.email ?? undefined}
+            className="flex w-full flex-col gap-2 rounded-[12px] border border-sidebar-border bg-card px-3 py-2.5 text-left transition-colors hover:border-primary/50 data-[state=open]:border-primary/60"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-[12.5px] font-bold text-primary">
-              {user?.initials ?? "?"}
+            <span className="flex w-full items-center justify-between">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-[12.5px] font-bold text-primary">
+                {user?.initials ?? "?"}
+              </span>
+              <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13.5px] font-semibold text-foreground">
-                {user?.name ?? "…"}
-              </span>
-              <span className="block truncate text-[11.5px] text-muted-foreground">
-                {user?.email ?? ""}
-              </span>
+            {/* The whole name across the card's width, on as many lines as
+                it needs -- never cut; the e-mail is at the top of the menu
+                this opens. */}
+            <span className="w-full break-words text-[13px] font-semibold leading-snug text-foreground">
+              {user?.name ?? "…"}
             </span>
           </button>
         ) : (
