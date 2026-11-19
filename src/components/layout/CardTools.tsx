@@ -71,6 +71,9 @@ export function valueStateClass(state: CardState): string {
   return state === "bad" ? "!text-rose-600 dark:!text-rose-400" : "";
 }
 
+/** The per-card gear is switched off (owner, 2026-11-19). */
+const SHOW_GEAR: boolean = false;
+
 /** "!" and the gear, side by side, for a card's top corner. */
 export function CardTools({
   chrome,
@@ -108,12 +111,9 @@ export function CardTools({
         text={text ?? t("info.fallback", { name: label })}
         title={label}
       />
-      {gear && chrome.canEdit && (
-        // Shown while the pointer is on the card (styles.css .card-gear).
-        <span className="card-gear inline-flex">
-          <CardGear chrome={chrome} label={label} />
-        </span>
-      )}
+      {/* The per-card gear was removed (owner, 2026-11-19): only the "!" stays.
+          Limits and hidden cards saved earlier still apply. */}
+      {gear && SHOW_GEAR && <CardGear chrome={chrome} label={label} />}
     </span>
   );
 }

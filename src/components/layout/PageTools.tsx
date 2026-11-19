@@ -63,6 +63,9 @@ function moduleSettingsFor(page: string): string | null {
   return hit[1];
 }
 
+/** The page gear is switched off (owner, 2026-11-19). */
+const SHOW_GEAR: boolean = false;
+
 export function PageTools({
   title,
   description,
@@ -89,7 +92,8 @@ export function PageTools({
         title={title}
         footer={<span className="text-[11.5px] text-subtle">{t("tipbox.guideHint")}</span>}
       />
-      {canEdit && (
+      {/* The page gear was removed (owner, 2026-11-19); saved page settings still apply. */}
+      {canEdit && SHOW_GEAR && (
         <button
           type="button"
           onClick={() => setOpen(true)}
