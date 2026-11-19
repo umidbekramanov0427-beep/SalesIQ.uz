@@ -21,7 +21,6 @@ import {
   Lock,
   LogOut,
   Moon,
-  GraduationCap,
   Search,
   Sun,
   ShieldCheck,
@@ -191,33 +190,6 @@ export function NotificationBell({
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-// Sinfxona on the rail: the same gradient tile as Search, right under
-// Nazorat, with its name under it like the other items.
-function ClassroomTile({ label, active }: { label: string; active: boolean }) {
-  return (
-    <RailTip label={label} show={false}>
-      <Link
-        to="/content-library"
-        aria-label={label}
-        className="group mx-auto flex w-full flex-col items-center gap-1 py-1 text-sidebar-foreground"
-      >
-        <span
-          className={cn(
-            RAIL_TILE,
-            active &&
-              "shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
-          )}
-        >
-          <RailGlyph icon={GraduationCap} className="transition-transform group-hover:scale-110" />
-        </span>
-        <span className={cn(RAIL_LABEL, "text-center", active ? "font-bold" : "font-semibold")}>
-          {label}
-        </span>
-      </Link>
-    </RailTip>
   );
 }
 
@@ -707,13 +679,7 @@ export function AppSidebar({
         >
           {items.map((item) => (
             <div key={item.to} className="relative">
-              {item.to === "/content-library" && collapsed ? (
-                <ClassroomTile
-                  key={item.to}
-                  label={railLabel(t, item.to)}
-                  active={pathname.startsWith(item.to)}
-                />
-              ) : item.to === "/funnels" ? (
+              {item.to === "/funnels" ? (
                 <FunnelsNavGroup
                   key={item.to}
                   item={item}
