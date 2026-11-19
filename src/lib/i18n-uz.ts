@@ -9595,6 +9595,13 @@ const uz: Record<string, string> = {
   "ann.telegramScheduled":
     "Rejalashtirilgan e'lon Telegram'ga yuborilmaydi — u saytda belgilangan vaqtda chiqadi",
   "ann.schedule": "Rejalashtirish",
+  "ai.chat.title": "Marketing yordamchisi",
+  "ai.chat.subtitle": "Javoblar faqat sizning raqamlaringizdan · {p}",
+  "ai.chat.history": "Oldingi suhbatlar",
+  "ai.chat.noHistory": "Hali suhbat yo'q",
+  "ai.chat.used": "Ishlatilgan davr: {p}",
+  "mkt.group.analysis": "Tahlil",
+  "mkt.group.audience": "Auditoriya",
   "mkt.wb.sheetMinutes": "Daqiqalar bo'yicha",
   "refund.done": "Yakunlandi",
   "refund.fFunnel": "Voronka",

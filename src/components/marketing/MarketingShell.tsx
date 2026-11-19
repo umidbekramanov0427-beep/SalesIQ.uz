@@ -37,10 +37,10 @@ import { useTheme, type ThemeMode } from "@/lib/theme";
 import { LANGS, LANG_FLAGS, LANG_SHORT, type Lang } from "@/lib/i18n";
 import { MarketingFiltersProvider } from "@/components/marketing/MarketingFilters";
 
-// The marketing panel's own frame (marketing.salesiq.uz): the platform's
-// narrow icon rail, always folded -- overview, ads, lead quality, channels,
-// webinars, settings -- with the switch back to the CRM and the person's
-// tile (theme, language, sign out) at the bottom. The project and period
+// The marketing panel's own frame (marketing.salesiq.uz): like the owner
+// panel, a 256px menu with every page named in groups (Tahlil / Auditoriya /
+// Tizim), the switch back to the CRM and the person (theme, language, sign
+// out) at the bottom; the platform's own colours (not the admin console's). The project and period
 // filters live here too (MarketingFiltersProvider). The CRM's sidebar,
 // phone, incoming calls and chat pop-ups don't load here.
 
@@ -199,79 +199,99 @@ function Brand() {
   );
 }
 
-/** The desktop menu: the platform's folded rail, it never opens wider. */
+/** The menu's groups: what is analysed, the audience, the settings. */
+const GROUPS: { label: string; keys: string[] }[] = [
+  { label: "mkt.group.analysis", keys: ["overview", "ads", "quality", "ai"] },
+  { label: "mkt.group.audience", keys: ["channels", "webinars"] },
+  { label: "owner.group.system", keys: ["settings"] },
+];
+
+/**
+ * The desktop menu, like the owner panel's: 256px, every page named, in
+ * groups; the chosen page a solid brand row. The switch to the CRM and the
+ * person (theme, language, sign out) at the bottom.
+ */
 function Rail() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const { data: org } = useMyOrganization();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const toCrm = useToCrm();
-  // Like the CRM's rail: it keeps its size whatever the page zoom.
+  // Like the CRM's menu: it keeps its size whatever the page zoom.
   const zoom = useBrowserZoom();
   const frame: CSSProperties | undefined =
     zoom === 1 ? undefined : { zoom: 1 / zoom, height: `calc(100dvh * ${zoom})` };
-  const main = MARKETING_NAV.filter((i) => i.key !== "settings");
-  const settings = MARKETING_NAV.find((i) => i.key === "settings")!;
-  const item = (it: Item) => {
-    const active = isActive(it.to, pathname);
-    return (
-      <div key={it.to} className="relative">
-        <Link
-          to={it.to}
-          className={cn(
-            "group flex items-center transition-colors duration-150",
-            RAIL_ITEM,
-            active
-              ? "bg-sidebar-active font-bold text-sidebar-active-foreground shadow-soft"
-              : "font-semibold text-sidebar-foreground hover:bg-accent",
-          )}
-        >
-          <RailGlyph icon={it.icon} active={active} className={it.tone} />
-          <span className={RAIL_LABEL}>{railLabel(t, `mkt.${it.key}`, `mkt.nav.${it.key}`)}</span>
-        </Link>
-      </div>
-    );
-  };
   return (
-    <div className="relative h-dvh w-[80px] shrink-0 phone:hidden" style={frame}>
-      <aside className="absolute left-0 top-0 z-40 flex h-full w-[80px] flex-col border-r border-sidebar-border bg-background">
-        <div className="flex h-14 items-center justify-center">
-          <Link
-            to="/marketing"
-            aria-label={t("mkt.brand")}
-            className="rounded-xl transition-transform hover:scale-105"
-          >
-            <Logo className="h-9 w-9" />
-          </Link>
-        </div>
-        <p className="-mt-1 mb-2 text-center text-[8.5px] font-bold uppercase tracking-[0.14em] text-rose-600">
-          {t("mkt.brand")}
-        </p>
-        <nav
-          className={cn("flex-1 overflow-y-auto px-1.5 py-1.5 [scrollbar-width:none]", RAIL_STACK)}
+    <div className="relative h-dvh w-[256px] shrink-0 phone:hidden" style={frame}>
+      <aside className="absolute inset-0 z-40 flex flex-col border-r border-sidebar-border bg-background">
+        <Link
+          to="/marketing"
+          className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5"
         >
-          {main.map(item)}
+          <Logo className="h-9 w-9" />
+          <span className="min-w-0">
+            <span className="block truncate text-[15px] font-bold leading-tight text-foreground">
+              {org?.name || "SalesIQ"}
+            </span>
+            <span className="block text-[11.5px] font-medium text-muted-foreground">
+              {t("mkt.brand")}
+            </span>
+          </span>
+        </Link>
+        <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4 [scrollbar-width:thin]">
+          {GROUPS.map((g) => (
+            <div key={g.label}>
+              <p className="px-3 pb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-sidebar-muted">
+                {t(g.label)}
+              </p>
+              <div className="space-y-1">
+                {g.keys.map((k) => {
+                  const it = MARKETING_NAV.find((i) => i.key === k);
+                  if (!it) return null;
+                  const active = isActive(it.to, pathname);
+                  return (
+                    <Link
+                      key={it.to}
+                      to={it.to}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex h-11 items-center gap-3 rounded-xl px-2.5 text-[14px] transition-colors",
+                        active
+                          ? "bg-primary font-semibold text-primary-foreground shadow-soft"
+                          : "font-medium text-sidebar-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "grid h-8 w-8 shrink-0 place-items-center rounded-lg",
+                          active ? "bg-white/18" : "bg-muted",
+                        )}
+                      >
+                        <it.icon
+                          className={cn("h-4 w-4", active ? "text-primary-foreground" : it.tone)}
+                          strokeWidth={2.1}
+                        />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{t(`mkt.nav.${it.key}`)}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
-        <div className="border-t border-sidebar-border p-1.5">
-          <div className={RAIL_STACK}>
-            {item(settings)}
-            {canUseCrm(user) && (
-              <button
-                type="button"
-                onClick={toCrm}
-                title={t("mkt.toCrm")}
-                className={cn(
-                  "group flex items-center font-semibold text-primary transition-colors hover:bg-primary/10",
-                  RAIL_ITEM,
-                )}
-              >
-                <RailGlyph icon={ArrowLeftRight} className="text-primary" />
-                <span className={RAIL_LABEL}>{t("mkt.crmShort")}</span>
-              </button>
-            )}
-          </div>
-          <div className="mt-2.5">
-            <PersonTile />
-          </div>
+        <div className="shrink-0 space-y-2 border-t border-sidebar-border p-3">
+          {canUseCrm(user) && (
+            <button
+              type="button"
+              onClick={toCrm}
+              className="ctl-soft flex h-10 w-full items-center justify-center gap-2 rounded-full text-[13.5px] font-semibold"
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+              {t("mkt.toCrm")}
+            </button>
+          )}
+          <PersonTile wide />
         </div>
       </aside>
     </div>
@@ -279,27 +299,47 @@ function Rail() {
 }
 
 /** The person's tile at the bottom: who, the theme, the language, sign out. */
-function PersonTile() {
+function PersonTile({ wide = false }: { wide?: boolean }) {
   const { t, lang, setLang } = useI18n();
   const { mode, setMode } = useTheme();
   const { user, signOut } = useAuth();
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={t("userMenu.open")}
-          title={user?.name ?? undefined}
-          className={RAIL_TILE}
-        >
-          <span className="text-[15px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
-            {user?.initials ?? "?"}
-          </span>
-        </button>
+        {wide ? (
+          <button
+            type="button"
+            aria-label={t("userMenu.open")}
+            className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors hover:bg-accent"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-[12.5px] font-bold text-primary">
+              {user?.initials ?? "?"}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13.5px] font-semibold text-foreground">
+                {user?.name ?? "…"}
+              </span>
+              <span className="block truncate text-[11.5px] text-muted-foreground">
+                {user?.email ?? ""}
+              </span>
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label={t("userMenu.open")}
+            title={user?.name ?? undefined}
+            className={RAIL_TILE}
+          >
+            <span className="text-[15px] font-extrabold leading-none tracking-wide transition-transform group-hover:scale-110">
+              {user?.initials ?? "?"}
+            </span>
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent
-        side="right"
-        align="end"
+        side={wide ? "top" : "right"}
+        align={wide ? "start" : "end"}
         sideOffset={12}
         className="w-72 overflow-hidden rounded-2xl p-0"
       >

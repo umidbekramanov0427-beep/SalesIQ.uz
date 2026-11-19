@@ -9424,6 +9424,13 @@ const ru: Record<string, string> = {
   "ann.telegramScheduled":
     "Запланированное объявление не отправляется в Telegram — оно появится на сайте в указанное время",
   "ann.schedule": "Запланировать",
+  "ai.chat.title": "Маркетинг-ассистент",
+  "ai.chat.subtitle": "Ответы только по вашим цифрам · {p}",
+  "ai.chat.history": "Прошлые чаты",
+  "ai.chat.noHistory": "Чатов пока нет",
+  "ai.chat.used": "Использован период: {p}",
+  "mkt.group.analysis": "Аналитика",
+  "mkt.group.audience": "Аудитория",
   "mkt.wb.sheetMinutes": "По минутам",
   "refund.done": "Завершено",
   "refund.fFunnel": "Воронка",

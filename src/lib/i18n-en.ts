@@ -9402,6 +9402,13 @@ export const en: Record<string, string> = {
   "ann.telegramScheduled":
     "A scheduled announcement isn't sent to Telegram — it appears in the app at its time",
   "ann.schedule": "Schedule",
+  "ai.chat.title": "Marketing assistant",
+  "ai.chat.subtitle": "Answers only from your figures · {p}",
+  "ai.chat.history": "Past chats",
+  "ai.chat.noHistory": "No chats yet",
+  "ai.chat.used": "Period used: {p}",
+  "mkt.group.analysis": "Analysis",
+  "mkt.group.audience": "Audience",
   "mkt.wb.sheetMinutes": "By minute",
   "refund.done": "Done",
   "refund.fFunnel": "Funnel",
