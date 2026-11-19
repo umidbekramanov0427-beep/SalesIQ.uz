@@ -70,7 +70,7 @@ export function SearchPalette(props: PaletteProps) {
 
 // Sub-pages anyone can jump to: Bosh sahifa's tabs, Telefon's sections,
 // Inbox's tabs (labels are their i18n keys).
-const HOME_TAB_KEYS = ["desk", "overview", "rating", "conversion"];
+const HOME_TAB_KEYS = ["overview", "rating", "conversion"];
 const PHONE_SECTION_KEYS = [
   "dial",
   "log",

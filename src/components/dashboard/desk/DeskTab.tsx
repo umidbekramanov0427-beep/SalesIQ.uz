@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   CalendarRange,
   Download,
-  History,
-  LayoutGrid,
   Loader2,
   Pencil,
   Percent,
@@ -14,7 +12,6 @@ import {
   Users,
   Receipt,
   Repeat2,
-  Send,
   ShoppingCart,
   Target,
   TrendingUp,
@@ -24,16 +21,13 @@ import {
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
 import {
   useDesk,
-  useDeskHistory,
   useMyOrganization,
   useOrgGeneralSettings,
   useProfilesRaw,
   useSalesPlans,
   useSaveSalesPlan,
-  useSendDeskToTelegram,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/currency";
@@ -104,7 +98,26 @@ const DESK_DEFAULTS: BoardLayout = {
 
 const fmtDay = (ymd: string) => ymd.split("-").reverse().join(".");
 
-export function DeskTab({ tabs }: { tabs: ReactNode }) {
+/** What the page's period and funnel are, for the cards the page adds. */
+export type DeskView = {
+  from: string;
+  to: string;
+  prevFrom: string;
+  prevTo: string;
+  funnel: string | null;
+};
+
+export function DeskTab({
+  tabs,
+  onView,
+  extra,
+}: {
+  tabs: ReactNode;
+  /** Told whenever the period or funnel changes. */
+  onView?: (v: DeskView) => void;
+  /** More cards on the same board, after the desk's own. */
+  extra?: { widgets: BoardWidget[]; layout: BoardLayout };
+}) {
   const { t } = useI18n();
   const { user: me } = useAuth();
   const { format } = useCurrency();
@@ -119,7 +132,6 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
   const [funnel, setFunnel] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
   useEffect(() => {
     try {
       const p = localStorage.getItem(PRESET_STORE) as DeskPreset | null;
@@ -142,25 +154,24 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
   const period = useMemo(() => deskPeriod(preset, new Date(), custom), [preset, custom]);
   const query = { ...period, funnel };
   const { data: d, isLoading, error, isFetching } = useDesk(query);
-  const send = useSendDeskToTelegram();
+  useEffect(() => {
+    onView?.({ ...period, funnel });
+  }, [period, funnel, onView]);
+  const defaults = useMemo<BoardLayout>(
+    () =>
+      extra
+        ? {
+            order: [...DESK_DEFAULTS.order, ...extra.layout.order],
+            size: { ...DESK_DEFAULTS.size, ...extra.layout.size },
+          }
+        : DESK_DEFAULTS,
+    [extra],
+  );
 
   const periodText = `${fmtDay(period.from)} – ${fmtDay(period.to)}`;
   const prevText = `${fmtDay(period.prevFrom)} – ${fmtDay(period.prevTo)}`;
   const revenueLabel = t(`desk.revenue.${preset}`);
   const prevWord = preset === "month" ? t("desk.prevMonthDays") : t("desk.prevPeriodShort");
-
-  function sendTelegram() {
-    send.mutate(
-      { ...query, period: periodText },
-      {
-        onSuccess: () => toast.success(t("desk.tgSent")),
-        onError: (e) =>
-          toast.error(
-            e.message === "NO_TELEGRAM" ? t("desk.tgNoChat") : describeError(e, t("desk.failed")),
-          ),
-      },
-    );
-  }
 
   function exportXlsx(data: DeskData) {
     const row = (label: string, p: { cur: number; prev: number }) => [
@@ -503,24 +514,6 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
             ))}
           </select>
           {!editing && <BoardCustomizeButton onClick={() => setEditing(true)} />}
-          <button
-            type="button"
-            className={btn}
-            onClick={sendTelegram}
-            disabled={!d || send.isPending}
-            title={t("desk.tgHint")}
-          >
-            {send.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            Telegram
-          </button>
-          <button type="button" className={btn} onClick={() => setHistoryOpen(true)}>
-            <History className="h-4 w-4" />
-            {t("desk.history")}
-          </button>
           <button type="button" className={btn} onClick={() => d && exportXlsx(d)} disabled={!d}>
             <Download className="h-4 w-4" />
             {t("desk.export")}
@@ -542,8 +535,8 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
         <>
           <HomeBoard
             boardKey="desk"
-            widgets={boardWidgets}
-            defaults={DESK_DEFAULTS}
+            widgets={extra ? [...boardWidgets, ...extra.widgets] : boardWidgets}
+            defaults={defaults}
             editing={editing}
             onEditingChange={setEditing}
           />
@@ -557,12 +550,6 @@ export function DeskTab({ tabs }: { tabs: ReactNode }) {
           month={d?.plan.month ?? monthKey(new Date())}
         />
       )}
-      <HistoryDialog
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-        to={period.to}
-        funnel={funnel}
-      />
     </div>
   );
 }
@@ -843,82 +830,6 @@ function PlanDialog({
             {t("common.cancel")}
           </button>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/** «Tarix»: the last 12 months' sales, leads and plan. */
-function HistoryDialog({
-  open,
-  onOpenChange,
-  to,
-  funnel,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  to: string;
-  funnel: string | null;
-}) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const { data, isLoading } = useDeskHistory(to, funnel, open);
-  const max = Math.max(1, ...(data ?? []).map((m) => m.revenue));
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogTitle className="flex items-center gap-2">
-          <LayoutGrid className="h-5 w-5 text-primary" />
-          {t("desk.historyTitle")}
-        </DialogTitle>
-        {isLoading || !data ? (
-          <div className="grid place-items-center py-16">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div className="max-h-[60vh] overflow-auto">
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-border text-left text-[12px] text-muted-foreground">
-                  <th className="py-2 pr-3 font-semibold">{t("desk.xl.month")}</th>
-                  <th className="px-3 py-2 font-semibold">{t("desk.col.revenue")}</th>
-                  <th className="px-3 py-2 text-right font-semibold">{t("desk.col.sales")}</th>
-                  <th className="px-3 py-2 text-right font-semibold">{t("desk.col.avg")}</th>
-                  <th className="px-3 py-2 text-right font-semibold">{t("desk.col.leads")}</th>
-                  <th className="py-2 pl-3 text-right font-semibold">{t("desk.col.plan")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((m) => (
-                  <tr key={m.month} className="border-b border-border/60 last:border-0">
-                    <td className="py-2 pr-3 font-semibold tabular-nums">{m.month.slice(0, 7)}</td>
-                    <td className="px-3 py-2">
-                      <span className="flex items-center gap-2">
-                        <span className="h-2 w-28 overflow-hidden rounded-full bg-muted">
-                          <span
-                            className="block h-full rounded-full bg-primary"
-                            style={{ width: `${Math.round((m.revenue / max) * 100)}%` }}
-                          />
-                        </span>
-                        <span className="tabular-nums">{format(m.revenue)}</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{m.count}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {m.count ? format(Math.round(m.revenue / m.count)) : "—"}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{m.leads}</td>
-                    <td className="py-2 pl-3 text-right tabular-nums">
-                      {m.plan
-                        ? `${format(m.plan)} · ${Math.round((m.revenue / m.plan) * 100)}%`
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

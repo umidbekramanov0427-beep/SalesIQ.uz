@@ -17,7 +17,6 @@ import {
   PhoneCall,
   Timer,
   Users,
-  BriefcaseBusiness,
   ChartColumnBig,
   ClipboardList,
   LayoutDashboard,
@@ -36,9 +35,7 @@ import {
   PeriodSegment,
 } from "@/components/dashboard/HomeOverview";
 import {
-  BoardCustomizeButton,
   CardBoard,
-  HomeBoard,
   type CardBoardItem,
   type BoardLayout,
   type BoardWidget,
@@ -74,6 +71,7 @@ import {
   useVisibleOwnerIds,
 } from "@/hooks/use-crm-data";
 import type { DateFilterValue } from "@/components/leaderboard/DateRangeFilter";
+import type { DeskView } from "@/components/dashboard/desk/DeskTab";
 
 const Leaderboard = lazy(() =>
   import("@/components/leaderboard/LeaderboardPage").then((m) => ({ default: m.Leaderboard })),
@@ -89,11 +87,10 @@ const DeskTab = lazy(() =>
   import("@/components/dashboard/desk/DeskTab").then((m) => ({ default: m.DeskTab })),
 );
 
-export const HOME_TABS = ["desk", "overview", "rating", "conversion"] as const;
+export const HOME_TABS = ["overview", "rating", "conversion"] as const;
 export type HomeTab = (typeof HOME_TABS)[number];
 
 const TAB_ICONS: Record<HomeTab, LucideIcon> = {
-  desk: BriefcaseBusiness,
   overview: LayoutDashboard,
   rating: Trophy,
   conversion: Workflow,
@@ -101,8 +98,7 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
 
 // The filters each tab's numbers actually follow -- a tab shows only those
 // (funnel always), so no filter sits there doing nothing.
-const TAB_FILTERS: Record<Exclude<HomeTab, "rating" | "desk">, FilterSet> = {
-  overview: { team: true, operator: true, date: true },
+const TAB_FILTERS: Record<Exclude<HomeTab, "rating" | "overview">, FilterSet> = {
   conversion: { team: true, operator: true, date: true },
 };
 
@@ -114,8 +110,6 @@ const KPI_WIDGETS: { id: KpiId; label: string; icon: LucideIcon; tone: CardTone 
   { id: "cycle", label: "home2.kpiCycle", icon: ArrowLeftRight, tone: "violet" },
 ];
 const KPI_WIDGET_IDS = KPI_WIDGETS.map((k) => `kpi:${k.id}`);
-// The old single KPI row of a saved layout becomes the six cards in its place.
-const BOARD_ALIASES: Record<string, string[]> = { kpis: KPI_WIDGET_IDS };
 
 const BOARD_DEFAULTS: BoardLayout = {
   order: [
@@ -167,7 +161,7 @@ export function HomePage() {
   const analyticsOpen = canOpenSection(accessRules, appRoleOf(me), "/analytics");
   const tabs = HOME_TABS.filter((tb) => (tb === "rating" ? canSeeRating : true));
   const tab: HomeTab =
-    search.tab && tabs.includes(search.tab as HomeTab) ? (search.tab as HomeTab) : "desk";
+    search.tab && tabs.includes(search.tab as HomeTab) ? (search.tab as HomeTab) : "overview";
   function setTab(next: HomeTab) {
     void navigate({ search: (prev) => ({ ...prev, tab: next }), replace: true });
   }
@@ -277,7 +271,6 @@ export function HomePage() {
     return all.filter((p) => p.id === teamId || p.manager_id === teamId);
   }, [profiles, teamId, visibleOwnerIds]);
 
-  const dateRange = { from: dateFilter.from, to: dateFilter.to };
   // Every overview card follows the same team / operator / date picks as
   // the period blocks below, not just the funnel.
   const ownerIds = useMemo(
@@ -294,27 +287,39 @@ export function HomePage() {
     };
   }, [ownerIds, dateFilter.from, dateFilter.to]);
   const period = usePeriodRanges(dateFilter);
-  const periodTab = tab === "overview";
-  const periodStats = usePeriodStats(
-    periodTab ? period.range : null,
-    periodTab ? period.prevRange : null,
-    { funnel, teamId: teamId || null, operatorId: operatorId || null },
+  // Umumiy follows the desk's own period and funnel (its head row).
+  const [deskView, setDeskView] = useState<DeskView | null>(null);
+  const ov = useMemo(() => {
+    const day = (s: string) => new Date(`${s}T00:00:00`);
+    const next = (s: string) => new Date(day(s).getTime() + 86_400_000);
+    if (!deskView) return { range: period.range, prevRange: period.prevRange, funnel: null };
+    return {
+      range: { from: day(deskView.from), to: next(deskView.to) },
+      prevRange: { from: day(deskView.prevFrom), to: next(deskView.prevTo) },
+      funnel: deskView.funnel,
+    };
+  }, [deskView, period.range, period.prevRange]);
+  const ovScope = useMemo(
+    () => ({ ownerIds: null, from: ov.range.from, to: ov.range.to }),
+    [ov.range.from, ov.range.to],
   );
+  const periodTab = tab === "overview";
+  const periodStats = usePeriodStats(periodTab ? ov.range : null, periodTab ? ov.prevRange : null, {
+    funnel: ov.funnel,
+    teamId: null,
+    operatorId: null,
+  });
   // The reports' period: the page's own date pick (30 days by default).
   const reportRange = reportPeriod(period.range);
-  const periodCaption = period.isDefault
-    ? t("home.periodDefault")
-    : t("home.periodPicked", { label: dateFilter.label });
 
   // Bosh sahifa's overview as a board each person arranges (HomeBoard):
   // the overview's own blocks first, the other tabs' widgets in the list.
-  const [editingBoard, setEditingBoard] = useState(false);
   const overviewProps = {
-    range: period.range,
-    prevRange: period.prevRange,
-    funnel,
-    ownerIds,
-    statsScope,
+    range: ov.range,
+    prevRange: ov.prevRange,
+    funnel: ov.funnel,
+    ownerIds: null,
+    statsScope: ovScope,
   };
   const boardWidgets: BoardWidget[] = [
     // The six figure cards, each its own widget: any width from a quarter
@@ -357,7 +362,7 @@ export function HomePage() {
       icon: Wallet,
       tone: "emerald",
       sizes: [4, 6, 8, 12],
-      node: <CollectedPaymentsCard funnel={funnel} dateRange={dateRange} />,
+      node: <CollectedPaymentsCard funnel={ov.funnel} dateRange={ov.range} />,
     },
     {
       id: "kpiCards",
@@ -365,7 +370,7 @@ export function HomePage() {
       icon: LayoutGrid,
       tone: "sky",
       sizes: [6, 8, 12],
-      node: <DashboardKpiCards funnel={funnel} scope={statsScope} />,
+      node: <DashboardKpiCards funnel={ov.funnel} scope={ovScope} />,
     },
     {
       id: "attention",
@@ -373,7 +378,7 @@ export function HomePage() {
       icon: AlertTriangle,
       tone: "amber",
       sizes: [6, 8, 12],
-      node: <PeriodAttentionRow stats={periodStats} funnel={funnel} />,
+      node: <PeriodAttentionRow stats={periodStats} funnel={ov.funnel} />,
     },
   ];
 
@@ -430,9 +435,9 @@ export function HomePage() {
     />
   );
 
-  // Ish stoli brings its own head (company, period buttons, Telegram,
-  // Tarix, Eksport) with the tabs under it.
-  if (tab === "desk") {
+  // Umumiy brings its own head (company, period buttons, funnel, Eksport)
+  // with the tabs under it; its board holds the desk's cards and the rest.
+  if (tab === "overview") {
     return (
       <>
         <MyMeetingCard />
@@ -446,7 +451,11 @@ export function HomePage() {
               </>
             }
           >
-            <DeskTab tabs={tabsNode} />
+            <DeskTab
+              tabs={tabsNode}
+              onView={setDeskView}
+              extra={{ widgets: boardWidgets, layout: BOARD_DEFAULTS }}
+            />
           </Suspense>
         </div>
       </>
@@ -509,22 +518,6 @@ export function HomePage() {
               operators={operators}
               extra={saveButton}
             />
-
-            {tab === "overview" && (
-              <>
-                <div className="mb-3 mt-5 flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold text-subtle">{periodCaption}</p>
-                  {!editingBoard && <BoardCustomizeButton onClick={() => setEditingBoard(true)} />}
-                </div>
-                <HomeBoard
-                  widgets={boardWidgets}
-                  defaults={BOARD_DEFAULTS}
-                  editing={editingBoard}
-                  onEditingChange={setEditingBoard}
-                  aliases={BOARD_ALIASES}
-                />
-              </>
-            )}
 
             {tab === "conversion" && (
               <div className="mt-5">

@@ -1,4 +1,4 @@
-import { change, computeDesk, deskHistory, deskPeriod, type DeskInput } from "@/lib/desk";
+import { change, computeDesk, deskPeriod, type DeskInput } from "@/lib/desk";
 
 const TZ = 300;
 // Tashkent midnight of a day, as an ISO instant.
@@ -173,22 +173,5 @@ describe("Ish stoli", () => {
       prevFrom: "2026-02-28",
       prevTo: "2026-03-09",
     });
-  });
-
-  it("builds the months for Tarix, newest first", () => {
-    const h = deskHistory({
-      months: ["2026-11-01", "2026-10-01"],
-      tz: TZ,
-      sales: [
-        { revenue: 100, at: day("2026-10-31", 23) },
-        { revenue: 50, at: day("2026-11-01", 1) },
-      ],
-      leads: [{ created_at: day("2026-11-02") }],
-      plans: [{ month: "2026-11-01", profile_id: null, target_amount: 1000 }],
-    });
-    expect(h).toEqual([
-      { month: "2026-11-01", revenue: 50, count: 1, leads: 1, plan: 1000 },
-      { month: "2026-10-01", revenue: 100, count: 1, leads: 0, plan: 0 },
-    ]);
   });
 });

@@ -20,9 +20,9 @@ export const TIPS: Record<string, Tip> = {
       en: "Figures come from the CRM's leads, deals and calls for the chosen period and funnel; a rep sees only their own.",
     },
     act: {
-      uz: "Tablar: Ish stoli (asosiy ko'rsatkichlar, plan/fakt, kanallar, menejerlar), Umumiy, Reyting, Konversiya. Har bir kartaning ⚙️ belgisidan maqsad va ko'rinishni sozlang.",
-      ru: "Вкладки: Рабочий стол (основные показатели, план/факт, каналы, менеджеры), Общее, Рейтинг, Конверсия. Цель и вид карточки — через её ⚙️.",
-      en: "Tabs: Desk (main figures, plan vs actual, channels, managers), Overview, Rating, Conversion. Set a card's goal and view from its ⚙️.",
+      uz: "Tablar: Umumiy (asosiy ko'rsatkichlar, plan/fakt, kanallar, menejerlar, vazifalar, qo'ng'iroqlar), Reyting, Konversiya. Har bir kartaning ⚙️ belgisidan maqsad va ko'rinishni sozlang.",
+      ru: "Вкладки: Общее (основные показатели, план/факт, каналы, менеджеры, задачи, звонки), Рейтинг, Конверсия. Цель и вид карточки — через её ⚙️.",
+      en: "Tabs: Overview (main figures, plan vs actual, channels, managers, tasks, calls), Rating, Conversion. Set a card's goal and view from its ⚙️.",
     },
   },
   "nav:/funnels": {

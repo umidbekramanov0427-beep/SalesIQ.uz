@@ -3,11 +3,9 @@ import { loadFunnels, TZ_OFFSET_MIN, type Viewer } from "@/lib/analytics.server"
 import {
   computeDesk,
   dayStart,
-  deskHistory,
   type DeskCall,
   type DeskData,
   type DeskLead,
-  type DeskMonth,
   type DeskRange,
   type DeskSale,
   type DeskStage,
@@ -227,59 +225,5 @@ export async function gatherDesk(
     calls,
     plans,
     planMonth,
-  });
-}
-
-/** Tarix: the last 12 months up to the period's month. */
-export async function gatherDeskHistory(
-  v: Viewer,
-  endMonth: string,
-  funnelParam: string | null,
-): Promise<DeskMonth[]> {
-  const { funnels, wonIds } = await deskStages(v);
-  const funnel = funnelParam && funnels.includes(funnelParam) ? funnelParam : null;
-  const ok = (f: string | null) => (funnel ? (f ?? "") === funnel : funnels.includes(f ?? ""));
-  const end = new Date(`${endMonth}T00:00:00Z`);
-  const months = Array.from({ length: 12 }, (_, k) => {
-    const d = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - k, 1));
-    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
-  });
-  const first = new Date(`${months[11]}T00:00:00Z`);
-  const from = new Date(first.getTime() - TZ_OFFSET_MIN * 60_000).toISOString();
-  const to = new Date(
-    Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 1, 1) - TZ_OFFSET_MIN * 60_000,
-  ).toISOString();
-  const owners = v.owners ? [...v.owners] : null;
-  const [sales, leads, plans] = await Promise.all([
-    wonLeads(v, wonIds, from, to),
-    readAll<{ created_at: string; funnel: string | null }>((a, b) => {
-      let q = supabaseAdmin
-        .from("leads")
-        .select("created_at, funnel")
-        .eq("organization_id", v.orgId)
-        .gte("created_at", from)
-        .lt("created_at", to);
-      if (owners) q = q.in("owner_id", owners);
-      return q.order("created_at").range(a, b);
-    }),
-    supabaseAdmin
-      .from("sales_plans")
-      .select("month, profile_id, target_amount")
-      .eq("organization_id", v.orgId)
-      .in("month", months)
-      .then(
-        (r) =>
-          (r.data ?? []) as { month: string; profile_id: string | null; target_amount: number }[],
-        () => [],
-      ),
-  ]);
-  return deskHistory({
-    months,
-    tz: TZ_OFFSET_MIN,
-    sales: sales
-      .filter((s) => ok(s.funnel) && s.stage_changed_at)
-      .map((s) => ({ revenue: revenueOf(s), at: s.stage_changed_at! })),
-    leads: leads.filter((l) => ok(l.funnel)),
-    plans: owners ? plans.filter((p) => !p.profile_id || owners.includes(p.profile_id)) : plans,
   });
 }
