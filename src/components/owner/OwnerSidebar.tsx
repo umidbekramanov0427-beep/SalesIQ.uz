@@ -55,30 +55,30 @@ export function OwnerSidebar({ onEditProfile }: { onEditProfile: () => void }) {
   const frame: CSSProperties | undefined =
     zoom === 1 ? undefined : { zoom: 1 / zoom, height: `calc(100dvh * ${zoom})` };
   return (
-    <div className="relative hidden h-dvh w-[256px] shrink-0 lg:block phone:hidden" style={frame}>
+    <div className="relative hidden h-dvh w-[180px] shrink-0 lg:block phone:hidden" style={frame}>
       <aside
         data-app-rail
         className="absolute inset-0 flex flex-col border-r border-sidebar-border bg-background"
       >
         <Link
           to="/platform/companies"
-          className="flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border px-5"
+          className="flex h-16 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-3.5"
         >
-          <Logo className="h-9 w-9" />
+          <Logo className="h-8 w-8" />
           <span className="min-w-0">
             <span className="block text-[15px] font-bold leading-tight text-foreground">
               {t("app.name")}
             </span>
-            <span className="block text-[11.5px] font-medium text-muted-foreground">
+            <span className="block truncate text-[11px] font-medium text-muted-foreground">
               {t("owner.badge")}
             </span>
           </span>
         </Link>
         <OwnerNav
           grouped
-          className="min-h-0 flex-1 overflow-y-auto px-3 py-4 [scrollbar-width:thin]"
+          className="min-h-0 flex-1 overflow-y-auto px-2 py-4 [scrollbar-width:thin]"
         />
-        <div className="shrink-0 border-t border-sidebar-border p-3">
+        <div className="shrink-0 border-t border-sidebar-border p-2">
           <UserMenu collapsed={false} isAdmin={false} onEditProfile={onEditProfile} />
         </div>
       </aside>
@@ -130,7 +130,7 @@ export function OwnerNav({
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-11 items-center gap-3 rounded-xl px-2.5 text-[14px] transition-colors",
+                    "flex h-10 items-center gap-2.5 rounded-xl px-2 text-[13.5px] transition-colors",
                     active
                       ? "bg-primary font-semibold text-primary-foreground shadow-soft"
                       : "font-medium text-sidebar-foreground hover:bg-accent hover:text-foreground",
@@ -138,7 +138,7 @@ export function OwnerNav({
                 >
                   <span
                     className={cn(
-                      "grid h-8 w-8 shrink-0 place-items-center rounded-lg",
+                      "grid h-7 w-7 shrink-0 place-items-center rounded-lg",
                       active ? "bg-white/18 text-primary-foreground" : TONE_TILE[item.tone],
                     )}
                   >
