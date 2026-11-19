@@ -8,10 +8,6 @@ const TO_HOME_TAB: Record<string, string> = {
   sales: "conversion",
   winloss: "conversion",
   summary: "rating",
-  staff: "activity",
-  events: "activity",
-  forecast: "forecast",
-  pnl: "finance",
 };
 
 export const Route = createFileRoute("/analytics")({

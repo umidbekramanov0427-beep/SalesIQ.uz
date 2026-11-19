@@ -121,9 +121,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Desk buttons: **Customize** moves, resizes, adds and removes the cards; **Telegram** sends the figures to your Telegram; **History** shows the last 12 months; **Export** writes an Excel file.",
       },
       {
-        uz: "**Panelni sozlash** tugmasi Ish stoli, Umumiy, Konversiya, Prognoz, Moliya va AI tahlil tablarini o'zingizga moslaydi (har tabniki alohida saqlanadi): vidjetni ushlab boshqa joyga qo'ying (qolganlari surilib joy beradi), kengligini burchagidan torting, o'ngdagi **Vidjetlar** ro'yxatidan qo'shing yoki × bilan olib tashlang. **Joylashuvni saqlash** — keyingi safar ham shunday ochiladi, **Tiklash** — asl ko'rinishga qaytaradi.",
-        ru: "Кнопка **Настроить панель** подстраивает под вас вкладки «Рабочий стол», «Общее», «Конверсия», «Прогноз», «Финансы» и «AI аналитика» (у каждой своя раскладка): перетащите виджет на новое место (остальные раздвинутся), потяните за угол, чтобы изменить ширину, добавьте из списка **Виджеты** справа или уберите ×. **Сохранить** — так откроется и в следующий раз, **Сбросить** — вернёт исходный вид.",
-        en: "**Customize** fits the Desk, Overview, Conversion, Forecast, Finance and AI insights tabs to you (each keeps its own layout): pick a widget up and drop it elsewhere (the others make room), drag its corner to change the width, add widgets from the **Widgets** list on the right or remove them with ×. **Save layout** keeps it for next time; **Reset** brings back the original view.",
+        uz: "**Panelni sozlash** tugmasi Ish stoli, Umumiy va Konversiya tablarini o'zingizga moslaydi (har tabniki alohida saqlanadi): vidjetni ushlab boshqa joyga qo'ying (qolganlari surilib joy beradi), kengligini burchagidan torting, o'ngdagi **Vidjetlar** ro'yxatidan qo'shing yoki × bilan olib tashlang. **Joylashuvni saqlash** — keyingi safar ham shunday ochiladi, **Tiklash** — asl ko'rinishga qaytaradi.",
+        ru: "Кнопка **Настроить панель** подстраивает под вас вкладки «Рабочий стол», «Общее» и «Конверсия» (у каждой своя раскладка): перетащите виджет на новое место (остальные раздвинутся), потяните за угол, чтобы изменить ширину, добавьте из списка **Виджеты** справа или уберите ×. **Сохранить** — так откроется и в следующий раз, **Сбросить** — вернёт исходный вид.",
+        en: "**Customize** fits the Desk, Overview and Conversion tabs to you (each keeps its own layout): pick a widget up and drop it elsewhere (the others make room), drag its corner to change the width, add widgets from the **Widgets** list on the right or remove them with ×. **Save layout** keeps it for next time; **Reset** brings back the original view.",
       },
       {
         uz: "Eng tepadagi **Bugungi ish** paneli avval nima qilishni ko'rsatadi: muddati o'tgan va bugungi vazifalar, vazifasiz va mas'ulsiz lidlar, to'lov kutilayotgan (predoplata, yarim to'lov) lidlar. Kartani bossangiz, shu lidlar turgan voronka ochiladi.",
@@ -131,19 +131,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The **Today's work** panel at the top shows what to do first: overdue and today's tasks, leads with no task or owner, and leads awaiting payment (prepayment, half payment). A tile opens the funnel with those leads.",
       },
       {
-        uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy** (oylik tushum dinamikasi ham shu yerda), **Reyting**, **Konversiya**, **Faoliyat**, **AI tahlil**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
-        ru: "Выберите вкладку сверху: **Обзор** (там же динамика выручки по месяцам), **Рейтинг**, **Конверсия**, **Активность**, **AI аналитика**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
-        en: "Pick a tab at the top: **Overview** (the monthly revenue trend is there too), **Ranking**, **Conversion**, **Activity**, **AI insights**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
+        uz: "Tepadagi tablardan keraklisini tanlang: **Umumiy** (oylik tushum dinamikasi ham shu yerda), **Reyting**, **Konversiya**. Qo'ng'iroqlar bo'yicha hamma raqamlar **Audio tahlil**da, yo'qotish sabablari **Lid tahlili → Yo'nalish**da.",
+        ru: "Выберите вкладку сверху: **Обзор** (там же динамика выручки по месяцам), **Рейтинг**, **Конверсия**. Все цифры по звонкам — в **Аудиоаналитике**, причины потерь — в **Аналитике лидов → Направление**.",
+        en: "Pick a tab at the top: **Overview** (the monthly revenue trend is there too), **Ranking**, **Conversion**. Every call figure is in **Audio analytics**, loss reasons in **Lead analytics → Direction**.",
       },
       {
         uz: "Filtrda voronka, jamoa, menejer yoki sanani tanlang. Har bir tab faqat o'z raqamlariga ta'sir qiladigan filtrlarni ko'rsatadi.",
         ru: "В фильтре выберите воронку, команду, менеджера или даты. Каждая вкладка показывает только те фильтры, которые влияют на её цифры.",
         en: "Use the filter for funnel, team, manager or dates. Each tab shows only the filters that change its numbers.",
-      },
-      {
-        uz: "**AI tahlil** tabida qo'ng'iroqlarning AI bali sotuv bilan solishtiriladi: bali yuqori lidlar qanchalik ko'p sotilgani va skriptning qaysi bosqichi sotilgan bitimlarda bajarilib, yo'qotilganlarida tashlab ketilgani (**Sotuv qayerda yo'qoladi**).",
-        ru: "Во вкладке **AI аналитика** AI-балл звонков сравнивается с продажами: насколько чаще продаются лиды с высоким баллом и какой этап скрипта выполнялся в проданных сделках, но пропускался в потерянных (**Где теряется продажа**).",
-        en: "The **AI insights** tab compares the calls' AI score with sales: how much more often high-scored leads buy, and which script step was done in won deals but skipped in lost ones (**Where the sale is lost**).",
       },
       {
         uz: "Hisobot kerak bo'lsa, o'ng tepadagi **Hisobot** tugmasini bosing.",
@@ -446,15 +441,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
     open: "/?tab=conversion",
     title: { uz: "Analitika", ru: "Аналитика", en: "Analytics" },
     summary: {
-      uz: "Savdo voronkasi, xodimlar bo'yicha hisobot, Win-Loss, kim nima qilgani, hodisalar jurnali va prognoz — bitta davr va voronka uchun.",
-      ru: "Воронка продаж, сводный отчёт по сотрудникам, Win-Loss, кто что сделал, журнал событий и прогноз — за один период и воронку.",
-      en: "The sales funnel, a per-person summary, win-loss, who did what, the events log and the forecast — for one period and funnel.",
+      uz: "Savdo voronkasi, xodimlar bo'yicha hisobot va Win-Loss — bitta davr va voronka uchun.",
+      ru: "Воронка продаж, сводный отчёт по сотрудникам и Win-Loss — за один период и воронку.",
+      en: "The sales funnel, a per-person summary and win-loss — for one period and funnel.",
     },
     steps: [
       {
-        uz: "Analitika hisobotlari endi **Bosh sahifa** tablarida: Savdo tahlili va Win-Loss — **Konversiya**da, xodimlar bo'yicha hisobot — **Reyting**da, xodimlar faolligi va hodisalar jurnali — **Faollik**da, prognoz — **Prognoz**da, foyda va zarar — **Moliya**da. Davr va voronka sahifa tepasidagi filtrdan olinadi. Reklama hisobotlari **Marketing paneli**ga ko'chdi.",
-        ru: "Отчёты аналитики теперь во вкладках **Главной**: анализ продаж и Win-Loss — в **Конверсии**, отчёт по сотрудникам — в **Рейтинге**, активность и журнал событий — в **Активности**, прогноз — в **Прогнозе**, прибыли и убытки — в **Финансах**. Период и воронка берутся из фильтра вверху страницы. Рекламные отчёты переехали в **панель маркетинга**.",
-        en: "The analytics reports now live in **Home**'s tabs: sales analysis and win-loss under **Conversion**, the per-person summary under **Rating**, staff activity and the events log under **Activity**, the forecast under **Forecast**, profit and loss under **Finance**. The period and funnel come from the filters at the top. The ad reports moved to the **marketing panel**.",
+        uz: "Analitika hisobotlari endi **Bosh sahifa** tablarida: Savdo tahlili va Win-Loss — **Konversiya**da, xodimlar bo'yicha hisobot — **Reyting**da. Davr va voronka sahifa tepasidagi filtrdan olinadi. Reklama hisobotlari **Marketing paneli**ga ko'chdi.",
+        ru: "Отчёты аналитики теперь во вкладках **Главной**: анализ продаж и Win-Loss — в **Конверсии**, отчёт по сотрудникам — в **Рейтинге**. Период и воронка берутся из фильтра вверху страницы. Рекламные отчёты переехали в **панель маркетинга**.",
+        en: "The analytics reports now live in **Home**'s tabs: sales analysis and win-loss under **Conversion**, the per-person summary under **Rating**. The period and funnel come from the filters at the top. The ad reports moved to the **marketing panel**.",
       },
       {
         uz: "**Savdo tahlili**: davrda nechta lid har bir etapga kirgani, hozir qancha turgani, etapdan etapga o'tish foizi, yutilgan/yo'qotilgan, konversiya, o'rtacha chek va sotuv sikli.",
@@ -467,29 +462,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "**Summary** — a row per person: new, open, won and lost leads, conversion, tasks, calls and messages. **Win-Loss** — loss reasons and win rate by source and by person.",
       },
       {
-        uz: "**Xodimlar hisoboti** kim qancha lid, etap o'zgarishi, izoh, vazifa, qo'ng'iroq va xabar qilganini kunma-kun ko'rsatadi. **Hodisalar jurnali**da hamma harakat vaqt bo'yicha — tur va xodim bo'yicha saralanadi, lid nomi lid kartasini ochadi.",
-        ru: "**Отчёт по сотрудникам** показывает по дням, кто сколько создал лидов, сменил этапов, написал примечаний, закрыл задач, сделал звонков и сообщений. В **Журнале событий** все действия по времени — с фильтром по типу и сотруднику, имя лида открывает его карточку.",
-        en: "**Staff report** shows, day by day, how many leads, stage moves, notes, tasks, calls and messages each person made. The **Events log** lists every action in time order — filter by type and person; a lead's name opens its card.",
-      },
-      {
-        uz: "**Prognoz** ochiq lidlar summasini etap ehtimoli bilan ko'paytiradi: kutilayotgan tushum. Ehtimollar Voronkalar → Sozlash'dagi etap sozlamasidan olinadi.",
-        ru: "**Прогноз** умножает сумму открытых лидов на вероятность этапа — ожидаемая выручка. Вероятности берутся из настроек этапа в Воронки → Настройка.",
-        en: "**Forecast** multiplies open leads' budgets by the stage probability: the expected revenue. Probabilities come from each stage's settings in Funnels → Settings.",
-      },
-      {
         uz: "**Reklama** tabida (admin va ROP) har manba bo'yicha reklama xarajati, yangi lidlar, **lid narxi** (xarajat ÷ lidlar), **sotuv narxi** (xarajat ÷ sotuvlar), daromad va **ROI** ko'rinadi. Admin **Xarajat qo'shish** bilan sana, manba (lidlardagi \"Manba\" bilan bir xil yozing, masalan Instagram) va summani kiritadi.",
         ru: "Во вкладке **Реклама** (админ и РОП) по каждому источнику — расход на рекламу, новые лиды, **цена лида** (расход ÷ лиды), **цена продажи** (расход ÷ продажи), выручка и **ROI**. Админ вносит расход кнопкой **Добавить расход**: дата, источник (как в поле «Источник» у лидов, например Instagram) и сумма.",
         en: "The **Ads** tab (admins and heads of sales) shows, per source, ad spend, new leads, **cost per lead** (spend ÷ leads), **cost per sale** (spend ÷ sales), revenue and **ROI**. The admin adds spend with **Add ad spend**: the date, the source (written as in the leads' Source, e.g. Instagram) and the amount.",
-      },
-      {
-        uz: "**Moliya** tabi (faqat admin) — tanlangan davr uchun foyda va zarar: sotuvdan tushum (yutilgan lidlar) + boshqa kirimlar − xarajatlar (reklama, oylik, ijara, soliq, xizmatlar...). Kirim va xarajatni shu yerda qo'shasiz; foyda va marja o'zi hisoblanadi.",
-        ru: "Вкладка **Финансы** (только админ) — прибыли и убытки за период: выручка от продаж (выигранные лиды) + прочие доходы − расходы (реклама, зарплата, аренда, налоги, услуги...). Доходы и расходы добавляются здесь; прибыль и маржа считаются сами.",
-        en: "The **Finance** tab (admin only) is the period's profit and loss: sales revenue (won leads) + other income − expenses (ads, salaries, rent, tax, services...). Add income and expenses right there; profit and margin are worked out for you.",
-      },
-      {
-        uz: "**Prognoz** tabining tepasida oy oxiriga prognoz: shu oy hozirgacha sotuv, kunlik sur'at bo'yicha oy oxiriga kutilgan summa, ochiq bitimlar (ehtimol bilan) va oldingi 3 oy o'rtachasi, hamda oxirgi 6 oy grafigi.",
-        ru: "Вверху вкладки **Прогноз** — прогноз на конец месяца: продажи с начала месяца, ожидаемая сумма к концу месяца по текущему темпу, открытые сделки (с вероятностью) и среднее за 3 прошлых месяца, плюс график за 6 месяцев.",
-        en: "The top of the **Forecast** tab projects the month: sales so far, the month-end figure at today's daily pace, open deals weighted by probability and the last three months' average, with a six-month chart.",
       },
     ],
     notes: [
@@ -510,18 +485,6 @@ export const HELP_ARTICLES: HelpArticle[] = [
           uz: "Analitika lidning yutilgan yoki yo'qotilgan etapga **shu davrda** o'tganini hisoblaydi va bitta voronkani ko'rsatadi. Davr va voronka bir xil ekanini tekshiring.",
           ru: "Аналитика считает переход лида в выигранный или проигранный этап **в этот период** и показывает одну воронку. Проверьте, что период и воронка совпадают.",
           en: "Analytics counts a lead's move into a won or lost stage **within the period** and shows one funnel. Check that the period and funnel match.",
-        },
-      },
-      {
-        q: {
-          uz: "Prognoz nolga teng",
-          ru: "Прогноз равен нулю",
-          en: "The forecast is zero",
-        },
-        a: {
-          uz: "Ochiq lidlarda summa yo'q yoki etaplarga ehtimol berilmagan. Voronkalar → Sozlash'da har bir etapning ehtimolini kiriting.",
-          ru: "У открытых лидов нет бюджета или у этапов не задана вероятность. Укажите вероятность каждого этапа в Воронки → Настройка.",
-          en: "Open leads have no budget or the stages have no probability. Set each stage's probability in Funnels → Settings.",
         },
       },
     ],

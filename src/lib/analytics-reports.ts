@@ -3,8 +3,6 @@
 //   salesAnalysis  -- Анализ продаж: the funnel stage by stage for a period
 //   summaryByOwner -- Сводный отчёт: one row per manager
 //   winLoss        -- Win-Loss: why leads were lost, where wins come from
-//   activity       -- Отчёт по сотрудникам: who did what, day by day
-//   forecast       -- Прогноз: open leads weighted by stage probability
 
 export type Range = { from: string; to: string };
 
@@ -293,116 +291,7 @@ export const ACTIVITY_KINDS = ["leads", "moves", "notes", "tasks", "calls", "mes
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 export type ActivityEvent = { actor: string | null; kind: ActivityKind; at: string };
 
-/** Local calendar day "YYYY-MM-DD" of an instant, in the given offset (minutes east of UTC). */
-export function dayKey(iso: string, offsetMinutes = 300): string {
-  return new Date(Date.parse(iso) + offsetMinutes * 60_000).toISOString().slice(0, 10);
-}
-
-export type Activity = {
-  days: string[];
-  people: {
-    actor: string | null;
-    totals: Record<ActivityKind, number>;
-    perDay: Record<string, number>;
-  }[];
-};
-
-export function activity(events: ActivityEvent[], r: Range, offsetMinutes = 300): Activity {
-  const days: string[] = [];
-  for (let t = Date.parse(r.from); t < Date.parse(r.to) && days.length < 62; t += DAY) {
-    const k = dayKey(new Date(t).toISOString(), offsetMinutes);
-    if (!days.includes(k)) days.push(k);
-  }
-  const people = new Map<string | null, Activity["people"][number]>();
-  for (const e of events) {
-    if (!inRange(e.at, r)) continue;
-    let p = people.get(e.actor);
-    if (!p) {
-      p = {
-        actor: e.actor,
-        totals: Object.fromEntries(ACTIVITY_KINDS.map((k) => [k, 0])) as Record<
-          ActivityKind,
-          number
-        >,
-        perDay: {},
-      };
-      people.set(e.actor, p);
-    }
-    p.totals[e.kind] += 1;
-    const d = dayKey(e.at, offsetMinutes);
-    p.perDay[d] = (p.perDay[d] ?? 0) + 1;
-  }
-  const total = (p: Activity["people"][number]) =>
-    ACTIVITY_KINDS.reduce((s, k) => s + p.totals[k], 0);
-  return { days, people: [...people.values()].sort((a, b) => total(b) - total(a)) };
-}
-
-export type Forecast = {
-  stages: {
-    id: string;
-    name: string;
-    count: number;
-    sum: number;
-    probability: number;
-    weighted: number;
-  }[];
-  byOwner: { ownerId: string | null; count: number; sum: number; weighted: number }[];
-  total: { count: number; sum: number; weighted: number };
-};
-
-/** Open leads: their budget times the stage's chance to close. */
-export function forecast(leads: ALead[], stages: AStage[]): Forecast {
-  const open = stages
-    .filter((s) => !s.is_won && !s.is_lost)
-    .sort((a, b) => a.position - b.position);
-  const byId = new Map(open.map((s) => [s.id, s]));
-  const rows = new Map(
-    open.map((s) => [
-      s.id,
-      {
-        id: s.id,
-        name: s.name,
-        count: 0,
-        sum: 0,
-        probability: Math.max(0, Math.min(100, s.probability ?? 0)),
-        weighted: 0,
-      },
-    ]),
-  );
-  const owners = new Map<
-    string | null,
-    { ownerId: string | null; count: number; sum: number; weighted: number }
-  >();
-  for (const l of leads) {
-    const s = l.stage_id ? byId.get(l.stage_id) : undefined;
-    if (!s) continue;
-    const row = rows.get(s.id)!;
-    const b = money(l.budget);
-    const w = (b * row.probability) / 100;
-    row.count += 1;
-    row.sum += b;
-    row.weighted += w;
-    const o = owners.get(l.owner_id) ?? { ownerId: l.owner_id, count: 0, sum: 0, weighted: 0 };
-    o.count += 1;
-    o.sum += b;
-    o.weighted += w;
-    owners.set(l.owner_id, o);
-  }
-  const stageRows = [...rows.values()].map((x) => ({ ...x, weighted: Math.round(x.weighted) }));
-  return {
-    stages: stageRows,
-    byOwner: [...owners.values()]
-      .map((x) => ({ ...x, weighted: Math.round(x.weighted) }))
-      .sort((a, b) => b.weighted - a.weighted),
-    total: {
-      count: stageRows.reduce((s, x) => s + x.count, 0),
-      sum: stageRows.reduce((s, x) => s + x.sum, 0),
-      weighted: stageRows.reduce((s, x) => s + x.weighted, 0),
-    },
-  };
-}
-
-// ---- What /analytics/data and /analytics/events answer -----------------------
+// ---- What /analytics/data answers ------------------------------------------
 
 export type AnalyticsData = {
   range: Range;
@@ -413,18 +302,5 @@ export type AnalyticsData = {
   sales: SalesAnalysis;
   summary: OwnerRow[];
   winLoss: WinLoss;
-  activity: Activity;
-  forecast: Forecast;
   truncated: boolean;
-};
-
-export const EVENT_KINDS = ["lead", "stage", "note", "task", "call", "message", "payment"] as const;
-export type EventKind = (typeof EVENT_KINDS)[number];
-export type LogEvent = {
-  at: string;
-  kind: EventKind;
-  actor: string | null;
-  leadId: string | null;
-  leadName: string | null;
-  text: string;
 };

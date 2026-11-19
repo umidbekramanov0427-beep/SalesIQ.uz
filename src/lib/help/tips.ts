@@ -20,9 +20,9 @@ export const TIPS: Record<string, Tip> = {
       en: "Figures come from the CRM's leads, deals and calls for the chosen period and funnel; a rep sees only their own.",
     },
     act: {
-      uz: "Tablar: Ish stoli (asosiy ko'rsatkichlar, plan/fakt, kanallar, menejerlar), Umumiy, Konversiya, Reyting, Faollik, Prognoz, Moliya. Har bir kartaning ⚙️ belgisidan maqsad va ko'rinishni sozlang.",
-      ru: "Вкладки: Рабочий стол (основные показатели, план/факт, каналы, менеджеры), Общее, Конверсия, Рейтинг, Активность, Прогноз, Финансы. Цель и вид карточки — через её ⚙️.",
-      en: "Tabs: Desk (main figures, plan vs actual, channels, managers), Overview, Conversion, Rating, Activity, Forecast, Finance. Set a card's goal and view from its ⚙️.",
+      uz: "Tablar: Ish stoli (asosiy ko'rsatkichlar, plan/fakt, kanallar, menejerlar), Umumiy, Reyting, Konversiya. Har bir kartaning ⚙️ belgisidan maqsad va ko'rinishni sozlang.",
+      ru: "Вкладки: Рабочий стол (основные показатели, план/факт, каналы, менеджеры), Общее, Рейтинг, Конверсия. Цель и вид карточки — через её ⚙️.",
+      en: "Tabs: Desk (main figures, plan vs actual, channels, managers), Overview, Rating, Conversion. Set a card's goal and view from its ⚙️.",
     },
   },
   "nav:/funnels": {
@@ -429,9 +429,9 @@ export const TIPS: Record<string, Tip> = {
   },
   "ai.k.spend": {
     what: {
-      uz: "Meta kampaniyalari va Moliya'dagi marketing xarajatlari.",
-      ru: "Кампании Meta и маркетинговые расходы в Финансах.",
-      en: "Meta campaigns and marketing spend in Finance.",
+      uz: "Meta kampaniyalari va Reklama'da qo'lda kiritilgan marketing xarajatlari.",
+      ru: "Кампании Meta и маркетинговые расходы, внесённые вручную в Рекламе.",
+      en: "Meta campaigns and marketing spend entered by hand under Ads.",
     },
   },
   "nav:/marketing/ai": {
@@ -1140,72 +1140,6 @@ export const TIPS: Record<string, Tip> = {
       uz: "Yutilgan lidlar bo'yicha (yutilgan sana − yaratilgan sana) o'rtachasi.",
       ru: "Среднее (дата выигрыша − дата создания).",
       en: "The average of (won date − created date).",
-    },
-  },
-  "an.openLeads": {
-    what: {
-      uz: "Hali yopilmagan lidlar.",
-      ru: "Ещё не закрытые лиды.",
-      en: "Leads not closed yet.",
-    },
-  },
-  "an.pipelineSum": {
-    what: {
-      uz: "Ochiq lidlar byudjetlari yig'indisi.",
-      ru: "Сумма бюджетов открытых лидов.",
-      en: "Open leads' budgets added up.",
-    },
-  },
-  "an.expected": {
-    what: {
-      uz: "Kutilayotgan tushum (prognoz).",
-      ru: "Ожидаемая выручка (прогноз).",
-      en: "Expected income (forecast).",
-    },
-    calc: {
-      uz: "Har bir ochiq lid byudjeti × uning bosqichi ehtimoli (Prognoz → Sozlash).",
-      ru: "Бюджет каждого открытого лида × вероятность этапа (Прогноз → Настроить).",
-      en: "Each open lead's budget × its stage's chance (Forecast → Settings).",
-    },
-    act: {
-      uz: "Bosqich ehtimollarini o'z tajribangizga moslang.",
-      ru: "Настройте вероятности этапов под свой опыт.",
-      en: "Tune the stage chances to your own experience.",
-    },
-  },
-  "fin.income": {
-    what: {
-      uz: "Davrdagi tushum (yutilgan bitimlar).",
-      ru: "Доход за период (выигранные сделки).",
-      en: "Income in the period (won deals).",
-    },
-  },
-  "fin.expense": {
-    what: {
-      uz: "Davrdagi xarajatlar: reklama va qo'lda kiritilganlar.",
-      ru: "Расходы за период: реклама и внесённые вручную.",
-      en: "Expenses in the period: ads and those entered by hand.",
-    },
-    act: {
-      uz: "Xarajatlarni Moliya tabida qo'shing.",
-      ru: "Добавляйте расходы во вкладке Финансы.",
-      en: "Add expenses in the Finance tab.",
-    },
-  },
-  "fin.profit": {
-    what: { uz: "Foyda.", ru: "Прибыль.", en: "Profit." },
-    calc: { uz: "Tushum − xarajat.", ru: "Доход − расход.", en: "Income − expenses." },
-  },
-  "fin.margin": {
-    what: {
-      uz: "Rentabellik — tushumning qancha qismi foyda.",
-      ru: "Маржа — какая часть дохода прибыль.",
-      en: "Margin — how much of the income is profit.",
-    },
-    calc: {
-      uz: "Foyda ÷ tushum × 100%.",
-      ru: "Прибыль ÷ доход × 100%.",
-      en: "Profit ÷ income × 100%.",
     },
   },
   "fin.cac": {

@@ -1,11 +1,4 @@
-import {
-  marketingBySource,
-  monthForecast,
-  monthlyRevenue,
-  profitAndLoss,
-  type FinEntry,
-  type FLead,
-} from "@/lib/finance";
+import { marketingBySource, monthlyRevenue, type FinEntry, type FLead } from "@/lib/finance";
 
 const r = { from: "2026-10-31T19:00:00.000Z", to: "2026-11-30T19:00:00.000Z" }; // November, Tashkent
 const lead = (
@@ -67,30 +60,7 @@ describe("finance", () => {
     expect(total.leads).toBe(5);
   });
 
-  it("builds the profit and loss", () => {
-    const p = profitAndLoss(
-      20_000_000,
-      [
-        entry({ amount: 3_000_000 }),
-        entry({ category: "rent", amount: 5_000_000 }),
-        entry({ category: "rent", amount: 1_000_000 }),
-        entry({ kind: "income", category: "investment", amount: 2_000_000 }),
-        entry({ category: "rent", amount: 7e9, entry_date: "2026-12-01" }),
-      ],
-      r,
-    );
-    expect(p.expenses).toEqual([
-      { category: "rent", amount: 6_000_000 },
-      { category: "marketing", amount: 3_000_000 },
-    ]);
-    expect(p.totalIncome).toBe(22_000_000);
-    expect(p.totalExpense).toBe(9_000_000);
-    expect(p.profit).toBe(13_000_000);
-    expect(p.marginPct).toBe(59.1);
-    expect(profitAndLoss(0, [], r).marginPct).toBeNull();
-  });
-
-  it("projects the month", () => {
+  it("adds up won revenue per month", () => {
     const now = new Date("2026-11-10T07:00:00Z"); // 10 Nov, Tashkent
     const leads = [
       lead(null, "2026-11-02T08:00:00Z", true, 10_000_000),
@@ -109,11 +79,5 @@ describe("finance", () => {
       "2026-11",
     ]);
     expect(months.at(-1)).toEqual({ month: "2026-11", revenue: 10_000_000, won: 1 });
-    const f = monthForecast(months, now, 12_345_678.4);
-    expect(f.daysPassed).toBe(10);
-    expect(f.daysInMonth).toBe(30);
-    expect(f.runRate).toBe(30_000_000);
-    expect(f.avgPrev3).toBe(20_000_000);
-    expect(f.pipelineWeighted).toBe(12_345_678);
   });
 });

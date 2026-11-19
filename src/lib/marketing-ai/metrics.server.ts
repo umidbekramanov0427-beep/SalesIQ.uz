@@ -3,7 +3,7 @@
 // the period's leads with their phone, calls (picked up or not), whether
 // they watched the webinar, their qualification, prepayment / full payment
 // and the money really received; spend (Meta campaigns + spend typed into
-// Moliya as marketing); the period's webinars (peak, drop, the stage that
+// Marketing -> Reklama); the period's webinars (peak, drop, the stage that
 // lost most); the channels' subscribers. Always filtered by organization_id.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { toUzs } from "@/lib/meta-ads";

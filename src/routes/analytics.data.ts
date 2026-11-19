@@ -4,7 +4,7 @@ import { gatherAnalytics, loadViewer, parseRange } from "@/lib/analytics.server"
 
 // GET /analytics/data?from=YYYY-MM-DD&to=YYYY-MM-DD&funnel=<name> ->
 // Analitika's reports for the period (Tashkent days, inclusive) and funnel:
-// sales funnel, per-manager summary, win-loss, staff activity, forecast.
+// sales funnel, per-manager summary and win-loss.
 // Any company member; each sees only the leads their access rules allow.
 export const Route = createFileRoute("/analytics/data")({
   server: {

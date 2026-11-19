@@ -1,6 +1,4 @@
 import {
-  activity,
-  forecast,
   parseRange,
   salesAnalysis,
   summaryByOwner,
@@ -108,27 +106,6 @@ describe("Analitika reports", () => {
     expect(w).toMatchObject({ won: 2, lost: 1 });
     expect(w.lostByReason).toEqual([{ reason: "Qimmat", count: 1, sum: 500 }]);
     expect(w.bySource[0]).toMatchObject({ source: "Instagram", won: 2, lost: 0, winRate: 100 });
-  });
-
-  it("activity counts each person's actions per kind and per local day", () => {
-    const a = activity(
-      [
-        { actor: "a", kind: "calls", at: "2026-10-02T20:00:00.000Z" },
-        { actor: "a", kind: "notes", at: "2026-10-02T05:00:00.000Z" },
-        { actor: "b", kind: "calls", at: "2026-12-01T00:00:00.000Z" },
-      ],
-      R,
-    );
-    expect(a.days.length).toBe(31);
-    expect(a.people).toHaveLength(1);
-    // 20:00 UTC is already the next day in Tashkent (+5).
-    expect(a.people[0]!.perDay).toEqual({ "2026-10-03": 1, "2026-10-02": 1 });
-  });
-
-  it("forecast weights open budgets by stage probability", () => {
-    const f = forecast(leads, stages);
-    expect(f.total).toEqual({ count: 2, sum: 2100, weighted: 1010 });
-    expect(f.stages.map((s) => s.weighted)).toEqual([10, 1000]);
   });
 });
 

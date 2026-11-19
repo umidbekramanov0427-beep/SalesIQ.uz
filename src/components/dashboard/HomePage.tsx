@@ -7,13 +7,11 @@ import {
   reportPeriod,
   useReportItems,
 } from "@/components/analytics/AnalyticsReports";
-import { MonthForecastCard, usePnlItems } from "@/components/analytics/FinanceTabs";
 import { canOpenSection } from "@/lib/access-rules";
 import { appRoleOf } from "@/lib/nav";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import {
-  Activity,
   AlertTriangle,
   ArrowLeftRight,
   ChartPie,
@@ -25,15 +23,11 @@ import {
   ChartColumnBig,
   ChartSpline,
   ClipboardList,
-  Gauge,
   LayoutDashboard,
   LayoutGrid,
-  Lightbulb,
   ListChecks,
   Phone,
-  Sparkles,
   Target,
-  TrendingDown,
   TrendingUp,
   Trophy,
   Wallet,
@@ -50,7 +44,6 @@ import {
 import {
   BoardCustomizeButton,
   CardBoard,
-  CardPlaceholder,
   HomeBoard,
   type CardBoardItem,
   type BoardLayout,
@@ -73,17 +66,13 @@ import {
   ConversionMetricCard,
   ConversionMetricsCards,
 } from "@/components/dashboard/ConversionMetricsCards";
-import { SalesInsightCard, SalesInsightsCards } from "@/components/dashboard/SalesInsightsCards";
 import { DailyWorkCard } from "@/components/dashboard/DailyWorkCard";
-import { LeadTasksWidget, ActivityWidget, AiInsightsWidget } from "@/components/dashboard/Widgets";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/lib/i18n";
 import {
   scopeOwnerIds,
   useAccessRules,
-  useFinance,
   useFunnelNames,
   useMyOrganization,
   usePeriodStats,
@@ -112,16 +101,7 @@ const DeskTab = lazy(() =>
   import("@/components/dashboard/desk/DeskTab").then((m) => ({ default: m.DeskTab })),
 );
 
-export const HOME_TABS = [
-  "desk",
-  "overview",
-  "rating",
-  "conversion",
-  "activity",
-  "ai",
-  "forecast",
-  "finance",
-] as const;
+export const HOME_TABS = ["desk", "overview", "rating", "conversion"] as const;
 export type HomeTab = (typeof HOME_TABS)[number];
 
 const TAB_ICONS: Record<HomeTab, LucideIcon> = {
@@ -129,10 +109,6 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
   overview: LayoutDashboard,
   rating: Trophy,
   conversion: Workflow,
-  activity: ListChecks,
-  ai: Sparkles,
-  forecast: TrendingUp,
-  finance: Wallet,
 };
 
 // The filters each tab's numbers actually follow -- a tab shows only those
@@ -140,10 +116,6 @@ const TAB_ICONS: Record<HomeTab, LucideIcon> = {
 const TAB_FILTERS: Record<Exclude<HomeTab, "rating" | "desk">, FilterSet> = {
   overview: { team: true, operator: true, date: true },
   conversion: { team: true, operator: true, date: true },
-  activity: {},
-  ai: { date: true },
-  forecast: { date: true },
-  finance: { date: true },
 };
 
 // What the overview shows before anyone arranges it (the page as it was).
@@ -203,7 +175,6 @@ function Loading() {
 export function HomePage() {
   const { t } = useI18n();
   const { user: me } = useAuth();
-  const canManageHome = me?.role === "super_admin" || me?.role === "platform_owner";
   const search = homeRoute.useSearch();
   const navigate = homeRoute.useNavigate();
   const canSeeRating = usePermission("View leaderboard");
@@ -213,15 +184,7 @@ export function HomePage() {
   // Huquqlar can still close "Analitika" for a role, which hides them.
   const { rules: accessRules } = useAccessRules();
   const analyticsOpen = canOpenSection(accessRules, appRoleOf(me), "/analytics");
-  const tabs = HOME_TABS.filter((tb) =>
-    tb === "rating"
-      ? canSeeRating
-      : tb === "forecast"
-        ? analyticsOpen
-        : tb === "finance"
-          ? canManageHome
-          : true,
-  );
+  const tabs = HOME_TABS.filter((tb) => (tb === "rating" ? canSeeRating : true));
   const tab: HomeTab =
     search.tab && tabs.includes(search.tab as HomeTab) ? (search.tab as HomeTab) : "desk";
   function setTab(next: HomeTab) {
@@ -358,8 +321,6 @@ export function HomePage() {
   );
   // The reports' period: the page's own date pick (30 days by default).
   const reportRange = reportPeriod(period.range);
-  const canFinance = canManageHome || me?.role === "rop";
-  const finance = useFinance(reportRange, canFinance && (tab === "forecast" || tab === "finance"));
   const periodCaption = period.isDefault
     ? t("home.periodDefault")
     : t("home.periodPicked", { label: dateFilter.label });
@@ -481,38 +442,6 @@ export function HomePage() {
         </Suspense>
       ),
     },
-    {
-      id: "leadTasks",
-      title: t("board.w.leadTasks"),
-      icon: ListChecks,
-      tone: "sky",
-      sizes: [4, 6, 8, 12],
-      node: <LeadTasksWidget funnel={funnel} />,
-    },
-    {
-      id: "activity",
-      title: t("board.w.activity"),
-      icon: Activity,
-      tone: "amber",
-      sizes: [4, 6, 8, 12],
-      node: <ActivityWidget funnel={funnel} />,
-    },
-    {
-      id: "aiInsights",
-      title: t("board.w.aiInsights"),
-      icon: Sparkles,
-      tone: "violet",
-      sizes: [4, 6, 8, 12],
-      node: <AiInsightsWidget funnel={funnel} dateRange={dateRange} />,
-    },
-    {
-      id: "salesInsights",
-      title: t("board.w.salesInsights"),
-      icon: Lightbulb,
-      tone: "amber",
-      sizes: [6, 8, 12],
-      node: <SalesInsightsCards funnel={funnel} dateRange={dateRange} />,
-    },
   ];
 
   // Konversiya as a board: the four rates, the quality chart and (with
@@ -552,64 +481,6 @@ export function HomePage() {
     },
     ...(analyticsOpen ? [...salesReport.items, ...winLossReport.items] : []),
   ];
-
-  // Prognoz as a board: the month-end projection, then the forecast
-  // report's cards one by one.
-  const forecastReport = useReportItems("forecast", reportRange, funnel, tab === "forecast");
-  const forecastItems: CardBoardItem[] = [
-    ...(canFinance ? [monthForecastItem()] : []),
-    ...forecastReport.items,
-  ];
-  function monthForecastItem(): CardBoardItem {
-    return {
-      id: "forecast:month",
-      title: t("fin.monthTitle"),
-      icon: TrendingUp,
-      tone: "sky",
-      span: 12,
-      sizes: [8, 12],
-      node: finance.data ? (
-        <MonthForecastCard forecast={finance.data.forecast} months={finance.data.months} />
-      ) : (
-        <CardPlaceholder error={finance.isError ? t("an.loadError") : null} />
-      ),
-    };
-  }
-
-  // AI tahlil as a board: the AI's tips, then the score-band and
-  // skipped-step blocks.
-  const aiItems: CardBoardItem[] = [
-    {
-      id: "ai:insights",
-      title: t("board.w.aiInsights"),
-      icon: Sparkles,
-      tone: "violet",
-      span: 12,
-      sizes: [6, 8, 12],
-      node: <AiInsightsWidget funnel={funnel} dateRange={dateRange} />,
-    },
-    {
-      id: "ai:bands",
-      title: t("insights.bandsTitle"),
-      icon: Gauge,
-      tone: "sky",
-      span: 6,
-      sizes: [4, 6, 8, 12],
-      node: <SalesInsightCard part="bands" funnel={funnel} dateRange={dateRange} />,
-    },
-    {
-      id: "ai:gaps",
-      title: t("insights.gapsTitle"),
-      icon: TrendingDown,
-      tone: "rose",
-      span: 6,
-      sizes: [4, 6, 8, 12],
-      node: <SalesInsightCard part="gaps" funnel={funnel} dateRange={dateRange} />,
-    },
-  ];
-
-  // Moliya as a board: the P&L figures and blocks one card each.
-  const pnl = usePnlItems(finance.data, finance.isError ? t("an.loadError") : null);
 
   const tabsNode = (
     <Segmented
@@ -728,35 +599,6 @@ export function HomePage() {
                 <CardBoard boardKey="home.conversion" items={conversionItems} />
               </div>
             )}
-
-            {tab === "activity" && (
-              <div className="mt-6 space-y-6">
-                <LeadTasksWidget funnel={funnel} />
-                <ActivityWidget funnel={funnel} />
-                {analyticsOpen && (
-                  <>
-                    <AnalyticsReport report="staff" period={reportRange} funnel={funnel} />
-                    <AnalyticsReport report="events" period={reportRange} funnel={funnel} />
-                  </>
-                )}
-              </div>
-            )}
-
-            {tab === "forecast" && (
-              <div className="mt-5">
-                {forecastReport.notice}
-                <CardBoard boardKey="home.forecast" items={forecastItems} />
-              </div>
-            )}
-
-            {tab === "finance" && (
-              <div className="mt-5">
-                <CardBoard boardKey="home.finance" items={pnl.items} />
-                {pnl.dialog}
-              </div>
-            )}
-
-            {tab === "ai" && <CardBoard className="mt-5" boardKey="home.ai" items={aiItems} />}
           </>
         )}
       </div>

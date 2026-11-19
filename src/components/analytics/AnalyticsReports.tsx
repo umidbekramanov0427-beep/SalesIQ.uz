@@ -1,5 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import {
   ArrowRightLeft,
   Banknote,
@@ -7,12 +6,6 @@ import {
   Clock3,
   Loader2,
   Lock,
-  MessageSquareText,
-  Phone,
-  PhoneIncoming,
-  PhoneMissed,
-  PhoneOutgoing,
-  StickyNote,
   Target,
   TrendingUp,
   Trophy,
@@ -23,17 +16,9 @@ import {
 } from "lucide-react";
 import { SectionCard, StatCard } from "@/components/layout/Primitives";
 import { PlanGate } from "@/components/PlanGate";
-import { ForecastSettingsButton } from "@/components/analytics/ForecastSettings";
 import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
-import { useAnalytics, useAnalyticsEvents, type AnalyticsPeriod } from "@/hooks/use-crm-data";
-import {
-  ACTIVITY_KINDS,
-  EVENT_KINDS,
-  type ActivityKind,
-  type AnalyticsData,
-  type EventKind,
-  type LogEvent,
-} from "@/lib/analytics-reports";
+import { useAnalytics, type AnalyticsPeriod } from "@/hooks/use-crm-data";
+import type { AnalyticsData } from "@/lib/analytics-reports";
 import { useCurrency } from "@/lib/currency";
 import { useOrgAccess } from "@/lib/use-org-access";
 import { CardPlaceholder, type CardBoardItem, type Span } from "@/components/dashboard/HomeBoard";
@@ -42,8 +27,7 @@ import { cn } from "@/lib/utils";
 
 // The sales reports that used to make up Analitika (amoCRM's "Аналитика"),
 // now shown inside Bosh sahifa's tabs: the sales funnel and win-loss under
-// Konversiya, the per-manager summary under Reyting, staff activity and the
-// events log under Faollik, the forecast under Prognoz. The server cuts the
+// Konversiya, the per-manager summary under Reyting. The server cuts the
 // data to whose leads the person may see (a manager their own, a ROP their
 // team).
 
@@ -582,405 +566,7 @@ function WinByOwnerCard({ data, who }: { data: AnalyticsData; who: Who }) {
   );
 }
 
-// ---- Xodimlar hisoboti ----------------------------------------------------------
-
-const KIND_ICON: Record<ActivityKind, LucideIcon> = {
-  leads: UserPlus,
-  moves: ArrowRightLeft,
-  notes: StickyNote,
-  tasks: CheckCircle2,
-  calls: Phone,
-  messages: MessageSquareText,
-};
-
-function StaffTab({ data, who }: { data: AnalyticsData; who: Who }) {
-  const { t } = useI18n();
-  const a = data.activity;
-  const days = a.days.slice(-31);
-  const maxDay = Math.max(1, ...a.people.flatMap((p) => days.map((d) => p.perDay[d] ?? 0)));
-  return (
-    <SectionCard
-      icon={Users}
-      tone="amber"
-      title={t("an.tab.staff")}
-      description={t("an.staffDesc")}
-    >
-      {a.people.length === 0 ? (
-        <Empty>{t("an.noData")}</Empty>
-      ) : (
-        <TableWrap>
-          <thead className="border-b border-border">
-            <tr>
-              <Th>{t("an.person")}</Th>
-              {ACTIVITY_KINDS.map((k) => {
-                const Icon = KIND_ICON[k];
-                return (
-                  <Th key={k} right>
-                    <span className="inline-flex items-center gap-1">
-                      <Icon className="h-3.5 w-3.5" />
-                      {t(`an.kind.${k}`)}
-                    </span>
-                  </Th>
-                );
-              })}
-              <Th right>{t("an.total")}</Th>
-              <Th>{t("an.byDay")}</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {a.people.map((p) => {
-              const total = ACTIVITY_KINDS.reduce((s, k) => s + p.totals[k], 0);
-              return (
-                <tr key={p.actor ?? "none"} className="border-b border-border/60 last:border-0">
-                  <Td strong>{who(p.actor)}</Td>
-                  {ACTIVITY_KINDS.map((k) => (
-                    <Td key={k} right className={p.totals[k] ? "" : "text-subtle"}>
-                      {p.totals[k]}
-                    </Td>
-                  ))}
-                  <Td right strong>
-                    {total}
-                  </Td>
-                  <td className="px-3 py-2.5">
-                    {/* One cell a day: darker = busier. */}
-                    <div className="flex gap-[3px]" aria-label={t("an.byDay")}>
-                      {days.map((d) => {
-                        const n = p.perDay[d] ?? 0;
-                        return (
-                          <span
-                            key={d}
-                            title={`${d}: ${n}`}
-                            className="h-4 w-[7px] rounded-[2px] bg-primary"
-                            style={{ opacity: n ? 0.2 + 0.8 * (n / maxDay) : 0.07 }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </TableWrap>
-      )}
-    </SectionCard>
-  );
-}
-
-// ---- Hodisalar jurnali ----------------------------------------------------------
-
-const EVENT_ICON: Record<EventKind, { icon: LucideIcon; cls: string }> = {
-  lead: { icon: UserPlus, cls: "bg-sky-500/12 text-sky-600 dark:text-sky-400" },
-  stage: { icon: ArrowRightLeft, cls: "bg-violet-500/12 text-violet-600 dark:text-violet-400" },
-  note: { icon: StickyNote, cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
-  task: { icon: CheckCircle2, cls: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400" },
-  call: { icon: Phone, cls: "bg-primary/12 text-primary" },
-  message: { icon: MessageSquareText, cls: "bg-sky-500/12 text-sky-600 dark:text-sky-400" },
-  payment: { icon: Banknote, cls: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400" },
-};
-
-function EventText({ e }: { e: LogEvent }) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  if (e.kind === "call") {
-    const [dir, sec] = e.text.split(":");
-    const Icon = dir === "missed" ? PhoneMissed : dir === "out" ? PhoneOutgoing : PhoneIncoming;
-    const s = Number(sec) || 0;
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        <Icon className={cn("h-3.5 w-3.5", dir === "missed" && "text-destructive")} />
-        {t(`an.call.${dir}`)}
-        {s > 0 && ` · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`}
-      </span>
-    );
-  }
-  if (e.kind === "payment") return <>{format(Number(e.text) || 0)}</>;
-  if (e.kind === "stage") return <>→ {e.text}</>;
-  return <>{e.text}</>;
-}
-
-function EventsTab({
-  period,
-  data,
-  who,
-}: {
-  period: AnalyticsPeriod;
-  data: AnalyticsData;
-  who: Who;
-}) {
-  const { t } = useI18n();
-  const [kind, setKind] = useState<EventKind | null>(null);
-  const [actor, setActor] = useState<string | null>(null);
-  const q = useAnalyticsEvents(period, kind, actor);
-  const events = q.data?.pages.flatMap((p) => p.events) ?? [];
-  const when = (iso: string) =>
-    new Date(iso).toLocaleString("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  return (
-    <SectionCard
-      icon={Clock3}
-      tone="slate"
-      title={t("an.tab.events")}
-      description={t("an.eventsDesc")}
-      actions={
-        <select
-          value={actor ?? ""}
-          onChange={(e) => setActor(e.target.value || null)}
-          className="h-9 rounded-lg border border-border bg-card px-2.5 text-[13px] text-foreground outline-none"
-          aria-label={t("an.person")}
-        >
-          <option value="">{t("an.everyone")}</option>
-          {data.people.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      }
-    >
-      <div className="mb-4 flex flex-wrap gap-1.5 phone-tabs">
-        {[null, ...EVENT_KINDS].map((k) => (
-          <button
-            key={k ?? "all"}
-            type="button"
-            onClick={() => setKind(k)}
-            className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold transition-colors",
-              kind === k
-                ? "border-primary/40 bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {k &&
-              (() => {
-                const Icon = EVENT_ICON[k].icon;
-                return <Icon className="h-3.5 w-3.5" />;
-              })()}
-            {k ? t(`an.ev.${k}`) : t("an.all")}
-          </button>
-        ))}
-      </div>
-      {q.isLoading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : events.length === 0 ? (
-        <Empty>{t("an.noEvents")}</Empty>
-      ) : (
-        <ul className="divide-y divide-border/60">
-          {events.map((e, i) => {
-            const { icon: Icon, cls } = EVENT_ICON[e.kind];
-            return (
-              <li key={`${e.at}-${i}`} className="flex items-center gap-3 py-2.5">
-                <span className="w-[104px] shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums text-muted-foreground">
-                  {when(e.at)}
-                </span>
-                <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", cls)}>
-                  <Icon className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] text-foreground">
-                    <span className="font-semibold">{t(`an.ev.${e.kind}`)}</span>
-                    {e.leadId && (
-                      <>
-                        {" · "}
-                        <Link
-                          to="/crm/leads/$leadId"
-                          params={{ leadId: e.leadId }}
-                          className="font-semibold text-primary hover:underline"
-                        >
-                          {e.leadName ?? t("an.lead")}
-                        </Link>
-                      </>
-                    )}
-                  </p>
-                  <p className="truncate text-[12.5px] text-muted-foreground">
-                    {who(e.actor)}
-                    {e.text && (
-                      <>
-                        {" · "}
-                        <EventText e={e} />
-                      </>
-                    )}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {q.hasNextPage && (
-        <div className="mt-4 flex justify-center">
-          <button
-            type="button"
-            onClick={() => void q.fetchNextPage()}
-            disabled={q.isFetchingNextPage}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-4 text-[13px] font-semibold text-foreground hover:bg-accent disabled:opacity-60"
-          >
-            {q.isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("an.more")}
-          </button>
-        </div>
-      )}
-    </SectionCard>
-  );
-}
-
-// ---- Prognoz ---------------------------------------------------------------------
-
-function forecastParts({ t, format }: PartCtx): PartDef[] {
-  const stat = (
-    id: string,
-    icon: LucideIcon,
-    tone: CardBoardItem["tone"],
-    label: string,
-    value: (d: AnalyticsData) => string,
-    info?: string,
-  ): PartDef => ({
-    id: `forecast:${id}`,
-    title: t(label),
-    icon,
-    tone,
-    span: 4,
-    sizes: STAT_SIZES,
-    render: (d) => (
-      <StatCard
-        icon={icon}
-        iconTone={tone}
-        label={t(label)}
-        tipKey={label}
-        value={value(d)}
-        {...(info ? { info } : {})}
-      />
-    ),
-  });
-  return [
-    stat("openLeads", Users, "sky", "an.openLeads", (d) => String(d.forecast.total.count)),
-    stat("pipelineSum", Banknote, "amber", "an.pipelineSum", (d) => format(d.forecast.total.sum)),
-    stat(
-      "expected",
-      TrendingUp,
-      "emerald",
-      "an.expected",
-      (d) => format(d.forecast.total.weighted),
-      t("an.expectedInfo"),
-    ),
-    {
-      id: "forecast:stages",
-      title: t("an.forecastStages"),
-      icon: TrendingUp,
-      tone: "emerald",
-      span: 12,
-      sizes: BLOCK_SIZES,
-      render: (d) => <ForecastStagesCard data={d} />,
-    },
-    {
-      id: "forecast:owners",
-      title: t("an.forecastOwners"),
-      icon: Users,
-      tone: "sky",
-      span: 12,
-      sizes: HALF_SIZES,
-      render: (d, who) => <ForecastOwnersCard data={d} who={who} />,
-    },
-  ];
-}
-
-function ForecastStagesCard({ data }: { data: AnalyticsData }) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const f = data.forecast;
-  const maxSum = Math.max(1, ...f.stages.map((s) => s.sum));
-  return (
-    <SectionCard
-      icon={TrendingUp}
-      tone="emerald"
-      title={t("an.forecastStages")}
-      description={t("an.forecastDesc")}
-      actions={<ForecastSettingsButton stages={f.stages} />}
-    >
-      {f.stages.length === 0 ? (
-        <Empty>{t("an.noStages")}</Empty>
-      ) : (
-        <TableWrap>
-          <thead className="border-b border-border">
-            <tr>
-              <Th>{t("an.stage")}</Th>
-              <Th right>{t("an.leads")}</Th>
-              <Th>{t("an.amount")}</Th>
-              <Th right>{t("an.probability")}</Th>
-              <Th right>{t("an.expected")}</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {f.stages.map((s) => (
-              <tr key={s.id} className="border-b border-border/60 last:border-0">
-                <Td strong>{s.name}</Td>
-                <Td right>{s.count}</Td>
-                <td className="px-3 py-2.5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-full min-w-[120px]">
-                      <Bar value={s.sum} max={maxSum} />
-                    </div>
-                    <span className="w-[110px] shrink-0 text-right text-[13px] tabular-nums text-foreground/85">
-                      {format(s.sum)}
-                    </span>
-                  </div>
-                </td>
-                <Td right>{s.probability}%</Td>
-                <Td right strong>
-                  {format(s.weighted)}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      )}
-    </SectionCard>
-  );
-}
-
-function ForecastOwnersCard({ data, who }: { data: AnalyticsData; who: Who }) {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const f = data.forecast;
-  return (
-    <SectionCard icon={Users} tone="sky" title={t("an.forecastOwners")}>
-      {f.byOwner.length === 0 ? (
-        <Empty>{t("an.noData")}</Empty>
-      ) : (
-        <TableWrap>
-          <thead className="border-b border-border">
-            <tr>
-              <Th>{t("an.person")}</Th>
-              <Th right>{t("an.leads")}</Th>
-              <Th right>{t("an.amount")}</Th>
-              <Th right>{t("an.expected")}</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {f.byOwner.map((o) => (
-              <tr key={o.ownerId ?? "none"} className="border-b border-border/60 last:border-0">
-                <Td strong>{who(o.ownerId)}</Td>
-                <Td right>{o.count}</Td>
-                <Td right>{format(o.sum)}</Td>
-                <Td right strong>
-                  {format(o.weighted)}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      )}
-    </SectionCard>
-  );
-}
-
-export type ReportKind = "sales" | "summary" | "winloss" | "staff" | "events" | "forecast";
+export type ReportKind = "sales" | "summary" | "winloss";
 
 const ymdOf = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -1060,8 +646,6 @@ function ReportBody({
         </div>
       )}
       {report === "summary" && <SummaryTab data={data} who={who} />}
-      {report === "staff" && <StaffTab data={data} who={who} />}
-      {report === "events" && <EventsTab period={period} data={data} who={who} />}
     </div>
   );
 }
@@ -1069,9 +653,8 @@ function ReportBody({
 // ---- the reports as board cards ---------------------------------------------
 
 /** The reports a page can lay out card by card on its board. */
-export type PartedReport = "sales" | "winloss" | "forecast";
-const isPartedReport = (r: ReportKind): r is PartedReport =>
-  r === "sales" || r === "winloss" || r === "forecast";
+export type PartedReport = "sales" | "winloss";
+const isPartedReport = (r: ReportKind): r is PartedReport => r === "sales" || r === "winloss";
 
 function usePartDefs(report: ReportKind): PartDef[] {
   const { t } = useI18n();
@@ -1079,7 +662,6 @@ function usePartDefs(report: ReportKind): PartDef[] {
   const ctx = { t, format };
   if (report === "sales") return salesParts(ctx);
   if (report === "winloss") return winLossParts(ctx);
-  if (report === "forecast") return forecastParts(ctx);
   return [];
 }
 
