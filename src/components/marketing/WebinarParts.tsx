@@ -22,18 +22,14 @@ import { useChannels, useWebinarMutations, type WebinarRow } from "@/hooks/use-c
 
 export function StatusChip({ status }: { status: string }) {
   const { t } = useI18n();
+  // The desk's state tag: a lamp and mono capitals -- red and blinking
+  // while on air, blue when planned, grey once over.
   return (
     <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11.5px] font-semibold",
-        status === "live"
-          ? "bg-red-500/12 text-red-700 dark:text-red-300"
-          : status === "ended"
-            ? "bg-muted text-muted-foreground"
-            : "bg-sky-500/12 text-sky-700 dark:text-sky-300",
-      )}
+      className="studio-tag"
+      data-tone={status === "live" ? "live" : status === "ended" ? undefined : "info"}
     >
-      {status === "live" && <Radio className="h-3 w-3 animate-pulse" />}
+      <span className="studio-lamp" />
       {t(`mkt.wb.status.${status}`)}
     </span>
   );

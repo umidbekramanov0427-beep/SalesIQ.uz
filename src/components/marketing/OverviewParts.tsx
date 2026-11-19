@@ -53,6 +53,7 @@ export function OverviewKpis({ d }: { d: MarketingData }) {
         label={t("mkt.avgScore")}
         tipKey="mkt.avgScore"
         value={qt.avgScore == null ? "—" : `${qt.avgScore}/100`}
+        meter={qt.avgScore}
         info={t("mkt.avgScoreInfo")}
       />
       <StatCard
@@ -219,11 +220,11 @@ export function DailyLeads({ days }: { days: DayPoint[] }) {
               {d.day}: {t("mkt.leadsN", { n: d.leads })} · {t("mkt.hotN", { n: d.hot })}
             </span>
             <div
-              className="relative w-full overflow-hidden rounded-t bg-sky-400/50"
+              className="relative w-full overflow-hidden rounded-t bg-primary/35"
               style={{ height: `${(d.leads / max) * 100}%`, minHeight: d.leads ? 3 : 0 }}
             >
               <div
-                className="absolute inset-x-0 bottom-0 bg-rose-500/80"
+                className="absolute inset-x-0 bottom-0 bg-amber-500"
                 style={{ height: `${d.leads ? (d.hot / d.leads) * 100 : 0}%` }}
               />
             </div>
@@ -237,10 +238,10 @@ export function DailyLeads({ days }: { days: DayPoint[] }) {
       </div>
       <div className="mt-7 flex items-center gap-4 text-[12px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className={cn("h-2.5 w-2.5 rounded-sm bg-sky-400/50")} /> {t("fin.newLeads")}
+          <span className={cn("h-2.5 w-2.5 rounded-sm bg-primary/35")} /> {t("fin.newLeads")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-rose-500/80" /> {t("mkt.hotLeads")}
+          <span className="h-2.5 w-2.5 rounded-sm bg-amber-500" /> {t("mkt.hotLeads")}
         </span>
       </div>
     </SectionCard>

@@ -69,6 +69,15 @@ export const useAdminLook = () => useContext(AdminLook);
  * layouts (they know the catalog): the caption over a page's title naming
  * where it sits, and the row of the other sections of its group.
  */
+/**
+ * The marketing panel's «Efir studiyasi» look (SettingsLayout
+ * variant="studio"): mono capital labels instead of icon tiles, a page
+ * eyebrow naming where it sits ("TAHLIL · REKLAMA"), state as lit tags.
+ * The colours come from the .studio token scope in styles.css.
+ */
+export const StudioLook = createContext<{ eyebrow?: string | undefined } | null>(null);
+export const useStudio = () => useContext(StudioLook);
+
 export const AdminChrome = createContext<{
   Crumb?: ComponentType;
   Strip?: ComponentType;
@@ -82,11 +91,11 @@ export function SettingsLayout({
   children: ReactNode;
   // Off where the page already pads its own scroll pane (settings).
   gutter?: boolean;
-  variant?: "settings" | "admin";
+  variant?: "settings" | "admin" | "studio";
 }) {
   return (
     <SettingsDensity.Provider value={true}>
-      <AdminLook.Provider value={variant === "admin"}>
+      <AdminLook.Provider value={variant === "admin" || variant === "studio"}>
         {/* Without its gutter the wrapper takes no box of its own (only its
             styles), so a page pinned to the screen (FixedPage) sits right
             in <main> and can cancel its padding. */}
@@ -146,6 +155,14 @@ export function StatusChip({
 }) {
   const { icon: Icon, cls } = STATUS_CHIP[state];
   const { console: consoleOn } = useTheme();
+  if (useContext(StudioLook)) {
+    return (
+      <span className="studio-tag" data-tone={state}>
+        <span className="studio-lamp" />
+        {children}
+      </span>
+    );
+  }
   if (consoleOn) {
     // The console's state line: a lit dot and the word, as on its cards.
     return (
@@ -421,8 +438,38 @@ export function AdminConsoleHeader({
   caption?: string | undefined;
 }) {
   const { Crumb, Strip } = useContext(AdminChrome);
+  const studio = useContext(StudioLook);
   const { t } = useI18n();
   const { dark, toggle } = useTheme();
+  if (studio) {
+    const eyebrow = caption ?? studio.eyebrow;
+    return (
+      <>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 phone:mb-4">
+          <div className="min-w-0 [overflow-wrap:anywhere]">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2">
+              {eyebrow && <span className="studio-eyebrow phone:hidden">{eyebrow}</span>}
+              <h1 className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[24px] font-semibold leading-tight tracking-tight text-foreground phone:text-[20px]">
+                <span>{title}</span>
+                <PageTools title={title} description={description} />
+              </h1>
+            </div>
+            {summary ? (
+              <p className="mt-2 font-mono text-[12.5px] text-muted-foreground">{summary}</p>
+            ) : description ? (
+              <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground phone:line-clamp-2">
+                {description}
+              </p>
+            ) : null}
+          </div>
+          {actions && (
+            <div className="flex flex-wrap items-center gap-2 phone:w-full">{actions}</div>
+          )}
+        </div>
+        {Strip && <Strip />}
+      </>
+    );
+  }
   // Day / night for the console, one click from every section.
   const themeButton = (
     <button
@@ -508,6 +555,42 @@ export function FigureCard({
   /** Under the figure: FigureLine rows, bars, small charts. */
   children?: ReactNode;
 }) {
+  const studio = useContext(StudioLook);
+  if (studio) {
+    return (
+      <div
+        className={cn(
+          "stat-card relative flex min-w-0 flex-col px-5 pb-5 pt-4 phone:px-4 phone:pb-4 phone:pt-3.5",
+          nested
+            ? "rounded-[10px] border border-border/70 bg-surface/60 dark:bg-white/[0.025]"
+            : "surface-card",
+          className,
+        )}
+      >
+        <div className="flex min-h-6 items-center justify-between gap-2">
+          <p className="studio-label flex min-w-0 items-center gap-1.5 !tracking-[0.09em]">
+            <span
+              className="line-clamp-2 min-w-0"
+              title={typeof label === "string" ? label : undefined}
+            >
+              {label}
+            </span>
+            {labelExtra}
+          </p>
+          {tools && <span className="flex shrink-0 items-center gap-1">{tools}</span>}
+        </div>
+        <div
+          className={cn(
+            "mt-2.5 min-w-0 text-[30px] font-semibold leading-tight tracking-tight tabular-nums text-foreground phone:text-[23px]",
+            valueClassName,
+          )}
+        >
+          {value}
+        </div>
+        {children}
+      </div>
+    );
+  }
   return (
     <div
       className={cn(
@@ -591,6 +674,7 @@ export function StatCard({
   tipKey,
   gear = true,
   extraTools,
+  meter,
 }: {
   label: string;
   value: string;
@@ -614,8 +698,14 @@ export function StatCard({
   gear?: boolean;
   /** The card's own controls, beside its "!". */
   extraTools?: ReactNode;
+  /** A 0-100 level drawn as the studio desk's fader (a "40%" hint draws one by itself). */
+  meter?: number | null | undefined;
 }) {
   void emphasize;
+  const studio = useContext(StudioLook);
+  const hintPct =
+    hint && /^\d+(?:[.,]\d+)?%$/.test(hint.trim()) ? parseFloat(hint.replace(",", ".")) : null;
+  const level = studio ? (meter ?? hintPct) : null;
   const isDanger = tone === "danger";
   const tip = useTipText(info, undefined, label);
   const admin = useContext(AdminLook);
@@ -647,6 +737,12 @@ export function StatCard({
         </FigureLine>
       )}
       {hint && <FigureLine className={cn(isDanger && "text-destructive/80")}>{hint}</FigureLine>}
+      {level != null && Number.isFinite(level) && (
+        <div className="studio-fader mt-3" aria-hidden>
+          <i style={{ width: `${Math.max(0, Math.min(100, level))}%` }} />
+          <b style={{ left: `${Math.max(0, Math.min(100, level))}%` }} />
+        </div>
+      )}
     </FigureCard>
   );
 }
@@ -661,9 +757,13 @@ export function SectionCard({
   id,
   icon,
   tone = "primary",
+  named = false,
 }: {
   title?: ReactNode;
   description?: string;
+  /** The title is the card's subject (a channel's name), not a section
+   * heading: the studio desk keeps it a bold title instead of a label. */
+  named?: boolean;
   // Same "!" hover explainer as StatCard's info prop, shown next to the
   // section title — for sections whose purpose isn't obvious from the
   // title alone.
@@ -678,6 +778,7 @@ export function SectionCard({
 }) {
   const roomy = useContext(SettingsDensity);
   const admin = useContext(AdminLook);
+  const studio = useContext(StudioLook);
   const insideCard = useContext(InsideSectionCard);
   const tip = useTipText(info, description, title);
   const tipKeys = useTipKeys(title);
@@ -687,6 +788,47 @@ export function SectionCard({
   ) : (
     children
   );
+  if (admin && studio && !nested) {
+    const hasHeader = !!(title || actions);
+    return (
+      <section id={id} className={cn("admin-card border border-border bg-card", className)}>
+        {hasHeader && (
+          <header className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 pt-4 sm:px-6 phone:px-4 phone:pt-3.5">
+            <div className="min-w-0 flex-1 basis-56 [overflow-wrap:anywhere]">
+              {title && (
+                <h2
+                  className={cn(
+                    "flex items-center gap-1.5 leading-snug",
+                    named
+                      ? "text-[16px] font-semibold tracking-tight text-foreground"
+                      : "studio-label",
+                  )}
+                >
+                  {title}
+                  <InfoTip text={tip} tipKeys={tipKeys} />
+                </h2>
+              )}
+              {description && (
+                <p className="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+                  {description}
+                </p>
+              )}
+            </div>
+            {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+          </header>
+        )}
+        <div
+          className={
+            hasHeader
+              ? "px-5 pb-5 pt-4 sm:px-6 sm:pb-6 phone:px-4 phone:pb-4"
+              : "p-5 sm:p-6 phone:p-4"
+          }
+        >
+          {body}
+        </div>
+      </section>
+    );
+  }
   if (admin) {
     const hasHeader = !!(title || actions);
     return (

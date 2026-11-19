@@ -187,7 +187,7 @@ function WebinarsPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="flex flex-col gap-3">
           {rows.map((w) => (
             <WebinarCard
               key={w.id}
@@ -235,55 +235,50 @@ function WebinarCard({
 }) {
   const { t } = useI18n();
   const [archiving, setArchiving] = useState(false);
+  const turnout =
+    stats && w.registrations ? Math.round((stats.peak / w.registrations) * 100) : null;
+  const live = w.status === "live";
+  const when = w.starts_at
+    ? new Date(w.starts_at).toLocaleString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  const figures = [
+    { k: t("mkt.wb.peak"), v: stats ? stats.peak.toLocaleString("ru-RU") : "—" },
+    { k: t("mkt.wb.avg"), v: stats ? stats.avg.toLocaleString("ru-RU") : "—" },
+    {
+      k: t("mkt.wb.registered"),
+      v: w.registrations != null ? w.registrations.toLocaleString("ru-RU") : "—",
+    },
+    { k: t("mkt.wb.turnout"), v: turnout != null ? `${turnout}%` : "—", bar: turnout },
+  ];
+  // One webinar = one line of the broadcast log: state, name, when, then
+  // its figures across; the live one is edged in red.
   return (
-    <article className="surface-card flex flex-col p-5 transition-shadow hover:shadow-md">
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "grid h-11 w-11 shrink-0 place-items-center rounded-xl",
-            w.platform === "youtube"
-              ? "bg-rose-500/12 text-rose-600 dark:text-rose-400"
-              : w.platform === "telegram"
-                ? "bg-sky-500/12 text-sky-600 dark:text-sky-400"
-                : "bg-violet-500/12 text-violet-600 dark:text-violet-400",
-          )}
-        >
-          <Video className="h-5 w-5" />
-        </span>
-        <Link to="/marketing/webinars/$id" params={{ id: w.id }} className="min-w-0 flex-1">
-          <p className="truncate text-[15.5px] font-bold text-foreground hover:text-primary">
-            {w.title}
-          </p>
-          <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-            {t(`mkt.wb.platform.${w.platform}`)}
-            {w.starts_at &&
-              ` · ${new Date(w.starts_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`}
-          </p>
-        </Link>
+    <article
+      className={cn(
+        "surface-card px-5 py-4 phone:px-4",
+        live && "!border-[color-mix(in_oklab,var(--studio-live)_45%,transparent)]",
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <StatusChip status={w.status} />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="-mr-1 grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-              aria-label={t("refund.actions")}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="h-4 w-4" /> {t("mkt.p.edit")}
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={() => setArchiving(true)}>
-              <Trash2 className="h-4 w-4" /> {t("common.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
+        <Link
+          to="/marketing/webinars/$id"
+          params={{ id: w.id }}
+          className="min-w-0 truncate text-[16px] font-semibold text-foreground hover:text-primary"
+        >
+          {w.title}
+        </Link>
+        <span className="font-mono text-[12px] text-muted-foreground">
+          {t(`mkt.wb.platform.${w.platform}`)}
+          {when && ` · ${when}`}
+        </span>
         {project && (
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-[12px] font-semibold text-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-0.5 text-[12px] font-medium text-foreground">
             <span
               className={cn("h-2 w-2 rounded-full", PROJECT_DOT[project.color] ?? "bg-sky-500")}
             />
@@ -291,28 +286,54 @@ function WebinarCard({
           </span>
         )}
         {w.auto_created && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-sky-500/10 px-2 py-0.5 text-[12px] font-semibold text-sky-700 dark:text-sky-300">
+          <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[12px] font-medium text-muted-foreground">
             <Radio className="h-3 w-3" />
             {t("mkt.wb.auto")}
           </span>
         )}
+        <span className="ml-auto flex items-center gap-1">
+          <Link
+            to="/marketing/webinars/$id"
+            params={{ id: w.id }}
+            className="px-2 text-[13px] font-medium text-primary hover:underline"
+          >
+            {t("mkt.wb.openRow")} →
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                aria-label={t("refund.actions")}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="h-4 w-4" /> {t("mkt.p.edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => setArchiving(true)}>
+                <Trash2 className="h-4 w-4" /> {t("common.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </span>
       </div>
       <Link
         to="/marketing/webinars/$id"
         params={{ id: w.id }}
-        className="mt-4 grid grid-cols-3 gap-2"
+        className="mt-3.5 grid grid-cols-4 gap-x-6 gap-y-3 phone:grid-cols-2"
       >
-        {[
-          { k: t("mkt.wb.peak"), v: stats ? stats.peak.toLocaleString("ru-RU") : "—" },
-          { k: t("mkt.wb.avg"), v: stats ? stats.avg.toLocaleString("ru-RU") : "—" },
-          {
-            k: t("mkt.wb.registered"),
-            v: w.registrations != null ? w.registrations.toLocaleString("ru-RU") : "—",
-          },
-        ].map((c) => (
-          <div key={c.k} className="rounded-xl bg-surface px-3 py-2.5">
-            <p className="text-[11.5px] text-muted-foreground">{c.k}</p>
-            <p className="text-[18px] font-bold tabular-nums text-foreground">{c.v}</p>
+        {figures.map((c) => (
+          <div key={c.k} className="min-w-0">
+            <p className="studio-label !tracking-[0.08em]">{c.k}</p>
+            <p className="mt-1 text-[20px] font-semibold tabular-nums text-foreground">{c.v}</p>
+            {c.bar != null && (
+              <div className="studio-fader mt-1.5">
+                <i style={{ width: `${Math.min(100, c.bar)}%` }} />
+              </div>
+            )}
           </div>
         ))}
       </Link>

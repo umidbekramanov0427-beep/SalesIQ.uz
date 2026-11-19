@@ -298,6 +298,7 @@ function ChannelCard({
       <SectionCard
         icon={Send}
         tone="sky"
+        named
         title={c.title || `@${c.username}`}
         description={c.username ? `@${c.username}` : t("mkt.ch.private")}
         actions={

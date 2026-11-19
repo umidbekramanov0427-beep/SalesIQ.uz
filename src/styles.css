@@ -2174,3 +2174,506 @@ html:has(.always-dark) {
 html.phone .card-gear {
   opacity: 1;
 }
+
+/* ---- Marketing «Efir studiyasi» (the owner's pick, design A) -------------
+   The marketing panel's page area (<main class="studio">, MarketingShell)
+   reads like a broadcast desk: calm panels on a deep ground in the dark
+   theme (a cool paper ground in the light one), mono capital labels, the
+   brand blue for what is on, red only for "live" and bad news. The side
+   menu is NOT inside the scope -- it keeps the platform's own look.
+   Everything is tokens, so dialogs and pop-ups opened from the panel take
+   the same set (html:has(.studio) below). */
+.studio,
+html:has(main.studio) :is([data-radix-popper-content-wrapper], [role="dialog"]) {
+  --studio-ground: #f3f5f9;
+  --studio-panel: #ffffff;
+  --studio-well: #f6f8fb;
+  --studio-sel: #e8eefd;
+  --studio-sel-edge: color-mix(in oklab, var(--primary) 32%, transparent);
+  --studio-off: #cbd3e0;
+  --studio-live: #e5322a;
+  --studio-ok: #1f9d4c;
+  --studio-warn: #c27200;
+  --background: var(--studio-ground);
+  --card: var(--studio-panel);
+  --popover: var(--studio-panel);
+  --dialog: var(--studio-panel);
+  --surface: var(--studio-well);
+  --border: #e1e6ee;
+  --input: #dbe1ea;
+  --muted: #eef1f6;
+  --accent: #eef2fb;
+  --foreground: #0f172a;
+  --card-foreground: #0f172a;
+  --popover-foreground: #0f172a;
+  --muted-foreground: #5b6576;
+  --subtle: #7b8494;
+  --shadow-glow: 0 0 0 0 transparent;
+}
+.dark .studio,
+html.dark:has(main.studio) :is([data-radix-popper-content-wrapper], [role="dialog"]) {
+  --studio-ground: #0b0e13;
+  --studio-panel: #11161e;
+  --studio-well: #0e1218;
+  --studio-sel: #172036;
+  --studio-sel-edge: #2a3550;
+  --studio-off: #2a3140;
+  --studio-live: #ff453a;
+  --studio-ok: #30d158;
+  --studio-warn: #ff9f0a;
+  --border: #1c222c;
+  --input: #232a36;
+  --muted: #161c26;
+  --accent: #172036;
+  --foreground: #e6eaf2;
+  --card-foreground: #e6eaf2;
+  --popover-foreground: #e6eaf2;
+  --muted-foreground: #8a93a3;
+  --subtle: #6b7485;
+}
+main.studio {
+  background: var(--studio-ground);
+  color: var(--foreground);
+}
+
+/* Panels: one flat block, 14px corners, a hairline -- no glow, no tint. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(.surface-card, .admin-card, .stat-card),
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(div, section, article, aside, li, form)[class*="bg-card"][class*="rounded"][class*="border"] {
+  background-color: var(--studio-panel);
+  background-image: none;
+  border-color: var(--border);
+  box-shadow: none;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(.surface-card, .admin-card) {
+  border-radius: 14px;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .stat-card.surface-card {
+  border-radius: 12px;
+}
+
+/* The small capital label used across the desk (card names, table heads,
+   the page's eyebrow). */
+.studio-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.studio-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--eyebrow, var(--primary));
+  border: 1px solid color-mix(in oklab, var(--eyebrow, var(--primary)) 38%, transparent);
+  background: color-mix(in oklab, var(--eyebrow, var(--primary)) 7%, transparent);
+  padding: 5px 11px;
+  border-radius: 6px;
+}
+/* A state tag: mono capitals in a hairline box, with a lamp. */
+.studio-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--tag, var(--muted-foreground));
+  border: 1px solid color-mix(in oklab, var(--tag, var(--muted-foreground)) 45%, transparent);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.studio-tag[data-tone="ok"] {
+  --tag: var(--studio-ok);
+}
+.studio-tag[data-tone="warn"] {
+  --tag: var(--studio-warn);
+}
+.studio-tag[data-tone="error"],
+.studio-tag[data-tone="live"] {
+  --tag: var(--studio-live);
+}
+.studio-tag[data-tone="info"] {
+  --tag: var(--primary);
+}
+.studio-lamp {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--tag, currentColor);
+}
+.studio-tag[data-tone="live"] .studio-lamp,
+.studio-tag[data-tone="ok"] .studio-lamp {
+  box-shadow: 0 0 8px var(--tag);
+}
+.studio-tag[data-tone="live"] .studio-lamp {
+  animation: studio-blink 1.6s ease-in-out infinite;
+}
+@keyframes studio-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Buttons: the main one is the brand, flat and firm; every other one a
+   navy (light: pale blue) key with a hairline. 8px corners. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(.ctl-lit, .ctl-soft) {
+  border-radius: 8px;
+  transform: none;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ctl-lit {
+  background-image: none;
+  background-color: var(--primary);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 80%, black);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ctl-lit:hover:not(:disabled) {
+  transform: none;
+  filter: none;
+  background-color: color-mix(in oklab, var(--primary) 88%, white);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--primary) 80%, black),
+    0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ctl-soft {
+  background-image: none;
+  background-color: var(--studio-sel);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px var(--studio-sel-edge);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ctl-soft:hover:not(:disabled) {
+  transform: none;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, transparent);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ui-button.bg-destructive {
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--studio-live);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--studio-live) 45%, transparent);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ui-button.bg-destructive:hover {
+  background-color: color-mix(in oklab, var(--studio-live) 10%, transparent);
+}
+
+/* Tabs: a dark well; the chosen segment is the navy key with a lit blue
+   lamp in front of the word -- "this channel is on air". */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ctl-track {
+  background: var(--studio-well);
+  box-shadow: inset 0 0 0 1px var(--border);
+  border-radius: 10px;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ctl-tab {
+  border-radius: 7px;
+  color: var(--muted-foreground);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .ctl-tab:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(.ctl-tab[aria-selected="true"], .ctl-tab[data-state="active"], .ctl-tab.is-on) {
+  background: var(--studio-sel);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px var(--studio-sel-edge);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(.ctl-tab[aria-selected="true"], .ctl-tab[data-state="active"], .ctl-tab.is-on)::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  flex: none;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+}
+
+/* Switches: a slim 38x22 desk toggle. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="switch"] {
+  width: 38px;
+  height: 22px;
+  padding: 3px;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="switch"][data-state="unchecked"] {
+  background-color: var(--studio-off);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="switch"]
+  > span {
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+}
+/* Tailwind v4 moves the knob with the "translate" property, not transform. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="switch"]
+  > span {
+  translate: 0 0;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="switch"]
+  > span[data-state="checked"] {
+  translate: 16px 0;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="switch"][data-state="checked"] {
+  box-shadow: 0 0 10px -2px color-mix(in oklab, var(--primary) 70%, transparent);
+}
+
+/* Check boxes and radios: square keys with the brand when on. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="checkbox"] {
+  border-radius: 4px;
+  border-color: var(--input);
+  background: var(--studio-well);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  button[role="checkbox"][data-state="checked"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Fields: a recessed well with a hairline; focus lights the brand edge. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+    textarea,
+    select,
+    button[role="combobox"]
+  ):not(.studio-bare) {
+  background-color: var(--studio-well);
+  border-color: var(--input);
+  border-radius: 8px;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="range"]),
+    textarea,
+    select,
+    button[role="combobox"]
+  ):focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 20%, transparent);
+  outline: none;
+}
+
+/* Tables: mono capital heads, hairline rows, figures in columns. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  table {
+  font-variant-numeric: tabular-nums;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  table
+  thead
+  th {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  table
+  tbody
+  tr {
+  border-color: var(--border);
+}
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  table
+  tbody
+  tr:hover {
+  background: color-mix(in oklab, var(--primary) 5%, transparent);
+}
+
+/* Icon tiles keep their section colour, on a quiet square. */
+:is(
+    .studio,
+    html:has(main.studio) [role="dialog"],
+    html:has(main.studio) [data-radix-popper-content-wrapper]
+  )
+  .icon-tile {
+  background-color: var(--studio-well);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* A fader: the desk's level meter for one figure (Umumiy). */
+.studio-fader {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--studio-well);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.studio-fader > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--fader, var(--primary));
+}
+.studio-fader > b {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 14px;
+  margin-left: -2px;
+  border-radius: 2px;
+  transform: translateY(-50%);
+  background: var(--foreground);
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-tag[data-tone="live"] .studio-lamp {
+    animation: none;
+  }
+}

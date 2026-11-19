@@ -9602,6 +9602,8 @@ const uz: Record<string, string> = {
   "ai.chat.used": "Ishlatilgan davr: {p}",
   "mkt.group.analysis": "Tahlil",
   "mkt.group.audience": "Auditoriya",
+  "mkt.wb.turnout": "Kirish",
+  "mkt.wb.openRow": "Ochish",
   "mkt.wb.sheetMinutes": "Daqiqalar bo'yicha",
   "refund.done": "Yakunlandi",
   "refund.fFunnel": "Voronka",

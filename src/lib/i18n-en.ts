@@ -9409,6 +9409,8 @@ export const en: Record<string, string> = {
   "ai.chat.used": "Period used: {p}",
   "mkt.group.analysis": "Analysis",
   "mkt.group.audience": "Audience",
+  "mkt.wb.turnout": "Turnout",
+  "mkt.wb.openRow": "Open",
   "mkt.wb.sheetMinutes": "By minute",
   "refund.done": "Done",
   "refund.fFunnel": "Funnel",

@@ -9431,6 +9431,8 @@ const ru: Record<string, string> = {
   "ai.chat.used": "Использован период: {p}",
   "mkt.group.analysis": "Аналитика",
   "mkt.group.audience": "Аудитория",
+  "mkt.wb.turnout": "Явка",
+  "mkt.wb.openRow": "Открыть",
   "mkt.wb.sheetMinutes": "По минутам",
   "refund.done": "Завершено",
   "refund.fFunnel": "Воронка",
