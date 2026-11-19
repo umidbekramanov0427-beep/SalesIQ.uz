@@ -26,6 +26,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/admin/work-hours", "attendance"],
   ["/reminders", "reminders"],
   ["/refunds", "refunds"],
+  ["/marketing/ai", "marketing-ai"],
   ["/marketing", "marketing"],
   ["/admin/api", "integrations"],
   ["/admin/pipelines", "pipelines"],

@@ -1135,9 +1135,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "Panel `marketing.salesiq.uz` (yoki kompaniyangiz manzili) da ochiladi; CRM'dan avatar menyusidagi **Marketing paneli** orqali o'tiladi. Chap tomonda platformadagidek ixcham menyu: Umumiy, Reklama, Lid sifati, Kanallar, Vebinarlar va pastda Sozlash, CRM'ga o'tish va profil (kunduzgi/tungi rejim, til).",
-        ru: "Панель открывается на `marketing.salesiq.uz` (или адресе компании); из CRM — через **Маркетинг-панель** в меню аватара. Слева компактное меню, как в платформе: Обзор, Реклама, Качество лидов, Каналы, Вебинары, внизу Настройка, переход в CRM и профиль (день/ночь, язык).",
-        en: "The panel lives at `marketing.salesiq.uz` (or your company's address); from the CRM use **Marketing panel** in the avatar menu. On the left, the platform's compact menu: Overview, Ads, Lead quality, Channels, Webinars, and at the bottom Settings, the CRM switch and your profile (day/night, language).",
+        uz: "Panel `marketing.salesiq.uz` (yoki kompaniyangiz manzili) da ochiladi; CRM'dan avatar menyusidagi **Marketing paneli** orqali o'tiladi. Chap tomonda guruhlangan menyu: **Tahlil** (Umumiy, Reklama, Lid sifati, AI tahlilchi), **Auditoriya** (Kanallar, Vebinarlar), **Tizim** (Sozlash); pastda CRM'ga o'tish va profil (kunduzgi/tungi rejim, til).",
+        ru: "Панель открывается на `marketing.salesiq.uz` (или адресе компании); из CRM — через **Маркетинг-панель** в меню аватара. Слева меню по группам: **Аналитика** (Обзор, Реклама, Качество лидов, AI-аналитик), **Аудитория** (Каналы, Вебинары), **Система** (Настройка); внизу переход в CRM и профиль (день/ночь, язык).",
+        en: "The panel lives at `marketing.salesiq.uz` (or your company's address); from the CRM use **Marketing panel** in the avatar menu. On the left, a grouped menu: **Analysis** (Overview, Ads, Lead quality, AI analyst), **Audience** (Channels, Webinars), **System** (Settings); at the bottom the CRM switch and your profile (day/night, language).",
       },
       {
         uz: "**Sozlash → Loyihalar**: har kurs yoki yo'nalish uchun loyiha oching — nomi, rangi, CRM voronkalari va UTM kampaniya nomlari (utm_campaign). Shu voronkaga tushgan yoki shu kampaniyadan kelgan lid — shu loyihaniki. Har sahifa tepasidagi **Loyiha** filtri butun panelni shu loyihaga moslaydi; tanlov saqlanib qoladi.",
@@ -1173,6 +1173,60 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "O'chirish — **arxivga olish**: loyiha, kanal yoki vebinar tasdiqdan keyin arxivga tushadi va ro'yxat/hisobotlardan chiqadi. Tepadagi **Arxiv** tugmasidan tiklash yoki ikkinchi tasdiq bilan butunlay o'chirish mumkin. Har sahifadagi **Excel** tanlangan loyiha va davr bo'yicha hisobot beradi.",
         ru: "Удаление — это **архив**: проект, канал или вебинар после подтверждения уходит в архив и пропадает из списков и отчётов. Кнопкой **Архив** сверху его можно восстановить или удалить навсегда со вторым подтверждением. **Excel** на каждой странице выгружает отчёт по выбранному проекту и периоду.",
         en: "Deleting means **archiving**: after a confirmation a project, channel or webinar moves to the archive and leaves the lists and reports. **Archive** at the top brings it back or deletes it for good after a second confirmation. **Excel** on every page exports for the chosen project and period.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
+    slug: "marketing-ai",
+    group: "ai",
+    open: "/marketing/ai",
+    title: {
+      uz: "AI tahlilchi (Marketing)",
+      ru: "AI-аналитик (Маркетинг)",
+      en: "AI analyst (Marketing)",
+    },
+    summary: {
+      uz: "Marketing raqamlari, kval lidlar, kampaniyalar, prognoz, tavsiyalar, AI chat va marketing boti — qanday ishlaydi va nimani sozlash kerak.",
+      ru: "Цифры маркетинга, квал-лиды, кампании, прогноз, рекомендации, AI-чат и маркетинг-бот — как работают и что настроить.",
+      en: "Marketing figures, qualified leads, campaigns, forecast, recommendations, AI chat and the marketing bot — how they work and what to set up",
+    },
+    steps: [
+      {
+        uz: "**AI tahlilchi** (Marketing → AI tahlilchi) raqamlarni kompaniyangiz ma'lumotidan o'zi hisoblaydi: lidlar, kval lidlar, predoplata, to'liq to'lov, tushgan pul, xarajat, CPL, CPQL, CAC, ROAS — oldingi davr bilan. AI faqat ularni tushuntiradi va tavsiya beradi. Tepada loyiha, davr va **so'm / $** (Markaziy bank kursi).",
+        ru: "**AI-аналитик** (Маркетинг → AI-аналитик) сам считает цифры по данным компании: лиды, квал-лиды, предоплата, полная оплата, поступления, расход, CPL, CPQL, CAC, ROAS — с прошлым периодом. ИИ только объясняет их и даёт рекомендации. Сверху проект, период и **сум / $** (курс ЦБ).",
+        en: "The **AI analyst** (Marketing → AI analyst) works out the figures from your data: leads, qualified leads, prepaid, paid in full, money received, spend, CPL, CPQL, CAC, ROAS — against the previous period. The AI only explains them and recommends. On top: project, period and **so'm / $** (Central Bank rate).",
+      },
+      {
+        uz: "**Kval lid** = telefonni ko'targan **va** vebinarni ko'rgan lid. Telefonni ko'targani qo'ng'iroqlardan o'zi aniqlanadi. «Vebinarni ko'rdi» ni sotuvchi lid kartasidagi **Kval** blokida belgilaydi (yoki AI qo'ng'iroq tahlilidan topadi). Kval emas bo'lsa — sababi: noto'g'ri raqam, raqam yo'q, ko'tarmadi, ko'rmadi, boshqa. Belgilanmasa kval raqamlari bo'sh chiqadi.",
+        ru: "**Квал-лид** = взял трубку **и** смотрел вебинар. «Взял трубку» определяется по звонкам само. «Смотрел вебинар» отмечает менеджер в блоке **Квал** карточки лида (или находит ИИ при анализе звонка). Если не квал — причина: неверный номер, нет номера, не взял, не смотрел, другое. Без отметок квал-цифры будут пустыми.",
+        en: "A **qualified lead** = picked up the phone **and** watched the webinar. Picking up is read from the calls. \"Watched\" is marked by the rep in the lead card's **Qualification** block (or found by the AI in a call). If not qualified — the reason: wrong number, no number, didn't pick up, didn't watch, other. Without marks the qualified figures stay empty.",
+      },
+      {
+        uz: "**Umumiy** tabida: voronkadagi yo'qotishlar (eng kattasi qizil), kval emas sabablari, ogohlantirishlar (AI'siz, raqamlarning o'zidan) va **AI tahlili**: muammo, dalil (faqat yuqoridagi raqamlar), tahlil, taxmin va tavsiyalar. **Kuzatishga olish** tavsiyani **Tavsiyalar** tabiga qo'shadi: mas'ul, holat va ko'rsatkich oldin / bajarilgandan 14 kun keyin.",
+        ru: "Во вкладке **Обзор**: потери в воронке (самая большая — красным), причины неквала, предупреждения (без ИИ, по цифрам) и **анализ ИИ**: проблема, доказательства (только цифры выше), анализ, допущения и рекомендации. **Взять в работу** добавляет рекомендацию во вкладку **Рекомендации**: ответственный, статус и показатель до / через 14 дней после.",
+        en: "**Overview** shows funnel losses (the biggest in red), why leads are not qualified, alerts (no AI, from the figures) and the **AI analysis**: problem, evidence (only the figures above), analysis, assumptions and recommendations. **Track it** adds a recommendation to **Recommendations**: owner, status and the figure before / 14 days after.",
+      },
+      {
+        uz: "**Kampaniyalar** — har kampaniya bo'yicha lid, kval, predoplata, xarajat, CPL, CPQL, CAC, ROAS (ustunni bosib saralang) va raqamlardan chiqqan tavsiyalar. **Prognoz** — kelgusi 4 hafta (kamida 4 to'liq hafta tarix kerak), ishonch darajasi bilan; bu kafolat emas. **Chat** — savolingizga faqat SalesIQ raqamlaringizdan javob beradi va qaysi davrni ishlatganini yozadi.",
+        ru: "**Кампании** — по каждой кампании лиды, квал, предоплата, расход, CPL, CPQL, CAC, ROAS (сортировка по столбцу) и рекомендации по цифрам. **Прогноз** — на 4 недели (нужно минимум 4 полные недели истории), с уровнем уверенности; это не гарантия. **Чат** — отвечает только по вашим цифрам SalesIQ и пишет, какой период использовал.",
+        en: "**Campaigns** — per campaign leads, qualified, prepaid, spend, CPL, CPQL, CAC, ROAS (click a column to sort) and recommendations from the numbers. **Forecast** — the next 4 weeks (needs 4+ full weeks of history) with a confidence level; not a promise. **Chat** — answers only from your SalesIQ figures and says which period it used.",
+      },
+      {
+        uz: "**Sozlash → AI**: AI yoqilganmi, **avtomatik tahlil** (qo'lda / har kuni 09:00 dan keyin / har vebinardan keyin — natija marketing botiga ham boradi), kunlik va oylik $ limit va shu oydagi sarf. Sukut bo'yicha platformaning AI'si ishlaydi; **Qo'shimcha**da o'z Claude yoki OpenAI kalitingizni qo'yish mumkin (kalit faqat serverda saqlanadi).",
+        ru: "**Настройка → ИИ**: включён ли ИИ, **автоанализ** (вручную / ежедневно после 09:00 / после каждого вебинара — результат уходит и в маркетинг-бот), дневной и месячный лимит в $ и расход за месяц. По умолчанию работает ИИ платформы; в **Дополнительно** можно указать свой ключ Claude или OpenAI (хранится только на сервере).",
+        en: "**Settings → AI**: AI on or off, **automatic analysis** (manual / daily after 09:00 / after each webinar — the result also goes to the marketing bot), daily and monthly $ limits and this month's spend. The platform's AI works by default; under **Advanced** you can use your own Claude or OpenAI key (kept on the server only).",
+      },
+      {
+        uz: "**Marketing boti** (Sozlash → Bot): BotFather'dan olingan o'z botingiz tokenini ulang, **Mening Telegramim** bilan marketologlar botga ulanadi. Bot efir boshlanganini, Telegram efir uzilganini, auditoriya keskin tushganini, yangi peakni va vebinardan keyingi hisobotni yuboradi; `/efir` — efir pulti (Dars, Taqdimot, Ta'riflar, Timer, SMS…), `/holat` — hozirgi tomoshabinlar. Botni vebinar kanaliga **admin** qilsangiz, qo'shilish/chiqishlar, taklif havolalari va reaksiyalar ham hisoblanadi.",
+        ru: "**Маркетинг-бот** (Настройка → Бот): подключите токен своего бота из BotFather, маркетологи подключаются кнопкой **Мой Telegram**. Бот сообщает о начале эфира, обрыве Telegram-эфира, резком падении аудитории, новом пике и шлёт отчёт после вебинара; `/efir` — пульт эфира (Урок, Презентация, Тарифы, Таймер, SMS…), `/holat` — текущие зрители. Сделайте бота **админом** канала вебинара — будут учитываться подписки/отписки, пригласительные ссылки и реакции.",
+        en: "**Marketing bot** (Settings → Bot): connect your own bot's token from BotFather; marketers link themselves with **My Telegram**. The bot reports a stream going live, the Telegram stream stopping, a sharp audience drop, a new peak and sends the post-webinar report; `/efir` is the live console (Lesson, Presentation, Prices, Timer, SMS…), `/holat` the current viewers. Make the bot an **admin** of the webinar channel to count joins/leaves, invite links and reactions.",
+      },
+      {
+        uz: "**Kuzatuv → AI taxmini** (sukut bo'yicha o'chiq): AI efir kadrlarida narxlar, timer, taqdimot yoki savol-javobni taniydi va vebinarga **taxmin** qilib qo'yadi. Taxmin siz vebinar sahifasida tasdiqlamaguningizcha hisobga kirmaydi. Har kadr — AI chaqiruvi, sarf Sozlash → AI'da ko'rinadi.",
+        ru: "**Отслеживание → Догадка ИИ** (по умолчанию выкл.): ИИ распознаёт на кадрах эфира цены, таймер, презентацию или вопросы и ставит это на вебинар как **догадку**. Пока вы не подтвердите её на странице вебинара, она не учитывается. Каждый кадр — вызов ИИ, расход виден в Настройка → ИИ.",
+        en: "**Tracking → AI guess** (off by default): the AI recognises prices, a timer, a presentation or Q&A on stream frames and puts it on the webinar as a **guess**. It is not counted until you confirm it on the webinar page. Each frame is an AI call; the spend shows in Settings → AI.",
       },
     ],
     notes: [],

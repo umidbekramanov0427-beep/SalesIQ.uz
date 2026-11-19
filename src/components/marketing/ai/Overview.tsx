@@ -131,7 +131,7 @@ export function AiOverviewTab({
             value={c.v}
             icon={c.icon}
             iconTone="violet"
-            info={t(`${c.k}.tip`)}
+            tipKey={c.k}
             {...(c.hint ? { hint: c.hint } : {})}
             {...(c.d !== undefined ? { delta: c.d, deltaLowerIsBetter: !!c.bad } : {})}
           />

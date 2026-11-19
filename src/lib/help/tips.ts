@@ -364,6 +364,76 @@ export const TIPS: Record<string, Tip> = {
       en: "From the lead's chats, calls and stage; hot ≥ 70, cold < 40.",
     },
   },
+  "ai.k.cac": {
+    what: {
+      uz: "Bir mijoz narxi = xarajat ÷ to'liq to'laganlar.",
+      ru: "Цена клиента = расход ÷ полностью оплатившие.",
+      en: "Cost per customer = spend ÷ paid in full.",
+    },
+  },
+  "ai.k.cpl": {
+    what: {
+      uz: "Bir lid narxi = xarajat ÷ lidlar.",
+      ru: "Цена лида = расход ÷ лиды.",
+      en: "Cost per lead = spend ÷ leads.",
+    },
+  },
+  "ai.k.cpql": {
+    what: {
+      uz: "Bir kval lid narxi = xarajat ÷ kval lidlar.",
+      ru: "Цена квал-лида = расход ÷ квал-лиды.",
+      en: "Cost per qualified lead = spend ÷ qualified.",
+    },
+  },
+  "ai.k.full": {
+    what: {
+      uz: "To'liq to'lagan (yoki «sotuv» bosqichiga yetgan) lidlar. Ostida — Predoplata → To'liq.",
+      ru: "Оплатили полностью (или этап «продажа»). Ниже — Предоплата → Полная.",
+      en: "Paid in full (or reached the sale stage). Below — Prepaid → Full.",
+    },
+  },
+  "ai.k.leads": {
+    what: {
+      uz: "Tanlangan davrda kelgan lidlar.",
+      ru: "Лиды, пришедшие за период.",
+      en: "Leads that came in the period.",
+    },
+  },
+  "ai.k.prepaid": {
+    what: {
+      uz: "To'lov qilgan yoki «predoplata» bosqichiga yetgan lidlar. Ostida — Lid → Predoplata.",
+      ru: "Оплатили или дошли до этапа «предоплата». Ниже — Лид → Предоплата.",
+      en: "Paid or reached the prepayment stage. Below — Lead → Prepaid.",
+    },
+  },
+  "ai.k.qualified": {
+    what: {
+      uz: "Telefonni ko'targan va vebinarni ko'rgan lidlar (yoki sotuvchi qo'lda «Kval» degan). Ostida — lidlardan ulushi.",
+      ru: "Взяли трубку и смотрели вебинар (или квал вручную). Ниже — доля от лидов.",
+      en: "Picked up and watched the webinar (or marked by hand). Below — share of leads.",
+    },
+  },
+  "ai.k.revenue": {
+    what: {
+      uz: "Shu davr lidlaridan haqiqatda tushgan to'lovlar.",
+      ru: "Реальные оплаты от лидов периода.",
+      en: "Payments actually received from the period's leads.",
+    },
+  },
+  "ai.k.roas": {
+    what: {
+      uz: "Tushgan pul ÷ xarajat. 1× dan kam — reklama o'zini qoplamayapti.",
+      ru: "Поступления ÷ расход. Меньше 1× — реклама не окупается.",
+      en: "Money received ÷ spend. Below 1× the ads do not pay back.",
+    },
+  },
+  "ai.k.spend": {
+    what: {
+      uz: "Meta kampaniyalari va Moliya'dagi marketing xarajatlari.",
+      ru: "Кампании Meta и маркетинговые расходы в Финансах.",
+      en: "Meta campaigns and marketing spend in Finance.",
+    },
+  },
   "nav:/marketing/ai": {
     what: {
       uz: "AI tahlilchi — vebinar, lid, sotuv va reklama raqamlarini yig'ib, muammolarni topadi, dalil bilan tushuntiradi va tavsiya beradi.",
