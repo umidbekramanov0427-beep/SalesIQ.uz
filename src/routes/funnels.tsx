@@ -1173,6 +1173,8 @@ function FunnelDetail({
   // Ticked leads the current filters still show; the bar stays while any is ticked.
   const selectedIds = shownLeads.filter((l) => selected.has(l.id)).map((l) => l.id);
   const selecting = bulk || selectedIds.length > 0;
+  // The funnel's lead ids, for the missed-calls column (its head and its cards).
+  const funnelLeadIds = new Set(leads.map((l) => l.id));
 
   // The pinned bar's height, so the tasks toolbar can pin right under it.
   useEffect(() => {
@@ -1672,7 +1674,8 @@ function FunnelDetail({
           sortBy={sortBy}
           showClosed={showClosed}
           liveIds={liveIds}
-          leading={<MissedCallsColumn funnelLeadIds={new Set(leads.map((l) => l.id))} />}
+          leading={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="body" />}
+          leadingHead={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="head" />}
           // Tick boxes only while "Ommaviy amallar" is on.
           {...(selecting
             ? {

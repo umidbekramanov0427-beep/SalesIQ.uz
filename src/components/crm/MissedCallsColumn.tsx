@@ -8,14 +8,23 @@ import { timeAgo } from "@/lib/utils";
 // answered and nobody has called back yet -- this funnel's leads and numbers
 // no lead has. A call back with the same number takes the card off
 // (the pbx_calls trigger closes it). Hidden while there are none.
-export function MissedCallsColumn({ funnelLeadIds }: { funnelLeadIds: Set<string> }) {
+// `part`: the board draws the column's head in its pinned strip of stage
+// names ("head") and the cards below ("body") -- the same width, both gone
+// while there are no calls.
+export function MissedCallsColumn({
+  funnelLeadIds,
+  part,
+}: {
+  funnelLeadIds: Set<string>;
+  part: "head" | "body";
+}) {
   const { t } = useI18n();
   const { data = [] } = useOpenMissedCalls();
   const items = data.filter((c) => !c.leadId || funnelLeadIds.has(c.leadId));
   if (items.length === 0) return null;
-  return (
-    <section className="flex w-[86vw] max-w-[290px] shrink-0 flex-col sm:w-[290px]">
-      <header data-stage-head className="px-1 pb-2 pt-1 text-center">
+  if (part === "head")
+    return (
+      <header className="w-[86vw] max-w-[320px] shrink-0 px-1 pb-2 pt-1 text-center sm:w-[320px]">
         <h2 className="truncate text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
           {t("missedCol.title")}
         </h2>
@@ -24,6 +33,9 @@ export function MissedCallsColumn({ funnelLeadIds }: { funnelLeadIds: Set<string
         </p>
         <span className="mt-2 block h-[2px] rounded-full bg-rose-500" />
       </header>
+    );
+  return (
+    <section className="flex w-[86vw] max-w-[320px] shrink-0 flex-col sm:w-[320px]">
       <div className="flex-1 space-y-1.5 pb-2">
         {items.map((c) => (
           <article

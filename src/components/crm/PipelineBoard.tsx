@@ -4,8 +4,8 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type DragEvent,
   type ReactNode,
-  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
@@ -66,6 +66,7 @@ export function PipelineBoard({
   selection,
   liveIds,
   leading,
+  leadingHead,
   showClosed = false,
 }: {
   funnel: string;
@@ -87,6 +88,8 @@ export function PipelineBoard({
   liveIds?: Set<string>;
   /** A column drawn before the stages (the missed calls). */
   leading?: ReactNode;
+  /** The leading column's head, for the pinned strip of stage names. */
+  leadingHead?: ReactNode;
   /**
    * The won / lost stages as columns too (funnels.tsx's «Yopilganlar»).
    * Otherwise, like amoCRM, they have no column and appear as drop zones
@@ -218,7 +221,14 @@ export function PipelineBoard({
   const sortItems = (items: CrmLeadView[]) => sortLikeBoard(items, sortBy);
 
   const panRef = useRef<HTMLDivElement>(null);
-  useStickyStageHeads(panRef);
+  // The pinned strip of stage names follows the board sideways.
+  const headRowRef = useRef<HTMLDivElement>(null);
+  const syncHeads = () => {
+    const el = panRef.current;
+    const row = headRowRef.current;
+    if (el && row) row.style.transform = `translateX(${-el.scrollLeft}px)`;
+  };
+  useEffect(syncHeads);
   function startPan(e: React.PointerEvent<HTMLDivElement>) {
     const el = panRef.current;
     const target = e.target as HTMLElement;
@@ -240,40 +250,59 @@ export function PipelineBoard({
     window.addEventListener("pointerup", up);
   }
 
+  const cols = columnStages.map((s) => {
+    const ids = board[s.id] ?? [];
+    const items = sortItems(
+      ids.map((id) => leadsById.get(id)).filter((l): l is CrmLeadView => !!l),
+    );
+    return {
+      s,
+      items,
+      value: items.reduce((sum, l) => sum + l.expectedRevenue, 0),
+      line: stageLine(s),
+    };
+  });
+  // Dropping on a stage's name moves the card there too.
+  const dropProps = (id: string) => ({
+    onDragOver: (e: DragEvent) => {
+      e.preventDefault();
+      setOver(id);
+    },
+    onDragLeave: () => setOver((o) => (o === id ? null : o)),
+    onDrop: () => void move(id),
+  });
+
   return (
-    // No scrollbar under the board (amoCRM has none): it scrolls sideways
-    // with a trackpad, Shift + wheel, or by dragging an empty spot.
-    <div
-      ref={panRef}
-      onPointerDown={startPan}
-      className="cursor-default overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
-      <div className={cn("flex min-w-max gap-4", selection && "pl-1.5")}>
-        {leading}
-        {columnStages.map((s) => {
-          const ids = board[s.id] ?? [];
-          const items = sortItems(
-            ids.map((id) => leadsById.get(id)).filter((l): l is CrmLeadView => !!l),
-          );
-          const value = items.reduce((sum, l) => sum + l.expectedRevenue, 0);
-          const line = stageLine(s);
-          return (
-            <section
+    <div>
+      {/* The stage names: pinned right under the page's own pinned bar
+          (--funnel-bar-h, funnels.tsx) by the browser itself -- a solid
+          strip, so cards pass under it unseen, and no lag while scrolling.
+          It follows the board sideways (syncHeads); a sideways wheel over
+          it scrolls the board. */}
+      <div
+        className="sticky z-[8] overflow-hidden bg-canvas"
+        style={{ top: "var(--funnel-bar-h, 0px)" }}
+        onWheel={(e) => {
+          const el = panRef.current;
+          const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+          if (el && dx) el.scrollLeft += dx;
+        }}
+      >
+        <div
+          ref={headRowRef}
+          className={cn("flex min-w-max gap-4 pt-1.5 will-change-transform", selection && "pl-1.5")}
+        >
+          {leadingHead}
+          {cols.map(({ s, items, value, line }) => (
+            <div
               key={s.id}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setOver(s.id);
-              }}
-              onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
-              onDrop={() => void move(s.id)}
+              {...dropProps(s.id)}
               className={cn(
-                // No box per stage: like amoCRM, every column sits on the one
-                // page background, a header with a colored line over its cards.
-                "group/stage flex w-[86vw] max-w-[290px] shrink-0 flex-col rounded-xl transition-colors sm:w-[290px]",
-                over === s.id && "bg-primary/[0.06] ring-1 ring-primary/30",
+                "w-[86vw] max-w-[320px] shrink-0 rounded-xl sm:w-[320px]",
+                over === s.id && "bg-primary/[0.06]",
               )}
             >
-              <header data-stage-head className="group/col relative px-1 pb-2 pt-1 text-center">
+              <header className="group/col relative px-1 pb-2 pt-1 text-center">
                 {selection && items.length > 0 && (
                   <Tick
                     checked={items.every((l) => selection.ids.has(l.id))}
@@ -310,74 +339,105 @@ export function PipelineBoard({
                   </p>
                 )}
               </header>
-
-              <div className="flex-1 space-y-1.5 pb-2">
-                {canCreateDeals && !selecting && <StageQuickAdd stageId={s.id} funnel={funnel} />}
-                {items.map((l) => {
-                  const color = colorRules.length ? leadColor(l, colorRules, funnel, now) : null;
-                  return (
-                    <article
-                      key={l.id}
-                      draggable={canMoveDeals}
-                      onDragStart={() => setDragged(l.id)}
-                      onDragEnd={() => setDragged(null)}
-                      onClick={() =>
-                        selecting && selection
-                          ? selection.onToggle(l.id)
-                          : void navigate({
-                              to: "/crm/leads/$leadId",
-                              params: { leadId: l.id },
-                              search: { from: "funnels" },
-                            })
-                      }
-                      className={cn(
-                        "group relative cursor-pointer rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] shadow-[0_1px_1px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)] dark:border-white/[0.1] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
-                        canMoveDeals && "active:cursor-grabbing",
-                        dragged === l.id && "opacity-40",
-                        selection?.ids.has(l.id) &&
-                          "border-primary/60 bg-primary/[0.05] ring-1 ring-primary/30",
-                        color && LEAD_COLOR_CARD[color],
-                        liveIds?.has(l.id) &&
-                          "border-emerald-500/70 ring-2 ring-emerald-500/25 dark:border-emerald-400/60",
-                      )}
-                    >
-                      {liveIds?.has(l.id) && (
-                        <span className="absolute -top-2.5 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10.5px] font-bold text-white shadow-sm">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white motion-reduce:animate-none" />
-                          {t("live.registering")}
-                        </span>
-                      )}
-                      {selection && (
-                        <Tick
-                          checked={selection.ids.has(l.id)}
-                          visible={selecting}
-                          label={t("bulk.selectLead")}
-                          onClick={() => selection.onToggle(l.id)}
-                          className="absolute -left-1.5 -top-1.5 z-10"
-                        />
-                      )}
-                      <KanbanLeadCard
-                        lead={{ ...l, leadNumber: chatInfo?.numbers.get(l.id) ?? null }}
-                        layout={layout}
-                        ctx={cardCtx}
-                        amoLink={getAmoLink(l.amocrmId)}
-                        chat={{
-                          last: chatInfo?.last.get(l.id) ?? null,
-                          hasPhoto: !!chatInfo?.photos.has(l.id),
-                        }}
-                      />
-                    </article>
-                  );
-                })}
-                {items.length === 0 && dragged && (
-                  <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
-                    {t("pipeline.dropHint")}
-                  </p>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* No scrollbar under the board (amoCRM has none): it scrolls sideways
+          with a trackpad, Shift + wheel, or by dragging an empty spot. */}
+      <div
+        ref={panRef}
+        onPointerDown={startPan}
+        onScroll={syncHeads}
+        className="cursor-default overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <div className={cn("flex min-w-max gap-4 pt-1", selection && "pl-1.5")}>
+          {leading}
+          {cols.map(({ s, items }) => {
+            return (
+              <section
+                key={s.id}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setOver(s.id);
+                }}
+                onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
+                onDrop={() => void move(s.id)}
+                className={cn(
+                  // No box per stage: like amoCRM, every column sits on the one
+                  // page background, a header with a colored line over its cards.
+                  "group/stage flex w-[86vw] max-w-[320px] shrink-0 flex-col rounded-xl transition-colors sm:w-[320px]",
+                  over === s.id && "bg-primary/[0.06] ring-1 ring-primary/30",
                 )}
-              </div>
-            </section>
-          );
-        })}
+              >
+                <div className="flex-1 space-y-1.5 pb-2">
+                  {canCreateDeals && !selecting && <StageQuickAdd stageId={s.id} funnel={funnel} />}
+                  {items.map((l) => {
+                    const color = colorRules.length ? leadColor(l, colorRules, funnel, now) : null;
+                    return (
+                      <article
+                        key={l.id}
+                        draggable={canMoveDeals}
+                        onDragStart={() => setDragged(l.id)}
+                        onDragEnd={() => setDragged(null)}
+                        onClick={() =>
+                          selecting && selection
+                            ? selection.onToggle(l.id)
+                            : void navigate({
+                                to: "/crm/leads/$leadId",
+                                params: { leadId: l.id },
+                                search: { from: "funnels" },
+                              })
+                        }
+                        className={cn(
+                          "group relative cursor-pointer rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] shadow-[0_1px_1px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)] dark:border-white/[0.1] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
+                          canMoveDeals && "active:cursor-grabbing",
+                          dragged === l.id && "opacity-40",
+                          selection?.ids.has(l.id) &&
+                            "border-primary/60 bg-primary/[0.05] ring-1 ring-primary/30",
+                          color && LEAD_COLOR_CARD[color],
+                          liveIds?.has(l.id) &&
+                            "border-emerald-500/70 ring-2 ring-emerald-500/25 dark:border-emerald-400/60",
+                        )}
+                      >
+                        {liveIds?.has(l.id) && (
+                          <span className="absolute -top-2.5 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10.5px] font-bold text-white shadow-sm">
+                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white motion-reduce:animate-none" />
+                            {t("live.registering")}
+                          </span>
+                        )}
+                        {selection && (
+                          <Tick
+                            checked={selection.ids.has(l.id)}
+                            visible={selecting}
+                            label={t("bulk.selectLead")}
+                            onClick={() => selection.onToggle(l.id)}
+                            className="absolute -left-1.5 -top-1.5 z-10"
+                          />
+                        )}
+                        <KanbanLeadCard
+                          lead={{ ...l, leadNumber: chatInfo?.numbers.get(l.id) ?? null }}
+                          layout={layout}
+                          ctx={cardCtx}
+                          amoLink={getAmoLink(l.amocrmId)}
+                          chat={{
+                            last: chatInfo?.last.get(l.id) ?? null,
+                            hasPhoto: !!chatInfo?.photos.has(l.id),
+                          }}
+                        />
+                      </article>
+                    );
+                  })}
+                  {items.length === 0 && dragged && (
+                    <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
+                      {t("pipeline.dropHint")}
+                    </p>
+                  )}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       </div>
       {dragged &&
         (closingStages.length > 0 || canDeleteLead) &&
@@ -518,46 +578,4 @@ function Tick({
       <Check className="h-3.5 w-3.5" strokeWidth={3} />
     </button>
   );
-}
-
-/**
- * Like amoCRM: once the board is scrolled up under the page's pinned bar,
- * the stage names stay at the top instead of leaving the screen. The board
- * scrolls sideways by itself, which keeps CSS position: sticky from reaching
- * the page's own scroll, so the heads ([data-stage-head]) are moved down by
- * the distance scrolled past the bar (--board-stick, styles.css) -- and
- * still slide sideways with their columns.
- */
-function useStickyStageHeads(ref: RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
-    const board = ref.current;
-    const scroller = board?.closest("main");
-    if (!board || !scroller) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const bar = scroller.querySelector<HTMLElement>("[data-funnel-bar]");
-      const line = (bar ?? scroller).getBoundingClientRect()[bar ? "bottom" : "top"];
-      const box = board.getBoundingClientRect();
-      const head = board.querySelector<HTMLElement>("[data-stage-head]");
-      const most = Math.max(0, box.height - (head?.offsetHeight ?? 0) - 24);
-      const shift = Math.round(Math.min(most, Math.max(0, line - box.top)));
-      board.style.setProperty("--board-stick", `${shift}px`);
-      board.toggleAttribute("data-stuck", shift > 0);
-    };
-    const later = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    scroller.addEventListener("scroll", later, { passive: true });
-    window.addEventListener("resize", later);
-    const ro = new ResizeObserver(later);
-    ro.observe(board);
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      scroller.removeEventListener("scroll", later);
-      window.removeEventListener("resize", later);
-      ro.disconnect();
-    };
-  }, [ref]);
 }
