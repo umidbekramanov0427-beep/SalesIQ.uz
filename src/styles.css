@@ -2119,11 +2119,11 @@ html:has(.always-dark) {
       inset 0 0 0 1px color-mix(in oklab, var(--primary) 70%, black),
       0 12px 22px -10px color-mix(in oklab, var(--primary) 85%, transparent);
   }
-  /* A row of tabs: one plain panel (card colour, hairline edge) holding
-     the segments as words -- no tile per tab, no tint, no glow. The chosen
-     one is a solid brand chip with white text; hovering greys a segment. */
+  /* A row of tabs, as on the marketing panel: a soft well with a hairline
+     edge; the chosen segment is raised as a small card with a lit brand
+     dot in front of its word. Hovering greys a segment. */
   .ctl-track {
-    background: var(--card);
+    background: color-mix(in oklab, var(--foreground) 3.5%, var(--card));
     box-shadow:
       inset 0 0 0 1px var(--border),
       0 1px 2px rgb(16 24 40 / 0.05);
@@ -2142,10 +2142,25 @@ html:has(.always-dark) {
   .ctl-tab[aria-selected="true"],
   .ctl-tab[data-state="active"],
   .ctl-tab.is-on {
-    background: var(--primary);
-    color: var(--primary-foreground);
+    background: var(--card);
+    color: var(--foreground);
     font-weight: 600;
-    box-shadow: 0 1px 2px rgb(16 24 40 / 0.14);
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      0 1px 2px rgb(16 24 40 / 0.1);
+  }
+  .ctl-tab[aria-selected="true"]::before,
+  .ctl-tab[data-state="active"]::before,
+  .ctl-tab.is-on::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 2px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
   }
   @media (prefers-reduced-motion: reduce) {
     .ctl-soft:hover,

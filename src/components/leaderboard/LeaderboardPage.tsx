@@ -164,10 +164,13 @@ function TagFilter({
 export function Leaderboard({
   embedded = false,
   extraFilter,
+  renderTabs,
 }: {
   embedded?: boolean;
-  /** Shown at the end of the filter row (the home page's "Saqlash"). */
+  /** Shown at the end of the filter row (the home page's "Saqlash", "Hisobot"). */
   extraFilter?: ReactNode;
+  /** Bosh sahifa's tab row, with this view's filters on its right. */
+  renderTabs?: (filters: ReactNode) => ReactNode;
 } = {}) {
   const { t, lang } = useI18n();
   const { format, formatCompact } = useCurrency();
@@ -419,6 +422,46 @@ export function Leaderboard({
     </>
   );
 
+  // The view's filters: in their own card, or on the right of the home
+  // page's tab row (then in the same card as the other tabs' filters).
+  const filterRow = (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2.5",
+        renderTabs && "phone-joined rounded-2xl border border-border bg-card p-2.5 shadow-soft",
+      )}
+    >
+      <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
+      <FilterSelect
+        icon={GitBranch}
+        label={t("leadFilter.funnelLabel")}
+        value={funnel ?? ""}
+        onChange={(v) => setFunnel(v || null)}
+      >
+        <option value="">{t("leadFilter.allFunnels")}</option>
+        {funnelNames.map((f) => (
+          <option key={f} value={f}>
+            {f}
+          </option>
+        ))}
+      </FilterSelect>
+      <TagFilter
+        options={tagSummary.map((tg) => tg.name)}
+        selected={selectedTags}
+        onChange={setSelectedTags}
+      />
+      <AmountRangeFilter value={revenueRange} onChange={setRevenueRange} />
+      <FilterSearchInput
+        icon={Search}
+        label={t("leadFilter.searchLabel")}
+        value={search}
+        onChange={setSearch}
+        placeholder={t("lb.searchPlaceholder")}
+      />
+      {extraFilter}
+    </div>
+  );
+
   return (
     <>
       {embedded ? (
@@ -434,38 +477,7 @@ export function Leaderboard({
       )}
       {/* A rep's home: today's work first, then the ranking. */}
 
-      <SectionCard>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <DateRangeFilter value={dateFilter} onChange={setDateFilter} />
-          <FilterSelect
-            icon={GitBranch}
-            label={t("leadFilter.funnelLabel")}
-            value={funnel ?? ""}
-            onChange={(v) => setFunnel(v || null)}
-          >
-            <option value="">{t("leadFilter.allFunnels")}</option>
-            {funnelNames.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </FilterSelect>
-          <TagFilter
-            options={tagSummary.map((tg) => tg.name)}
-            selected={selectedTags}
-            onChange={setSelectedTags}
-          />
-          <AmountRangeFilter value={revenueRange} onChange={setRevenueRange} />
-          <FilterSearchInput
-            icon={Search}
-            label={t("leadFilter.searchLabel")}
-            value={search}
-            onChange={setSearch}
-            placeholder={t("lb.searchPlaceholder")}
-          />
-          {extraFilter}
-        </div>
-      </SectionCard>
+      {renderTabs ? renderTabs(filterRow) : <SectionCard>{filterRow}</SectionCard>}
 
       <Podium rows={enrichedRows} loading={isLoading} live={live} />
 

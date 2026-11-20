@@ -17,7 +17,6 @@ import {
   UserPlus,
   Wallet,
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
 import { useDesk, useMyOrganization, useOrgGeneralSettings } from "@/hooks/use-crm-data";
 import { useCurrency } from "@/lib/currency";
@@ -436,15 +435,14 @@ export function DeskTab({
             onClick={() => setPreset(p)}
           />
         ))}
+        <RangeForm
+          value={custom ?? { from: period.from, to: period.to }}
+          onApply={(v) => {
+            setCustom(v);
+            setPreset("range");
+          }}
+        />
       </FilterTile>
-      <RangePicker
-        active={preset === "range"}
-        value={custom ?? { from: period.from, to: period.to }}
-        onApply={(v) => {
-          setCustom(v);
-          setPreset("range");
-        }}
-      />
       <FilterTile
         icon={GitBranch}
         label={t("leadAnalytics.funnelLabel")}
@@ -519,44 +517,32 @@ export function DeskTab({
   );
 }
 
-function RangePicker({
-  active,
+/** «Oraliq» inside the period's list: from / to and «Qo'llash». */
+function RangeForm({
   value,
   onApply,
 }: {
-  active: boolean;
   value: { from: string; to: string };
   onApply: (v: { from: string; to: string }) => void;
 }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
   const [from, setFrom] = useState(value.from);
   const [to, setTo] = useState(value.to);
   useEffect(() => {
-    if (open) {
-      setFrom(value.from);
-      setTo(value.to);
-    }
-  }, [open, value.from, value.to]);
+    setFrom(value.from);
+    setTo(value.to);
+  }, [value.from, value.to]);
   const ok = from && to && from <= to;
   const input =
     "h-9 w-full rounded-[6px] border border-border bg-background px-2.5 text-[13px] tabular-nums outline-none focus:border-primary phone:text-base";
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={active}
-          data-state={active ? "active" : "inactive"}
-          className="ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-foreground data-[state=active]:text-primary"
-        >
-          <CalendarRange className="h-3.5 w-3.5" />
-          {t("desk.preset.range")}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="center" className="w-72 space-y-2.5 p-3">
-        <label className="block text-[12px] font-semibold text-muted-foreground">
+    <div className="mt-1.5 space-y-2 border-t border-border px-1.5 pb-1 pt-2.5">
+      <p className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground">
+        <CalendarRange className="h-3.5 w-3.5" />
+        {t("desk.preset.range")}
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block text-[11.5px] font-semibold text-muted-foreground">
           {t("desk.from")}
           <input
             type="date"
@@ -565,7 +551,7 @@ function RangePicker({
             className={cn(input, "mt-1")}
           />
         </label>
-        <label className="block text-[12px] font-semibold text-muted-foreground">
+        <label className="block text-[11.5px] font-semibold text-muted-foreground">
           {t("desk.to")}
           <input
             type="date"
@@ -574,18 +560,16 @@ function RangePicker({
             className={cn(input, "mt-1")}
           />
         </label>
-        <button
-          type="button"
-          disabled={!ok}
-          onClick={() => {
-            onApply({ from, to });
-            setOpen(false);
-          }}
-          className="ctl-lit h-9 w-full rounded-[6px] text-[13px] font-semibold disabled:opacity-50"
-        >
-          {t("desk.apply")}
-        </button>
-      </PopoverContent>
-    </Popover>
+      </div>
+      <button
+        type="button"
+        data-close-menu
+        disabled={!ok}
+        onClick={() => onApply({ from, to })}
+        className="ctl-lit h-9 w-full rounded-[6px] text-[13px] font-semibold disabled:opacity-50"
+      >
+        {t("desk.apply")}
+      </button>
+    </div>
   );
 }

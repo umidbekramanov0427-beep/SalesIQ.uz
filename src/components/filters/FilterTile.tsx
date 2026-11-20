@@ -49,7 +49,8 @@ export function FilterTile({
         className="max-h-80 w-64 overflow-y-auto rounded-xl p-1.5 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.35)]"
         onClick={(e) => {
           // A picked option closes the list.
-          if ((e.target as HTMLElement).closest(".filter-menu-option")) setOpen(false);
+          if ((e.target as HTMLElement).closest(".filter-menu-option, [data-close-menu]"))
+            setOpen(false);
         }}
       >
         {children}

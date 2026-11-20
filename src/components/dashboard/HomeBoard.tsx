@@ -680,13 +680,21 @@ export function CardBoard({
   items,
   toolbar,
   className,
+  editing: editingProp,
+  onEditingChange,
 }: {
   boardKey: string;
   items: CardBoardItem[];
   toolbar?: ReactNode;
   className?: string;
+  /** Set by the page when it shows «Panelni sozlash» itself (no button here). */
+  editing?: boolean;
+  onEditingChange?: (v: boolean) => void;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [ownEditing, setOwnEditing] = useState(false);
+  const controlled = editingProp !== undefined;
+  const editing = controlled ? editingProp : ownEditing;
+  const setEditing = onEditingChange ?? setOwnEditing;
   const widgets = useMemo<BoardWidget[]>(
     () =>
       items.map((i) => ({
@@ -710,7 +718,7 @@ export function CardBoard({
   );
   return (
     <div className={className}>
-      {!editing && (
+      {!editing && !controlled && (
         <div className="mb-3 flex items-center justify-end gap-2 phone:hidden">
           {toolbar}
           <BoardCustomizeButton onClick={() => setEditing(true)} />

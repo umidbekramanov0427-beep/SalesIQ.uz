@@ -112,7 +112,7 @@ export function GreetingHeader({
   actions,
 }: {
   orgName?: string | undefined;
-  actions: ReactNode;
+  actions?: ReactNode;
 }) {
   const { t, lang } = useI18n();
   const { user } = useAuth();
@@ -145,7 +145,6 @@ const SEGMENTS = [
   { key: "year", label: "home2.segYear" },
 ] as const;
 
-/** Bugun / Hafta / Oy / Yil -- shortcuts for the page's date filter. */
 export function PeriodSegment({
   value,
   onChange,

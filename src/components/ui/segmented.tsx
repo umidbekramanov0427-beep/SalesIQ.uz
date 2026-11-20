@@ -40,7 +40,7 @@ export function Segmented<T extends string>({
       className={cn(
         "ctl-track inline-flex max-w-full items-center overflow-x-auto [scrollbar-width:none]",
         centered
-          ? "gap-1.5 rounded-2xl p-1.5 shadow-[0_8px_24px_-14px_rgb(16_24_40/0.25)]"
+          ? "gap-1.5 rounded-2xl border border-border !bg-card p-2.5 shadow-soft"
           : consoleOn
             ? "gap-1 rounded-xl p-1"
             : "gap-1 rounded-[12px] p-[3px]",
@@ -57,7 +57,7 @@ export function Segmented<T extends string>({
           className={cn(
             "ctl-tab inline-flex shrink-0 items-center whitespace-nowrap font-medium",
             centered
-              ? "h-10 gap-2 rounded-xl px-4 text-[13.5px]"
+              ? "h-12 gap-2 rounded-[14px] px-4 text-[13.5px]"
               : "h-8 gap-1.5 rounded-[9px] px-3.5 text-[13px]",
           )}
         >

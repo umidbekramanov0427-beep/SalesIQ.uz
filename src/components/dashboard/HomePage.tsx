@@ -20,13 +20,9 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
+import { GreetingHeader, HomeOverviewPart, type KpiId } from "@/components/dashboard/HomeOverview";
 import {
-  GreetingHeader,
-  HomeOverviewPart,
-  type KpiId,
-  PeriodSegment,
-} from "@/components/dashboard/HomeOverview";
-import {
+  BoardCustomizeButton,
   CardBoard,
   type CardBoardItem,
   type BoardLayout,
@@ -356,6 +352,19 @@ export function HomePage() {
       }))}
     />
   );
+  // The one export on the page (Hisobot) -- the Reyting tab included (its
+  // manager table is in the report); it sits at the end of the filters.
+  const exportButton = (
+    <ReportExportDialog
+      funnelNames={funnelNames}
+      rops={rops}
+      operators={operators}
+      initialFunnel={funnel}
+      initialTeamId={teamId || null}
+      initialOperatorId={operatorId || null}
+    />
+  );
+  const [editingConv, setEditingConv] = useState(false);
   const conversionFilters = (
     <DashboardFilterRow
       show={TAB_FILTERS.conversion}
@@ -370,7 +379,12 @@ export function HomePage() {
       funnelNames={funnelNames}
       rops={rops}
       operators={operators}
-      extra={saveButton}
+      extra={
+        <>
+          {saveButton}
+          {exportButton}
+        </>
+      }
     />
   );
 
@@ -403,36 +417,34 @@ export function HomePage() {
 
   return (
     <>
-      <GreetingHeader
-        orgName={org?.name ?? undefined}
-        actions={
-          <>
-            <PeriodSegment value={dateFilter} onChange={setDateFilter} />
-            {/* The one export on the page -- the Reyting tab included (its
-              manager table is in the report). */}
-            <ReportExportDialog
-              funnelNames={funnelNames}
-              rops={rops}
-              operators={operators}
-              initialFunnel={funnel}
-              initialTeamId={teamId || null}
-              initialOperatorId={operatorId || null}
-            />
-          </>
-        }
-      />
+      <GreetingHeader orgName={org?.name ?? undefined} />
 
       <MyMeetingCard />
       <FirstStepsCard />
 
-      {tabsRow(tab === "conversion" ? conversionFilters : undefined)}
+      {/* Konversiya: «Panelni sozlash» in the corner above the tab row. */}
+      {tab === "conversion" && !editingConv && (
+        <div className="mb-2 flex justify-end phone:hidden">
+          <BoardCustomizeButton onClick={() => setEditingConv(true)} />
+        </div>
+      )}
+      {tab === "conversion" && tabsRow(conversionFilters)}
 
       {/* Keyed by tab so switching tabs plays .tab-enter (styles.css). */}
       <div key={tab} className="tab-enter">
         {tab === "rating" ? (
           <>
             <Suspense fallback={<Loading />}>
-              <Leaderboard embedded extraFilter={saveButton} />
+              <Leaderboard
+                embedded
+                extraFilter={
+                  <>
+                    {saveButton}
+                    {exportButton}
+                  </>
+                }
+                renderTabs={tabsRow}
+              />
             </Suspense>
             {analyticsOpen && (
               <div className="mt-6">
@@ -443,7 +455,12 @@ export function HomePage() {
         ) : (
           <div>
             {winLossReport.notice}
-            <CardBoard boardKey="home.conversion" items={conversionItems} />
+            <CardBoard
+              boardKey="home.conversion"
+              items={conversionItems}
+              editing={editingConv}
+              onEditingChange={setEditingConv}
+            />
           </div>
         )}
       </div>
