@@ -417,16 +417,20 @@ export function HomePage() {
 
   return (
     <>
-      <GreetingHeader orgName={org?.name ?? undefined} />
-
-      <MyMeetingCard />
-      <FirstStepsCard />
-
-      {/* Konversiya: «Panelni sozlash» in the corner above the tab row. */}
-      {tab === "conversion" && !editingConv && (
-        <div className="mb-2 flex justify-end phone:hidden">
-          <BoardCustomizeButton onClick={() => setEditingConv(true)} />
-        </div>
+      {/* Reyting draws this head itself, with Jonli / Yangilash on its right. */}
+      {tab === "conversion" && (
+        <>
+          <GreetingHeader
+            orgName={org?.name ?? undefined}
+            actions={
+              editingConv ? undefined : (
+                <BoardCustomizeButton onClick={() => setEditingConv(true)} />
+              )
+            }
+          />
+          <MyMeetingCard />
+          <FirstStepsCard />
+        </>
       )}
       {tab === "conversion" && tabsRow(conversionFilters)}
 
@@ -444,6 +448,13 @@ export function HomePage() {
                   </>
                 }
                 renderTabs={tabsRow}
+                renderTop={(controls) => (
+                  <>
+                    <GreetingHeader orgName={org?.name ?? undefined} actions={controls} />
+                    <MyMeetingCard />
+                    <FirstStepsCard />
+                  </>
+                )}
               />
             </Suspense>
             {analyticsOpen && (

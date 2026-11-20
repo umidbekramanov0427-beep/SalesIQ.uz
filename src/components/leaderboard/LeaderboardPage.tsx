@@ -165,12 +165,15 @@ export function Leaderboard({
   embedded = false,
   extraFilter,
   renderTabs,
+  renderTop,
 }: {
   embedded?: boolean;
   /** Shown at the end of the filter row (the home page's "Saqlash", "Hisobot"). */
   extraFilter?: ReactNode;
   /** Bosh sahifa's tab row, with this view's filters on its right. */
   renderTabs?: (filters: ReactNode) => ReactNode;
+  /** Bosh sahifa's head row, with Jonli / Yangilash on its right. */
+  renderTop?: (controls: ReactNode) => ReactNode;
 } = {}) {
   const { t, lang } = useI18n();
   const { format, formatCompact } = useCurrency();
@@ -465,7 +468,11 @@ export function Leaderboard({
   return (
     <>
       {embedded ? (
-        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">{controls}</div>
+        renderTop ? (
+          renderTop(controls)
+        ) : (
+          <div className="mb-4 flex flex-wrap items-center justify-end gap-2">{controls}</div>
+        )
       ) : (
         <PageHeader
           icon={Trophy}
