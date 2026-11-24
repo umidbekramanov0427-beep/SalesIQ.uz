@@ -9671,7 +9671,6 @@ const uz: Record<string, string> = {
   "mkt.exp.warm": "Iliq",
   "mkt.exp.cold": "Sovuq",
   "mkt.exp.conversion": "Konversiya %",
-  "desk.mainFigures": "Asosiy ko'rsatkichlar",
   "desk.funnelLabel": "Voronka:",
   "desk.periodTile": "DAVR",
   "desk.allFunnels": "Barcha voronkalar",

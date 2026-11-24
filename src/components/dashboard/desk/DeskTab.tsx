@@ -18,7 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { FilterTile, TileOption } from "@/components/filters/FilterTile";
-import { useDesk, useMyOrganization, useOrgGeneralSettings } from "@/hooks/use-crm-data";
+import { useDesk } from "@/hooks/use-crm-data";
 import { useCurrency } from "@/lib/currency";
 import { change, deskPeriod, type DeskData, type DeskPreset } from "@/lib/desk";
 import { useI18n } from "@/lib/i18n";
@@ -105,10 +105,13 @@ export type DeskView = {
 };
 
 export function DeskTab({
+  renderTop,
   renderTabs,
   onView,
   extra,
 }: {
+  /** The page's head (the greeting), with the desk's own buttons on its right. */
+  renderTop: (controls: ReactNode) => ReactNode;
   /** The page's tab row, with these filters on its right. */
   renderTabs: (filters: ReactNode) => ReactNode;
   /** Told whenever the period or funnel changes. */
@@ -118,10 +121,6 @@ export function DeskTab({
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
-  const { data: org } = useMyOrganization();
-  // Sozlamalar → Umumiy: the company's own logo, as in the sidebar.
-  const { data: orgGeneral } = useOrgGeneralSettings();
-  const companyLogo = orgGeneral?.company_logo_url ?? null;
 
   const [preset, setPresetState] = useState<DeskPreset>("month");
   const [custom, setCustom] = useState<{ from: string; to: string } | undefined>();
@@ -244,7 +243,6 @@ export function DeskTab({
     ]);
   }
 
-  const initial = (org?.name ?? "S").trim().slice(0, 1).toUpperCase();
   const btn =
     "ctl-soft inline-flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-foreground disabled:opacity-50";
 
@@ -454,7 +452,6 @@ export function DeskTab({
           <TileOption key={f} label={f} active={funnel === f} onClick={() => setFunnel(f)} />
         ))}
       </FilterTile>
-      {!editing && <BoardCustomizeButton onClick={() => setEditing(true)} />}
       <button type="button" className={btn} onClick={() => d && exportXlsx(d)} disabled={!d}>
         <Download className="h-4 w-4" />
         {t("desk.export")}
@@ -464,33 +461,12 @@ export function DeskTab({
 
   return (
     <div className="space-y-4">
-      {/* One row: the company (small, top left) and, on the right, the
-          desk's own controls -- they belong to this tab only; the page's
-          tabs come under this row. */}
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          {companyLogo ? (
-            <img
-              src={companyLogo}
-              alt=""
-              className="h-10 w-10 shrink-0 rounded-[10px] border border-border bg-card object-contain p-1"
-            />
-          ) : (
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-border bg-card text-[16px] font-bold text-primary">
-              {initial}
-            </span>
-          )}
-          <div className="min-w-0">
-            <h1 className="truncate font-display text-[18px] font-bold leading-tight tracking-tight text-foreground">
-              {org?.name ?? "—"}
-            </h1>
-            <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-              {t("desk.mainFigures")} · <span className="tabular-nums">{periodText}</span>
-              {isFetching && <Loader2 className="h-3 w-3 animate-spin" />}
-            </p>
-          </div>
-        </div>
-      </header>
+      {renderTop(
+        <span className="inline-flex items-center gap-2">
+          {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          {!editing && <BoardCustomizeButton onClick={() => setEditing(true)} />}
+        </span>,
+      )}
 
       {renderTabs(filters)}
 

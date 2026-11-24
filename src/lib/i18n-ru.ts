@@ -9508,7 +9508,6 @@ const ru: Record<string, string> = {
   "mkt.exp.warm": "Тёплые",
   "mkt.exp.cold": "Холодные",
   "mkt.exp.conversion": "Конверсия %",
-  "desk.mainFigures": "Основные показатели",
   "desk.funnelLabel": "Воронка:",
   "desk.periodTile": "ПЕРИОД",
   "desk.allFunnels": "Все воронки",

@@ -388,23 +388,29 @@ export function HomePage() {
     />
   );
 
-  // Umumiy brings its own head (company, period buttons, funnel, Eksport)
-  // with the tabs under it; its board holds the desk's cards and the rest.
+  // Umumiy: the same greeting head as the other tabs (Panelni sozlash on its
+  // right), then the tab row with the period, the funnel and Eksport.
   if (tab === "overview") {
     return (
       <>
-        <MyMeetingCard />
-        <FirstStepsCard />
         <div key={tab} className="tab-enter">
           <Suspense
             fallback={
               <>
+                <GreetingHeader orgName={org?.name ?? undefined} />
                 {tabsRow()}
                 <Loading />
               </>
             }
           >
             <DeskTab
+              renderTop={(controls) => (
+                <>
+                  <GreetingHeader orgName={org?.name ?? undefined} actions={controls} />
+                  <MyMeetingCard />
+                  <FirstStepsCard />
+                </>
+              )}
               renderTabs={tabsRow}
               onView={setDeskView}
               extra={{ widgets: boardWidgets, layout: BOARD_DEFAULTS }}
