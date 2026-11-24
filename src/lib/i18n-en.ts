@@ -6331,25 +6331,32 @@ export const en: Record<string, string> = {
   "mk.title": "Marketing keys",
   "mk.notReady": "The database needs updating: apply migration 20270131.",
   "mk.meta.title": "Meta ads (Facebook app)",
-  "mk.meta.info": "Companies press «Connect with Facebook» in Marketing → Settings → Sources through this app; ad spend arrives every hour.",
+  "mk.meta.info":
+    "Companies press «Connect with Facebook» in Marketing → Settings → Sources through this app; ad spend arrives every hour.",
   "mk.meta.env": "The app is set in the server's .env.",
   "mk.meta.panel": "The app is connected (App ID: {id}).",
-  "mk.meta.instagram": "The Instagram app is used. Without «Marketing API» (ads_read) on it ads won't connect — enter a separate Meta app.",
+  "mk.meta.instagram":
+    "The Instagram app is used. Without «Marketing API» (ads_read) on it ads won't connect — enter a separate Meta app.",
   "mk.meta.none": "No Meta app — companies cannot connect their ads.",
   "mk.meta.step1": "developers.facebook.com → My Apps → Create App → choose «Business».",
-  "mk.meta.step2": "Add «Facebook Login for Business» and «Marketing API» to the app (permission: ads_read).",
+  "mk.meta.step2":
+    "Add «Facebook Login for Business» and «Marketing API» to the app (permission: ads_read).",
   "mk.meta.step3": "Facebook Login → Settings → put this address in «Valid OAuth Redirect URIs»:",
-  "mk.meta.step4": "Copy App ID and App Secret from App settings → Basic and enter them below. Switch the app to «Live».",
+  "mk.meta.step4":
+    "Copy App ID and App Secret from App settings → Basic and enter them below. Switch the app to «Live».",
   "mk.meta.secretKeep": "App Secret (leave empty to keep)",
   "mk.meta.clear": "Remove the app",
   "mk.live.title": "Live streams service (tg-live)",
-  "mk.live.info": "The server's service: counts Telegram live viewers and takes frames from YouTube and Telegram streams.",
+  "mk.live.info":
+    "The server's service: counts Telegram live viewers and takes frames from YouTube and Telegram streams.",
   "mk.live.notConfigured": "The service is not set up on the server (TGLIVE_URL / TGLIVE_SECRET).",
   "mk.live.up": "The service is running.",
   "mk.live.down": "The service does not answer: restart salesiq-tglive on the server.",
-  "mk.live.telegram": "For Telegram live frames each company connects a Telegram account that admins the channel in Marketing → Settings → Sources.",
+  "mk.live.telegram":
+    "For Telegram live frames each company connects a Telegram account that admins the channel in Marketing → Settings → Sources.",
   "mk.yt.title": "YouTube live frame",
-  "mk.yt.info": "Frames are taken with yt-dlp + ffmpeg. If YouTube stops the server as a «bot», your YouTube account's cookies file is needed.",
+  "mk.yt.info":
+    "Frames are taken with yt-dlp + ffmpeg. If YouTube stops the server as a «bot», your YouTube account's cookies file is needed.",
   "mk.yt.test": "Test",
   "mk.yt.testing": "Taking a frame (30–60 seconds)…",
   "mk.yt.ok": "Frame taken — YouTube live pictures work.",
@@ -8760,7 +8767,7 @@ export const en: Record<string, string> = {
     "Taken every minute from YouTube and Telegram; “Total” is both together, dashed lines are the stream's events.",
   "mkt.wb.consoleTitle": "Live console",
   "mkt.wb.consoleDesc":
-    "Press when it happens — the current minute is saved. Telegram live, YouTube and SMS (from SalesIQ) are also recorded by themselves.",
+    "Moments are written by themselves from the stream's frames by AI (presentation, tariffs, timer, Q&A, lesson). TG live, YouTube and SMS are recorded too. Delete a wrong one and press by hand when needed.",
   "mkt.wb.eventsTitle": "Stream events",
   "mkt.wb.eventsDesc":
     "How many were watching at each event and the share of the peak. Click the time to fix it.",

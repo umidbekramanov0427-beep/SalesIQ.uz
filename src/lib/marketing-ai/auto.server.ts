@@ -106,8 +106,9 @@ function toBase64(data: Uint8Array | ArrayBuffer): string {
 /**
  * A new frame of a live webinar: when the company turned on "AI taxmini",
  * the AI says which moment it shows (prices, timer, presentation, Q&A,
- * lesson). A sure, new guess becomes an unconfirmed moment on the webinar
- * (counted only once confirmed). Returns the kind added, if any.
+ * lesson). A sure, new guess goes onto the webinar's console by itself
+ * (marked as found by AI; a wrong one is deleted there). Returns the kind
+ * added, if any.
  */
 export async function guessFromShot(input: {
   orgId: string;
@@ -161,7 +162,7 @@ export async function guessFromShot(input: {
     seq,
     auto: true,
     ai_guess: true,
-    confirmed: false,
+    confirmed: true,
     shot_id: input.shotId,
     meta: { confidence: guess.confidence, note: guess.note } as never,
   });

@@ -35,7 +35,7 @@ export type MarketingRules = {
 };
 
 export const DEFAULT_MARKETING_RULES: MarketingRules = {
-  shots: { enabled: true, everyMin: 5, youtubeFrame: true, aiGuess: false },
+  shots: { enabled: true, everyMin: 3, youtubeFrame: true, aiGuess: true },
   channels: {
     checkEveryMin: 60,
     statsEveryH: 6,

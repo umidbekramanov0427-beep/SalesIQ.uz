@@ -6469,25 +6469,34 @@ const uz: Record<string, string> = {
   "mk.title": "Marketing kalitlari",
   "mk.notReady": "Bazani yangilash kerak: 20270131 migratsiyasini qo'llang.",
   "mk.meta.title": "Meta reklama (Facebook ilovasi)",
-  "mk.meta.info": "Kompaniyalar Marketing → Sozlash → Manbalar'da «Facebook orqali ulash» tugmasini shu ilova orqali bosadi; reklama xarajati har soatda o'zi tushadi.",
+  "mk.meta.info":
+    "Kompaniyalar Marketing → Sozlash → Manbalar'da «Facebook orqali ulash» tugmasini shu ilova orqali bosadi; reklama xarajati har soatda o'zi tushadi.",
   "mk.meta.env": "Ilova serverning .env faylida sozlangan.",
   "mk.meta.panel": "Ilova ulangan (App ID: {id}).",
-  "mk.meta.instagram": "Instagram ilovasi ishlatilyapti. Unda «Marketing API» (ads_read) yoqilmagan bo'lsa, reklama ulanmaydi — alohida Meta ilovasini kiriting.",
+  "mk.meta.instagram":
+    "Instagram ilovasi ishlatilyapti. Unda «Marketing API» (ads_read) yoqilmagan bo'lsa, reklama ulanmaydi — alohida Meta ilovasini kiriting.",
   "mk.meta.none": "Meta ilovasi yo'q — kompaniyalar reklamani ulay olmaydi.",
   "mk.meta.step1": "developers.facebook.com → My Apps → Create App → «Business» turini tanlang.",
-  "mk.meta.step2": "Ilovaga «Facebook Login for Business» va «Marketing API» mahsulotlarini qo'shing (ruxsat: ads_read).",
-  "mk.meta.step3": "Facebook Login → Settings → «Valid OAuth Redirect URIs» ga shu manzilni qo'ying:",
-  "mk.meta.step4": "App settings → Basic'dan App ID va App Secret'ni nusxalab, quyiga kiriting. Ilovani «Live» rejimiga o'tkazing.",
+  "mk.meta.step2":
+    "Ilovaga «Facebook Login for Business» va «Marketing API» mahsulotlarini qo'shing (ruxsat: ads_read).",
+  "mk.meta.step3":
+    "Facebook Login → Settings → «Valid OAuth Redirect URIs» ga shu manzilni qo'ying:",
+  "mk.meta.step4":
+    "App settings → Basic'dan App ID va App Secret'ni nusxalab, quyiga kiriting. Ilovani «Live» rejimiga o'tkazing.",
   "mk.meta.secretKeep": "App Secret (o'zgarmasa bo'sh qoldiring)",
   "mk.meta.clear": "Ilovani o'chirish",
   "mk.live.title": "Jonli efirlar xizmati (tg-live)",
-  "mk.live.info": "Serverdagi xizmat: Telegram efirdagi tomoshabinlarni sanaydi va YouTube hamda Telegram efiridan kadr oladi.",
+  "mk.live.info":
+    "Serverdagi xizmat: Telegram efirdagi tomoshabinlarni sanaydi va YouTube hamda Telegram efiridan kadr oladi.",
   "mk.live.notConfigured": "Xizmat serverda sozlanmagan (TGLIVE_URL / TGLIVE_SECRET).",
   "mk.live.up": "Xizmat ishlayapti.",
-  "mk.live.down": "Xizmat javob bermayapti: serverda salesiq-tglive xizmatini qayta ishga tushiring.",
-  "mk.live.telegram": "Telegram efir rasmi uchun har bir kompaniya Marketing → Sozlash → Manbalar'da kanal admini bo'lgan Telegram akkauntni ulaydi.",
+  "mk.live.down":
+    "Xizmat javob bermayapti: serverda salesiq-tglive xizmatini qayta ishga tushiring.",
+  "mk.live.telegram":
+    "Telegram efir rasmi uchun har bir kompaniya Marketing → Sozlash → Manbalar'da kanal admini bo'lgan Telegram akkauntni ulaydi.",
   "mk.yt.title": "YouTube efir kadri",
-  "mk.yt.info": "Efirdan kadr yt-dlp + ffmpeg bilan olinadi. YouTube serverni «bot» deb to'xtatsa, YouTube akkauntingiz cookie fayli kerak bo'ladi.",
+  "mk.yt.info":
+    "Efirdan kadr yt-dlp + ffmpeg bilan olinadi. YouTube serverni «bot» deb to'xtatsa, YouTube akkauntingiz cookie fayli kerak bo'ladi.",
   "mk.yt.test": "Sinash",
   "mk.yt.testing": "Kadr olinmoqda (30–60 soniya)…",
   "mk.yt.ok": "Kadr olindi — YouTube efir rasmi ishlaydi.",
@@ -8931,7 +8940,7 @@ const uz: Record<string, string> = {
     "Har daqiqada YouTube va Telegram'dan o'zi olinadi; «Jami» — ikkalasi birga, uzuq chiziqlar — efir voqealari.",
   "mkt.wb.consoleTitle": "Efir pulti",
   "mkt.wb.consoleDesc":
-    "Efir paytida voqea bo'lganda bosing — hozirgi daqiqa yoziladi. TG efir, YouTube va SMS (SalesIQ'dan) o'zi ham yoziladi.",
+    "Voqealar efir kadrlaridan AI orqali o'zi yoziladi (taqdimot, ta'riflar, timer, savol-javob, dars). TG efir, YouTube va SMS ham o'zi yoziladi. Xato yozilganini o'chirib, kerak bo'lsa qo'lda bosing.",
   "mkt.wb.eventsTitle": "Efir voqealari",
   "mkt.wb.eventsDesc":
     "Har voqea paytida nechta odam bor edi va eng ko'pining necha foizi. Vaqtni bosib to'g'rilash mumkin.",

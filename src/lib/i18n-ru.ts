@@ -6366,25 +6366,32 @@ const ru: Record<string, string> = {
   "mk.title": "Ключи маркетинга",
   "mk.notReady": "Нужно обновить базу: примените миграцию 20270131.",
   "mk.meta.title": "Реклама Meta (приложение Facebook)",
-  "mk.meta.info": "Компании нажимают «Подключить через Facebook» в Маркетинг → Настройка → Источники через это приложение; расходы приходят каждый час.",
+  "mk.meta.info":
+    "Компании нажимают «Подключить через Facebook» в Маркетинг → Настройка → Источники через это приложение; расходы приходят каждый час.",
   "mk.meta.env": "Приложение задано в .env сервера.",
   "mk.meta.panel": "Приложение подключено (App ID: {id}).",
-  "mk.meta.instagram": "Используется приложение Instagram. Без «Marketing API» (ads_read) реклама не подключится — укажите отдельное приложение Meta.",
+  "mk.meta.instagram":
+    "Используется приложение Instagram. Без «Marketing API» (ads_read) реклама не подключится — укажите отдельное приложение Meta.",
   "mk.meta.none": "Нет приложения Meta — компании не могут подключить рекламу.",
   "mk.meta.step1": "developers.facebook.com → My Apps → Create App → тип «Business».",
-  "mk.meta.step2": "Добавьте в приложение «Facebook Login for Business» и «Marketing API» (разрешение ads_read).",
+  "mk.meta.step2":
+    "Добавьте в приложение «Facebook Login for Business» и «Marketing API» (разрешение ads_read).",
   "mk.meta.step3": "Facebook Login → Settings → вставьте этот адрес в «Valid OAuth Redirect URIs»:",
-  "mk.meta.step4": "Скопируйте App ID и App Secret из App settings → Basic и введите ниже. Переведите приложение в «Live».",
+  "mk.meta.step4":
+    "Скопируйте App ID и App Secret из App settings → Basic и введите ниже. Переведите приложение в «Live».",
   "mk.meta.secretKeep": "App Secret (оставьте пустым, чтобы не менять)",
   "mk.meta.clear": "Удалить приложение",
   "mk.live.title": "Сервис прямых эфиров (tg-live)",
-  "mk.live.info": "Сервис на сервере: считает зрителей эфира Telegram и берёт кадры из эфиров YouTube и Telegram.",
+  "mk.live.info":
+    "Сервис на сервере: считает зрителей эфира Telegram и берёт кадры из эфиров YouTube и Telegram.",
   "mk.live.notConfigured": "Сервис не настроен на сервере (TGLIVE_URL / TGLIVE_SECRET).",
   "mk.live.up": "Сервис работает.",
   "mk.live.down": "Сервис не отвечает: перезапустите salesiq-tglive на сервере.",
-  "mk.live.telegram": "Для кадров эфира Telegram каждая компания подключает аккаунт-админ канала в Маркетинг → Настройка → Источники.",
+  "mk.live.telegram":
+    "Для кадров эфира Telegram каждая компания подключает аккаунт-админ канала в Маркетинг → Настройка → Источники.",
   "mk.yt.title": "Кадр эфира YouTube",
-  "mk.yt.info": "Кадры берутся через yt-dlp + ffmpeg. Если YouTube останавливает сервер как «бота», нужен файл cookies вашего аккаунта YouTube.",
+  "mk.yt.info":
+    "Кадры берутся через yt-dlp + ffmpeg. Если YouTube останавливает сервер как «бота», нужен файл cookies вашего аккаунта YouTube.",
   "mk.yt.test": "Проверить",
   "mk.yt.testing": "Берём кадр (30–60 секунд)…",
   "mk.yt.ok": "Кадр получен — снимки эфира YouTube работают.",
@@ -8783,7 +8790,7 @@ const ru: Record<string, string> = {
     "Каждую минуту берётся из YouTube и Telegram; «Всего» — оба вместе, пунктир — события эфира.",
   "mkt.wb.consoleTitle": "Пульт эфира",
   "mkt.wb.consoleDesc":
-    "Нажимайте в момент события — запишется текущая минута. TG-эфир, YouTube и SMS (из SalesIQ) пишутся и сами.",
+    "События записываются сами по кадрам эфира через ИИ (презентация, тарифы, таймер, вопросы, урок). TG-эфир, YouTube и SMS тоже пишутся сами. Неверное удалите, при необходимости нажмите вручную.",
   "mkt.wb.eventsTitle": "События эфира",
   "mkt.wb.eventsDesc":
     "Сколько было зрителей в момент события и сколько это от пика. Время можно исправить.",
