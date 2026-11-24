@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Settings } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/lib/i18n";
@@ -105,13 +105,15 @@ function smooth(p: [number, number][]) {
 
 /**
  * A line chart over named items (stages, sources, managers): one point per
- * item with its value above and its name below. Lines only, never bars.
+ * item with its value above and its name below. Drawn in real pixels for the
+ * card's width, so the text stays the same size on a wide or a narrow card.
+ * Lines only, never bars; nothing to draw (all zero) says so instead.
  */
 export function CategoryLine({
   items,
   format = (n) => String(n),
   color = "#0552FB",
-  height = 220,
+  height = 230,
   className,
 }: {
   items: { name: string; value: number; sub?: string; accent?: string }[];
@@ -120,80 +122,116 @@ export function CategoryLine({
   height?: number;
   className?: string;
 }) {
-  const W = 640;
-  const H = height;
-  const top = 38;
-  const bottom = H - 34;
+  const { t } = useI18n();
+  const ref = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.round(e!.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const n = items.length;
-  const max = Math.max(1, ...items.map((i) => i.value));
-  const x = (i: number) => (n <= 1 ? W / 2 : 50 + (i * (W - 100)) / (n - 1));
+  const max = Math.max(0, ...items.map((i) => i.value));
+  if (!n || max <= 0)
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-xl border border-dashed border-border text-[13px] text-muted-foreground",
+          className,
+        )}
+        style={{ height: 140 }}
+      >
+        {t("an.noData")}
+      </div>
+    );
+  const H = height;
+  const top = 34;
+  const bottom = H - 44;
+  const pad = Math.min(90, Math.max(48, W / (n * 2)));
+  const x = (i: number) => (n <= 1 ? W / 2 : pad + (i * (W - 2 * pad)) / (n - 1));
   const y = (v: number) => bottom - (v / max) * (bottom - top);
   const pts = items.map((it, i) => [x(i), y(it.value)] as [number, number]);
   const line = smooth(pts);
   const id = `cl-${color.replace("#", "")}`;
-  if (!n) return null;
+  const room = n > 1 ? (W - 2 * pad) / (n - 1) : W;
+  const maxChars = Math.max(6, Math.floor(room / 7.5));
+  const cut = (s: string) => (s.length > maxChars ? `${s.slice(0, maxChars - 1)}…` : s);
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className={cn("h-auto w-full", className)}
-      role="img"
-      aria-label={items.map((i) => `${i.name}: ${format(i.value)}`).join(", ")}
-    >
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={color} stopOpacity="0.16" />
-          <stop offset="1" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <line x1="20" x2={W - 20} y1={bottom} y2={bottom} className="stroke-border" />
-      {n > 1 && (
-        <path
-          d={`${line} L${f1(x(n - 1))} ${bottom} L${f1(x(0))} ${bottom} Z`}
-          fill={`url(#${id})`}
-        />
-      )}
-      {n > 1 && <path d={line} fill="none" stroke={color} strokeWidth="2.75" />}
-      {items.map((it, i) => (
-        <g key={`${it.name}-${i}`}>
-          <circle
-            cx={x(i)}
-            cy={y(it.value)}
-            r="5"
-            fill={it.accent ?? color}
-            className="stroke-card"
-            strokeWidth="2.5"
-          >
-            <title>{`${it.name}: ${format(it.value)}`}</title>
-          </circle>
-          <text
-            x={x(i)}
-            y={y(it.value) - 12}
-            textAnchor="middle"
-            className="fill-foreground text-[13px] font-bold"
-          >
-            {format(it.value)}
-          </text>
-          <text
-            x={x(i)}
-            y={H - 14}
-            textAnchor="middle"
-            className="fill-muted-foreground text-[11.5px]"
-          >
-            {it.name.length > 16 ? `${it.name.slice(0, 15)}…` : it.name}
-          </text>
-          {it.sub && (
-            <text
-              x={x(i)}
-              y={H - 1}
-              textAnchor="middle"
-              className="fill-muted-foreground text-[10.5px]"
-            >
-              {it.sub}
-            </text>
+    <div ref={ref} className={cn("w-full", className)} style={{ height: H }}>
+      {W > 0 && (
+        <svg
+          width={W}
+          height={H}
+          role="img"
+          aria-label={items.map((i) => `${i.name}: ${format(i.value)}`).join(", ")}
+        >
+          <defs>
+            <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor={color} stopOpacity="0.16" />
+              <stop offset="1" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {[0, 0.5, 1].map((f) => (
+            <line
+              key={f}
+              x1={0}
+              x2={W}
+              y1={top + (bottom - top) * f}
+              y2={top + (bottom - top) * f}
+              className="stroke-border"
+              strokeDasharray={f === 1 ? undefined : "3 4"}
+            />
+          ))}
+          {n > 1 && (
+            <path
+              d={`${line} L${f1(x(n - 1))} ${bottom} L${f1(x(0))} ${bottom} Z`}
+              fill={`url(#${id})`}
+            />
           )}
-        </g>
-      ))}
-    </svg>
+          {n > 1 && <path d={line} fill="none" stroke={color} strokeWidth="2.5" />}
+          {items.map((it, i) => (
+            <g key={`${it.name}-${i}`} fontSize="12">
+              <circle
+                cx={x(i)}
+                cy={y(it.value)}
+                r="4.5"
+                fill={it.accent ?? color}
+                className="stroke-card"
+                strokeWidth="2.5"
+              >
+                <title>{`${it.name}: ${format(it.value)}`}</title>
+              </circle>
+              <text
+                x={x(i)}
+                y={y(it.value) - 11}
+                textAnchor="middle"
+                fontSize="12.5"
+                fontWeight="700"
+                className="fill-foreground"
+              >
+                {format(it.value)}
+              </text>
+              <text x={x(i)} y={H - 24} textAnchor="middle" className="fill-foreground">
+                {cut(it.name)}
+              </text>
+              {it.sub && (
+                <text
+                  x={x(i)}
+                  y={H - 8}
+                  textAnchor="middle"
+                  fontSize="11"
+                  className="fill-muted-foreground"
+                >
+                  {cut(it.sub)}
+                </text>
+              )}
+            </g>
+          ))}
+        </svg>
+      )}
+    </div>
   );
 }
 
