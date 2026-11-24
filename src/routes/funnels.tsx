@@ -1184,7 +1184,9 @@ function FunnelDetail({
   }, [headEl]);
 
   return (
-    <>
+    // 5CRM's board colours (the same skin as the funnel's settings): a
+    // full-bleed navy page in the dark theme, amoCRM's light one otherwise.
+    <div className="amo-skin -mx-4 -mb-4 -mt-4 min-h-[calc(100%+2rem)] bg-background px-4 pb-4 pt-4 text-foreground md:-mx-6 md:-mb-6 md:min-h-[calc(100%+2.5rem)] md:px-6 md:pb-6 phone:-mx-3 phone:-mt-3 phone:px-3 phone:pt-3">
       {/* Pinned under the app's own top bar so filters/view controls never
           scroll away on a page that's worked in all day -- the title row
           is icon-back + name only (no description, no full PageHeader),
@@ -1727,6 +1729,6 @@ function FunnelDetail({
         funnel={name}
         stages={funnelStages}
       />
-    </>
+    </div>
   );
 }

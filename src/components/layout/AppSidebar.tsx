@@ -69,7 +69,8 @@ import {
   useMyOrganization,
   useNotificationsView,
 } from "@/hooks/use-crm-data";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SalesPanel } from "@/components/layout/SalesPanel";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -442,26 +443,54 @@ function FunnelsNavGroup({
   const [expanded, setExpanded] = useState(() => active);
   const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const activeFunnel = typeof search["funnel"] === "string" ? search["funnel"] : undefined;
+  const [panel, setPanel] = useState(false);
+  const panelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (collapsed) {
+    // 5CRM's «Sotuv» panel: hovering the rail's Voronkalar opens the list of
+    // funnels and the sales directory beside it; a click still opens the page.
+    const enter = () => {
+      if (panelTimer.current) clearTimeout(panelTimer.current);
+      panelTimer.current = setTimeout(() => setPanel(true), 120);
+    };
+    const leave = () => {
+      if (panelTimer.current) clearTimeout(panelTimer.current);
+      panelTimer.current = setTimeout(() => setPanel(false), 250);
+    };
     return (
-      <RailTip label={t(`nav.${item.to}`)} show={false}>
-        <Link
-          to={item.to}
-          className={cn(
-            "group flex items-center transition-colors duration-150",
-            RAIL_ITEM,
-            active
-              ? "bg-sidebar-active text-sidebar-active-foreground"
-              : "text-sidebar-foreground hover:bg-accent",
-          )}
+      <Popover open={panel} onOpenChange={setPanel}>
+        <PopoverAnchor asChild>
+          <div onMouseEnter={enter} onMouseLeave={leave}>
+            <Link
+              to={item.to}
+              onClick={() => setPanel(false)}
+              className={cn(
+                "group flex items-center transition-colors duration-150",
+                RAIL_ITEM,
+                active
+                  ? "bg-sidebar-active text-sidebar-active-foreground"
+                  : "text-sidebar-foreground hover:bg-accent",
+              )}
+            >
+              <RailGlyph icon={item.icon} active={active} className={TONE_TEXT[item.tone]} />
+              <span className={cn(RAIL_LABEL, active ? "font-bold" : "font-semibold")}>
+                {railLabel(t, item.to)}
+              </span>
+            </Link>
+          </div>
+        </PopoverAnchor>
+        <PopoverContent
+          side="right"
+          align="start"
+          sideOffset={10}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onMouseEnter={enter}
+          onMouseLeave={leave}
+          className="amo-skin w-auto overflow-hidden rounded-xl p-0"
         >
-          <RailGlyph icon={item.icon} active={active} className={TONE_TEXT[item.tone]} />
-          <span className={cn(RAIL_LABEL, active ? "font-bold" : "font-semibold")}>
-            {railLabel(t, item.to)}
-          </span>
-        </Link>
-      </RailTip>
+          <SalesPanel {...(activeFunnel ? { activeFunnel } : {})} onDone={() => setPanel(false)} />
+        </PopoverContent>
+      </Popover>
     );
   }
 

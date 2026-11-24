@@ -25,6 +25,44 @@ export const STAGE_PALETTE = [
   "#64748b", // slate
 ] as const;
 
+/**
+ * The stage menu's 30 swatches in 5CRM's order: light, pastel, warm and
+ * muted tones on top, the deep ones under them. New stages still take their
+ * colour from STAGE_PALETTE (the 20 that tell neighbours apart best).
+ */
+export const STAGE_SWATCHES = [
+  "#c4c4cc",
+  "#93c5fd",
+  "#7dd3fc",
+  "#a78bfa",
+  "#f0abfc",
+  "#f5d0fe",
+  "#86efac",
+  "#5eead4",
+  "#fef08a",
+  "#fcd34d",
+  "#fdba74",
+  "#fca5a5",
+  "#ef4444",
+  "#d9f99d",
+  "#94a3b8",
+  "#1d4ed8",
+  "#4338ca",
+  "#6d28d9",
+  "#a21caf",
+  "#be185d",
+  "#b91c1c",
+  "#c2410c",
+  "#b45309",
+  "#4d7c0f",
+  "#15803d",
+  "#0f766e",
+  "#0e7490",
+  "#475569",
+  "#92400e",
+  "#9f1239",
+] as const;
+
 const norm = (c: string | null | undefined) => (c ?? "").trim().toLowerCase();
 
 /** The first palette color none of `used` has (after all 20, the least used one). */

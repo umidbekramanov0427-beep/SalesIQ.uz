@@ -41,6 +41,8 @@ import {
   Wallet,
   Waypoints,
   Webhook,
+  Pipette,
+  Trash2,
   X,
   Zap,
   type LucideIcon,
@@ -78,7 +80,7 @@ import { asDedupeMode, type DedupeMode } from "@/lib/leads/funnel-dedupe";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { defaultStageRows, missingDefaultStages } from "@/lib/funnel-defaults";
-import { STAGE_PALETTE, nextStageColor } from "@/lib/stage-colors";
+import { STAGE_SWATCHES, nextStageColor } from "@/lib/stage-colors";
 import { stageValueOf, stageValueOverrides, type StageValue } from "@/lib/stage-value";
 import { cn, describeError } from "@/lib/utils";
 
@@ -906,58 +908,41 @@ function StageColumn({
             </button>
           )}
           <span className="flex items-center gap-0.5">
-            {canManage ? (
-              <ColorDot color={color} onPick={(c) => save({ color: c })} />
-            ) : (
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-            )}
-            {canStructure && (!(stage.is_won || stage.is_lost) || stage.hidden) && (
-              <button
-                type="button"
-                onClick={() => save({ hidden: !stage.hidden })}
-                title={stage.hidden ? t("amo.show") : t("amo.hide")}
-                className={cn(
-                  "grid h-6 w-6 place-items-center rounded-[3px] transition-colors hover:bg-accent",
-                  stage.hidden ? "text-amber-400" : "text-muted-foreground",
-                )}
-              >
-                {stage.hidden ? (
-                  <EyeOff className="h-3.5 w-3.5" />
-                ) : (
-                  <Eye className="h-3.5 w-3.5" />
-                )}
-              </button>
-            )}
             {canStructure && !system && (
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
                 title={t("fs.deleteStage")}
-                className="grid h-6 w-6 place-items-center rounded-[3px] text-muted-foreground opacity-0 transition-[opacity,color] hover:bg-destructive/10 hover:text-destructive group-hover/head:opacity-100"
+                className="grid h-6 w-6 place-items-center rounded-[3px] text-rose-400/80 opacity-0 transition-[opacity,color] hover:bg-destructive/10 hover:text-rose-400 group-hover/head:opacity-100"
               >
-                <X className="h-3.5 w-3.5" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
+            {stage.hidden && (
+              <EyeOff className="h-3.5 w-3.5 text-amber-400" aria-label={t("amo.hide")} />
+            )}
+            {canManage ? (
+              <StageMenu
+                color={color}
+                onPick={(c) => save({ color: c })}
+                value={value}
+                valueOptions={VALUE_OPTIONS}
+                onValue={(v) => save({ stage_value: v, ...stageValueOverrides(stage, v) })}
+                quality={quality}
+                qualityOptions={QUALITY_OPTIONS}
+                onQuality={(v) => save({ lead_quality: v === "none" ? null : v })}
+                hidden={!!stage.hidden}
+                canHide={canStructure && (!(stage.is_won || stage.is_lost) || !!stage.hidden)}
+                onHidden={() => save({ hidden: !stage.hidden })}
+                leadCount={leadCount}
+              />
+            ) : (
+              <span
+                className="mx-1.5 h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+            )}
           </span>
-        </div>
-
-        <div className="space-y-1 px-2.5 pb-2">
-          <PickMenu
-            title={t("amo.valueTitle")}
-            value={value}
-            options={VALUE_OPTIONS}
-            disabled={!canManage}
-            tinted
-            onChange={(v) => save({ stage_value: v, ...stageValueOverrides(stage, v) })}
-          />
-          <PickMenu
-            title={t("amo.qualityTitle")}
-            value={quality}
-            options={QUALITY_OPTIONS}
-            disabled={!canManage}
-            tinted
-            onChange={(v) => save({ lead_quality: v === "none" ? null : v })}
-          />
         </div>
 
         <div className="relative h-[3px]" style={{ backgroundColor: color }}>
@@ -1036,7 +1021,38 @@ function StageColumn({
   );
 }
 
-function ColorDot({ color, onPick }: { color: string; onPick: (c: string) => void }) {
+/**
+ * The stage's menu, behind its colour dot (5CRM): the palette and any colour,
+ * what the stage means (sale, prepayment, refusal, ...), the lead quality it
+ * marks, showing or hiding it on the board, and how many leads are in it.
+ */
+function StageMenu<V extends string, Q extends string>({
+  color,
+  onPick,
+  value,
+  valueOptions,
+  onValue,
+  quality,
+  qualityOptions,
+  onQuality,
+  hidden,
+  canHide,
+  onHidden,
+  leadCount,
+}: {
+  color: string;
+  onPick: (c: string) => void;
+  value: V;
+  valueOptions: PickOption<V>[];
+  onValue: (v: V) => void;
+  quality: Q;
+  qualityOptions: PickOption<Q>[];
+  onQuality: (v: Q) => void;
+  hidden: boolean;
+  canHide: boolean;
+  onHidden: () => void;
+  leadCount: number | null;
+}) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   return (
@@ -1044,27 +1060,24 @@ function ColorDot({ color, onPick }: { color: string; onPick: (c: string) => voi
       <PopoverTrigger asChild>
         <button
           type="button"
-          title={t("amo.color")}
-          className="grid h-6 w-6 place-items-center rounded-[3px] transition-colors hover:bg-accent"
+          title={t("amo.stageMenu")}
+          className="grid h-6 w-6 place-items-center rounded-full transition-colors hover:bg-accent"
         >
           <span
-            className="h-2.5 w-2.5 rounded-full ring-2 ring-transparent transition-shadow hover:ring-white/30"
+            className="h-3 w-3 rounded-full ring-2 ring-transparent transition-shadow hover:ring-white/30"
             style={{ backgroundColor: color }}
           />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="amo-skin w-auto rounded-[6px] p-2.5">
-        <div className="grid grid-cols-5 gap-1.5">
-          {STAGE_PALETTE.map((c) => (
+      <PopoverContent align="end" className="amo-skin w-[300px] rounded-[10px] p-3">
+        <div className="grid grid-cols-5 gap-2">
+          {STAGE_SWATCHES.map((c) => (
             <button
               key={c}
               type="button"
-              onClick={() => {
-                setOpen(false);
-                onPick(c);
-              }}
+              onClick={() => onPick(c)}
               className={cn(
-                "h-7 w-7 rounded-full transition-transform hover:scale-110",
+                "h-9 w-full rounded-[8px] transition-transform hover:scale-105",
                 c.toLowerCase() === color.toLowerCase() &&
                   "ring-2 ring-foreground ring-offset-2 ring-offset-popover",
               )}
@@ -1072,6 +1085,61 @@ function ColorDot({ color, onPick }: { color: string; onPick: (c: string) => voi
               aria-label={c}
             />
           ))}
+        </div>
+        <label className="mt-3 flex cursor-pointer items-center gap-2.5 border-y border-[var(--amo-divider)] py-2.5 text-[13px] font-semibold text-foreground">
+          <span
+            className="h-7 w-7 shrink-0 rounded-full"
+            style={{
+              background:
+                "conic-gradient(#f43f5e, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #f43f5e)",
+            }}
+          />
+          <span className="flex-1">{t("amo.anyColor")}</span>
+          <span className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground">
+            <Pipette className="h-4 w-4" />
+          </span>
+          <input
+            type="color"
+            value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#3b82f6"}
+            onChange={(e) => onPick(e.target.value)}
+            className="sr-only"
+          />
+        </label>
+        <div className="mt-2 space-y-1">
+          <PickMenu
+            title={t("amo.valueTitle")}
+            value={value}
+            options={valueOptions}
+            tinted
+            onChange={onValue}
+          />
+          <PickMenu
+            title={t("amo.qualityTitle")}
+            value={quality}
+            options={qualityOptions}
+            tinted
+            onChange={onQuality}
+          />
+          {canHide && (
+            <button
+              type="button"
+              onClick={onHidden}
+              className="flex w-full items-center gap-2 rounded-[6px] px-2.5 py-2 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              {hidden ? (
+                <EyeOff className="h-4 w-4 text-amber-400" />
+              ) : (
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              )}
+              {hidden ? t("amo.show") : t("amo.hide")}
+              {hidden && (
+                <span className="ml-auto text-[11.5px] text-amber-400">{t("amo.hiddenNow")}</span>
+              )}
+            </button>
+          )}
+          <p className="px-2.5 pt-1 text-[12.5px] tabular-nums text-muted-foreground">
+            <b className="text-foreground">{leadCount ?? "…"}</b> {t("amo.leadsWord")}
+          </p>
         </div>
       </PopoverContent>
     </Popover>
