@@ -6,13 +6,27 @@
 //   META_REDIRECT_URI               (default https://salesiq.uz/marketing-api/meta-callback;
 //                                    add it to the Meta app's valid OAuth redirect URIs)
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { refreshPlatformIntegrations, savedMetaApp } from "@/lib/platform-integrations.server";
 import { openSecret, sealSecret } from "@/lib/secret-box.server";
 import { parseInsights, type InsightRow } from "@/lib/meta-ads";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 const env = (k: string) => process.env[k] || undefined;
-const appId = () => env("META_APP_ID") ?? env("INSTAGRAM_APP_ID");
-const appSecret = () => env("META_APP_SECRET") ?? env("INSTAGRAM_APP_SECRET");
+// The server's .env first, then the app saved in Platforma -> Sozlamalar ->
+// Marketing, then the Instagram app (one Meta app can serve both).
+const appId = () => env("META_APP_ID") ?? savedMetaApp().id ?? env("INSTAGRAM_APP_ID");
+const appSecret = () =>
+  env("META_APP_SECRET") ??
+  (savedMetaApp().id ? savedMetaApp().secret : null) ??
+  env("INSTAGRAM_APP_SECRET");
+
+/** Where the Meta app comes from, for the settings page. */
+export function metaAppSource(): "env" | "panel" | "instagram" | null {
+  if (env("META_APP_ID") && env("META_APP_SECRET")) return "env";
+  if (savedMetaApp().id && savedMetaApp().secret) return "panel";
+  if (env("INSTAGRAM_APP_ID") && env("INSTAGRAM_APP_SECRET")) return "instagram";
+  return null;
+}
 export const metaRedirectUri = () =>
   env("META_REDIRECT_URI") ?? "https://salesiq.uz/marketing-api/meta-callback";
 
@@ -57,6 +71,7 @@ async function graph<T>(path: string, params: Record<string, string>): Promise<T
 
 /** Code -> long-lived token -> the person and their ad accounts, saved for the company. */
 export async function metaFinish(orgId: string, userId: string, code: string): Promise<void> {
+  await refreshPlatformIntegrations();
   const short = await graph<{ access_token: string }>("/oauth/access_token", {
     client_id: appId() ?? "",
     client_secret: appSecret() ?? "",
@@ -161,6 +176,7 @@ export async function metaSyncOrg(a: MetaRow): Promise<number> {
 
 /** From the 5-minute cron: every connected company, once an hour. */
 export async function metaSyncDue(): Promise<number> {
+  await refreshPlatformIntegrations();
   if (!metaConfigured()) return 0;
   const stale = new Date(Date.now() - 55 * 60_000).toISOString();
   const { data, error } = await supabaseAdmin

@@ -134,3 +134,13 @@ def test_code_info():
     assert code_info(sent) == {"via": "app", "next": "sms", "timeout": 60}
     sent = auth.SentCode(type=auth.SentCodeTypeSms(length=5), phone_code_hash="h")
     assert code_info(sent) == {"via": "sms", "next": None, "timeout": None}
+
+
+def test_youtube_test_needs_secret_and_reports_reason(monkeypatch):
+    import app.main as m
+
+    monkeypatch.setattr(m, "youtube_probe", lambda vid, cookies=None: (None, "Sign in to confirm"))
+    c = TestClient(m.create_app(gateway=FakeGateway(), secret="s"))
+    assert c.post("/v1/youtube-test", json={"video_id": "LIVEvideo01"}).status_code == 401
+    r = c.post("/v1/youtube-test", json={"video_id": "LIVEvideo01"}, headers={"x-tglive-secret": "s"})
+    assert r.json() == {"ok": False, "error": "Sign in to confirm"}

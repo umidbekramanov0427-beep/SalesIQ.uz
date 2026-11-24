@@ -6472,6 +6472,9 @@ export type Database = {
       };
       platform_private: {
         Row: {
+          meta_app_id: string | null;
+          meta_app_secret_sealed: string | null;
+          youtube_cookies_sealed: string | null;
           id: boolean;
           staff_bot_token_sealed: string | null;
           ops_bot_token_sealed: string | null;
@@ -6482,6 +6485,9 @@ export type Database = {
           vapid_public_key: string | null;
         };
         Insert: {
+          meta_app_id?: string | null;
+          meta_app_secret_sealed?: string | null;
+          youtube_cookies_sealed?: string | null;
           id?: boolean;
           staff_bot_token_sealed?: string | null;
           ops_bot_token_sealed?: string | null;
@@ -6492,6 +6498,9 @@ export type Database = {
           vapid_public_key?: string | null;
         };
         Update: {
+          meta_app_id?: string | null;
+          meta_app_secret_sealed?: string | null;
+          youtube_cookies_sealed?: string | null;
           id?: boolean;
           staff_bot_token_sealed?: string | null;
           ops_bot_token_sealed?: string | null;

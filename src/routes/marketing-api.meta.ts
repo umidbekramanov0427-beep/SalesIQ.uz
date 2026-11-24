@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { refreshPlatformIntegrations } from "@/lib/platform-integrations.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireMarketingMember } from "@/lib/marketing.server";
 import { metaConfigured, metaStartUrl, metaSyncOrg } from "@/lib/meta-ads.server";
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/marketing-api/meta")({
           .eq("organization_id", caller.organizationId)
           .maybeSingle();
         return Response.json({
-          configured: metaConfigured(),
+          configured: (await refreshPlatformIntegrations(), metaConfigured()),
           account: data
             ? {
                 user: data.meta_user,
@@ -50,6 +51,7 @@ export const Route = createFileRoute("/marketing-api/meta")({
               .eq("organization_id", caller.organizationId);
             return Response.json({ ok: true });
           }
+          await refreshPlatformIntegrations();
           if (!metaConfigured())
             return Response.json({ error: "Meta ilovasi sozlanmagan" }, { status: 503 });
           if (body.action === "start") {

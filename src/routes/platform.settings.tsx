@@ -10,6 +10,7 @@ import {
   DatabaseBackup,
   FileSignature,
   LifeBuoy,
+  Megaphone,
   ShieldCheck,
   SlidersHorizontal,
   type LucideIcon,
@@ -23,6 +24,7 @@ import { ConsoleSideTabs, OwnerEmpty, OwnerHeader, OwnerPanel } from "@/componen
 import type { CardTone } from "@/lib/tones";
 import { RequisitesCard } from "@/components/platform/RequisitesCard";
 import { BackupCard } from "@/components/platform/BackupCard";
+import { MarketingKeysCards } from "@/components/platform/MarketingKeysCard";
 import { MeetingSettingsCard } from "@/components/owner/MeetingSettingsCard";
 import { MfaCard } from "@/components/settings/MfaCard";
 import { useAllAiAgents } from "@/hooks/use-crm-data";
@@ -39,6 +41,7 @@ const TABS = [
   "contacts",
   "meetings",
   "ai",
+  "marketing",
   "security",
   "backup",
 ] as const;
@@ -49,6 +52,7 @@ const ICONS: Record<Tab, LucideIcon> = {
   contacts: LifeBuoy,
   meetings: CalendarClock,
   ai: Bot,
+  marketing: Megaphone,
   security: ShieldCheck,
   backup: DatabaseBackup,
 };
@@ -58,6 +62,7 @@ const TONES: Record<Tab, CardTone> = {
   contacts: "amber",
   meetings: "amber",
   ai: "violet",
+  marketing: "sky",
   security: "rose",
   backup: "emerald",
 };
@@ -96,6 +101,7 @@ function OwnerSettingsPage() {
           {tab === "contacts" && <SupportContactsCard />}
           {tab === "meetings" && <MeetingSettingsCard />}
           {tab === "ai" && <AiAgentsPanel />}
+          {tab === "marketing" && <MarketingKeysCards />}
           {tab === "backup" && <BackupCard />}
           {tab === "security" && (
             <>

@@ -11,6 +11,7 @@ Run: TELEGRAM_API_ID=.. TELEGRAM_API_HASH=.. TGLIVE_SECRET=.. uvicorn app.main:a
 from __future__ import annotations
 
 import asyncio
+import base64
 import hmac
 import logging
 import os
@@ -18,7 +19,7 @@ import os
 from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel, Field
 
-from app.gateway import AdminRequired, Gateway, LoginError, NeedPassword, TelethonGateway, youtube_frame_sync
+from app.gateway import AdminRequired, Gateway, LoginError, NeedPassword, TelethonGateway, youtube_frame_sync, youtube_probe
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -39,6 +40,9 @@ class CodeIn(BaseModel):
 
 class YoutubeIn(BaseModel):
     video_id: str = Field(pattern=r"^[A-Za-z0-9_-]{11}$")
+    # A signed-in YouTube account's cookies.txt (Platforma -> Sozlamalar ->
+    # Marketing), when YouTube asks the server to prove it is not a bot.
+    cookies: str | None = Field(default=None, max_length=300_000)
 
 
 class ChannelIn(BaseModel):
@@ -152,14 +156,26 @@ def create_app(gateway: Gateway | None = None, secret: str | None = None) -> Fas
         # No Telegram account needed: yt-dlp + ffmpeg on the stream itself.
         try:
             if gw is not None:
-                jpg = await gw.youtube_frame(body.video_id)
+                jpg = (
+                    await gw.youtube_frame(body.video_id, cookies=body.cookies)
+                    if body.cookies
+                    else await gw.youtube_frame(body.video_id)
+                )
             else:
-                jpg = await asyncio.to_thread(youtube_frame_sync, body.video_id)
+                jpg = await asyncio.to_thread(youtube_frame_sync, body.video_id, body.cookies)
         except Exception:  # noqa: BLE001 - a frame is best effort
             jpg = None
         if not jpg:
             return Response(status_code=204)
         return Response(content=jpg, media_type="image/jpeg")
+
+    @app.post("/v1/youtube-test", dependencies=[Depends(auth)])
+    async def youtube_test(body: YoutubeIn) -> dict:
+        # The settings page's check: a frame, or exactly why there is none.
+        jpg, err = await asyncio.to_thread(youtube_probe, body.video_id, body.cookies)
+        if not jpg:
+            return {"ok": False, "error": err or "no frame"}
+        return {"ok": True, "image": base64.b64encode(jpg).decode("ascii")}
 
     return app
 

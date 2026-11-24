@@ -5,6 +5,7 @@ bots are not told how many people watch a channel's live stream.
 
 from __future__ import annotations
 
+import logging
 import asyncio
 import json
 import os
@@ -39,7 +40,7 @@ class Gateway(Protocol):
     async def finish_login(self, login_id: str, code: str, password: str | None) -> tuple[str, str]: ...
     async def live(self, session: str, channel: str) -> LiveInfo: ...
     async def frame(self, session: str, channel: str) -> bytes | None: ...
-    async def youtube_frame(self, video_id: str) -> bytes | None: ...
+    async def youtube_frame(self, video_id: str, cookies: str | None = None) -> bytes | None: ...
     async def channel_stats(self, session: str, channel: str) -> dict: ...
     async def admin_log(self, session: str, channel: str, since: float) -> list[dict]: ...
 
@@ -151,43 +152,61 @@ def admin_event(action_name: str) -> str | None:
     return None
 
 
+log = logging.getLogger("tglive")
+
 YOUTUBE_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 
 
-def youtube_stream_url(video_id: str) -> str | None:
-    """The live stream's playable (HLS) address, through yt-dlp. YouTube's
-    player needs a JavaScript runtime to be read; the VPS has Node."""
+def _yt_dlp_url(video_id: str, cookies: str | None) -> tuple[str | None, str | None]:
+    """The live stream's playable (HLS) address through yt-dlp, or why not.
+    YouTube's player needs a JavaScript runtime to be read; the VPS has Node.
+    `cookies` (a Netscape cookies.txt of a signed-in YouTube account) gets
+    past "Sign in to confirm you're not a bot" on a server's address."""
     if not YOUTUBE_ID.match(video_id):
-        return None
-    try:
-        r = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "yt_dlp",
-                "--quiet",
-                "--no-warnings",
-                "--no-playlist",
-                "--js-runtimes",
-                "node",
-                "-f",
-                "best[height<=720]/best",
-                "-g",
-                f"https://www.youtube.com/watch?v={video_id}",
-            ],
-            check=True,
-            timeout=45,
-            capture_output=True,
-            text=True,
-        )
-    except (subprocess.SubprocessError, FileNotFoundError):
-        return None
+        return None, "bad video id"
+    with tempfile.TemporaryDirectory() as d:
+        cmd = [
+            sys.executable,
+            "-m",
+            "yt_dlp",
+            "--quiet",
+            "--no-warnings",
+            "--no-playlist",
+            "--js-runtimes",
+            "node",
+            "-f",
+            "best[height<=720]/best",
+            "-g",
+        ]
+        if cookies and cookies.strip():
+            path = os.path.join(d, "cookies.txt")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(cookies)
+            cmd += ["--cookies", path]
+        cmd.append(f"https://www.youtube.com/watch?v={video_id}")
+        try:
+            r = subprocess.run(cmd, timeout=45, capture_output=True, text=True)
+        except subprocess.TimeoutExpired:
+            return None, "yt-dlp: timeout"
+        except FileNotFoundError:
+            return None, "yt-dlp not installed"
     url = r.stdout.strip().splitlines()[0] if r.stdout.strip() else ""
-    return url if url.startswith("http") else None
+    if url.startswith("http"):
+        return url, None
+    err = (r.stderr or "").strip().splitlines()
+    return None, (err[-1] if err else f"yt-dlp exit {r.returncode}")[:300]
+
+
+def youtube_stream_url(video_id: str, cookies: str | None = None) -> str | None:
+    return _yt_dlp_url(video_id, cookies)[0]
 
 
 def jpeg_from_stream(url: str) -> bytes | None:
     """The newest frame of a live HLS stream (or the first of a recording)."""
+    return _jpeg(url)[0]
+
+
+def _jpeg(url: str) -> tuple[bytes | None, str | None]:
     with tempfile.TemporaryDirectory() as d:
         out = os.path.join(d, "frame.jpg")
         cmd = ["ffmpeg", "-loglevel", "error", "-y"]
@@ -195,18 +214,31 @@ def jpeg_from_stream(url: str) -> bytes | None:
             cmd += ["-live_start_index", "-1"]
         cmd += ["-i", url, "-frames:v", "1", "-q:v", "3", out]
         try:
-            subprocess.run(cmd, check=True, timeout=30, capture_output=True)
-        except (subprocess.SubprocessError, FileNotFoundError):
-            return None
+            r = subprocess.run(cmd, timeout=30, capture_output=True, text=True)
+        except subprocess.TimeoutExpired:
+            return None, "ffmpeg: timeout"
+        except FileNotFoundError:
+            return None, "ffmpeg not installed"
         if not os.path.exists(out) or os.path.getsize(out) < 1000:
-            return None
+            err = (r.stderr or "").strip().splitlines()
+            return None, ("ffmpeg: " + (err[-1] if err else "no frame"))[:300]
         with open(out, "rb") as f:
-            return f.read()
+            return f.read(), None
 
 
-def youtube_frame_sync(video_id: str) -> bytes | None:
-    url = youtube_stream_url(video_id)
-    return jpeg_from_stream(url) if url else None
+def youtube_probe(video_id: str, cookies: str | None = None) -> tuple[bytes | None, str | None]:
+    """A frame of the stream, or the reason there is none (for the settings test)."""
+    url, err = _yt_dlp_url(video_id, cookies)
+    if not url:
+        return None, err
+    return _jpeg(url)
+
+
+def youtube_frame_sync(video_id: str, cookies: str | None = None) -> bytes | None:
+    jpg, err = youtube_probe(video_id, cookies)
+    if err:
+        log.warning("youtube frame %s: %s", video_id, err)
+    return jpg
 
 
 class TelethonGateway:
@@ -365,8 +397,8 @@ class TelethonGateway:
         mp4 = mp4_from_part(bytes(part.bytes))
         return await asyncio.to_thread(jpeg_from_mp4, mp4) if mp4 else None
 
-    async def youtube_frame(self, video_id: str) -> bytes | None:
-        return await asyncio.to_thread(youtube_frame_sync, video_id)
+    async def youtube_frame(self, video_id: str, cookies: str | None = None) -> bytes | None:
+        return await asyncio.to_thread(youtube_frame_sync, video_id, cookies)
 
     async def _graph(self, c, sender, g) -> dict | None:
         from telethon import functions, types

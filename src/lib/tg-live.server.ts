@@ -5,6 +5,7 @@
 // marketing_tg_accounts and passed along on each call.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { openSecret, sealSecret } from "@/lib/secret-box.server";
+import { refreshPlatformIntegrations, youtubeCookies } from "@/lib/platform-integrations.server";
 
 export function tgLiveConfigured(): boolean {
   return !!process.env["TGLIVE_URL"] && !!process.env["TGLIVE_SECRET"];
@@ -104,10 +105,45 @@ export async function tgFrame(session: string, channel: string): Promise<Uint8Ar
 
 /** A YouTube live stream's current frame (yt-dlp + ffmpeg on the VPS); null when none. */
 export async function ytFrame(videoId: string): Promise<Uint8Array | null> {
-  const res = await call("/v1/youtube-frame", { video_id: videoId }, 90_000);
+  await refreshPlatformIntegrations();
+  const cookies = youtubeCookies();
+  const res = await call(
+    "/v1/youtube-frame",
+    { video_id: videoId, ...(cookies ? { cookies } : {}) },
+    90_000,
+  );
   if (res.status !== 200) return null;
   const data = new Uint8Array(await res.arrayBuffer());
   return data.length > 1000 ? data : null;
+}
+
+/** Platforma -> Sozlamalar -> Marketing: a frame of a stream now, or exactly why not. */
+export async function ytTest(
+  videoId: string,
+): Promise<{ ok: true; image: string } | { ok: false; error: string }> {
+  await refreshPlatformIntegrations(true);
+  const cookies = youtubeCookies();
+  const res = await call(
+    "/v1/youtube-test",
+    { video_id: videoId, ...(cookies ? { cookies } : {}) },
+    90_000,
+  );
+  if (res.status === 404) return { ok: false, error: "tg-live eski: serverda uni yangilang" };
+  return json<{ ok: true; image: string } | { ok: false; error: string }>(res);
+}
+
+/** Is the tg-live service up? */
+export async function tgLiveHealth(): Promise<boolean> {
+  const base = process.env["TGLIVE_URL"];
+  if (!base) return false;
+  try {
+    const r = await fetch(`${base.replace(/\/$/, "")}/health`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
 }
 
 /** The account is not an admin of the channel (or Telegram has no statistics for it). */
