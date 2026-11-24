@@ -17,6 +17,8 @@ export type DeskStage = {
 
 export type DeskSale = {
   id: string;
+  /** The lead's name (for today's list). */
+  name?: string | null;
   owner_id: string | null;
   contact_id: string | null;
   source: string | null;
@@ -82,7 +84,22 @@ export type DeskData = {
   prev: DeskRange;
   funnels: string[];
   funnel: string | null;
-  today: { revenue: number; count: number; yRevenue: number; yCount: number; until: string };
+  today: {
+    revenue: number;
+    count: number;
+    yRevenue: number;
+    yCount: number;
+    until: string;
+    /** Today's sales, newest first (time in the company's zone). */
+    list: {
+      id: string;
+      time: string;
+      name: string;
+      owner: string;
+      funnel: string;
+      revenue: number;
+    }[];
+  };
   revenue: Pair;
   count: Pair;
   avgCheck: Pair;
@@ -362,6 +379,20 @@ export function computeDesk(i: DeskInput): DeskData {
       yRevenue: sum(yest),
       yCount: yest.length,
       until: `${pad(nowLocal.getUTCHours())}:${pad(nowLocal.getUTCMinutes())}`,
+      list: [...tod]
+        .sort((a, b) => t(b.at) - t(a.at))
+        .slice(0, 12)
+        .map((s) => {
+          const at = new Date(t(s.at) + i.tz * 60_000);
+          return {
+            id: s.id,
+            time: `${pad(at.getUTCHours())}:${pad(at.getUTCMinutes())}`,
+            name: s.name ?? "",
+            owner: i.people.find((p) => p.id === s.owner_id)?.name ?? "",
+            funnel: s.funnel ?? "",
+            revenue: s.revenue,
+          };
+        }),
     },
     revenue: { cur: cr, prev: pr },
     count: { cur: cur.length, prev: prev.length },

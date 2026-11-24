@@ -39,6 +39,7 @@ const revenueOf = (l: { expected_revenue: number | null; budget: number | null }
 
 type SaleRow = {
   id: string;
+  name?: string | null;
   owner_id: string | null;
   contact_id: string | null;
   source: string | null;
@@ -76,7 +77,7 @@ async function wonLeads(v: Viewer, wonIds: string[], from: string, to: string) {
     let q = supabaseAdmin
       .from("leads")
       .select(
-        "id, owner_id, contact_id, source, funnel, budget, expected_revenue, stage_changed_at",
+        "id, name, owner_id, contact_id, source, funnel, budget, expected_revenue, stage_changed_at",
       )
       .eq("organization_id", v.orgId)
       .in("stage_id", wonIds)
@@ -167,6 +168,7 @@ export async function gatherDesk(
 
   const toSale = (r: SaleRow): DeskSale => ({
     id: r.id,
+    name: r.name ?? null,
     owner_id: r.owner_id,
     contact_id: r.contact_id,
     source: r.source,

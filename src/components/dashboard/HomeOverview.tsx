@@ -1,3 +1,4 @@
+import { CardViewToggle, CategoryLine, useCardView } from "@/components/dashboard/desk/CardView";
 import { useId, useMemo, type ReactNode } from "react";
 import { PageTools } from "@/components/layout/PageTools";
 import { Link } from "@tanstack/react-router";
@@ -1226,8 +1227,7 @@ function TaskDiscipline({ o }: { o: Overview }) {
 
 function CallTypes({ o }: { o: Overview }) {
   const { t } = useI18n();
-  const settings: HomeCardDefaults = {};
-  const view = (["donut", "bars", "list"] as const).find((v) => v === settings.view) ?? "donut";
+  const [view, setView] = useCardView("home.calls");
   const c = o.callTypes;
   const parts = [
     { key: "repeat", label: t("home2.ctRepeat"), n: c.repeat, color: "#5b8cff" },
@@ -1235,108 +1235,36 @@ function CallTypes({ o }: { o: Overview }) {
     { key: "other", label: t("home2.ctOther"), n: c.other, color: "#e8a93a" },
   ];
   const share = (n: number) => (c.total ? Math.round((n / c.total) * 100) : 0);
-  const r = 52;
-  const circ = 2 * Math.PI * r;
-  let off = 0;
-  const legend = (
-    <div className="min-w-0 flex-1">
-      {parts.map((p) => (
-        <div key={p.key} className="flex items-center gap-2.5 py-1.5">
-          <i className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: p.color }} />
-          <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground">{p.label}</span>
-          <span className="w-10 text-right text-[12.5px] tabular-nums text-subtle">
-            {share(p.n)}%
-          </span>
-          <b className="w-12 text-right tabular-nums text-foreground">{p.n}</b>
-        </div>
-      ))}
-    </div>
-  );
   return (
     <div className="surface-card min-w-0 p-5">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold text-foreground">{t("home2.ctTitle")}</h3>
+          <h3 className="text-base font-bold text-foreground">
+            {t("home2.ctTitle")} · <span className="tabular-nums">{c.total}</span>
+          </h3>
           <p className="mt-0.5 text-[12.5px] text-subtle">{t("home2.ctDesc")}</p>
         </div>
+        <CardViewToggle view={view} onChange={setView} />
       </div>
-
-      {view === "donut" && (
-        <div className="mt-3 flex items-center gap-6 phone:flex-col phone:items-stretch">
-          <svg width="140" height="140" viewBox="0 0 140 140" className="shrink-0 self-center">
-            <circle r={r} cx="70" cy="70" fill="none" stroke="var(--muted)" strokeWidth="18" />
-            {c.total > 0 &&
-              parts.map((p) => {
-                const seg = (circ * p.n) / c.total;
-                const el = (
-                  <circle
-                    key={p.key}
-                    r={r}
-                    cx="70"
-                    cy="70"
-                    fill="none"
-                    stroke={p.color}
-                    strokeWidth="18"
-                    strokeDasharray={`${Math.max(0, seg - (p.n ? 3 : 0))} ${circ}`}
-                    strokeDashoffset={-off}
-                    transform="rotate(-90 70 70)"
-                  />
-                );
-                off += seg;
-                return el;
-              })}
-            <text
-              x="70"
-              y="68"
-              textAnchor="middle"
-              className="fill-foreground"
-              fontSize="22"
-              fontWeight="700"
-            >
-              {c.total}
-            </text>
-            <text
-              x="70"
-              y="86"
-              textAnchor="middle"
-              className="fill-[var(--muted-foreground)]"
-              fontSize="11"
-            >
-              {t("home2.ctCalls")}
-            </text>
-          </svg>
-          {legend}
-        </div>
-      )}
-      {view === "bars" && (
-        <div className="mt-4 space-y-3.5">
+      {view === "chart" ? (
+        <CategoryLine
+          className="mt-3"
+          items={parts.map((p) => ({ name: p.label, value: p.n, sub: `${share(p.n)}%` }))}
+        />
+      ) : (
+        <div className="mt-3 divide-y divide-dashed divide-border">
           {parts.map((p) => (
-            <div key={p.key}>
-              <div className="flex items-baseline justify-between gap-3 text-[13px]">
-                <span className="truncate text-foreground">{p.label}</span>
-                <span className="tabular-nums text-subtle">
-                  <b className="text-foreground">{p.n}</b> · {share(p.n)}%
-                </span>
-              </div>
-              <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${share(p.n)}%`, background: p.color }}
-                />
-              </div>
+            <div key={p.key} className="flex items-center gap-2.5 py-2.5">
+              <i className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: p.color }} />
+              <span className="min-w-0 flex-1 truncate text-[13.5px] text-foreground">
+                {p.label}
+              </span>
+              <span className="w-10 text-right text-[12.5px] tabular-nums text-subtle">
+                {share(p.n)}%
+              </span>
+              <b className="w-12 text-right tabular-nums text-foreground">{p.n}</b>
             </div>
           ))}
-          <p className="text-[12.5px] text-subtle">
-            {t("cardset.totalCalls")} <b className="text-foreground">{c.total}</b>
-          </p>
-        </div>
-      )}
-      {view === "list" && (
-        <div className="mt-3">
-          {legend}
-          <p className="mt-1 border-t border-border pt-2 text-[12.5px] text-subtle">
-            {t("cardset.totalCalls")} <b className="text-foreground">{c.total}</b>
-          </p>
         </div>
       )}
     </div>

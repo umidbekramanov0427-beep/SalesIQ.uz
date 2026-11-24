@@ -130,6 +130,35 @@ function SummaryTab({ data, who }: { data: AnalyticsData; who: Who }) {
     rows.reduce((s, r) => s + (typeof r[k] === "number" ? (r[k] as number) : 0), 0);
   const won = sum("won");
   const lost = sum("lost");
+  // Each column's best (green) and weakest (red) person, when there are two or more.
+  const mark = (
+    k: "newLeads" | "won" | "lost" | "conversion" | "tasksDone" | "calls" | "messages",
+    v: number,
+    lowerIsBetter = false,
+  ) => {
+    if (rows.length < 2) return v;
+    const vals = rows.map((r) => r[k]);
+    const hi = Math.max(...vals);
+    const lo = Math.min(...vals);
+    if (hi === lo) return v;
+    const best = lowerIsBetter ? lo : hi;
+    const worst = lowerIsBetter ? hi : lo;
+    const cls =
+      v === best
+        ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
+        : v === worst
+          ? "bg-rose-500/12 text-rose-700 dark:text-rose-300"
+          : "";
+    return cls ? (
+      <span className={`rounded-md px-1.5 py-0.5 font-semibold ${cls}`}>
+        {k === "conversion" ? `${v}%` : v}
+      </span>
+    ) : k === "conversion" ? (
+      `${v}%`
+    ) : (
+      v
+    );
+  };
   return (
     <SectionCard
       icon={Users}
@@ -159,27 +188,27 @@ function SummaryTab({ data, who }: { data: AnalyticsData; who: Who }) {
             {rows.map((r) => (
               <tr key={r.ownerId ?? "none"} className="border-b border-border/60 last:border-0">
                 <Td strong>{who(r.ownerId)}</Td>
-                <Td right>{r.newLeads}</Td>
+                <Td right>{mark("newLeads", r.newLeads)}</Td>
                 <Td right>
                   {r.open}
                   <span className="ml-1.5 text-[12px] text-muted-foreground">
                     {format(r.openSum)}
                   </span>
                 </Td>
-                <Td right className="text-success">
-                  {r.won}
+                <Td right>
+                  {mark("won", r.won)}
                   <span className="ml-1.5 text-[12px] text-muted-foreground">
                     {format(r.wonSum)}
                   </span>
                 </Td>
-                <Td right>{r.lost}</Td>
+                <Td right>{mark("lost", r.lost, true)}</Td>
                 <Td right strong>
-                  {r.conversion}%
+                  {mark("conversion", r.conversion)}
                 </Td>
                 <Td right>{format(r.avgCheck)}</Td>
-                <Td right>{r.tasksDone}</Td>
-                <Td right>{r.calls}</Td>
-                <Td right>{r.messages}</Td>
+                <Td right>{mark("tasksDone", r.tasksDone)}</Td>
+                <Td right>{mark("calls", r.calls)}</Td>
+                <Td right>{mark("messages", r.messages)}</Td>
               </tr>
             ))}
           </tbody>

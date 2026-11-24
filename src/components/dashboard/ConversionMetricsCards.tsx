@@ -6,7 +6,7 @@ import { FigureCard } from "@/components/layout/Primitives";
 import { FitText } from "@/components/ui/fit-text";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { TONE_TEXT, type CardTone } from "@/lib/tones";
+import type { CardTone } from "@/lib/tones";
 import { conversionMetrics, type Rate } from "@/lib/conversion-metrics";
 
 const FILL: Record<CardTone, string> = {
@@ -59,7 +59,6 @@ function MetricCard({
       label={title}
       tools={<CardTools chrome={chrome} label={title} text={info} />}
       value={loading ? <Skeleton className="mt-1 h-8 w-24" /> : <FitText>{rate.pct}%</FitText>}
-      valueClassName={cn(TONE_TEXT[tone])}
     >
       <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
@@ -67,16 +66,10 @@ function MetricCard({
           style={{ width: `${Math.min(100, rate.pct)}%` }}
         />
       </div>
-      <dl className="mt-3 space-y-1 text-[13px]">
-        <div className="flex items-center justify-between gap-2">
-          <dt className="text-muted-foreground">{numLabel}</dt>
-          <dd className="font-semibold tabular-nums text-foreground">{rate.num}</dd>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <dt className="text-muted-foreground">{denLabel}</dt>
-          <dd className="font-semibold tabular-nums text-foreground">{rate.den}</dd>
-        </div>
-      </dl>
+      <p className="mt-2.5 text-[12.5px] tabular-nums text-muted-foreground">
+        <b className="font-semibold text-foreground">{rate.num}</b> {numLabel.toLowerCase()} /{" "}
+        <b className="font-semibold text-foreground">{rate.den}</b> {denLabel.toLowerCase()}
+      </p>
     </FigureCard>
   );
 }

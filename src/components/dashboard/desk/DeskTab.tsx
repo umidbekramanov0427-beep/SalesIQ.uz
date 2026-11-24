@@ -26,6 +26,7 @@ import { cn, describeError } from "@/lib/utils";
 import { downloadXlsx } from "@/lib/xlsx-write";
 import {
   ChannelsBlock,
+  TodayBlock,
   DynamicsBlock,
   FunnelBlock,
   ManagersBlock,
@@ -51,34 +52,44 @@ const PRESET_STORE = "desk.preset.v1";
 
 const KPI_SIZES: Span[] = [3, 4, 6, 12];
 const BLOCK_SIZES: Span[] = [6, 8, 12];
+// Bosh sahifa's look «Kassa» (the owner's pick): the main figures on top,
+// then the sales curve with today's sales beside it, then the lists.
 const DESK_DEFAULTS: BoardLayout = {
   order: [
-    "today",
     "revenue",
     "count",
     "avgCheck",
+    "conversion",
     "newClients",
     "repeat",
-    "conversion",
+    "kpi:newLeads",
+    "kpi:cycle",
+    "dynamics",
+    "today",
     "channels",
     "sources",
-    "dynamics",
     "funnel",
     "managers",
+    "tasks",
+    "calls",
   ],
   size: {
+    revenue: 3,
+    count: 3,
+    avgCheck: 3,
+    conversion: 3,
+    newClients: 3,
+    repeat: 3,
+    "kpi:newLeads": 3,
+    "kpi:cycle": 3,
+    dynamics: 8,
     today: 4,
-    revenue: 4,
-    count: 4,
-    avgCheck: 4,
-    newClients: 4,
-    repeat: 4,
-    conversion: 4,
     channels: 12,
-    sources: 12,
-    dynamics: 12,
-    funnel: 12,
+    sources: 6,
+    funnel: 6,
     managers: 12,
+    tasks: 6,
+    calls: 6,
   },
 };
 
@@ -145,8 +156,11 @@ export function DeskTab({
     () =>
       extra
         ? {
-            order: [...DESK_DEFAULTS.order, ...extra.layout.order],
-            size: { ...DESK_DEFAULTS.size, ...extra.layout.size },
+            order: [
+              ...DESK_DEFAULTS.order,
+              ...extra.layout.order.filter((id) => !DESK_DEFAULTS.order.includes(id)),
+            ],
+            size: { ...extra.layout.size, ...DESK_DEFAULTS.size },
           }
         : DESK_DEFAULTS,
     [extra],
@@ -243,22 +257,8 @@ export function DeskTab({
           title: t("desk.today"),
           icon: Wallet,
           tone: "emerald",
-          sizes: KPI_SIZES,
-          node: (
-            <DeskKpi
-              tipKey="desk.today"
-              label={t("desk.today")}
-              icon={Wallet}
-              tone="emerald"
-              rawValue={d.today.revenue}
-              value={format(d.today.revenue)}
-              change={change({ cur: d.today.revenue, prev: d.today.yRevenue })}
-              prevText={t("desk.yesterdayUntil", {
-                time: d.today.until,
-                v: format(d.today.yRevenue),
-              })}
-            />
-          ),
+          sizes: [4, 6, 12],
+          node: <TodayBlock d={d} />,
         },
         {
           id: "revenue",
@@ -505,7 +505,7 @@ export function DeskTab({
       ) : (
         <>
           <HomeBoard
-            boardKey="desk"
+            boardKey="desk.kassa"
             widgets={extra ? [...boardWidgets, ...extra.widgets] : boardWidgets}
             defaults={defaults}
             editing={editing}

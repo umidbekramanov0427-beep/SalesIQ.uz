@@ -49,17 +49,46 @@ export function DeskKpi({
       tone={tone}
       label={label}
       labelExtra={titleExtra}
-      tools={<CardTools chrome={chrome} label={label} />}
+      tools={
+        <>
+          {change !== undefined && <DeltaChip value={change} />}
+          <CardTools chrome={chrome} label={label} />
+        </>
+      }
       value={value}
     >
       {children}
-      {change !== undefined && (
-        <FigureLine>
-          <Change value={change} />
-        </FigureLine>
-      )}
       {prevText && <FigureLine className="tabular-nums">{prevText}</FigureLine>}
     </FigureCard>
+  );
+}
+
+/** The change against the period before as a small pill (top right of a card). */
+export function DeltaChip({
+  value,
+  lowerIsBetter = false,
+}: {
+  value: number | null;
+  lowerIsBetter?: boolean;
+}) {
+  if (value === null)
+    return (
+      <span className="rounded-full bg-muted px-2 py-0.5 text-[12px] font-semibold text-muted-foreground">
+        —
+      </span>
+    );
+  const good = lowerIsBetter ? value <= 0 : value >= 0;
+  return (
+    <span
+      className={
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-semibold tabular-nums " +
+        (good
+          ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
+          : "bg-rose-500/12 text-rose-700 dark:text-rose-300")
+      }
+    >
+      {value >= 0 ? "↑" : "↓"} {Math.abs(value)}%
+    </span>
   );
 }
 
