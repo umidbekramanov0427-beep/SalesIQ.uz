@@ -175,7 +175,7 @@ def _yt_dlp_url(video_id: str, cookies: str | None) -> tuple[str | None, str | N
             "--js-runtimes",
             "node",
             "-f",
-            "best[height<=720]/best",
+            "best[height<=720]/best/bestvideo[height<=720]/bestvideo",
             "-g",
         ]
         if cookies and cookies.strip():
