@@ -53,11 +53,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { LOSS_REASON_KEYS } from "@/components/crm/RequiredTaskDialog";
 import { ruleToDraft, type StageLite } from "@/components/funnel-settings/AutomationsTab";
-import {
-  CelebrateCard,
-  MorningBoostCard,
-  NotifyCenterCard,
-} from "@/components/funnel-settings/ExtraSettingsCards";
+import {} from "@/components/funnel-settings/ExtraSettingsCards";
+import { FunnelNotifyCard } from "@/components/funnel-settings/FunnelNotifyDialog";
 import { TriggerCatalog, type SettingsTabKey } from "@/components/funnel-settings/TriggerCatalog";
 import { AmoCard, AmoToggle, PickMenu, type PickOption } from "./AmoControls";
 import {
@@ -97,6 +94,8 @@ import { cn, describeError } from "@/lib/utils";
 export type NewTrigger = (stage: StageLite, actions: AutomationAction[]) => void;
 export type EditTrigger = (stage: StageLite, rule: AutomationRuleRow) => void;
 
+/** Empty grid cells offered for a new trigger under each stage. */
+const EMPTY_ROWS = 10;
 const ROW = 65; // one grid row, like amoCRM's trigger cells
 
 const fail = (t: (k: string) => string) => (e: unknown) =>
@@ -243,11 +242,7 @@ function SourcesColumn({
       </div>
 
       <ColumnHeading className="mt-9">{t("amo.extra")}</ColumnHeading>
-      <div className="space-y-3">
-        <CelebrateCard pipeline={pipeline} stages={stages} canManage={canManage} />
-        <MorningBoostCard canManage={canManage} />
-        <NotifyCenterCard canManage={canManage} />
-      </div>
+      <FunnelNotifyCard pipeline={pipeline} stages={stages} canManage={canManage} />
 
       <DuplicateRulesDialog
         open={dupOpen}
@@ -442,71 +437,75 @@ function SourcePicker({
   const items: {
     key: string;
     icon: LucideIcon;
-    tone: string;
     tab?: SettingsTabKey;
     to?: string;
     search?: Record<string, string>;
   }[] = [
-    { key: "webForm", icon: Globe, tone: "bg-sky-500/15 text-sky-400", tab: "forms" },
-    { key: "telegramBot", icon: Send, tone: "bg-sky-500/15 text-sky-300", tab: "salesbots" },
+    { key: "webForm", icon: Globe, tab: "forms" },
+    { key: "telegramBot", icon: Send, tab: "salesbots" },
     {
       key: "instagram",
       icon: Instagram,
-      tone: "bg-pink-500/15 text-pink-400",
       to: "/integrations/instagram",
     },
     {
       key: "telephony",
       icon: Phone,
-      tone: "bg-emerald-500/15 text-emerald-400",
       to: "/admin/telephony",
     },
-    { key: "api", icon: Webhook, tone: "bg-violet-500/15 text-violet-400", tab: "sources" },
+    { key: "api", icon: Webhook, tab: "sources" },
     {
       key: "sheets",
       icon: FileSpreadsheet,
-      tone: "bg-emerald-500/15 text-emerald-300",
       to: "/funnels",
       search: { funnel },
     },
   ];
+  // 5CRM's «Manba qo'shish»: one navy tile per channel, its white icon and
+  // a «+ name» pill; the description is the tile's tooltip and line below.
   const cls =
-    "group flex flex-col items-center gap-2.5 rounded-[6px] border border-border bg-card px-3 pb-4 pt-5 text-center transition-[border-color,transform] duration-200 hover:border-primary/60";
+    "group flex h-[104px] flex-col items-center justify-center gap-2 rounded-[4px] bg-[#2c4a72] px-2 text-center text-white transition-[filter,transform] duration-150 hover:brightness-110 active:scale-[0.98]";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="amo-skin max-w-2xl rounded-[6px]">
-        <DialogTitle>{t("fs.pickSource")}</DialogTitle>
-        <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <DialogContent className="amo-skin max-w-[560px] rounded-[6px] p-5">
+        <DialogTitle className="text-[17px] font-medium">{t("fs.pickSource")}</DialogTitle>
+        <div className="mt-3 grid grid-cols-3 gap-2 phone:grid-cols-2">
           {items.map((s) => {
             const body = (
               <>
-                <span
-                  className={cn(
-                    "grid h-12 w-12 place-items-center rounded-[12px] transition-transform duration-200 group-hover:scale-105",
-                    s.tone,
-                  )}
-                >
-                  <s.icon className="h-6 w-6" />
-                </span>
-                <span className="text-[13.5px] font-bold text-foreground">
-                  {t(`fs.src.${s.key}`)}
-                </span>
-                <span className="text-[11.5px] leading-snug text-muted-foreground">
-                  {t(`fs.src.${s.key}Desc`)}
+                <s.icon className="h-7 w-7" strokeWidth={1.6} />
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[12.5px] font-medium">
+                  <Plus className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{t(`fs.src.${s.key}`)}</span>
                 </span>
               </>
             );
+            const title = t(`fs.src.${s.key}Desc`);
             return s.to ? (
-              <Link key={s.key} to={s.to} search={s.search ?? {}} className={cls}>
+              <Link key={s.key} to={s.to} search={s.search ?? {}} className={cls} title={title}>
                 {body}
               </Link>
             ) : (
-              <button key={s.key} type="button" className={cls} onClick={() => onOpenTab(s.tab!)}>
+              <button
+                key={s.key}
+                type="button"
+                className={cls}
+                title={title}
+                onClick={() => onOpenTab(s.tab!)}
+              >
                 {body}
               </button>
             );
           })}
         </div>
+        <ul className="mt-4 space-y-1.5 text-[12.5px] leading-snug text-muted-foreground">
+          {items.map((s) => (
+            <li key={s.key}>
+              <b className="font-semibold text-foreground">{t(`fs.src.${s.key}`)}</b> —{" "}
+              {t(`fs.src.${s.key}Desc`)}
+            </li>
+          ))}
+        </ul>
       </DialogContent>
     </Dialog>
   );
@@ -987,25 +986,29 @@ function StageColumn({
             canManage={canStructure}
           />
         ))}
-        {canStructure && (
-          <button
-            type="button"
-            onClick={onAddTrigger}
-            style={{ height: ROW }}
-            className={cn(
-              "flex w-full items-center justify-center gap-2 text-[14px] text-muted-foreground transition-[opacity,color] duration-200 hover:text-foreground",
-              index === 0 && triggers.length === 0
-                ? "opacity-100"
-                : "opacity-0 focus-visible:opacity-100 group-hover/col:opacity-100",
-            )}
-          >
-            <span className="grid h-6 w-6 place-items-center rounded-full border border-current">
-              <Plus className="h-3.5 w-3.5" />
-            </span>
-            {t("fs.addTrigger")}
-          </button>
-        )}
         {stage.is_lost && <LossReasons pipeline={pipeline} canManage={canManage} />}
+        {/* 5CRM: every empty cell of the grid offers «Trigger qo'shish» on
+            hover (the first stage's first one always shows). */}
+        {canStructure &&
+          Array.from({ length: Math.max(1, EMPTY_ROWS - triggers.length) }, (_, k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={onAddTrigger}
+              style={{ height: ROW }}
+              className={cn(
+                "flex w-full items-center justify-center gap-2 text-[14px] text-muted-foreground transition-[opacity,color] duration-200 hover:text-foreground",
+                index === 0 && triggers.length === 0 && k === 0
+                  ? "opacity-100"
+                  : "opacity-0 hover:opacity-100 focus-visible:opacity-100",
+              )}
+            >
+              <span className="grid h-6 w-6 place-items-center rounded-full border border-current">
+                <Plus className="h-3.5 w-3.5" />
+              </span>
+              {t("fs.addTrigger")}
+            </button>
+          ))}
       </div>
 
       <ConfirmDialog

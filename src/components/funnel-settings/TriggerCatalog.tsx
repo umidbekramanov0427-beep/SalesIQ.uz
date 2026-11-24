@@ -240,7 +240,7 @@ export function TriggerCatalog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="amo-skin flex h-[86dvh] max-w-[1080px] flex-col gap-0 overflow-hidden rounded-[6px] border-border bg-background p-0 sm:max-w-[1080px] [&>button:last-child]:hidden">
+      <DialogContent className="amo-skin flex h-[90dvh] max-w-[560px] flex-col gap-0 overflow-hidden rounded-[6px] border-border bg-background p-0 sm:max-w-[560px] [&>button:last-child]:hidden">
         <DialogTitle className="sr-only">{t("fs.addTrigger")}</DialogTitle>
         <div className="shrink-0 border-b border-border px-5 pb-3 pt-4">
           <div className="flex items-center gap-3">
@@ -269,60 +269,52 @@ export function TriggerCatalog({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
-          {groups.map((g) => (
-            <section key={g.key} className="pt-5">
-              <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                {t(`tc.g.${g.key}`)}
-              </h3>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-                {g.tiles.map((tile) => (
-                  <button
-                    key={tile.key}
-                    type="button"
-                    onClick={() => pick(tile)}
-                    className="group flex flex-col items-center gap-3 rounded-[6px] border border-border bg-card px-3 pb-3 pt-4 text-left transition-[border-color,transform,box-shadow] duration-200 hover:border-primary/60 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.6)]"
-                  >
-                    <span
-                      className={cn(
-                        "grid h-12 w-12 place-items-center rounded-[10px] transition-transform duration-200 group-hover:scale-105",
-                        tile.danger ? "bg-rose-500/15 text-rose-400" : "bg-primary/15 text-primary",
-                      )}
-                    >
-                      <tile.icon className="h-[22px] w-[22px]" />
-                    </span>
-                    <span className="flex h-8 w-full items-center justify-center gap-1.5 rounded-[4px] border border-border bg-background/40 px-2 text-[12px] font-semibold text-foreground transition-colors group-hover:border-primary/50 group-hover:bg-primary/10">
-                      <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{t(`tc.a.${tile.key}`)}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
+          {/* 5CRM: one flat grid of actions, the salesbots lit first. */}
+          <div className="grid grid-cols-3 gap-2.5 pt-4 phone:grid-cols-2">
+            {groups.flatMap((g) =>
+              g.tiles.map((tile) => (
+                <button
+                  key={tile.key}
+                  type="button"
+                  onClick={() => pick(tile)}
+                  className={cn(
+                    "group flex h-[82px] flex-col items-center justify-between rounded-[4px] px-2.5 pb-2 pt-3 text-white transition-[filter,transform] duration-150 hover:brightness-110",
+                    g.key === "bot" ? "bg-[#4a68b8]" : "bg-[#2c4a72]",
+                  )}
+                >
+                  <tile.icon
+                    className={cn("h-6 w-6", tile.danger ? "text-rose-200" : "text-white")}
+                    strokeWidth={1.6}
+                  />
+                  <span className="flex h-6 w-full items-center justify-center gap-1 rounded-[3px] border border-white/25 bg-black/15 px-1.5 text-[11.5px] font-medium">
+                    <Plus className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{t(`tc.a.${tile.key}`)}</span>
+                  </span>
+                </button>
+              )),
+            )}
+          </div>
 
           {shownWidgets.length > 0 && (
             <section className="pt-6">
-              <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                {t("tc.g.widgets")}
-              </h3>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+              <h3 className="mb-3 text-[17px] font-medium text-foreground">{t("tc.g.widgets")}</h3>
+              <div className="grid grid-cols-4 gap-3 phone:grid-cols-2">
                 {shownWidgets.map((w) => {
                   const body = (
                     <>
-                      <ExternalLink className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100" />
-                      <span className="grid h-12 w-12 place-items-center rounded-[12px] bg-white/[0.06] ring-1 ring-border">
-                        <w.icon className={cn("h-6 w-6", w.tone)} />
+                      <span className="grid h-14 w-full place-items-center rounded-[3px] bg-white/95 ring-1 ring-black/5">
+                        <w.icon className={cn("h-7 w-7", w.tone)} />
                       </span>
-                      <span className="flex h-8 w-full items-center justify-center rounded-[4px] border border-border bg-background/40 px-2 text-[12px] font-semibold text-foreground transition-colors group-hover:border-primary/50 group-hover:bg-primary/10">
-                        <span className="truncate">{t(`tc.w.${w.key}`)}</span>
+                      <span className="w-full truncate text-left text-[12px] font-semibold text-foreground">
+                        {t(`tc.w.${w.key}`)}
                       </span>
                       {w.installed !== null && (
                         <span
                           className={cn(
-                            "rounded-full px-2 py-0.5 text-[10.5px] font-semibold",
+                            "self-start rounded-[3px] border px-2 py-0.5 text-[11px]",
                             w.installed
-                              ? "bg-emerald-500/15 text-emerald-400"
-                              : "bg-muted text-muted-foreground",
+                              ? "border-emerald-500/50 text-emerald-400"
+                              : "border-border text-muted-foreground",
                           )}
                         >
                           {w.installed ? t("tc.installed") : t("tc.notInstalled")}
@@ -331,7 +323,7 @@ export function TriggerCatalog({
                     </>
                   );
                   const cls =
-                    "group relative flex flex-col items-center gap-2.5 rounded-[6px] border border-border bg-card px-3 pb-3 pt-4 transition-[border-color,transform] duration-200 hover:border-primary/60";
+                    "group flex flex-col items-stretch gap-1.5 transition-opacity hover:opacity-90";
                   return w.to ? (
                     <Link key={w.key} to={w.to} className={cls}>
                       {body}

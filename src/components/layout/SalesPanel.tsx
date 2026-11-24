@@ -48,9 +48,11 @@ import { cn, describeError } from "@/lib/utils";
 export function SalesPanel({
   activeFunnel,
   onDone,
+  onMenu,
 }: {
   activeFunnel?: string;
   onDone: () => void;
+  onMenu?: (open: boolean) => void;
 }) {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -197,17 +199,14 @@ export function SalesPanel({
   const row = (p: (typeof sorted)[number]) => (
     <div
       key={p.id}
-      className={cn(
-        "group/f flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-accent",
-        activeFunnel === p.name && "bg-primary/10",
-      )}
+      className="group/f flex items-center border-b border-[var(--amo-divider)] pr-2 transition-colors hover:bg-accent/60"
     >
       <button
         type="button"
         onClick={() => open(p.name)}
         className={cn(
-          "min-w-0 flex-1 truncate px-3 py-2 text-left text-[13.5px]",
-          activeFunnel === p.name ? "font-semibold text-primary" : "text-foreground",
+          "min-w-0 flex-1 truncate px-5 py-3 text-left text-[14px]",
+          activeFunnel === p.name ? "font-medium text-primary" : "text-foreground",
         )}
         title={p.name}
       >
@@ -215,7 +214,7 @@ export function SalesPanel({
       </button>
       {busy === p.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
       {canSetUp && (
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={(o) => onMenu?.(o)}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
@@ -225,7 +224,7 @@ export function SalesPanel({
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="amo-skin w-52">
+          <DropdownMenuContent align="end" className="amo-skin z-[70] w-52">
             <DropdownMenuItem asChild>
               <Link to="/funnels/settings" search={{ funnel: p.name }} onClick={onDone}>
                 <Settings2 className="mr-2 h-4 w-4" /> {t("salesp.settings")}
@@ -255,20 +254,14 @@ export function SalesPanel({
     </div>
   );
 
-  const link = (to: string, icon: typeof List, label: string, search?: Record<string, string>) => {
-    const Icon = icon;
-    return (
-      <Link
-        to={to}
-        {...(search ? { search } : {})}
-        onClick={onDone}
-        className="flex items-center gap-2.5 border-t border-[var(--amo-divider)] px-4 py-3 text-[13.5px] text-foreground transition-colors hover:bg-accent"
-      >
-        <Icon className="h-4 w-4 text-muted-foreground" />
-        {label}
-      </Link>
-    );
-  };
+  const BOTTOM =
+    "flex w-full items-center gap-2 border-t border-[var(--amo-divider)] px-5 py-3.5 text-left text-[14px] text-foreground transition-colors hover:bg-accent/60";
+  const link = (to: string, label: string, search?: Record<string, string>, tail?: ReactNode) => (
+    <Link to={to} {...(search ? { search } : {})} onClick={onDone} className={BOTTOM}>
+      <span className="flex-1">{label}</span>
+      {tail}
+    </Link>
+  );
 
   if (archiveView)
     return (
@@ -294,10 +287,10 @@ export function SalesPanel({
 
   return (
     <Shell>
-      <p className="border-b border-[var(--amo-divider)] px-4 py-3.5 text-[12px] font-bold uppercase tracking-[0.1em] text-foreground">
+      <p className="px-5 pb-3 pt-5 text-[13px] font-bold uppercase tracking-[0.08em] text-foreground">
         {t("salesp.title")}
       </p>
-      <div className="max-h-[50vh] overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto border-t border-[var(--amo-divider)]">
         {live.map(row)}
         {canSetUp &&
           (adding ? (
@@ -306,7 +299,7 @@ export function SalesPanel({
                 e.preventDefault();
                 void addFunnel();
               }}
-              className="flex items-center gap-1.5 px-1 py-1"
+              className="flex items-center gap-1.5 border-b border-[var(--amo-divider)] px-4 py-2"
             >
               <input
                 autoFocus
@@ -314,12 +307,12 @@ export function SalesPanel({
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === "Escape" && setAdding(false)}
                 placeholder={t("salesp.newName")}
-                className="h-8 min-w-0 flex-1 rounded-md border border-primary bg-background px-2.5 text-[13px] outline-none"
+                className="h-8 min-w-0 flex-1 rounded-[3px] border border-primary bg-background px-2.5 text-[13px] outline-none"
               />
               <button
                 type="submit"
                 disabled={!newName.trim() || busy === "new"}
-                className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+                className="grid h-8 w-8 place-items-center rounded-[3px] bg-primary text-primary-foreground disabled:opacity-50"
                 aria-label={t("salesp.add")}
               >
                 {busy === "new" ? (
@@ -333,29 +326,28 @@ export function SalesPanel({
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="flex w-full items-center justify-between rounded-md px-3 py-2 text-[13.5px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex w-full items-center justify-between px-5 py-3 text-[14px] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
             >
               {t("salesp.add")}
-              <span className="grid h-6 w-6 place-items-center rounded border border-border">
+              <span className="grid h-6 w-6 place-items-center rounded-[3px] border border-border">
                 <Plus className="h-3.5 w-3.5" />
               </span>
             </button>
           ))}
       </div>
-      <div className="mt-auto">
-        {link("/funnels", UserRound, t("dir.tab.contacts"), { sec: "contacts" })}
-        {link("/funnels", Building2, t("dir.tab.companies"), { sec: "companies" })}
-        {link("/funnels", FileText, t("dir.tab.files"), { sec: "files" })}
-        {link("/crm/leads", List, t("dir.tab.allLeads"))}
-        {link("/refunds", Undo2, t("refund.title"))}
-        <button
-          type="button"
-          onClick={() => setArchiveView(true)}
-          className="flex w-full items-center gap-2.5 border-t border-[var(--amo-divider)] px-4 py-3 text-left text-[13.5px] text-foreground transition-colors hover:bg-accent"
-        >
-          <Archive className="h-4 w-4 text-muted-foreground" />
+      <div>
+        {link("/funnels", t("dir.tab.contacts"), { sec: "contacts" })}
+        {link("/funnels", t("dir.tab.companies"), { sec: "companies" })}
+        {link("/funnels", t("dir.tab.files"), { sec: "files" })}
+        {link(
+          "/crm/leads",
+          t("dir.tab.allLeads"),
+          undefined,
+          <List className="h-4 w-4 text-muted-foreground" />,
+        )}
+        {link("/refunds", t("refund.title"))}
+        <button type="button" onClick={() => setArchiveView(true)} className={BOTTOM}>
           <span className="flex-1">{t("salesp.archiveTitle")}</span>
-          <span className="text-[12px] tabular-nums text-muted-foreground">{archived.length}</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
       </div>
@@ -364,5 +356,5 @@ export function SalesPanel({
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  return <div className="flex max-h-[85vh] min-h-[420px] w-[280px] flex-col">{children}</div>;
+  return <div className="flex h-full w-full flex-col">{children}</div>;
 }

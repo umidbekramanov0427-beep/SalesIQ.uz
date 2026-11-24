@@ -69,7 +69,7 @@ import {
   useMyOrganization,
   useNotificationsView,
 } from "@/hooks/use-crm-data";
-import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SalesPanel } from "@/components/layout/SalesPanel";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -445,6 +445,13 @@ function FunnelsNavGroup({
   const activeFunnel = typeof search["funnel"] === "string" ? search["funnel"] : undefined;
   const [panel, setPanel] = useState(false);
   const panelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuOpen = useRef(false);
+  useEffect(() => {
+    if (!panel) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPanel(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [panel]);
 
   if (collapsed) {
     // 5CRM's «Sotuv» panel: hovering the rail's Voronkalar opens the list of
@@ -455,42 +462,48 @@ function FunnelsNavGroup({
     };
     const leave = () => {
       if (panelTimer.current) clearTimeout(panelTimer.current);
-      panelTimer.current = setTimeout(() => setPanel(false), 250);
+      panelTimer.current = setTimeout(() => {
+        // A funnel's «⋯» menu portals outside the panel: keep the panel
+        // while it is open.
+        if (!menuOpen.current) setPanel(false);
+      }, 250);
     };
     return (
-      <Popover open={panel} onOpenChange={setPanel}>
-        <PopoverAnchor asChild>
-          <div onMouseEnter={enter} onMouseLeave={leave}>
-            <Link
-              to={item.to}
-              onClick={() => setPanel(false)}
-              className={cn(
-                "group flex items-center transition-colors duration-150",
-                RAIL_ITEM,
-                active
-                  ? "bg-sidebar-active text-sidebar-active-foreground"
-                  : "text-sidebar-foreground hover:bg-accent",
-              )}
+      <>
+        <div onMouseEnter={enter} onMouseLeave={leave}>
+          <Link
+            to={item.to}
+            onClick={() => setPanel(false)}
+            className={cn(
+              "group flex items-center transition-colors duration-150",
+              RAIL_ITEM,
+              active
+                ? "bg-sidebar-active text-sidebar-active-foreground"
+                : "text-sidebar-foreground hover:bg-accent",
+            )}
+          >
+            <RailGlyph icon={item.icon} active={active} className={TONE_TEXT[item.tone]} />
+            <span className={cn(RAIL_LABEL, active ? "font-bold" : "font-semibold")}>
+              {railLabel(t, item.to)}
+            </span>
+          </Link>
+        </div>
+        {panel &&
+          createPortal(
+            <div
+              onMouseEnter={enter}
+              onMouseLeave={leave}
+              className="amo-skin fixed bottom-0 left-[72px] top-0 z-[60] flex w-[290px] flex-col border-r border-border bg-card text-foreground shadow-[8px_0_24px_-12px_rgba(0,0,0,0.45)] phone:hidden"
             >
-              <RailGlyph icon={item.icon} active={active} className={TONE_TEXT[item.tone]} />
-              <span className={cn(RAIL_LABEL, active ? "font-bold" : "font-semibold")}>
-                {railLabel(t, item.to)}
-              </span>
-            </Link>
-          </div>
-        </PopoverAnchor>
-        <PopoverContent
-          side="right"
-          align="start"
-          sideOffset={10}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onMouseEnter={enter}
-          onMouseLeave={leave}
-          className="amo-skin w-auto overflow-hidden rounded-xl p-0"
-        >
-          <SalesPanel {...(activeFunnel ? { activeFunnel } : {})} onDone={() => setPanel(false)} />
-        </PopoverContent>
-      </Popover>
+              <SalesPanel
+                {...(activeFunnel ? { activeFunnel } : {})}
+                onDone={() => setPanel(false)}
+                onMenu={(o) => (menuOpen.current = o)}
+              />
+            </div>,
+            document.body,
+          )}
+      </>
     );
   }
 

@@ -996,6 +996,11 @@ function FunnelDetail({
     );
   }, [shownLeads, taskDues, ownerChanges, dayStats]);
   const openCount = shownLeads.filter((l) => !l.stageIsWon && !l.stageIsLost).length;
+  // «Sotuv prognozi»: the value of every lead still open in the funnel.
+  const openRevenue = shownLeads.reduce(
+    (sum, l) => (l.stageIsWon || l.stageIsLost ? sum : sum + (l.expectedRevenue || 0)),
+    0,
+  );
 
   const analyticsButton = hasAnalytics ? (
     <button
@@ -1662,6 +1667,43 @@ function FunnelDetail({
           sortBy={sortBy}
           showClosed={showClosed}
           liveIds={liveIds}
+          footer={
+            <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12.5px] text-muted-foreground">
+              <span>
+                {t("funnels.day.tasksToday")}:{" "}
+                <b className="font-semibold text-foreground">{dayStats.tasksToday}</b>
+              </span>
+              <span>
+                {t("funnels.day.noTasks")}:{" "}
+                <b className="font-semibold text-foreground">{dayStats.noTasks}</b>
+              </span>
+              <span>
+                {t("funnels.day.overdue")}:{" "}
+                <b
+                  className={cn(
+                    "font-semibold",
+                    dayStats.overdueTasks ? "text-destructive" : "text-foreground",
+                  )}
+                >
+                  {dayStats.overdueTasks}
+                </b>
+              </span>
+              <span>
+                {t("funnels.day.newLeads")}:{" "}
+                <b className="font-semibold text-foreground">
+                  {dayStats.newToday} / {dayStats.newYesterday}
+                </b>
+              </span>
+              {canViewRevenue && (
+                <span>
+                  {t("funnels.day.forecast")}:{" "}
+                  <b className="font-semibold tabular-nums text-foreground">
+                    {format(openRevenue)}
+                  </b>
+                </span>
+              )}
+            </p>
+          }
           leading={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="body" />}
           leadingHead={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="head" />}
           // Tick boxes only while "Ommaviy amallar" is on.

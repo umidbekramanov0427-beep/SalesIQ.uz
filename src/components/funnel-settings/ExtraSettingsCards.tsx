@@ -68,7 +68,7 @@ function ExtraCard({
 const ghostBtn =
   "inline-flex h-8 items-center gap-1.5 rounded-[4px] border border-border px-2.5 text-[12px] font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:opacity-50";
 
-function useSaveOrg() {
+export function useSaveOrg() {
   const { t } = useI18n();
   const update = useUpdateOrgGeneralSettings();
   return {
@@ -308,70 +308,12 @@ export function MorningBoostCard({ canManage }: { canManage: boolean }) {
   );
 }
 
-const NOTIFY_KEYS = [
-  "notify_lead_assigned",
-  "notify_stage_changed",
-  "notify_sale_congrats",
-  "notify_task_reminder",
-] as const;
-
-export function NotifyCenterCard({ canManage }: { canManage: boolean }) {
-  const { t } = useI18n();
-  const { data: s } = useOrgGeneralSettings();
-  const { save } = useSaveOrg();
-  const [open, setOpen] = useState<string | null>(null);
-  return (
-    <ExtraCard icon={BellRing} tone="bg-primary/15 text-primary" title={t("xs.notify")}>
-      <p className="text-[12px] leading-snug text-muted-foreground">{t("xs.notifyDesc")}</p>
-      <ul className="mt-2 divide-y divide-border border-y border-border">
-        {NOTIFY_KEYS.map((k) => (
-          <li key={k}>
-            <div className="flex items-center gap-1.5 py-2">
-              <button
-                type="button"
-                onClick={() => setOpen(open === k ? null : k)}
-                className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-[12.5px] font-semibold text-foreground"
-              >
-                <ChevronRight
-                  className={cn(
-                    "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
-                    open === k && "rotate-90",
-                  )}
-                />
-                {t(`xs.n.${k}`)}
-              </button>
-              <AmoToggle
-                checked={s?.[k] ?? true}
-                disabled={!canManage}
-                label={t(`xs.n.${k}`)}
-                onChange={(v) => save({ [k]: v })}
-              />
-            </div>
-            <div
-              className={cn(
-                "grid transition-[grid-template-rows] duration-200",
-                open === k ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-              )}
-            >
-              <p className="overflow-hidden pl-5 text-[11.5px] leading-snug text-muted-foreground">
-                <span className="block pb-2">{t(`xs.n.${k}Desc`)}</span>
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <ClientMessageRules canManage={canManage} />
-      <p className="mt-2 text-[11px] leading-snug text-subtle">{t("xs.notifyFoot")}</p>
-    </ExtraCard>
-  );
-}
-
 /**
  * «Mijoz xabarlari»: whether a client's message notifies its owner when the
  * client is new / already known, and the keywords that raise a separate
  * alert (src/lib/client-notify.ts, read by notifyClientMessage).
  */
-function ClientMessageRules({ canManage }: { canManage: boolean }) {
+export function ClientMessageRules({ canManage }: { canManage: boolean }) {
   const { t } = useI18n();
   const ui = useUiSettings();
   const rules = ui.settings.notify ?? DEFAULT_CLIENT_NOTIFY;

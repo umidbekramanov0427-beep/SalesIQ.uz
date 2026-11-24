@@ -68,6 +68,7 @@ export function PipelineBoard({
   leading,
   leadingHead,
   showClosed = false,
+  footer,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -96,6 +97,8 @@ export function PipelineBoard({
    * along the bottom only while a lead is being dragged.
    */
   showClosed?: boolean;
+  /** The funnel's day figures, shown in the bar along the board's bottom. */
+  footer?: ReactNode;
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -228,6 +231,29 @@ export function PipelineBoard({
     const row = headRowRef.current;
     if (el && row) row.style.transform = `translateX(${-el.scrollLeft}px)`;
   };
+  // The mini-map's window: which part of the board is on screen, in %.
+  const [win, setWin] = useState({ left: 0, width: 100 });
+  const syncWin = () => {
+    const el = panRef.current;
+    if (!el || !el.scrollWidth) return;
+    const left = Math.round((el.scrollLeft / el.scrollWidth) * 1000) / 10;
+    const width = Math.round(Math.min(1, el.clientWidth / el.scrollWidth) * 1000) / 10;
+    setWin((w) => (w.left === left && w.width === width ? w : { left, width }));
+  };
+  useEffect(() => {
+    const el = panRef.current;
+    if (!el) return;
+    syncWin();
+    const ro = new ResizeObserver(syncWin);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => ro.disconnect();
+  }, []);
+  const scrollToStage = (id: string) => {
+    const el = panRef.current;
+    const col = el?.querySelector<HTMLElement>(`[data-stage-col="${id}"]`);
+    if (el && col) el.scrollTo({ left: col.offsetLeft - 8, behavior: "smooth" });
+  };
   useEffect(syncHeads);
   function startPan(e: React.PointerEvent<HTMLDivElement>) {
     const el = panRef.current;
@@ -280,7 +306,7 @@ export function PipelineBoard({
           It follows the board sideways (syncHeads); a sideways wheel over
           it scrolls the board. */}
       <div
-        className="sticky z-[8] overflow-hidden bg-canvas"
+        className="sticky z-[8] overflow-hidden bg-background"
         style={{ top: "var(--funnel-bar-h, 0px)" }}
         onWheel={(e) => {
           const el = panRef.current;
@@ -348,8 +374,11 @@ export function PipelineBoard({
       <div
         ref={panRef}
         onPointerDown={startPan}
-        onScroll={syncHeads}
-        className="cursor-default overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onScroll={() => {
+          syncHeads();
+          syncWin();
+        }}
+        className="cursor-default overflow-x-auto pb-14 [scrollbar-width:none] phone:pb-4 [&::-webkit-scrollbar]:hidden"
       >
         <div className={cn("flex min-w-max gap-4 pt-1", selection && "pl-1.5")}>
           {leading}
@@ -357,6 +386,7 @@ export function PipelineBoard({
             return (
               <section
                 key={s.id}
+                data-stage-col={s.id}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setOver(s.id);
@@ -439,6 +469,48 @@ export function PipelineBoard({
           })}
         </div>
       </div>
+      {/* 5CRM's bottom bar: the funnel's day figures on the left, a map of
+          the stages on the right -- the part on screen framed, a click
+          scrolls the board to that stage. */}
+      {!dragged &&
+        (footer || cols.length > 3) &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="amo-skin fixed bottom-0 left-[72px] right-0 z-30 flex items-center gap-4 border-t border-border bg-background/95 py-2 pl-6 pr-[96px] text-foreground backdrop-blur phone:hidden">
+            <div className="min-w-0 flex-1">{footer}</div>
+            {cols.length > 3 && (
+              <div
+                className="relative flex h-7 w-[240px] shrink-0 items-stretch gap-[2px] rounded-[3px] border border-border p-[3px]"
+                aria-label={t("pipeline.miniMap")}
+              >
+                {cols.map(({ s, items, line }) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    title={`${s.name} · ${items.length}`}
+                    onClick={() => scrollToStage(s.id)}
+                    className="relative min-w-0 flex-1 overflow-hidden rounded-[2px] bg-muted"
+                  >
+                    <span
+                      className={cn("absolute inset-x-0 bottom-0 block", line.className)}
+                      style={{
+                        ...line.style,
+                        height: `${Math.max(18, Math.min(100, items.length * 12))}%`,
+                      }}
+                    />
+                  </button>
+                ))}
+                {win.width < 100 && (
+                  <span
+                    className="pointer-events-none absolute inset-y-0 rounded-[3px] border-2 border-primary"
+                    style={{ left: `${win.left}%`, width: `${win.width}%` }}
+                  />
+                )}
+              </div>
+            )}
+          </div>,
+          document.body,
+        )}
       {dragged &&
         (closingStages.length > 0 || canDeleteLead) &&
         typeof document !== "undefined" &&
