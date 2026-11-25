@@ -287,7 +287,7 @@
 
 @layer base {
   * {
-    border-color: var(--color-border);
+    border-color: var(--border);
   }
 
   /* Grid items default to min-width:auto, so one long unbreakable value (a
@@ -323,8 +323,8 @@
      choice for anyone who later resizes an actual desktop window narrow. */
 
   body {
-    background-color: var(--color-surface);
-    color: var(--color-foreground);
+    background-color: var(--surface);
+    color: var(--foreground);
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     overscroll-behavior-y: none;
@@ -367,8 +367,8 @@
 @utility surface-card {
   min-width: 0;
   overflow-wrap: break-word;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card), var(--shadow-glow);
 }
@@ -376,8 +376,8 @@
 @utility mint-card {
   min-width: 0;
   overflow-wrap: break-word;
-  background-color: var(--color-mint);
-  border: 1px solid var(--color-mint-border);
+  background-color: var(--mint);
+  border: 1px solid var(--mint-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card), var(--shadow-glow);
 }
@@ -587,13 +587,13 @@
   right: 50%;
   width: 50%;
   height: 28px;
-  border-top: 2px solid var(--color-border);
+  border-top: 2px solid var(--border);
 }
 
 .org-chart-tree li::after {
   right: auto;
   left: 50%;
-  border-left: 2px solid var(--color-border);
+  border-left: 2px solid var(--border);
 }
 
 .org-chart-tree li:only-child {
@@ -609,7 +609,7 @@
   border: 0 none;
 }
 .org-chart-tree li:last-child::before {
-  border-right: 2px solid var(--color-border);
+  border-right: 2px solid var(--border);
   border-radius: 0 10px 0 0;
 }
 .org-chart-tree li:first-child::after {
@@ -621,7 +621,7 @@
   position: absolute;
   top: 0;
   left: 50%;
-  border-left: 2px solid var(--color-border);
+  border-left: 2px solid var(--border);
   width: 0;
   height: 28px;
 }
@@ -639,6 +639,7 @@ body.funnel-skin [data-radix-popper-content-wrapper] {
   --background: #e6edf5;
   --surface: #e6edf5;
   --card: #f4f8fc;
+  --dialog: #eef3f9;
   --card-foreground: #10283a;
   --popover: #ffffff;
   --popover-foreground: #10283a;
@@ -683,6 +684,7 @@ body.funnel-skin [data-radix-popper-content-wrapper] {
   --background: #0e2330;
   --surface: #0e2330;
   --card: #153147;
+  --dialog: #10283a;
   --card-foreground: #e5f5ff;
   --popover: #1f4560;
   --popover-foreground: #e5f5ff;
@@ -1483,7 +1485,7 @@ html.phone .phone-tabs > * {
    which for a light series (e.g. the "total" bars) is unreadable text. The
    swatch next to it carries the color; the label wears text ink. */
 .recharts-legend-item-text {
-  color: var(--color-muted-foreground) !important;
+  color: var(--muted-foreground) !important;
 }
 
 /* ---- Audio tahlil cards (.report-skin) ----
