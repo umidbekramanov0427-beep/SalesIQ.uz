@@ -33,6 +33,7 @@ import {
   useCreateStage,
   useCrmStages,
   useDeletePipeline,
+  useFunnelListStats,
   usePipelines,
   useUpdatePipeline,
 } from "@/hooks/use-crm-data";
@@ -147,6 +148,9 @@ export function SalesPanel({
     !!(p as { archived_at?: string | null }).archived_at;
   // A funnel can live only in its stages (made before funnels had their own
   // row): it is listed too, without the set-up menu.
+  // So can one that only its leads name (the company's first funnel, made
+  // before funnels had rows): every funnel with leads is listed.
+  const { funnels: withLeads } = useFunnelListStats();
   const orphans = useMemo(() => {
     const known = new Set(pipelines.map((p) => p.name));
     const names = new Set<string>();
@@ -154,13 +158,14 @@ export function SalesPanel({
       const n = st.pipeline_name || "";
       if (n && !known.has(n) && !st.pipeline_id) names.add(n);
     }
+    for (const f of withLeads) if (f.name && !known.has(f.name)) names.add(f.name);
     return [...names]
       .sort()
       .map(
         (name) =>
           ({ id: `name:${name}`, name, position: 9999 }) as unknown as (typeof sorted)[number],
       );
-  }, [pipelines, stages]);
+  }, [pipelines, stages, withLeads]);
   const live = [...sorted.filter((p) => !isArchived(p)), ...orphans];
   const archived = sorted.filter(isArchived);
 
