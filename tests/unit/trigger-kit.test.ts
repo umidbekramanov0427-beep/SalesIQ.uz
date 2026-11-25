@@ -1,4 +1,5 @@
 import {
+  pickByWeight,
   apiPayload,
   classifyChat,
   conditionsToRule,
@@ -63,5 +64,14 @@ describe("trigger kit", () => {
     expect(classifyChat([{ text: "Salom", media: false }])).toBeNull();
     expect(classifyChat([{ text: "chegirma bormi", media: false }], ["chegirma"])).toBe("price");
     expect(classifyChat([])).toBeNull();
+  });
+});
+
+describe("pickByWeight", () => {
+  it("gives the lead to the lowest open leads per share", () => {
+    expect(pickByWeight(["a", "b"], { a: 4, b: 3 }, { a: 2 })).toBe("a");
+    expect(pickByWeight(["a", "b"], { a: 4, b: 3 })).toBe("b");
+    expect(pickByWeight(["a", "b"], {})).toBe("a");
+    expect(pickByWeight([], {})).toBeNull();
   });
 });

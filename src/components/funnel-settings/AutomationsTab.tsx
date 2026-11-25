@@ -67,6 +67,8 @@ const CONDITION_FIELDS = [
   "paid_amount",
   "owner_id",
   "tags",
+  "phone",
+  "alt_phone",
   "source",
   "funnel",
   "region",
@@ -333,6 +335,9 @@ export function RuleDialog({
   const save = useSaveAutomationRule();
   const applyExisting = useApplyRuleToStage();
   const [toExisting, setToExisting] = useState(false);
+  // 5CRM's «Har kuni soatda (Toshkent)»: the same steps again every day for
+  // the leads still in this stage (saved as a companion daily trigger).
+  const [dailyAt, setDailyAt] = useState("");
   // 5CRM's «Bajarish:» in a stage column: on entering the stage (default)
   // or when the lead's owner changes there; our other stage events follow.
   const allowed: AutomationTriggerType[] = column
@@ -366,6 +371,7 @@ export function RuleDialog({
       setActions(preset ?? []);
     }
     setToExisting(false);
+    setDailyAt("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, rule, column?.id, funnel, preset]);
 
@@ -405,6 +411,20 @@ export function RuleDialog({
           actions,
         },
       });
+      if (dailyAt && column && type === "stage_enter") {
+        await save.mutateAsync({
+          draft: {
+            ...draft,
+            name: `${(draft.name.trim() || fallbackName).slice(0, 100)} · ${t("tk.daily.suffix")}`,
+            trigger_type: "daily",
+            trigger_time: dailyAt,
+            trigger_stage_id: column.id,
+            trigger_after_minutes: null,
+            ...conditionsToRule(ruleToConditions(draft).filter((c) => c.value.trim() !== "")),
+            actions,
+          },
+        });
+      }
       toast.success(t("dp.saved"));
       if (toExisting && type === "stage_enter" && id) {
         const n = await applyExisting.mutateAsync(id);
@@ -625,6 +645,22 @@ export function RuleDialog({
               className={`${inputCls} h-auto py-2`}
             />
           </section>
+          {column && type === "stage_enter" && !rule && (
+            <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-[13px] font-medium text-foreground">
+              <span>
+                {t("tk.daily.label")}
+                <span className="mt-0.5 block text-[11.5px] font-normal text-muted-foreground">
+                  {t("tk.daily.hint", { stage: column.name })}
+                </span>
+              </span>
+              <input
+                type="time"
+                value={dailyAt}
+                onChange={(e) => setDailyAt(e.target.value)}
+                className={`${inputCls} w-32`}
+              />
+            </label>
+          )}
           {column && type === "stage_enter" && (
             <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-[13px] font-medium text-foreground">
               <span>

@@ -64,6 +64,8 @@ export type AutomationAction =
       once?: boolean;
       /** «Media havolasi»: a picture / video / audio link sent with the text. */
       mediaUrl?: string;
+      /** «Media turi»: send the link as a photo, video or file (Telegram). */
+      mediaKind?: "photo" | "video" | "document";
     }
   | { type: "webhook"; url: string }
   /** «Telegram xabar»: to a staff member's or a group's chat (by chat id). */
@@ -109,7 +111,7 @@ export type AutomationAction =
   /** The actions after this one run `minutes` later (queued in the outbox). */
   | { type: "delay"; minutes: number }
   /** Closes the lead's open tasks. */
-  | { type: "close_tasks" }
+  | { type: "close_tasks"; note?: string }
   /** «Umumiy bazaga qaytarish»: the lead loses its owner (back to the shared pool). */
   | { type: "release_owner" }
   /** «Lid egaligi»: to the owner of the same client's latest other lead. */
@@ -119,7 +121,31 @@ export type AutomationAction =
   /** Moves the lead to another funnel's first open stage. */
   | { type: "move_funnel"; funnel: string; stageId?: string }
   /** In turn: whoever of these people has the fewest open leads gets it. */
-  | { type: "distribute"; ownerIds: string[]; onlyUnowned?: boolean }
+  | {
+      type: "distribute";
+      ownerIds: string[];
+      onlyUnowned?: boolean;
+      /** «Faqat online xodimlarga» (seen in the app in the last 5 minutes). */
+      onlineOnly?: boolean;
+      /** Per person share (1-10, default 1): 2 gets twice as many as 1. */
+      weights?: Record<string, number>;
+      /** Hand on to the next person when no work is done in this many minutes (0 = never). */
+      reassignMinutes?: number;
+      /** Told when the second person also does nothing. */
+      controller?: "rop_or_owner" | "rop" | "none";
+    }
+  /** Internal (outbox only): the «N daqiqada ishlanmasa» check of a distribute. */
+  | {
+      type: "distribute_check";
+      ownerIds: string[];
+      ownerId: string;
+      assignedAt: string;
+      round: number;
+      reassignMinutes: number;
+      controller?: "rop_or_owner" | "rop" | "none";
+      onlineOnly?: boolean;
+      weights?: Record<string, number>;
+    }
   /** Internal: what was left after a delay (only ever in the outbox). */
   | { type: "run_actions"; actions: AutomationAction[] }
   // Salesbot-only: writes a (templated) value such as {{reply}} into the

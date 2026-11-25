@@ -34,7 +34,7 @@ import {
   type MessageFile,
 } from "@/lib/automation-types";
 import { phoneKey } from "@/lib/phone-key";
-import { apiPayload, classifyChat } from "@/lib/automations/trigger-kit";
+import { apiPayload, classifyChat, pickByWeight } from "@/lib/automations/trigger-kit";
 
 const APP_URL = (process.env["PUBLIC_APP_URL"] ?? "https://salesiq.uz").replace(/\/$/, "");
 
@@ -332,11 +332,147 @@ type OutboxRow = {
   attempts: number;
 };
 
+/** A Telegram photo / video / file from a public https link; false = not Telegram. */
+async function sendMediaByUrl(
+  orgId: string,
+  actorId: string,
+  leadId: string,
+  channel: MessageChannel,
+  url: string,
+  kind: "photo" | "video" | "document",
+  caption: string,
+): Promise<boolean> {
+  const { channel: ch, chatId } = await pickChannel(orgId, leadId, channel);
+  if (ch !== "telegram" || chatId === null || !/^https:\/\//.test(url)) return false;
+  const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+  if (!res.ok) throw new Error(`Media yuklanmadi (${res.status})`);
+  const data = new Uint8Array(await res.arrayBuffer());
+  if (data.byteLength > 20 * 1024 * 1024) throw new Error("Media 20 MB dan katta");
+  const name = decodeURIComponent(new URL(url).pathname.split("/").pop() || kind);
+  const type = res.headers.get("content-type") ?? "application/octet-stream";
+  const sent = await sendTelegramFileAs(chatId, { kind, name, type, data }, caption);
+  await insertLeadChatMessage({
+    organization_id: orgId,
+    lead_id: leadId,
+    direction: "out",
+    sent_by: actorId,
+    text: caption,
+    file_kind: sent.kind,
+    file_id: sent.fileId,
+    file_name: name,
+  });
+  return true;
+}
+
+/**
+ * «Lidni taqsimlash» → «N daqiqada ishlanmasa»: if the person given the
+ * lead has done nothing on it (no note, call, chat answer or finished task)
+ * the lead goes to the next person; when the second one also does nothing
+ * the controller (heads of sales, else the lead's owner) is told.
+ */
+async function runDistributeCheck(
+  item: OutboxRow,
+  action: Extract<AutomationAction, { type: "distribute_check" }>,
+  lead: { id: string; name: string | null; owner_id: string | null },
+): Promise<string | null> {
+  if (lead.owner_id !== action.ownerId) return "owner_changed";
+  const since = action.assignedAt;
+  const [notes, tasks, calls, chats] = await Promise.all([
+    supabaseAdmin
+      .from("lead_activities")
+      .select("id", { count: "exact", head: true })
+      .eq("lead_id", lead.id)
+      .eq("created_by", action.ownerId)
+      .gt("created_at", since),
+    supabaseAdmin
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("lead_id", lead.id)
+      .eq("status", "Done")
+      .gt("updated_at", since),
+    supabaseAdmin
+      .from("pbx_calls")
+      .select("id", { count: "exact", head: true })
+      .eq("lead_id", lead.id)
+      .gt("created_at", since),
+    supabaseAdmin
+      .from("lead_telegram_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("lead_id", lead.id)
+      .eq("direction", "out")
+      .eq("sent_by", action.ownerId)
+      .gt("created_at", since),
+  ]);
+  const worked = [notes, tasks, calls, chats].some((r) => (r.count ?? 0) > 0);
+  if (worked) return "worked";
+
+  if (action.round >= 1) {
+    if ((action.controller ?? "rop_or_owner") === "none") return "not_worked";
+    const { data: rops } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("organization_id", item.organization_id)
+      .eq("role", "rop");
+    const to = (rops ?? []).map((r) => r.id);
+    if (to.length === 0 && action.controller !== "rop" && lead.owner_id) to.push(lead.owner_id);
+    if (to.length > 0)
+      await supabaseAdmin.from("notifications").insert(
+        to.map((uid) => ({
+          organization_id: item.organization_id,
+          user_id: uid,
+          type: "LeadNotWorked",
+          title: "Lid bilan ishlanmadi",
+          body: `${lead.name ?? "Lid"}: ${action.reassignMinutes} daqiqada hech narsa qilinmadi`,
+          link: `/crm/leads/${lead.id}`,
+        })),
+      );
+    return "controller_told";
+  }
+
+  // The next person: the chosen ones but the current, online if asked.
+  let ids = action.ownerIds.filter((id) => id !== action.ownerId);
+  if (action.onlineOnly && ids.length > 0) {
+    const { data: seen } = await supabaseAdmin
+      .from("user_login_events")
+      .select("user_id")
+      .in("user_id", ids)
+      .gt("last_seen_at", new Date(Date.now() - 5 * 60_000).toISOString());
+    const online = new Set((seen ?? []).map((r) => r.user_id));
+    if (online.size > 0) ids = ids.filter((id) => online.has(id));
+  }
+  if (ids.length === 0) return "nobody_else";
+  const { data: open } = await supabaseAdmin
+    .from("leads")
+    .select("owner_id, pipeline_stages(is_won, is_lost)")
+    .eq("organization_id", item.organization_id)
+    .in("owner_id", ids);
+  const counts: Record<string, number> = {};
+  for (const row of (open ?? []) as {
+    owner_id: string | null;
+    pipeline_stages: { is_won: boolean; is_lost: boolean } | null;
+  }[]) {
+    if (!row.owner_id || row.pipeline_stages?.is_won || row.pipeline_stages?.is_lost) continue;
+    counts[row.owner_id] = (counts[row.owner_id] ?? 0) + 1;
+  }
+  const next = pickByWeight(ids, counts, action.weights);
+  if (!next) return "nobody_else";
+  await supabaseAdmin.from("leads").update({ owner_id: next }).eq("id", lead.id);
+  await supabaseAdmin.from("automation_outbox").insert({
+    organization_id: item.organization_id,
+    rule_id: item.rule_id,
+    lead_id: lead.id,
+    action: { ...action, ownerId: next, assignedAt: new Date().toISOString(), round: 1 },
+    run_after: new Date(Date.now() + action.reassignMinutes * 60_000).toISOString(),
+  });
+  return "reassigned";
+}
+
 async function runOutboxAction(item: OutboxRow): Promise<string | null> {
   if (!item.lead_id) return "no_lead";
   const ctx = await loadLeadContext(item.lead_id);
   if (!ctx) return "lead_deleted";
   const action = item.action;
+  if (action.type === "distribute_check") return runDistributeCheck(item, action, ctx.lead);
   let ruleAuthor: string | null = null;
   if (item.rule_id) {
     const { data } = await supabaseAdmin
@@ -363,6 +499,20 @@ async function runOutboxAction(item: OutboxRow): Promise<string | null> {
       if ((count ?? 0) > 0) return "already_sent";
     }
     const body = renderTemplate(action.text, templateVars(ctx));
+    // «Media turi»: on Telegram the link goes as a real photo / video / file
+    // with the text as its caption; elsewhere it stays a link in the text.
+    if (action.mediaUrl && action.mediaKind) {
+      const sent = await sendMediaByUrl(
+        item.organization_id,
+        actor,
+        ctx.lead.id,
+        action.channel,
+        action.mediaUrl,
+        action.mediaKind,
+        body,
+      );
+      if (sent) return null;
+    }
     const text = action.mediaUrl ? `${body}\n${action.mediaUrl}` : body;
     const res = await sendToLead(
       item.organization_id,

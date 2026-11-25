@@ -114,3 +114,7 @@ alter table org_general_settings add column if not exists timezone text;
 -- Company bots (20270125000000_org_bots).
 alter table organizations add column if not exists created_at timestamptz default now();
 create table if not exists salesbots (id uuid primary key default gen_random_uuid(), organization_id uuid, name text, enabled boolean not null default true);
+
+-- Triggers, rest of the 5CRM guide (20270205).
+alter table user_login_events add column if not exists last_seen_at timestamptz;
+alter table leads add column if not exists custom_fields jsonb;

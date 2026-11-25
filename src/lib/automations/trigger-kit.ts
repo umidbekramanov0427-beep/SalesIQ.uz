@@ -182,3 +182,26 @@ export function classifyChat(
   if (messages.every((m) => m.media && !(m.text ?? "").trim())) return "media";
   return null;
 }
+
+/**
+ * «Lidni taqsimlash» with shares: the person whose open leads per share is
+ * lowest gets the next lead (ties: the first in the list). Weights 1-10,
+ * missing = 1. Returns null for an empty list.
+ */
+export function pickByWeight(
+  ids: string[],
+  openLeads: Record<string, number>,
+  weights: Record<string, number> = {},
+): string | null {
+  let best: string | null = null;
+  let bestScore = Infinity;
+  for (const id of ids) {
+    const w = Math.min(10, Math.max(1, Number(weights[id]) || 1));
+    const score = (openLeads[id] ?? 0) / w;
+    if (score < bestScore) {
+      best = id;
+      bestScore = score;
+    }
+  }
+  return best;
+}

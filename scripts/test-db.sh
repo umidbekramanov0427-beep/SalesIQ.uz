@@ -117,6 +117,8 @@ MIGRATIONS=(
   20270129000000_marketing_bot # twice
   20270204000000_automation_5crm
   20270204000000_automation_5crm # twice
+  20270205000000_automation_5crm_more
+  20270205000000_automation_5crm_more # twice
 )
 
 cleanup() { :; }

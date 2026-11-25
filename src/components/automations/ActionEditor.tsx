@@ -93,9 +93,11 @@ export function blankAction(type: AutomationActionType): AutomationAction {
     case "move_funnel":
       return { type, funnel: "" };
     case "distribute":
-      return { type, ownerIds: [] };
+      return { type, ownerIds: [], onlyUnowned: true, onlineOnly: true };
     case "run_actions":
       return { type, actions: [] };
+    case "distribute_check":
+      return { type, ownerIds: [], ownerId: "", assignedAt: "", round: 0, reassignMinutes: 0 };
     case "tg_chat_message":
       return { type, chatId: "", text: "" };
     case "api_post":
@@ -271,6 +273,25 @@ export function ActionEditor({
         <span className="text-xs font-semibold uppercase tracking-wide text-subtle">
           {t(`dp.action.${action.type}`)}
         </span>
+        {/* 5CRM's «← Boshqa amal»: swap this step for another kind. */}
+        <label className="ml-auto inline-flex cursor-pointer items-center gap-1 text-[12px] font-semibold text-primary hover:underline">
+          ← {t("tk.otherAction")}
+          <select
+            value=""
+            aria-label={t("tk.otherAction")}
+            onChange={(e) => {
+              if (e.target.value) onChange(blankAction(e.target.value as AutomationActionType));
+            }}
+            className="sr-only"
+          >
+            <option value="">{t("tk.otherAction")}</option>
+            {ACTION_TYPES.filter((a) => a !== action.type).map((a) => (
+              <option key={a} value={a}>
+                {t(`dp.action.${a}`)}
+              </option>
+            ))}
+          </select>
+        </label>
         {onRemove && (
           <button
             type="button"
@@ -318,6 +339,22 @@ export function ActionEditor({
             placeholder={t("tk.mediaUrl")}
             className={inputCls}
           />
+          {!!action.mediaUrl?.trim() && (
+            <select
+              value={action.mediaKind ?? ""}
+              onChange={(e) => {
+                const { mediaKind: _k, ...rest } = action;
+                const v = e.target.value as "photo" | "video" | "document" | "";
+                onChange(v ? { ...rest, mediaKind: v } : rest);
+              }}
+              className={inputCls}
+            >
+              <option value="">{t("tk.media.link")}</option>
+              <option value="photo">{t("tk.media.photo")}</option>
+              <option value="video">{t("tk.media.video")}</option>
+              <option value="document">{t("tk.media.document")}</option>
+            </select>
+          )}
           <Check
             checked={!!action.once}
             onChange={(v) => onChange({ ...action, once: v })}
@@ -613,7 +650,19 @@ export function ActionEditor({
       )}
 
       {action.type === "close_tasks" && (
-        <p className="text-[11px] text-subtle">{t("dp.closeTasksHint")}</p>
+        <>
+          <input
+            value={action.note ?? ""}
+            onChange={(e) =>
+              onChange(
+                e.target.value ? { ...action, note: e.target.value } : { type: "close_tasks" },
+              )
+            }
+            placeholder={t("tk.closeNote")}
+            className={inputCls}
+          />
+          <p className="text-[11px] text-subtle">{t("dp.closeTasksHint")}</p>
+        </>
       )}
       {action.type === "previous_owner" && (
         <p className="text-[11px] text-subtle">{t("dp.previousOwnerHint")}</p>
@@ -725,11 +774,80 @@ export function ActionEditor({
               {t("tk.none")}
             </button>
           </div>
+          {action.ownerIds.length > 1 && (
+            <div className="space-y-1 rounded-lg border border-border p-2">
+              <p className="text-[12px] font-semibold text-muted-foreground">
+                {t("tk.dist.weights")}
+              </p>
+              {action.ownerIds.map((id) => (
+                <div key={id} className="flex items-center justify-between gap-2 text-[13px]">
+                  <span className="min-w-0 truncate">
+                    {options.profiles.find((p) => p.id === id)?.full_name ?? "—"}
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={action.weights?.[id] ?? 1}
+                    onChange={(e) =>
+                      onChange({
+                        ...action,
+                        weights: {
+                          ...(action.weights ?? {}),
+                          [id]: Math.min(10, Math.max(1, Number(e.target.value) || 1)),
+                        },
+                      })
+                    }
+                    className={`${inputCls} h-8 w-20`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <Check
+            checked={action.onlineOnly ?? false}
+            onChange={(v) => onChange({ ...action, onlineOnly: v })}
+            label={t("tk.dist.online")}
+          />
           <Check
             checked={action.onlyUnowned ?? true}
             onChange={(v) => onChange({ ...action, onlyUnowned: v })}
             label={t("tk.onlyUnowned")}
           />
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <Lbl text={t("tk.dist.reassign")} />
+              <input
+                type="number"
+                min={0}
+                value={action.reassignMinutes ?? 0}
+                onChange={(e) =>
+                  onChange({ ...action, reassignMinutes: Math.max(0, Number(e.target.value) || 0) })
+                }
+                className={inputCls}
+              />
+            </label>
+            {(action.reassignMinutes ?? 0) > 0 && (
+              <label className="block">
+                <Lbl text={t("tk.dist.controller")} />
+                <select
+                  value={action.controller ?? "rop_or_owner"}
+                  onChange={(e) =>
+                    onChange({
+                      ...action,
+                      controller: e.target.value as "rop_or_owner" | "rop" | "none",
+                    })
+                  }
+                  className={inputCls}
+                >
+                  <option value="rop_or_owner">{t("tk.dist.ctl.rop_or_owner")}</option>
+                  <option value="rop">{t("tk.dist.ctl.rop")}</option>
+                  <option value="none">{t("tk.dist.ctl.none")}</option>
+                </select>
+              </label>
+            )}
+          </div>
+          <p className="text-[11px] text-subtle">{t("tk.dist.reassignHint")}</p>
           <p className="text-[11px] text-subtle">{t("dp.distributeHint")}</p>
         </>
       )}
