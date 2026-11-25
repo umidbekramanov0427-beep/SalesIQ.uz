@@ -1,6 +1,5 @@
 import { FunnelGroup } from "@/components/crm/FunnelGroup";
 import { LeadStatsTab } from "@/components/lead/LeadStatsTab";
-import { LeadQualBlock } from "@/components/lead/LeadQualBlock";
 import { stageAge } from "@/components/crm/KanbanLeadCard";
 import { checkPhone } from "@/lib/leads/intake-clean";
 import {
@@ -132,11 +131,7 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import { CARD, FEED_BG, dayWord, mmss, sameDay, stamp } from "@/components/lead/amo-utils";
 import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/AmoComposer";
 import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
-import {
-  LeadMoneyRows,
-  LeadPaymentsSection,
-  PaymentLinkDialog,
-} from "@/components/lead/LeadPayments";
+import { LeadMoneyRows, PaymentLinkDialog } from "@/components/lead/LeadPayments";
 import { LeadRefundToggle } from "@/components/lead/LeadRefund";
 import { RecordingLink } from "@/components/audio/RecordingLink";
 import { useRecordingUrl } from "@/hooks/use-recording-url";
@@ -1821,8 +1816,6 @@ function LeadPanel({
                   </FieldRow>
                 ))}
 
-                <LeadQualBlock leadId={lead.id} phone={lead.phone || null} />
-
                 {groupBoxes.length > 0 && (
                   <div className="space-y-2.5 pt-3">
                     {groupBoxes.map((box) => (
@@ -1991,16 +1984,6 @@ function LeadPanel({
                 </div>
               )}
 
-              {/* Payments: a folded one-line card under the client, so it never
-                pushes the client's name and phones out of view. */}
-              {crmEnabled && (
-                <LeadPaymentsSection
-                  leadId={lead.id}
-                  total={lead.budget}
-                  nextPaymentDate={lead.nextPaymentDate}
-                  onCreate={() => setPayOpen(true)}
-                />
-              )}
               {payOpen && (
                 <PaymentLinkDialog leadId={lead.id} open={payOpen} onOpenChange={setPayOpen} />
               )}
