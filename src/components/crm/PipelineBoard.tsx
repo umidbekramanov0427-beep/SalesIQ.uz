@@ -217,13 +217,52 @@ export function PipelineBoard({
 
   const sortItems = (items: CrmLeadView[]) => sortLikeBoard(items, sortBy);
 
+  // The board is ONE scroll box, both ways: the stage names are a sticky
+  // row inside it, so names and cards move as one piece in any direction
+  // (no JS keeping two layers in step, nothing lags behind a fast swipe).
   const panRef = useRef<HTMLDivElement>(null);
-  // The pinned strip of stage names follows the board sideways.
-  const headRowRef = useRef<HTMLDivElement>(null);
-  const syncHeads = () => {
+  // It fills the rest of the page's scroll box (<main>), so <main> itself
+  // never scrolls under it.
+  const [boxH, setBoxH] = useState<number | null>(null);
+  useEffect(() => {
     const el = panRef.current;
-    const row = headRowRef.current;
-    if (el && row) row.style.transform = `translateX(${-el.scrollLeft}px)`;
+    const main = el?.closest<HTMLElement>("[data-page-root]");
+    if (!el || !main) return;
+    const fit = () => {
+      const top =
+        el.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop;
+      const h = Math.max(320, Math.floor(main.clientHeight - top));
+      el.style.height = `${h}px`;
+      // Whatever still sticks out below (the page's own bottom padding).
+      const over = main.scrollHeight - main.clientHeight;
+      const fixed = over > 0 ? Math.max(320, h - over) : h;
+      el.style.height = `${fixed}px`;
+      setBoxH(fixed);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(main);
+    // Anything above it on the page (the pinned toolbar growing a row).
+    for (let n: HTMLElement | null = el; n && n !== main; n = n.parentElement)
+      for (let sib = n.previousElementSibling; sib; sib = sib.previousElementSibling)
+        ro.observe(sib);
+    window.addEventListener("resize", fit);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", fit);
+    };
+  }, []);
+  // While the board moves, cards ignore the pointer: no hover window, no
+  // "Tez qo'shish" button lighting up in whichever column slides under it.
+  const scrollIdle = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markScrolling = () => {
+    const el = panRef.current;
+    if (!el) return;
+    el.dataset["scrolling"] = "";
+    if (scrollIdle.current) clearTimeout(scrollIdle.current);
+    scrollIdle.current = setTimeout(() => {
+      delete el.dataset["scrolling"];
+    }, 160);
   };
   // The mini-map's window: which part of the board is on screen, in %.
   const [win, setWin] = useState({ left: 0, width: 100 });
@@ -274,6 +313,7 @@ export function PipelineBoard({
     () => () => {
       if (hoverTimer.current) clearTimeout(hoverTimer.current);
       if (mapTimer.current) clearTimeout(mapTimer.current);
+      if (scrollIdle.current) clearTimeout(scrollIdle.current);
     },
     [],
   );
@@ -282,7 +322,6 @@ export function PipelineBoard({
     const col = el?.querySelector<HTMLElement>(`[data-stage-col="${id}"]`);
     if (el && col) el.scrollTo({ left: col.offsetLeft - 8, behavior: "smooth" });
   };
-  useEffect(syncHeads);
   function startPan(e: React.PointerEvent<HTMLDivElement>) {
     const el = panRef.current;
     const target = e.target as HTMLElement;
@@ -324,23 +363,29 @@ export function PipelineBoard({
 
   return (
     <div>
-      {/* The stage names: pinned right under the page's own pinned bar
-          (--funnel-bar-h, funnels.tsx) by the browser itself -- a solid
-          strip, so cards pass under it unseen, and no lag while scrolling.
-          It follows the board sideways (syncHeads); a sideways wheel over
-          it scrolls the board. */}
+      {/* No scrollbar under the board (amoCRM has none): it scrolls sideways
+          with a trackpad, Shift + wheel, or by dragging an empty spot.
+          overscroll-contain: reaching an edge never hands the swipe to the
+          browser (its back/forward gesture) or to the page. */}
       <div
-        className="sticky z-[8] overflow-hidden bg-background"
-        style={{ top: "var(--funnel-bar-h, 0px)" }}
-        onWheel={(e) => {
-          const el = panRef.current;
-          const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
-          if (el && dx) el.scrollLeft += dx;
+        ref={panRef}
+        data-board-scroll
+        onPointerDown={startPan}
+        onScroll={() => {
+          markScrolling();
+          syncWin();
+          showMap();
         }}
+        style={boxH ? { height: boxH } : undefined}
+        className="relative cursor-default overflow-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&[data-scrolling]>*]:pointer-events-none"
       >
+        {/* The stage names: a solid sticky row INSIDE the scroll box, so
+            cards pass under it unseen and it moves with them sideways. */}
         <div
-          ref={headRowRef}
-          className={cn("flex min-w-max gap-4 pt-1.5 will-change-transform", selection && "pl-1.5")}
+          className={cn(
+            "sticky top-0 z-[8] flex min-w-max gap-4 bg-background pt-1.5",
+            selection && "pl-1.5",
+          )}
         >
           {leadingHead}
           {cols.map(({ s, items, value, line }) => (
@@ -390,20 +435,7 @@ export function PipelineBoard({
             </div>
           ))}
         </div>
-      </div>
-      {/* No scrollbar under the board (amoCRM has none): it scrolls sideways
-          with a trackpad, Shift + wheel, or by dragging an empty spot. */}
-      <div
-        ref={panRef}
-        onPointerDown={startPan}
-        onScroll={() => {
-          syncHeads();
-          syncWin();
-          showMap();
-        }}
-        className="cursor-default overflow-x-auto pb-14 [scrollbar-width:none] phone:pb-4 [&::-webkit-scrollbar]:hidden"
-      >
-        <div className={cn("flex min-w-max gap-4 pt-1", selection && "pl-1.5")}>
+        <div className={cn("flex min-w-max gap-4 pb-14 pt-1 phone:pb-4", selection && "pl-1.5")}>
           {leading}
           {cols.map(({ s, items }) => {
             return (

@@ -290,6 +290,20 @@
     border-color: var(--border);
   }
 
+  /* A sideways swipe that reaches a scroller's edge never turns into the
+     browser's back/forward gesture or a rubber-band of the whole page:
+     every window stays put however it is pushed. */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+
+  /* A page whose board fills the screen (the funnel board) needs no spare
+     room at its end: without it the page itself can't be pushed up/down. */
+  main:has([data-board-scroll]) .page-tail {
+    display: none;
+  }
+
   /* Grid items default to min-width:auto, so one long unbreakable value (a
      big sum, an email, a URL) used to stretch its column past the card and
      push neighbors / the card edge out of view. Letting items shrink keeps
@@ -2724,24 +2738,36 @@ html[data-font="lg"] main[data-page-root] > * {
 html[data-font="xl"] main[data-page-root] > * {
   zoom: 1.2;
 }
-html[data-shape="compact"] main[data-page-root] :is(button, input, select, textarea):not(:is(button, a) *) {
+html[data-shape="compact"]
+  main[data-page-root]
+  :is(button, input, select, textarea):not(:is(button, a) *) {
   zoom: 0.92;
 }
-html[data-shape="wide"] main[data-page-root] :is(button, input, select, textarea):not(:is(button, a) *) {
+html[data-shape="wide"]
+  main[data-page-root]
+  :is(button, input, select, textarea):not(:is(button, a) *) {
   zoom: 1.06;
 }
-html[data-shape="large"] main[data-page-root] :is(button, input, select, textarea):not(:is(button, a) *) {
+html[data-shape="large"]
+  main[data-page-root]
+  :is(button, input, select, textarea):not(:is(button, a) *) {
   zoom: 1.12;
 }
 
 /* Trigger forms (Voronka sozlamalari), 5CRM's way: square-ish fields on the
    panel's quiet tone, 40px tall. The bare selects inside <Inline> keep none. */
-.tf-form :is(input:not([type="checkbox"]):not([type="radio"]):not([data-bare]), select:not([data-bare]), textarea) {
+.tf-form
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([data-bare]),
+    select:not([data-bare]),
+    textarea
+  ) {
   border-radius: 3px;
   background-color: var(--amo-quiet, var(--background));
   font-size: 13.5px;
 }
-.tf-form :is(input:not([type="checkbox"]):not([type="radio"]):not([data-bare]), select:not([data-bare])) {
+.tf-form
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([data-bare]), select:not([data-bare])) {
   height: 40px;
 }
 .tf-form input[type="checkbox"] {
