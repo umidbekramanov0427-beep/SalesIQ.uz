@@ -4,6 +4,11 @@ import { shrinkLogo } from "@/lib/shrink-logo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsMutating } from "@tanstack/react-query";
 import {
+  BarChart3,
+  BookOpen,
+  PenLine,
+  Trophy,
+  UserRound,
   Bell,
   Inbox,
   Bot,
@@ -70,10 +75,29 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { BusinessProfileBot } from "@/components/settings/BusinessProfileBot";
 import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
-import { MfaCard } from "@/components/settings/MfaCard";
+import {
+  AppearanceSection,
+  BusinessInfoSection,
+  GuidesSection,
+  PersonalSection,
+  ResultsSection,
+  SecuritySection,
+  SignatureSection,
+  StatsSection,
+  SubscriptionSection,
+} from "@/components/profile/ProfileSections";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 
 type SectionKey =
+  | "personal"
+  | "results"
+  | "signature"
+  | "subscription"
+  | "stats"
+  | "businessInfo"
+  | "guides"
+  | "security"
+  | "appearance"
   | "profile"
   | "personalization"
   | "notifications"
@@ -86,6 +110,15 @@ type SectionKey =
   | "reportProblem";
 
 const SECTION_KEYS: SectionKey[] = [
+  "personal",
+  "results",
+  "signature",
+  "subscription",
+  "stats",
+  "businessInfo",
+  "guides",
+  "security",
+  "appearance",
   "profile",
   "personalization",
   "notifications",
@@ -123,68 +156,6 @@ const STAGE_COLORS = [
   "bg-mint-border",
   "bg-muted-foreground",
 ] as const;
-
-// Name, phone, email and password are edited in the profile window (user
-// menu → Hisob); this section only holds two-step sign-in.
-function ProfileSection() {
-  const { user } = useAuth();
-  // The platform owner's sign-in protection lives in Platforma → Sozlamalar →
-  // Xavfsizlik (with the login code); one place, not two.
-  const { t } = useI18n();
-  if (user?.role === "platform_owner") {
-    return (
-      <SectionCard icon={ShieldCheck} tone="emerald" title={t("settings.nav.profile")}>
-        <Link
-          to="/platform/settings"
-          search={{ tab: "security" }}
-          className="ctl-soft inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-foreground"
-        >
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          {t("os.tab.security")}
-        </Link>
-      </SectionCard>
-    );
-  }
-  return <MfaCard />;
-}
-
-// Language and light/dark mode are switched from the user menu; this is
-// the currency and the platform colour.
-function PersonalizationSection() {
-  const { t } = useI18n();
-  const { unit, setUnit } = useCurrency();
-  const { user } = useAuth();
-  const showCurrency = user?.role !== "sotuv_menejeri";
-
-  return (
-    <SectionCard
-      icon={Palette}
-      tone="violet"
-      title={t("settings.nav.personalization")}
-      description={t("settings.personalizationDesc")}
-      info={t("settings.personalizationInfo")}
-    >
-      <div className="grid gap-4 sm:grid-cols-2">
-        {showCurrency && (
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Wallet className="h-4 w-4" />
-              </span>
-              <span className="text-[13px] font-semibold text-foreground">
-                {t("settings.currency")}
-              </span>
-            </div>
-            <div className="mt-3">
-              <SegmentedControl value={unit} options={CURRENCIES} onChange={setUnit} />
-            </div>
-          </div>
-        )}
-        <AccentColorPicker />
-      </div>
-    </SectionCard>
-  );
-}
 
 // The reports/task-reminder Telegram bot has no way to know who's
 // messaging it besides this one-time code exchange: super_admin sets
@@ -1559,6 +1530,16 @@ type NavItem =
  * account, and so on.
  */
 const SECTION_WORDS: Partial<Record<SectionKey, string>> = {
+  personal:
+    "shaxsiy ism familiya telefon tug'ilgan manzil shahar lavozim holat status vaqt mintaqa sana valyuta личные",
+  results: "natija natijalarim sotuv konversiya результаты",
+  signature: "imzo vizitka qr подпись визитка",
+  subscription: "obuna tarif to'lov balans billing подписка оплата",
+  stats: "statistika kassa tushum статистика",
+  businessInfo: "biznes kompaniya subdomen tarif бизнес",
+  guides: "qo'llanma yo'riqnoma pdf инструкция",
+  security: "xavfsizlik parol password 2fa ikki bosqichli passkey ip qurilma безопасность пароль",
+  appearance: "ko'rinish shrift o'lcham rang valyuta внешний вид шрифт",
   profile: "profil ism parol password 2fa ikki bosqichli kirish xavfsizlik security пароль",
   personalization:
     "til language язык shrift font rang color accent sana date valyuta currency ko'rinish тема",
@@ -1616,22 +1597,24 @@ function SettingsPage() {
   const isAdmin = role === "super_admin";
   const isManager = isAdmin || role === "rop";
 
+  // Profil: 5CRM's profile window, section by section (Sozlamalar is where
+  // a person's own things live; the company's follow under it).
   const profileItems: NavItem[] = [
-    { type: "section", key: "profile", icon: ShieldCheck, label: t("settings.nav.profile") },
-    {
-      type: "section",
-      key: "personalization",
-      icon: Palette,
-      label: t("settings.nav.personalization"),
-    },
-    // Everyone: their own phone/computer notifications. The notification
-    // center itself opens from the sidebar's bell.
+    { type: "section", key: "personal", icon: UserRound, label: t("pf.nav.personal") },
+    { type: "section", key: "results", icon: Trophy, label: t("pf.nav.results") },
+    { type: "section", key: "signature", icon: PenLine, label: t("pf.nav.signature") },
+    { type: "section", key: "subscription", icon: CreditCard, label: t("pf.nav.subscription") },
+    { type: "section", key: "stats", icon: BarChart3, label: t("pf.nav.stats") },
     {
       type: "section",
       key: "notifications",
       icon: Bell,
       label: t("settings.nav.notifications"),
     },
+    { type: "section", key: "businessInfo", icon: Building2, label: t("pf.nav.business") },
+    { type: "section", key: "guides", icon: BookOpen, label: t("pf.nav.guides") },
+    { type: "section", key: "security", icon: ShieldCheck, label: t("pf.nav.security") },
+    { type: "section", key: "appearance", icon: Palette, label: t("pf.nav.appearance") },
   ];
   const generalItems: NavItem[] = [
     ...profileItems,
@@ -1649,7 +1632,6 @@ function SettingsPage() {
             icon: SlidersHorizontal,
             label: t("settings.nav.general"),
           },
-          { type: "section", key: "billing", icon: CreditCard, label: t("trial.subscribe") },
         ] satisfies NavItem[])
       : []),
     {
@@ -1701,13 +1683,18 @@ function SettingsPage() {
   const allowedSections = new Set(
     generalItems.flatMap((i) => (i.type === "section" ? [i.key] : [])),
   );
-  const [section, setSection] = useState<SectionKey>(
-    sectionParam && allowedSections.has(sectionParam) ? sectionParam : "profile",
-  );
+  // Old links: «profile» was two-step sign-in, «personalization» the look.
+  const alias = (k: SectionKey | undefined): SectionKey | undefined =>
+    k === "profile" ? "security" : k === "personalization" ? "appearance" : k;
+  const [section, setSection] = useState<SectionKey>(() => {
+    const k = alias(sectionParam);
+    return k && allowedSections.has(k) ? k : "personal";
+  });
   // A link to another section while already here (the bell's
   // "Hammasini ko'rish") switches to it.
   useEffect(() => {
-    if (sectionParam && allowedSections.has(sectionParam)) setSection(sectionParam);
+    const k = alias(sectionParam);
+    if (k && allowedSections.has(k)) setSection(k);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectionParam]);
   // Each section opens at its top, not at the previous section's offset.
@@ -1897,8 +1884,15 @@ function SettingsPage() {
               <BackButton />
               <SaveStatus />
             </div>
-            {section === "profile" && <ProfileSection />}
-            {section === "personalization" && <PersonalizationSection />}
+            {section === "personal" && <PersonalSection />}
+            {section === "results" && <ResultsSection />}
+            {section === "signature" && <SignatureSection />}
+            {section === "subscription" && <SubscriptionSection />}
+            {section === "stats" && <StatsSection />}
+            {section === "businessInfo" && <BusinessInfoSection />}
+            {section === "guides" && <GuidesSection />}
+            {section === "security" && <SecuritySection />}
+            {section === "appearance" && <AppearanceSection />}
             {section === "notifications" && (
               <div className="space-y-5">
                 <GeneralNotifyPanel />

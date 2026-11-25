@@ -1179,6 +1179,7 @@ const DEFAULT_SECURITY_SETTINGS: Omit<SecuritySettingsRow, "organization_id"> = 
   ip_allowlist_enabled: false,
   ip_allowlist: [],
   ip_allowlist_admins: false,
+  device_lock: false,
   updated_at: "",
   updated_by: null,
 };
@@ -1217,6 +1218,7 @@ export function useUpdateSecuritySettings() {
           | "ip_allowlist_enabled"
           | "ip_allowlist"
           | "ip_allowlist_admins"
+          | "device_lock"
         >
       >,
     ) => {

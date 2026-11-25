@@ -632,9 +632,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     open: "/settings",
     title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
     summary: {
-      uz: "Ikki bosqichli kirish, valyuta, bildirishnomalar, ish jadvali va tarif.",
-      ru: "Двухэтапный вход, валюта, уведомления, график работы и тариф.",
-      en: "Two-step sign-in, currency, notifications, work schedule and plan.",
+      uz: "Profilingiz (10 bo'lim), xavfsizlik, ko'rinish, bildirishnomalar va kompaniya sozlamalari.",
+      ru: "Ваш профиль (10 разделов), безопасность, внешний вид, уведомления и настройки компании.",
+      en: "Your profile (10 sections), security, look, notifications and company settings.",
     },
     steps: [
       {
@@ -643,9 +643,29 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Open **Settings** at the bottom of the left menu.",
       },
       {
-        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Ikki bosqichli kirish, Shaxsiylashtirish, Bildirishnomalar va boshqalar.",
-        ru: "Слева выберите раздел: Двухэтапный вход, Персонализация, Уведомления и другие.",
-        en: "Pick a section on the left: Two-step sign-in, Personalization, Notifications and more.",
+        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Shaxsiy ma'lumot, Natijalarim, Imzo va vizitka, Obunalar, Statistika, Bildirishnomalar, Biznes ma'lumoti, Qo'llanmalar, Xavfsizlik, Ko'rinish.",
+        ru: "Слева выберите раздел: Личные данные, Мои результаты, Подпись и визитка, Подписка, Статистика, Уведомления, О бизнесе, Инструкции, Безопасность, Внешний вид.",
+        en: "Pick a section on the left: Personal details, My results, Signature and card, Subscription, Statistics, Notifications, Business details, Guides, Security, Appearance.",
+      },
+      {
+        uz: "**Shaxsiy ma'lumot**da ism, familiya, telefon, tug'ilgan sana, shahar, lavozim va **holatingiz**ni (Ish joyidaman, Tushlikdaman…) yozing; pastda vaqt mintaqasi, sana va vaqt formati, valyuta. **Saqlash**ni bosing.",
+        ru: "В **Личных данных** заполните имя, фамилию, телефон, дату рождения, город, должность и **статус** (На месте, На обеде…); ниже — часовой пояс, формат даты и времени, валюта. Нажмите **Сохранить**.",
+        en: "In **Personal details** fill in name, last name, phone, birth date, city, position and your **status** (At work, At lunch…); below are time zone, date and time format and currency. Press **Save**.",
+      },
+      {
+        uz: "**Imzo va vizitka**da imzongizni chizib saqlang va **QR vizitka** yarating — mijoz QR'ni skanerlab kontaktingizni telefoniga saqlaydi.",
+        ru: "В **Подписи и визитке** нарисуйте и сохраните подпись и создайте **QR-визитку** — клиент сканирует её и сохраняет ваш контакт.",
+        en: "In **Signature and card** draw and save your signature and create a **QR business card** — a client scans it and saves your contact.",
+      },
+      {
+        uz: "**Xavfsizlik**da parolni o'zgartiring, ikki bosqichli kirishni yoqing va **Telefonga tez kirish** QR'i bilan telefondan parolsiz kiring. Administrator shu yerda IP cheklov va **Operator qurilma qulfi**ni yoqadi.",
+        ru: "В **Безопасности** смените пароль, включите двухэтапный вход и войдите с телефона без пароля по QR **Быстрого входа**. Администратор здесь включает ограничение по IP и **привязку оператора к устройству**.",
+        en: "In **Security** change your password, turn on two-step sign-in and sign in on your phone with the **Quick sign-in** QR. The admin turns on the IP limit and the **operator device lock** here.",
+      },
+      {
+        uz: "**Ko'rinish**da shrift va elementlar o'lchamini tanlang — namuna darhol o'zgaradi, tanlov hamma qurilmangizda saqlanadi.",
+        ru: "Во **Внешнем виде** выберите размер шрифта и элементов — пример меняется сразу, выбор сохраняется на всех устройствах.",
+        en: "In **Appearance** pick the text and control size — the preview changes at once and the choice follows you to every device.",
       },
       {
         uz: "Ism, telefon, til va mavzu (Avto, Yorug', Qorong'i) bitta joyda — chap pastdagi **avataringizni** bosing. Chiqish ham shu yerda.",

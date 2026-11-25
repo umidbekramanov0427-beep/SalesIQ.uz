@@ -2710,3 +2710,24 @@ main.studio {
     animation: none;
   }
 }
+
+/* Sozlamalar → Profil → Ko'rinish (src/lib/profile-prefs.ts): text size
+   scales the page content; control size scales buttons and fields. */
+html[data-font="sm"] main[data-page-root] > * {
+  zoom: 0.9;
+}
+html[data-font="lg"] main[data-page-root] > * {
+  zoom: 1.1;
+}
+html[data-font="xl"] main[data-page-root] > * {
+  zoom: 1.2;
+}
+html[data-shape="compact"] main[data-page-root] :is(button, input, select, textarea):not(:is(button, a) *) {
+  zoom: 0.92;
+}
+html[data-shape="wide"] main[data-page-root] :is(button, input, select, textarea):not(:is(button, a) *) {
+  zoom: 1.06;
+}
+html[data-shape="large"] main[data-page-root] :is(button, input, select, textarea):not(:is(button, a) *) {
+  zoom: 1.12;
+}

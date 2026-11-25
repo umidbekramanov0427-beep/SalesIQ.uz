@@ -173,7 +173,7 @@ const SESSION_BOOT_SCRIPT = `(function(){try{for(var i=0;i<localStorage.length;i
 // for the phone layout (the `phone:` variant and the html.phone rules in
 // styles.css: bottom tab bar, one-column pages, 16px inputs so iOS doesn't
 // zoom). A page that sets its own viewport (the Telegram Mini App) keeps it.
-const PHONE_BOOT_SCRIPT = `(function(){try{var s=window.screen,m=Math.min(s.width,s.height),phone=m<768&&window.matchMedia("(pointer: coarse)").matches;if(phone)document.documentElement.classList.add("phone");var v=document.querySelector('meta[name="viewport"]');if(v&&!phone)return;if(!v){v=document.createElement("meta");v.name="viewport";document.head.appendChild(v)}v.content=phone?"width=device-width, initial-scale=1, viewport-fit=cover":"width=1366"}catch(e){}})();`;
+const PHONE_BOOT_SCRIPT = `(function(){try{var lk=JSON.parse(localStorage.getItem("salesiq.look")||"{}"),de=document.documentElement;if(lk.fontSize&&lk.fontSize!=="md")de.setAttribute("data-font",lk.fontSize);if(lk.shapeSize&&lk.shapeSize!=="normal")de.setAttribute("data-shape",lk.shapeSize)}catch(e){}try{var s=window.screen,m=Math.min(s.width,s.height),phone=m<768&&window.matchMedia("(pointer: coarse)").matches;if(phone)document.documentElement.classList.add("phone");var v=document.querySelector('meta[name="viewport"]');if(v&&!phone)return;if(!v){v=document.createElement("meta");v.name="viewport";document.head.appendChild(v)}v.content=phone?"width=device-width, initial-scale=1, viewport-fit=cover":"width=1366"}catch(e){}})();`;
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -229,6 +229,8 @@ function AuthGate() {
     pathname.startsWith("/f/") ||
     // A company's client paying a bill from a link (lead_payment_links).
     pathname.startsWith("/pay/") ||
+    // A person's open QR business card (Profil → Imzo va vizitka).
+    pathname.startsWith("/card/") ||
     // A client's own cabinet (orders, payments, chat) from a private link.
     pathname.startsWith("/cabinet/") ||
     // Telegram Mini App pages sign the user in themselves (or need no

@@ -118,3 +118,7 @@ create table if not exists salesbots (id uuid primary key default gen_random_uui
 -- Triggers, rest of the 5CRM guide (20270205).
 alter table user_login_events add column if not exists last_seen_at timestamptz;
 alter table leads add column if not exists custom_fields jsonb;
+
+-- Profile (20270206).
+alter table profiles add column if not exists position text, add column if not exists avatar_url text;
+create table if not exists security_settings (organization_id uuid primary key, ip_allowlist jsonb not null default '[]');

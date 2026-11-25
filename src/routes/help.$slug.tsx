@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { GuideText } from "@/components/help/GuideText";
@@ -8,13 +9,27 @@ import { useI18n } from "@/lib/i18n";
 // One guide: what you need, the steps, what to watch out for, common
 // questions, and a button straight to the page it's about.
 export const Route = createFileRoute("/help/$slug")({
+  // ?print=1 (Profil → Qo'llanmalar → PDF): opens the browser's print /
+  // "Save as PDF" window once the guide is on screen.
+  validateSearch: (search: Record<string, unknown>): { print?: boolean | undefined } => ({
+    print:
+      search["print"] === true || search["print"] === "1" || search["print"] === "true"
+        ? true
+        : undefined,
+  }),
   component: HelpArticlePage,
 });
 
 function HelpArticlePage() {
   const { slug } = Route.useParams();
+  const { print } = Route.useSearch();
   const { t, lang } = useI18n();
   const article = helpArticle(slug);
+  useEffect(() => {
+    if (!print || !article) return;
+    const id = setTimeout(() => window.print(), 600);
+    return () => clearTimeout(id);
+  }, [print, article]);
 
   if (!article) {
     return (

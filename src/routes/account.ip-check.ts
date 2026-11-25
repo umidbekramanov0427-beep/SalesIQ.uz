@@ -32,7 +32,28 @@ export const Route = createFileRoute("/account/ip-check")({
         // Until the migration has run (or on a read error) nobody is locked out.
         if (error) return Response.json({ allowed: true, ip });
         const rules = parseIpRules(settings);
-        if (ipAllowed(rules, ip, profile.role)) return Response.json({ allowed: true, ip });
+        let reason: "ip" | "device" | null = ipAllowed(rules, ip, profile.role) ? null : "ip";
+
+        // «Operator qurilma qulfi»: a sales rep works from one device -- the
+        // first one seen is remembered; another one is turned away until an
+        // admin frees the lock (Sozlamalar → Xavfsizlik).
+        const device = new URL(request.url).searchParams.get("device")?.slice(0, 120) ?? "";
+        if (!reason && settings?.device_lock && profile.role === "sotuv_menejeri" && device) {
+          const { data: me } = await supabaseAdmin
+            .from("profiles")
+            .select("bound_device_id")
+            .eq("id", userId)
+            .maybeSingle();
+          if (!me?.bound_device_id) {
+            await supabaseAdmin
+              .from("profiles")
+              .update({ bound_device_id: device })
+              .eq("id", userId);
+          } else if (me.bound_device_id !== device) {
+            reason = "device";
+          }
+        }
+        if (!reason) return Response.json({ allowed: true, ip });
 
         // Only this session: the same person may be signed in at the office.
         const session = authSessionId(request);
@@ -45,7 +66,7 @@ export const Route = createFileRoute("/account/ip-check")({
             console.error("[ip-check] could not close the session", revokeError.message);
           }
         }
-        return Response.json({ allowed: false, ip });
+        return Response.json({ allowed: false, ip, reason });
       },
     },
   },

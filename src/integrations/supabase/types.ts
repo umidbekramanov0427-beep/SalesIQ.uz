@@ -7243,6 +7243,9 @@ export type Database = {
       };
       org_general_settings: {
         Row: {
+          notify_ai_objection: boolean;
+          notify_stage_ids: string[] | null;
+          notify_stage_robot: boolean;
           ai_task_creation_enabled: boolean;
           business_language: string | null;
           crm_task_forwarding_enabled: boolean;
@@ -7289,6 +7292,9 @@ export type Database = {
           file_lost_lead_days: number | null;
         };
         Insert: {
+          notify_ai_objection?: boolean;
+          notify_stage_ids?: string[] | null;
+          notify_stage_robot?: boolean;
           ai_task_creation_enabled?: boolean;
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
@@ -7335,6 +7341,9 @@ export type Database = {
           file_lost_lead_days?: number | null;
         };
         Update: {
+          notify_ai_objection?: boolean;
+          notify_stage_ids?: string[] | null;
+          notify_stage_robot?: boolean;
           ai_task_creation_enabled?: boolean;
           business_language?: string | null;
           crm_task_forwarding_enabled?: boolean;
@@ -8410,6 +8419,17 @@ export type Database = {
       };
       profiles: {
         Row: {
+          address: string | null;
+          birth_date: string | null;
+          bound_device_id: string | null;
+          city: string | null;
+          gender: string | null;
+          last_name: string | null;
+          prefs: Json;
+          signature_data: string | null;
+          status_text: string | null;
+          statuses: string[] | null;
+          vcard_code: string | null;
           amocrm_user_id: number | null;
           avatar_url: string | null;
           bitrix24_user_id: number | null;
@@ -8447,6 +8467,17 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          address?: string | null;
+          birth_date?: string | null;
+          bound_device_id?: string | null;
+          city?: string | null;
+          gender?: string | null;
+          last_name?: string | null;
+          prefs?: Json;
+          signature_data?: string | null;
+          status_text?: string | null;
+          statuses?: string[] | null;
+          vcard_code?: string | null;
           amocrm_user_id?: number | null;
           avatar_url?: string | null;
           bitrix24_user_id?: number | null;
@@ -8484,6 +8515,17 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          address?: string | null;
+          birth_date?: string | null;
+          bound_device_id?: string | null;
+          city?: string | null;
+          gender?: string | null;
+          last_name?: string | null;
+          prefs?: Json;
+          signature_data?: string | null;
+          status_text?: string | null;
+          statuses?: string[] | null;
+          vcard_code?: string | null;
           amocrm_user_id?: number | null;
           avatar_url?: string | null;
           bitrix24_user_id?: number | null;
@@ -8763,6 +8805,7 @@ export type Database = {
       };
       security_settings: {
         Row: {
+          device_lock: boolean;
           ip_allowlist: Json;
           ip_allowlist_admins: boolean;
           ip_allowlist_enabled: boolean;
@@ -8776,6 +8819,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          device_lock?: boolean;
           ip_allowlist?: Json;
           ip_allowlist_admins?: boolean;
           ip_allowlist_enabled?: boolean;
@@ -8789,6 +8833,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          device_lock?: boolean;
           ip_allowlist?: Json;
           ip_allowlist_admins?: boolean;
           ip_allowlist_enabled?: boolean;
@@ -9245,6 +9290,10 @@ export type Database = {
       };
     };
     Functions: {
+      public_vcard: {
+        Args: { p_code: string };
+        Returns: Json;
+      };
       backup_org_tables: {
         Args: Record<PropertyKey, never>;
         Returns: { table_name: string }[];

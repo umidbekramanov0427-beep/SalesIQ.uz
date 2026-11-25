@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { currentDeviceId } from "@/lib/device-id";
 import type { Database } from "@/integrations/supabase/types";
 import { logClientError } from "@/lib/error-log";
 import { orgPhase } from "@/lib/org-access";
@@ -194,14 +195,21 @@ async function fetchOrgFields(organizationId: string | null): Promise<OrgFields 
 }
 
 /** /account/ip-check for the signed-in session; null when it can't be asked. */
-async function checkSignInAddress(): Promise<{ allowed: boolean; ip: string | null } | null> {
+async function checkSignInAddress(): Promise<{
+  allowed: boolean;
+  ip: string | null;
+  reason?: "ip" | "device";
+} | null> {
   try {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return null;
-    const res = await fetch("/account/ip-check", { headers: { Authorization: `Bearer ${token}` } });
+    // The device id lets the server keep «Operator qurilma qulfi».
+    const res = await fetch(`/account/ip-check?device=${encodeURIComponent(currentDeviceId())}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (!res.ok) return null;
-    return (await res.json()) as { allowed: boolean; ip: string | null };
+    return (await res.json()) as { allowed: boolean; ip: string | null; reason?: "ip" | "device" };
   } catch {
     return null;
   }
@@ -273,7 +281,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await supabase.auth.signOut();
             if (mounted.current) {
               setSeatBlockedMessage(
-                `Bu manzildan (${ipCheck.ip ?? "noma'lum IP"}) kompaniyangiz tizimiga kirish ruxsat etilmagan. Ofis tarmog'idan kiring yoki administratorga murojaat qiling.`,
+                ipCheck.reason === "device"
+                  ? "Hisobingiz boshqa qurilmaga bog'langan (operator qurilma qulfi). Shu qurilmadan kirish uchun administrator qulfni bo'shatishi kerak."
+                  : `Bu manzildan (${ipCheck.ip ?? "noma'lum IP"}) kompaniyangiz tizimiga kirish ruxsat etilmagan. Ofis tarmog'idan kiring yoki administratorga murojaat qiling.`,
               );
               setUser(null);
             }

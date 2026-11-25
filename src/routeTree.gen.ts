@@ -51,6 +51,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TlsAllowedRouteImport } from './routes/tls-allowed'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AccountDeviceUnlockRouteImport } from './routes/account.device-unlock'
 import { Route as AccountFirstStepsRouteImport } from './routes/account.first-steps'
 import { Route as AccountIpCheckRouteImport } from './routes/account.ip-check'
 import { Route as AccountLoginCodeRouteImport } from './routes/account.login-code'
@@ -58,6 +59,7 @@ import { Route as AccountLoginEventRouteImport } from './routes/account.login-ev
 import { Route as AccountLoginFailedRouteImport } from './routes/account.login-failed'
 import { Route as AccountMyMeetingRouteImport } from './routes/account.my-meeting'
 import { Route as AccountOnlineRouteImport } from './routes/account.online'
+import { Route as AccountQuickLoginRouteImport } from './routes/account.quick-login'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
 import { Route as AdminAiOverviewRouteImport } from './routes/admin.ai-overview'
@@ -125,6 +127,7 @@ import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upl
 import { Route as CabinetTokenRouteImport } from './routes/cabinet.$token'
 import { Route as CabinetDataRouteImport } from './routes/cabinet.data'
 import { Route as CabinetLinkRouteImport } from './routes/cabinet.link'
+import { Route as CardCodeRouteImport } from './routes/card.$code'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
 import { Route as CrmSpeedToLeadRouteImport } from './routes/crm.speed-to-lead'
 import { Route as DailyReportSettingsGenerateNowRouteImport } from './routes/daily-report-settings.generate-now'
@@ -550,6 +553,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AccountDeviceUnlockRoute = AccountDeviceUnlockRouteImport.update({
+  id: '/account/device-unlock',
+  path: '/account/device-unlock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountFirstStepsRoute = AccountFirstStepsRouteImport.update({
   id: '/account/first-steps',
   path: '/account/first-steps',
@@ -583,6 +591,11 @@ const AccountMyMeetingRoute = AccountMyMeetingRouteImport.update({
 const AccountOnlineRoute = AccountOnlineRouteImport.update({
   id: '/account/online',
   path: '/account/online',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountQuickLoginRoute = AccountQuickLoginRouteImport.update({
+  id: '/account/quick-login',
+  path: '/account/quick-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountSessionEventsRoute = AccountSessionEventsRouteImport.update({
@@ -923,6 +936,11 @@ const CabinetDataRoute = CabinetDataRouteImport.update({
 const CabinetLinkRoute = CabinetLinkRouteImport.update({
   id: '/cabinet/link',
   path: '/cabinet/link',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CardCodeRoute = CardCodeRouteImport.update({
+  id: '/card/$code',
+  path: '/card/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContractsTokenRoute = ContractsTokenRouteImport.update({
@@ -2089,6 +2107,7 @@ export interface FileRoutesByFullPath {
   '/tls-allowed': typeof TlsAllowedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/device-unlock': typeof AccountDeviceUnlockRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
   '/account/ip-check': typeof AccountIpCheckRoute
   '/account/login-code': typeof AccountLoginCodeRoute
@@ -2096,6 +2115,7 @@ export interface FileRoutesByFullPath {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
+  '/account/quick-login': typeof AccountQuickLoginRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2163,6 +2183,7 @@ export interface FileRoutesByFullPath {
   '/cabinet/$token': typeof CabinetTokenRoute
   '/cabinet/data': typeof CabinetDataRoute
   '/cabinet/link': typeof CabinetLinkRoute
+  '/card/$code': typeof CardCodeRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -2419,6 +2440,7 @@ export interface FileRoutesByTo {
   '/tls-allowed': typeof TlsAllowedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/device-unlock': typeof AccountDeviceUnlockRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
   '/account/ip-check': typeof AccountIpCheckRoute
   '/account/login-code': typeof AccountLoginCodeRoute
@@ -2426,6 +2448,7 @@ export interface FileRoutesByTo {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
+  '/account/quick-login': typeof AccountQuickLoginRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2493,6 +2516,7 @@ export interface FileRoutesByTo {
   '/cabinet/$token': typeof CabinetTokenRoute
   '/cabinet/data': typeof CabinetDataRoute
   '/cabinet/link': typeof CabinetLinkRoute
+  '/card/$code': typeof CardCodeRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -2750,6 +2774,7 @@ export interface FileRoutesById {
   '/tls-allowed': typeof TlsAllowedRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/account/device-unlock': typeof AccountDeviceUnlockRoute
   '/account/first-steps': typeof AccountFirstStepsRoute
   '/account/ip-check': typeof AccountIpCheckRoute
   '/account/login-code': typeof AccountLoginCodeRoute
@@ -2757,6 +2782,7 @@ export interface FileRoutesById {
   '/account/login-failed': typeof AccountLoginFailedRoute
   '/account/my-meeting': typeof AccountMyMeetingRoute
   '/account/online': typeof AccountOnlineRoute
+  '/account/quick-login': typeof AccountQuickLoginRoute
   '/account/session-events': typeof AccountSessionEventsRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
@@ -2824,6 +2850,7 @@ export interface FileRoutesById {
   '/cabinet/$token': typeof CabinetTokenRoute
   '/cabinet/data': typeof CabinetDataRoute
   '/cabinet/link': typeof CabinetLinkRoute
+  '/card/$code': typeof CardCodeRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -3082,6 +3109,7 @@ export interface FileRouteTypes {
     | '/tls-allowed'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/device-unlock'
     | '/account/first-steps'
     | '/account/ip-check'
     | '/account/login-code'
@@ -3089,6 +3117,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/my-meeting'
     | '/account/online'
+    | '/account/quick-login'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3156,6 +3185,7 @@ export interface FileRouteTypes {
     | '/cabinet/$token'
     | '/cabinet/data'
     | '/cabinet/link'
+    | '/card/$code'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -3412,6 +3442,7 @@ export interface FileRouteTypes {
     | '/tls-allowed'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/device-unlock'
     | '/account/first-steps'
     | '/account/ip-check'
     | '/account/login-code'
@@ -3419,6 +3450,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/my-meeting'
     | '/account/online'
+    | '/account/quick-login'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3486,6 +3518,7 @@ export interface FileRouteTypes {
     | '/cabinet/$token'
     | '/cabinet/data'
     | '/cabinet/link'
+    | '/card/$code'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -3742,6 +3775,7 @@ export interface FileRouteTypes {
     | '/tls-allowed'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/account/device-unlock'
     | '/account/first-steps'
     | '/account/ip-check'
     | '/account/login-code'
@@ -3749,6 +3783,7 @@ export interface FileRouteTypes {
     | '/account/login-failed'
     | '/account/my-meeting'
     | '/account/online'
+    | '/account/quick-login'
     | '/account/session-events'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
@@ -3816,6 +3851,7 @@ export interface FileRouteTypes {
     | '/cabinet/$token'
     | '/cabinet/data'
     | '/cabinet/link'
+    | '/card/$code'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -4073,6 +4109,7 @@ export interface RootRouteChildren {
   TlsAllowedRoute: typeof TlsAllowedRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AccountDeviceUnlockRoute: typeof AccountDeviceUnlockRoute
   AccountFirstStepsRoute: typeof AccountFirstStepsRoute
   AccountIpCheckRoute: typeof AccountIpCheckRoute
   AccountLoginCodeRoute: typeof AccountLoginCodeRoute
@@ -4080,6 +4117,7 @@ export interface RootRouteChildren {
   AccountLoginFailedRoute: typeof AccountLoginFailedRoute
   AccountMyMeetingRoute: typeof AccountMyMeetingRoute
   AccountOnlineRoute: typeof AccountOnlineRoute
+  AccountQuickLoginRoute: typeof AccountQuickLoginRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
   AnnouncementsActiveRoute: typeof AnnouncementsActiveRoute
   ApiPricingRoute: typeof ApiPricingRoute
@@ -4093,6 +4131,7 @@ export interface RootRouteChildren {
   CabinetTokenRoute: typeof CabinetTokenRoute
   CabinetDataRoute: typeof CabinetDataRoute
   CabinetLinkRoute: typeof CabinetLinkRoute
+  CardCodeRoute: typeof CardCodeRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmSpeedToLeadRoute: typeof CrmSpeedToLeadRoute
   DevPhoneRoute: typeof DevPhoneRoute
@@ -4547,6 +4586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/device-unlock': {
+      id: '/account/device-unlock'
+      path: '/account/device-unlock'
+      fullPath: '/account/device-unlock'
+      preLoaderRoute: typeof AccountDeviceUnlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/first-steps': {
       id: '/account/first-steps'
       path: '/account/first-steps'
@@ -4594,6 +4640,13 @@ declare module '@tanstack/react-router' {
       path: '/account/online'
       fullPath: '/account/online'
       preLoaderRoute: typeof AccountOnlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/quick-login': {
+      id: '/account/quick-login'
+      path: '/account/quick-login'
+      fullPath: '/account/quick-login'
+      preLoaderRoute: typeof AccountQuickLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/session-events': {
@@ -5063,6 +5116,13 @@ declare module '@tanstack/react-router' {
       path: '/cabinet/link'
       fullPath: '/cabinet/link'
       preLoaderRoute: typeof CabinetLinkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/card/$code': {
+      id: '/card/$code'
+      path: '/card/$code'
+      fullPath: '/card/$code'
+      preLoaderRoute: typeof CardCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contracts/$token': {
@@ -7019,6 +7079,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AccountDeviceUnlockRoute: AccountDeviceUnlockRoute,
   AccountFirstStepsRoute: AccountFirstStepsRoute,
   AccountIpCheckRoute: AccountIpCheckRoute,
   AccountLoginCodeRoute: AccountLoginCodeRoute,
@@ -7026,6 +7087,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountLoginFailedRoute: AccountLoginFailedRoute,
   AccountMyMeetingRoute: AccountMyMeetingRoute,
   AccountOnlineRoute: AccountOnlineRoute,
+  AccountQuickLoginRoute: AccountQuickLoginRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
   AnnouncementsActiveRoute: AnnouncementsActiveRoute,
   ApiPricingRoute: ApiPricingRoute,
@@ -7039,6 +7101,7 @@ const rootRouteChildren: RootRouteChildren = {
   CabinetTokenRoute: CabinetTokenRoute,
   CabinetDataRoute: CabinetDataRoute,
   CabinetLinkRoute: CabinetLinkRoute,
+  CardCodeRoute: CardCodeRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmSpeedToLeadRoute: CrmSpeedToLeadRoute,
   DevPhoneRoute: DevPhoneRoute,

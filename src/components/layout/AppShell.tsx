@@ -34,6 +34,8 @@ import { TelegramLinkReminder } from "@/components/auth/TelegramLinkReminder";
 import { AiAssistantFab } from "@/components/ai/AiAssistantFab";
 import { WelcomeTour } from "@/components/onboarding/WelcomeTour";
 import { loadTips } from "@/lib/help/tips-loader";
+import { useMyProfile } from "@/components/profile/my-profile";
+import { applyLook, readPrefs } from "@/lib/profile-prefs";
 
 export function AppShell({ children }: { children: ReactNode }) {
   useRegisterAutoAnalyzeClient();
@@ -41,6 +43,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   useRecordLoginEvent();
   usePushResync();
   useEffect(() => startPwa(), []);
+  // Profil → Ko'rinish follows the person to every device they sign in on.
+  const { data: myProfile } = useMyProfile();
+  useEffect(() => {
+    if (myProfile) applyLook(readPrefs(myProfile.prefs));
+  }, [myProfile]);
   // The «!» explainers are ready before the first hover opens one.
   useEffect(() => {
     const id = setTimeout(() => void loadTips(), 300);
