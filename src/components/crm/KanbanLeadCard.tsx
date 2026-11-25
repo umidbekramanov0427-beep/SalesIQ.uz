@@ -278,7 +278,7 @@ export function KanbanLeadCard({
               rel="noreferrer"
               title={t("leadFilter.openInAmoCrm")}
               onClick={(e) => e.stopPropagation()}
-              className="hidden text-subtle hover:text-primary group-hover:inline-flex"
+              className="invisible inline-flex text-subtle hover:text-primary group-hover:visible"
             >
               <ExternalLink className="h-3 w-3" />
             </a>
@@ -326,7 +326,7 @@ export function KanbanLeadCard({
                 {LineIcon && <LineIcon className="h-3.5 w-3.5 shrink-0 text-subtle" />}
                 <span className="break-all">{line}</span>
                 {!preview && lineIsPhone && (
-                  <CopyButton value={line} className="hidden h-5 w-5 group-hover:inline-flex" />
+                  <CopyButton value={line} className="invisible h-5 w-5 group-hover:visible" />
                 )}
               </span>
             )}

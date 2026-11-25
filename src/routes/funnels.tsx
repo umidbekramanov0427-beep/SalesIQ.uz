@@ -1,3 +1,4 @@
+import { useFunnelSkin } from "@/lib/funnel-skin";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CardBoard } from "@/components/dashboard/HomeBoard";
 import { CardTools, useCardChrome } from "@/components/layout/CardTools";
@@ -208,8 +209,12 @@ function FunnelClosed() {
   );
 }
 
+const LAST_FUNNEL_KEY = "salesiq.lastFunnel";
+
 function Funnels() {
-  const { funnel: funnelParam } = Route.useSearch();
+  useFunnelSkin();
+  const { funnel: funnelParam, sec } = Route.useSearch();
+  const navigate = useNavigate();
   // The kanban toolbar's "Avtomatik yangilash" toggle -- lives here (not
   // inside FunnelDetail/PipelineBoard) since it has to reach into this
   // component's own usePipelineBoardLeads call to actually set the
@@ -233,7 +238,47 @@ function Funnels() {
   const detailLeads = board.rows;
   const isLoading = funnelParam ? board.isLoading : listStats.isLoading;
 
-  if (isLoading && funnels.length === 0 && !funnelParam) {
+  // Like 5CRM / amoCRM there is no page of funnel cards: «Voronkalar» opens
+  // the funnel used last (else the first open one); the rail's panel
+  // switches between them. The contacts / companies / files views stay.
+  const { data: allPipelines = [] } = usePipelines();
+  const target = useMemo(() => {
+    if (funnelParam || sec || listStats.isLoading) return null;
+    const archivedNames = new Set(
+      allPipelines
+        .filter((p) => (p as { archived_at?: string | null }).archived_at)
+        .map((p) => p.name),
+    );
+    // The funnels with leads (listStats) plus every set-up funnel, in order.
+    const names = [
+      ...funnels.map((f) => f.name),
+      ...[...allPipelines]
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((p) => p.name)
+        .filter((n) => funnelOpen(accessRules, me?.role, n)),
+    ];
+    const open = [...new Set(names)].filter((n) => !archivedNames.has(n)).map((name) => ({ name }));
+    let last: string | null = null;
+    try {
+      last = localStorage.getItem(LAST_FUNNEL_KEY);
+    } catch {
+      /* private mode */
+    }
+    return (open.find((f) => f.name === last) ?? open[0])?.name ?? null;
+  }, [funnelParam, sec, listStats.isLoading, funnels, allPipelines, accessRules, me?.role]);
+  useEffect(() => {
+    if (target) void navigate({ to: "/funnels", search: { funnel: target }, replace: true });
+  }, [target, navigate]);
+  useEffect(() => {
+    if (!funnelParam) return;
+    try {
+      localStorage.setItem(LAST_FUNNEL_KEY, funnelParam);
+    } catch {
+      /* private mode */
+    }
+  }, [funnelParam]);
+
+  if ((isLoading && funnels.length === 0 && !funnelParam) || target) {
     return <PageLoader />;
   }
   if (funnelParam && !funnelOpen(accessRules, me?.role, funnelParam)) {
@@ -996,11 +1041,6 @@ function FunnelDetail({
     );
   }, [shownLeads, taskDues, ownerChanges, dayStats]);
   const openCount = shownLeads.filter((l) => !l.stageIsWon && !l.stageIsLost).length;
-  // «Sotuv prognozi»: the value of every lead still open in the funnel.
-  const openRevenue = shownLeads.reduce(
-    (sum, l) => (l.stageIsWon || l.stageIsLost ? sum : sum + (l.expectedRevenue || 0)),
-    0,
-  );
 
   const analyticsButton = hasAnalytics ? (
     <button
@@ -1667,43 +1707,6 @@ function FunnelDetail({
           sortBy={sortBy}
           showClosed={showClosed}
           liveIds={liveIds}
-          footer={
-            <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12.5px] text-muted-foreground">
-              <span>
-                {t("funnels.day.tasksToday")}:{" "}
-                <b className="font-semibold text-foreground">{dayStats.tasksToday}</b>
-              </span>
-              <span>
-                {t("funnels.day.noTasks")}:{" "}
-                <b className="font-semibold text-foreground">{dayStats.noTasks}</b>
-              </span>
-              <span>
-                {t("funnels.day.overdue")}:{" "}
-                <b
-                  className={cn(
-                    "font-semibold",
-                    dayStats.overdueTasks ? "text-destructive" : "text-foreground",
-                  )}
-                >
-                  {dayStats.overdueTasks}
-                </b>
-              </span>
-              <span>
-                {t("funnels.day.newLeads")}:{" "}
-                <b className="font-semibold text-foreground">
-                  {dayStats.newToday} / {dayStats.newYesterday}
-                </b>
-              </span>
-              {canViewRevenue && (
-                <span>
-                  {t("funnels.day.forecast")}:{" "}
-                  <b className="font-semibold tabular-nums text-foreground">
-                    {format(openRevenue)}
-                  </b>
-                </span>
-              )}
-            </p>
-          }
           leading={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="body" />}
           leadingHead={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="head" />}
           // Tick boxes only while "Ommaviy amallar" is on.

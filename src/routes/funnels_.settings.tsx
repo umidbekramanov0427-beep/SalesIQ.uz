@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useFunnelSkin } from "@/lib/funnel-skin";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useIsMutating } from "@tanstack/react-query";
 import {
@@ -93,6 +94,7 @@ const TABS = [
 type SettingsTab = (typeof TABS)[number]["key"];
 
 function FunnelSettingsPage() {
+  useFunnelSkin();
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();

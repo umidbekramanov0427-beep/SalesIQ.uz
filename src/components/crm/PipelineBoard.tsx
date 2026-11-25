@@ -9,20 +9,18 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
-import { Check, CircleCheck, CircleX, Trash2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Check, CircleCheck, CircleX } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { hintLevelOf, stageHintFor } from "@/lib/stage-hints";
-import { toastLeadsTrashed } from "@/lib/leads-trash";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
+import { LeadHoverCard } from "@/components/crm/LeadHoverCard";
 import { StageQuickAdd } from "@/components/crm/StageQuickAdd";
 import { toast } from "sonner";
 import type { PipelineSortBy } from "@/components/crm/KanbanToolbarMenu";
 import { sortLikeBoard } from "@/lib/lead-distribution";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { cn, describeError, stageColorProps } from "@/lib/utils";
+import { cn, stageColorProps } from "@/lib/utils";
 import { LEAD_COLOR_CARD, leadColor, parseLeadColorRules } from "@/lib/lead-colors";
 import { missingRequired } from "@/lib/required-fields";
 import { requiredLabel } from "@/components/lead/lead-card-layout";
@@ -35,7 +33,6 @@ import {
   useOrgGeneralSettings,
   usePermission,
   useReplyRules,
-  useDeleteLeadForever,
   useUpdateLead,
   type CrmLeadView,
   type StageRow,
@@ -69,7 +66,6 @@ export function PipelineBoard({
   leading,
   leadingHead,
   showClosed = false,
-  footer,
 }: {
   funnel: string;
   leads: CrmLeadView[];
@@ -98,8 +94,6 @@ export function PipelineBoard({
    * along the bottom only while a lead is being dragged.
    */
   showClosed?: boolean;
-  /** The funnel's day figures, shown in the bar along the board's bottom. */
-  footer?: ReactNode;
 }) {
   const { t } = useI18n();
   const { format } = useCurrency();
@@ -156,10 +150,6 @@ export function PipelineBoard({
   const hintLevel = user
     ? hintLevelOf({ role: user.role, isIntern: user.isIntern, joinedAt: user.joinedAt })
     : "master";
-  const qc = useQueryClient();
-  const canDeleteLead = user?.role === "super_admin" || user?.role === "platform_owner";
-  const deleteLead = useDeleteLeadForever();
-  const [toDelete, setToDelete] = useState<CrmLeadView | null>(null);
 
   const [board, setBoard] = useState<Record<string, string[]>>({});
   const [dragged, setDragged] = useState<string | null>(null);
@@ -253,6 +243,40 @@ export function PipelineBoard({
     if (el.firstElementChild) ro.observe(el.firstElementChild);
     return () => ro.disconnect();
   }, []);
+  const [mapOn, setMapOn] = useState(false);
+  const mapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // true: keep it while the pointer is on it; undefined: a scroll (fades
+  // 1.2 s after the last one); false: the pointer left it.
+  const showMap = (hold?: boolean) => {
+    if (mapTimer.current) clearTimeout(mapTimer.current);
+    setMapOn(true);
+    if (!hold) mapTimer.current = setTimeout(() => setMapOn(false), hold === false ? 600 : 1200);
+  };
+  // The lead preview (LeadHoverCard): opens after the pointer rests on a
+  // card for half a second, stays while the pointer is on the window.
+  const [hover, setHover] = useState<{ id: string; rect: DOMRect } | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enterCard = (id: string, el: HTMLElement) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(
+      () => setHover({ id, rect: el.getBoundingClientRect() }),
+      hover ? 150 : 550,
+    );
+  };
+  const keepHover = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  };
+  const leaveHover = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => setHover(null), 250);
+  };
+  useEffect(
+    () => () => {
+      if (hoverTimer.current) clearTimeout(hoverTimer.current);
+      if (mapTimer.current) clearTimeout(mapTimer.current);
+    },
+    [],
+  );
   const scrollToStage = (id: string) => {
     const el = panRef.current;
     const col = el?.querySelector<HTMLElement>(`[data-stage-col="${id}"]`);
@@ -294,11 +318,7 @@ export function PipelineBoard({
   });
   // Dropping on a stage's name moves the card there too.
   const dropProps = (id: string) => ({
-    onDragOver: (e: DragEvent) => {
-      e.preventDefault();
-      setOver(id);
-    },
-    onDragLeave: () => setOver((o) => (o === id ? null : o)),
+    onDragOver: (e: DragEvent) => e.preventDefault(),
     onDrop: () => void move(id),
   });
 
@@ -327,10 +347,7 @@ export function PipelineBoard({
             <div
               key={s.id}
               {...dropProps(s.id)}
-              className={cn(
-                "w-[86vw] max-w-[320px] shrink-0 rounded-xl sm:w-[320px]",
-                over === s.id && "bg-primary/[0.06]",
-              )}
+              className={cn("w-[86vw] max-w-[320px] shrink-0 rounded-xl sm:w-[320px]")}
             >
               <header className="group/col relative px-1 pb-2 pt-1 text-center">
                 {selection && items.length > 0 && (
@@ -382,6 +399,7 @@ export function PipelineBoard({
         onScroll={() => {
           syncHeads();
           syncWin();
+          showMap();
         }}
         className="cursor-default overflow-x-auto pb-14 [scrollbar-width:none] phone:pb-4 [&::-webkit-scrollbar]:hidden"
       >
@@ -392,17 +410,12 @@ export function PipelineBoard({
               <section
                 key={s.id}
                 data-stage-col={s.id}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setOver(s.id);
-                }}
-                onDragLeave={() => setOver((o) => (o === s.id ? null : o))}
+                onDragOver={(e) => e.preventDefault()}
                 onDrop={() => void move(s.id)}
                 className={cn(
                   // No box per stage: like amoCRM, every column sits on the one
                   // page background, a header with a colored line over its cards.
-                  "group/stage flex w-[86vw] max-w-[320px] shrink-0 flex-col rounded-xl transition-colors sm:w-[320px]",
-                  over === s.id && "bg-primary/[0.06] ring-1 ring-primary/30",
+                  "group/stage flex w-[86vw] max-w-[320px] shrink-0 flex-col rounded-xl sm:w-[320px]",
                 )}
               >
                 <div className="flex-1 space-y-1.5 pb-2">
@@ -413,7 +426,12 @@ export function PipelineBoard({
                       <article
                         key={l.id}
                         draggable={canMoveDeals}
-                        onDragStart={() => setDragged(l.id)}
+                        onDragStart={() => {
+                          setHover(null);
+                          setDragged(l.id);
+                        }}
+                        onMouseEnter={(e) => !dragged && enterCard(l.id, e.currentTarget)}
+                        onMouseLeave={leaveHover}
                         onDragEnd={() => setDragged(null)}
                         onClick={() =>
                           selecting && selection
@@ -463,61 +481,57 @@ export function PipelineBoard({
                       </article>
                     );
                   })}
-                  {items.length === 0 && dragged && (
-                    <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-subtle">
-                      {t("pipeline.dropHint")}
-                    </p>
-                  )}
                 </div>
               </section>
             );
           })}
         </div>
       </div>
-      {/* 5CRM's bottom bar: the funnel's day figures on the left, a map of
-          the stages on the right -- the part on screen framed, a click
-          scrolls the board to that stage. */}
+      {/* 5CRM's stage map: grey blocks in the screen's corner, the part on
+          screen framed; it shows only while the board is moving sideways
+          and fades once it stops. A click scrolls to that stage. */}
       {!dragged &&
-        (footer || cols.length > 3) &&
+        cols.length > 3 &&
+        win.width < 100 &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="amo-skin fixed bottom-0 left-[72px] right-0 z-30 flex items-center gap-4 border-t border-border bg-background/95 py-2 pl-6 pr-[96px] text-foreground backdrop-blur phone:hidden">
-            <div className="min-w-0 flex-1">{footer}</div>
-            {cols.length > 3 && (
-              <div
-                className="relative flex h-7 w-[240px] shrink-0 items-stretch gap-[2px] rounded-[3px] border border-border p-[3px]"
-                aria-label={t("pipeline.miniMap")}
-              >
-                {cols.map(({ s, items, line }) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    title={`${s.name} · ${items.length}`}
-                    onClick={() => scrollToStage(s.id)}
-                    className="relative min-w-0 flex-1 overflow-hidden rounded-[2px] bg-muted"
-                  >
-                    <span
-                      className={cn("absolute inset-x-0 bottom-0 block", line.className)}
-                      style={{
-                        ...line.style,
-                        height: `${Math.max(18, Math.min(100, items.length * 12))}%`,
-                      }}
-                    />
-                  </button>
-                ))}
-                {win.width < 100 && (
-                  <span
-                    className="pointer-events-none absolute inset-y-0 rounded-[3px] border-2 border-primary"
-                    style={{ left: `${win.left}%`, width: `${win.width}%` }}
-                  />
-                )}
-              </div>
+          <div
+            aria-label={t("pipeline.miniMap")}
+            onMouseEnter={() => showMap(true)}
+            onMouseLeave={() => showMap(false)}
+            className={cn(
+              "amo-skin fixed bottom-6 right-[92px] z-30 flex h-6 w-[200px] items-stretch gap-[2px] rounded-[3px] p-[2px] transition-opacity duration-300 phone:hidden",
+              mapOn ? "opacity-100" : "pointer-events-none opacity-0",
             )}
+          >
+            {cols.map(({ s, items }) => (
+              <button
+                key={s.id}
+                type="button"
+                title={`${s.name} · ${items.length}`}
+                onClick={() => scrollToStage(s.id)}
+                className="min-w-0 flex-1 rounded-[2px] bg-[color-mix(in_oklab,var(--foreground),transparent_82%)] hover:bg-[color-mix(in_oklab,var(--foreground),transparent_65%)]"
+              />
+            ))}
+            <span
+              className="pointer-events-none absolute inset-y-0 rounded-[3px] border-2 border-[color-mix(in_oklab,var(--foreground),transparent_45%)]"
+              style={{ left: `${win.left}%`, width: `${win.width}%` }}
+            />
           </div>,
           document.body,
         )}
+      {hover && !dragged && leadsById.get(hover.id) && (
+        <LeadHoverCard
+          lead={leadsById.get(hover.id)!}
+          anchor={hover.rect}
+          stages={stages}
+          onClose={() => setHover(null)}
+          onKeep={keepHover}
+          onLeave={leaveHover}
+        />
+      )}
       {dragged &&
-        (closingStages.length > 0 || canDeleteLead) &&
+        closingStages.length > 0 &&
         typeof document !== "undefined" &&
         // A portal: an ancestor's transform would pin a fixed bar to the
         // board instead of the bottom of the screen.
@@ -566,56 +580,11 @@ export function PipelineBoard({
                   </div>
                 );
               })}
-              {canDeleteLead && (
-                <div
-                  role="region"
-                  aria-label={t("amo.deleteLead")}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setOver("__delete");
-                  }}
-                  onDragLeave={() => setOver((o) => (o === "__delete" ? null : o))}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const lead = dragged ? leadsById.get(dragged) : undefined;
-                    setDragged(null);
-                    setOver(null);
-                    if (lead) setToDelete(lead);
-                  }}
-                  className={cn(
-                    "flex min-h-[72px] w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-muted/40 px-3 text-muted-foreground transition-[background-color,border-color,transform] duration-150",
-                    over === "__delete" &&
-                      "scale-[1.03] border-solid border-destructive bg-destructive/10 text-destructive",
-                  )}
-                >
-                  <Trash2 className="h-5 w-5" />
-                  <span className="text-[12.5px] font-bold uppercase tracking-[0.04em]">
-                    {t("common.delete")}
-                  </span>
-                </div>
-              )}
             </div>
           </div>,
           document.body,
         )}
       {taskDialog}
-      <ConfirmDialog
-        open={!!toDelete}
-        onOpenChange={(v) => !v && setToDelete(null)}
-        title={t("amo.deleteLeadTitle")}
-        description={t("amo.deleteLeadDesc", { name: toDelete?.name ?? "" })}
-        confirmLabel={t("bulk.deleteYes")}
-        destructive
-        onConfirm={() => {
-          const lead = toDelete;
-          setToDelete(null);
-          if (!lead) return;
-          deleteLead
-            .mutateAsync(lead.id)
-            .then(() => toastLeadsTrashed(t, qc, [lead.id]))
-            .catch((err: unknown) => toast.error(describeError(err, t("amo.leadDeleteFailed"))));
-        }}
-      />
     </div>
   );
 }

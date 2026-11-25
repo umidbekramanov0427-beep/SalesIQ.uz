@@ -632,7 +632,10 @@
    Dark: the navy sampled from amoCRM. Light: the same blue family made
    light -- a steel-blue header band, a pale blue field panel and canvas,
    white message cards on it -- instead of white on white. */
-.amo-skin {
+.amo-skin,
+body.funnel-skin [role="dialog"],
+body.funnel-skin [role="alertdialog"],
+body.funnel-skin [data-radix-popper-content-wrapper] {
   --background: #e6edf5;
   --surface: #e6edf5;
   --card: #f4f8fc;
@@ -673,7 +676,10 @@
   font-weight: 500;
   color-scheme: light;
 }
-.dark .amo-skin {
+.dark .amo-skin,
+.dark body.funnel-skin [role="dialog"],
+.dark body.funnel-skin [role="alertdialog"],
+.dark body.funnel-skin [data-radix-popper-content-wrapper] {
   --background: #0e2330;
   --surface: #0e2330;
   --card: #153147;
