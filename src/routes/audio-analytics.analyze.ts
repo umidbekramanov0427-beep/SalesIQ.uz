@@ -1567,6 +1567,32 @@ export async function analyzeCallById(
     }
   }
 
+  // «AI agent: mijoz e'tirozi» (Sozlamalar → Bildirishnomalar): the first
+  // objection the rep did not answer, with a better answer, to the lead's
+  // owner -- a red card on their screen with «Bajardim».
+  const missed = result.deep.objectionHandling.find((o) => !o.handled && o.objection.trim());
+  if (missed && call.lead_id && call.leads?.owner_id) {
+    try {
+      const { data: g } = await supabaseAdmin
+        .from("org_general_settings")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .maybeSingle();
+      if ((g as { notify_ai_objection?: boolean } | null)?.notify_ai_objection !== false) {
+        await supabaseAdmin.from("notifications").insert({
+          organization_id: organizationId,
+          user_id: call.leads.owner_id,
+          type: "AiObjection",
+          title: missed.objection.slice(0, 200),
+          body: missed.betterResponse ? missed.betterResponse.slice(0, 500) : null,
+          link: `/crm/leads/${call.lead_id}`,
+        });
+      }
+    } catch {
+      // Best-effort.
+    }
+  }
+
   // Native task auto-creation -- gated by org_general_settings
   // .ai_task_creation_enabled ("Create AI tasks from calls" in Settings,
   // previously a dead switch with no logic reading it). Skipped whenever

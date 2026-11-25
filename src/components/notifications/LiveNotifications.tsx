@@ -3,7 +3,15 @@ import { celebrate } from "@/components/team/TeamMoments";
 import { parseCelebrationLink } from "@/lib/control-settings";
 import { useLocation } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlarmClock, AlarmClockOff, BellRing, ClipboardList, MessageCircle, X } from "lucide-react";
+import {
+  AlarmClock,
+  AlarmClockOff,
+  BellRing,
+  ClipboardList,
+  MessageCircle,
+  ShieldAlert,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -341,6 +349,14 @@ const KIND_LOOK: Record<
     heading: "overdue.title",
     ring: "border-destructive/50",
   },
+  // «AI agent: mijoz e'tirozi»: the call analysis found an objection the
+  // rep did not answer -- what the client said, a better answer, «Bajardim».
+  AiObjection: {
+    icon: ShieldAlert,
+    tile: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+    heading: "live.aiObjection",
+    ring: "border-rose-500/60",
+  },
   task_assigned: {
     icon: ClipboardList,
     tile: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
@@ -432,12 +448,36 @@ function LiveCard({
           )}
         </p>
         <p className="mt-0.5 truncate text-[13px] font-semibold leading-tight">
-          {card.type === "ClientMessage" || card.type === "KeywordAlert" ? card.title : card.body}
+          {card.type === "ClientMessage" ||
+          card.type === "KeywordAlert" ||
+          card.type === "AiObjection"
+            ? card.title
+            : card.body}
         </p>
         {(card.type === "ClientMessage" || card.type === "KeywordAlert") && card.body && (
           <p className="mt-0.5 truncate text-[12px] leading-snug text-muted-foreground">
             {card.body}
           </p>
+        )}
+        {card.type === "AiObjection" && (
+          <>
+            {card.body && (
+              <p className="mt-1 line-clamp-3 text-[12px] leading-snug text-muted-foreground">
+                {card.body}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen();
+                onClose();
+              }}
+              className="mt-2 inline-flex h-7 items-center gap-1 rounded-md bg-rose-600 px-2.5 text-[12px] font-semibold text-white hover:bg-rose-700"
+            >
+              {t("live.aiObjectionDone")}
+            </button>
+          </>
         )}
       </div>
       <button

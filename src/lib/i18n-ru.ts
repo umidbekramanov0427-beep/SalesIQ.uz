@@ -10634,6 +10634,18 @@ const ru: Record<string, string> = {
   "pf.look.sampleNote": "Заметка",
   "pf.card.notFound": "Визитка не найдена или удалена.",
   "pf.card.save": "Сохранить контакт",
+  "live.aiObjection": "AI: возражение клиента",
+  "live.aiObjectionDone": "Сделал",
+  "fn.i.notify_ai_objection": "AI-агент: возражение клиента",
+  "xs.n.notify_ai_objectionDesc": "Если в анализе звонка найдено возражение без ответа, ответственному приходит красная карточка: что сказал клиент и лучший ответ. Висит, пока не нажмут «Сделал».",
+  "fn.d.notify_ai_objection.when": "После AI-анализа звонка",
+  "fn.d.notify_ai_objection.who": "Ответственный по сделке",
+  "fn.s.notify_ai_objection.title": "«Дорого, подумаю»",
+  "fn.s.notify_ai_objection.body": "Лучший ответ: расскажите о рассрочке и гарантии результата.",
+  "fn.stages": "На каких этапах",
+  "fn.stagesInFunnel": "Этапы выбираются в уведомлениях настроек воронки.",
+  "fn.stagesHint": "Если ничего не выбрано — на всех этапах.",
+  "fn.robot": "Также при автоматическом (робот) переносе",
 };
 
 export default ru;

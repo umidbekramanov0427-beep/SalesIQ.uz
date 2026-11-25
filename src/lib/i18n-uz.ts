@@ -10805,6 +10805,18 @@ const uz: Record<string, string> = {
   "pf.look.sampleNote": "Izoh",
   "pf.card.notFound": "Vizitka topilmadi yoki o'chirilgan.",
   "pf.card.save": "Kontaktni saqlash",
+  "live.aiObjection": "AI: mijoz e'tirozi",
+  "live.aiObjectionDone": "Bajardim",
+  "fn.i.notify_ai_objection": "AI agent: mijoz e'tirozi",
+  "xs.n.notify_ai_objectionDesc": "Qo'ng'iroq tahlilida menejer javob bermagan e'tiroz topilsa, mas'ulga qizil karta chiqadi: mijoz nima degani va yaxshiroq javob. «Bajardim» bosilguncha turadi.",
+  "fn.d.notify_ai_objection.when": "AI qo'ng'iroqni tahlil qilgach",
+  "fn.d.notify_ai_objection.who": "Lid mas'uli",
+  "fn.s.notify_ai_objection.title": "«Qimmat ekan, o'ylab ko'raman»",
+  "fn.s.notify_ai_objection.body": "Yaxshiroq javob: bo'lib to'lash va natija kafolati haqida ayting.",
+  "fn.stages": "Qaysi bosqichlarda",
+  "fn.stagesInFunnel": "Bosqichlarni voronka sozlamalaridagi bildirishnomalardan tanlang.",
+  "fn.stagesHint": "Hech biri tanlanmasa — hamma bosqichlarda.",
+  "fn.robot": "Avtomatik (robot) o'zgartirganda ham",
 };
 
 export default uz;

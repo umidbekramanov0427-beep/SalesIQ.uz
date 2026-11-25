@@ -17,6 +17,7 @@ import {
   Users,
   MessageSquare,
   type LucideIcon,
+  ShieldAlert,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useOrgGeneralSettings, type PipelineRow, type StageRow } from "@/hooks/use-crm-data";
@@ -52,6 +53,7 @@ type Key =
   | "celebrate"
   | "boost"
   | "notify_task_reminder"
+  | "notify_ai_objection"
   | "client_messages";
 
 const TOGGLES = [
@@ -59,6 +61,7 @@ const TOGGLES = [
   "notify_stage_changed",
   "notify_sale_congrats",
   "notify_task_reminder",
+  "notify_ai_objection",
 ] as const;
 type ToggleKey = (typeof TOGGLES)[number];
 const isToggle = (k: Key): k is ToggleKey => (TOGGLES as readonly string[]).includes(k);
@@ -79,7 +82,13 @@ const FUNNEL_GROUPS: Group[] = [
 ];
 const GENERAL_GROUPS: Group[] = [
   { key: "tasks", items: [{ key: "notify_task_reminder", icon: Clock }] },
-  { key: "ai", items: [{ key: "client_messages", icon: MessageSquare }] },
+  {
+    key: "ai",
+    items: [
+      { key: "notify_ai_objection", icon: ShieldAlert },
+      { key: "client_messages", icon: MessageSquare },
+    ],
+  },
   { key: "team", items: [{ key: "boost", icon: Sunrise }] },
 ];
 
@@ -247,6 +256,20 @@ export function NotifyCenter({
             on={on(pick)}
             canManage={canManage}
             onChange={(v) => save({ [pick]: v })}
+            extra={
+              pick === "notify_stage_changed" ? (
+                <StageFilter
+                  stages={stages}
+                  canManage={canManage}
+                  ids={
+                    ((s as { notify_stage_ids?: string[] | null } | undefined)?.notify_stage_ids ??
+                      []) as string[]
+                  }
+                  robot={!!(s as { notify_stage_robot?: boolean } | undefined)?.notify_stage_robot}
+                  onSave={(patch) => save(patch)}
+                />
+              ) : null
+            }
           />
         ) : pick === "celebrate" && pipeline ? (
           <CelebrateCard pipeline={pipeline} stages={stages} canManage={canManage} />
@@ -266,16 +289,82 @@ export function NotifyCenter({
   );
 }
 
+/**
+ * «Lidim bosqichini boshqa odam o'zgartirsa» (5CRM): «Qaysi bosqichlarda»
+ * -- none picked means every stage -- and «Avtomatik (robot) o'zgartirganda
+ * ham» for moves made by triggers. Company-wide (org_general_settings).
+ */
+function StageFilter({
+  stages,
+  ids,
+  robot,
+  canManage,
+  onSave,
+}: {
+  stages: StageRow[];
+  ids: string[];
+  robot: boolean;
+  canManage: boolean;
+  onSave: (patch: Record<string, unknown>) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <section className="mt-4 space-y-3 rounded-[6px] bg-accent/40 p-4">
+      <p className="text-[12.5px] text-muted-foreground">{t("fn.stages")}</p>
+      {stages.length === 0 ? (
+        <p className="text-[12.5px] text-muted-foreground">{t("fn.stagesInFunnel")}</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {stages.map((st) => {
+            const sel = ids.includes(st.id);
+            return (
+              <button
+                key={st.id}
+                type="button"
+                disabled={!canManage}
+                aria-pressed={sel}
+                onClick={() =>
+                  onSave({
+                    notify_stage_ids: sel ? ids.filter((x) => x !== st.id) : [...ids, st.id],
+                  })
+                }
+                className={cn(
+                  "rounded-full border px-3 py-1 text-[12.5px] font-semibold disabled:opacity-60",
+                  sel ? "border-primary text-primary" : "border-border text-muted-foreground",
+                )}
+              >
+                {st.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <p className="text-[12px] text-muted-foreground">{t("fn.stagesHint")}</p>
+      <label className="flex items-center gap-2 text-[13px] text-foreground">
+        <input
+          type="checkbox"
+          disabled={!canManage}
+          checked={robot}
+          onChange={(e) => onSave({ notify_stage_robot: e.target.checked })}
+        />
+        {t("fn.robot")}
+      </label>
+    </section>
+  );
+}
+
 function ToggleDetail({
   k,
   on,
   canManage,
   onChange,
+  extra,
 }: {
   k: ToggleKey;
   on: boolean;
   canManage: boolean;
   onChange: (v: boolean) => void;
+  extra?: ReactNode;
 }) {
   const { t } = useI18n();
   const row = (icon: LucideIcon, label: string, value: ReactNode) => {
@@ -331,6 +420,7 @@ function ToggleDetail({
         )}
         {!on && <p className="text-[12.5px] text-muted-foreground">{t("fn.offNote")}</p>}
       </div>
+      {extra}
       <NotifyLook k={k} />
       <section className="mt-4 rounded-[6px] bg-accent/40 p-4">
         <p className="text-[12.5px] text-muted-foreground">{t("fn.settings")}</p>
@@ -366,11 +456,13 @@ function ToggleDetail({
 // «Ko'rinishi — namuna» block and «Ekranda ko'rish».
 function sample(k: ToggleKey, t: (key: string) => string) {
   const type =
-    k === "notify_task_reminder"
-      ? "TaskSoon"
-      : k === "notify_sale_congrats"
-        ? "TaskDue"
-        : "task_assigned";
+    k === "notify_ai_objection"
+      ? "AiObjection"
+      : k === "notify_task_reminder"
+        ? "TaskSoon"
+        : k === "notify_sale_congrats"
+          ? "TaskDue"
+          : "task_assigned";
   return { type, title: t(`fn.s.${k}.title`), body: t(`fn.s.${k}.body`) };
 }
 

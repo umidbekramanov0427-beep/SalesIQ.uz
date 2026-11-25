@@ -19,6 +19,7 @@ export const POPUP_KINDS = [
   "TaskDue",
   "TaskOverdue",
   "task_assigned",
+  "AiObjection",
 ] as const;
 export type PopupKind = (typeof POPUP_KINDS)[number];
 
@@ -28,7 +29,12 @@ export function isPopupKind(type: string): type is PopupKind {
 
 /** Cards that stay until closed: a task whose time has come is not missed. */
 export function staysOpen(type: string): boolean {
-  return type === "TaskDue" || type === "TaskOverdue" || type === "KeywordAlert";
+  return (
+    type === "TaskDue" ||
+    type === "TaskOverdue" ||
+    type === "KeywordAlert" ||
+    type === "AiObjection"
+  );
 }
 
 export function leadIdFromLink(link: string | null | undefined): string | null {
