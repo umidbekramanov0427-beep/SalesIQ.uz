@@ -125,7 +125,7 @@ export function blankAction(type: AutomationActionType): AutomationAction {
     case "send_message":
       return { type, channel: "auto", text: "" };
     case "create_task":
-      return { type, title: "", dueInMinutes: 60, priority: "Normal" };
+      return { type, title: "", dueInDays: 1, priority: "Normal" };
     case "add_tag":
     case "remove_tag":
       return { type, tag: "" };
@@ -367,7 +367,9 @@ export function ActionEditor({
       <div className="flex h-10 items-center gap-2 rounded-[3px] bg-[var(--amo-head,var(--accent))] px-3">
         <Icon className="h-4 w-4 shrink-0 text-primary" />
         <span className="min-w-0 truncate text-[13.5px] font-semibold text-foreground">
-          {t(`dp.action.${action.type}`)}
+          {action.type === "send_message" && action.channel === "sms"
+            ? t("tc.a.sms")
+            : t(`dp.action.${action.type}`)}
         </span>
         {/* 5CRM's «← Boshqa amal»: swap this step for another kind. */}
         <label className="ml-auto inline-flex cursor-pointer items-center gap-1 text-[12px] font-semibold text-primary hover:underline">
@@ -402,17 +404,20 @@ export function ActionEditor({
 
       {action.type === "send_message" && (
         <>
-          <select
-            value={action.channel}
-            onChange={(e) => onChange({ ...action, channel: e.target.value as MessageChannel })}
-            className={inputCls}
-          >
-            {CHANNELS.map((c) => (
-              <option key={c} value={c}>
-                {t(`dp.channel.${c}`)}
-              </option>
-            ))}
-          </select>
+          {/* An SMS step (the catalog's «SMS yuborish») is only its text, like 5CRM's. */}
+          {action.channel !== "sms" && (
+            <select
+              value={action.channel}
+              onChange={(e) => onChange({ ...action, channel: e.target.value as MessageChannel })}
+              className={inputCls}
+            >
+              {CHANNELS.map((c) => (
+                <option key={c} value={c}>
+                  {t(`dp.channel.${c}`)}
+                </option>
+              ))}
+            </select>
+          )}
           {action.channel === "email" && (
             <input
               value={action.subject ?? ""}
@@ -469,12 +474,14 @@ export function ActionEditor({
             onChange={(v) => onChange({ ...action, once: v })}
             label={t("tk.once")}
           />
-          <MessageExtras
-            files={action.files ?? []}
-            buttons={action.buttons ?? []}
-            onFiles={(files) => onChange({ ...action, files })}
-            onButtons={(buttons) => onChange({ ...action, buttons })}
-          />
+          {action.channel !== "sms" && (
+            <MessageExtras
+              files={action.files ?? []}
+              buttons={action.buttons ?? []}
+              onFiles={(files) => onChange({ ...action, files })}
+              onButtons={(buttons) => onChange({ ...action, buttons })}
+            />
+          )}
         </>
       )}
 
@@ -527,45 +534,48 @@ export function ActionEditor({
               </select>
             </Inline>
           </div>
-          <select
-            value={action.priority ?? "Normal"}
-            onChange={(e) => onChange({ ...action, priority: e.target.value as Priority })}
-            className={inputCls}
-          >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {t(`dp.priority.${p}`)}
-              </option>
-            ))}
-          </select>
-          <div className="sm:col-span-2">
-            <Lbl text={t("dp.taskDueIn")} />
-            <div className="grid gap-1.5 sm:grid-cols-2">
-              <select
-                value={taskDueOf(action)}
-                onChange={(e) => {
-                  const { dueInDays: _d, dueInMinutes: _m, ...rest } = action;
-                  onChange({ ...rest, ...taskDueFields(e.target.value as TaskDue, 60) });
+          <Inline label={`${t("dp.taskDueIn")}:`}>
+            <select
+              data-bare
+              value={taskDueOf(action)}
+              onChange={(e) => {
+                const { dueInDays: _d, dueInMinutes: _m, ...rest } = action;
+                onChange({ ...rest, ...taskDueFields(e.target.value as TaskDue, 60) });
+              }}
+              className={bareCls}
+            >
+              {TASK_DUE.map((d) => (
+                <option key={d} value={d}>
+                  {t(`tk.due.${d}`)}
+                </option>
+              ))}
+            </select>
+          </Inline>
+          <Inline label={`${t("tk.priority")}:`}>
+            <select
+              data-bare
+              value={action.priority ?? "Normal"}
+              onChange={(e) => onChange({ ...action, priority: e.target.value as Priority })}
+              className={bareCls}
+            >
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {t(`dp.priority.${p}`)}
+                </option>
+              ))}
+            </select>
+          </Inline>
+          {taskDueOf(action) === "custom" && (
+            <div className="sm:col-span-2">
+              <DurationInput
+                minutes={action.dueInMinutes ?? (action.dueInDays ?? 0) * 1440}
+                onChange={(m) => {
+                  const { dueInDays: _d, ...rest } = action;
+                  onChange({ ...rest, dueInMinutes: m });
                 }}
-                className={inputCls}
-              >
-                {TASK_DUE.map((d) => (
-                  <option key={d} value={d}>
-                    {t(`tk.due.${d}`)}
-                  </option>
-                ))}
-              </select>
-              {taskDueOf(action) === "custom" && (
-                <DurationInput
-                  minutes={action.dueInMinutes ?? (action.dueInDays ?? 0) * 1440}
-                  onChange={(m) => {
-                    const { dueInDays: _d, ...rest } = action;
-                    onChange({ ...rest, dueInMinutes: m });
-                  }}
-                />
-              )}
+              />
             </div>
-          </div>
+          )}
         </div>
       )}
 

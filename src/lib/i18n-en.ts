@@ -10617,6 +10617,7 @@ export const en: Record<string, string> = {
   "fn.stagesInFunnel": "Pick stages in a funnel's notification settings.",
   "fn.stagesHint": "None picked — every stage.",
   "fn.robot": "Also when a trigger (robot) moves it",
+  "tk.priority": "Priority",
   "tk.smsText": "SMS text",
   "tk.msgText": "Message text",
   "tk.mediaLink": "Media link",

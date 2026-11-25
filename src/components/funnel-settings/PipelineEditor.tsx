@@ -883,6 +883,7 @@ function StageColumn({
 
   return (
     <div
+      data-stage-col={stage.id}
       onDragOver={(e) => {
         e.preventDefault();
         onDragOverCol();

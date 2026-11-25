@@ -10646,6 +10646,7 @@ const ru: Record<string, string> = {
   "fn.stagesInFunnel": "Этапы выбираются в уведомлениях настроек воронки.",
   "fn.stagesHint": "Если ничего не выбрано — на всех этапах.",
   "fn.robot": "Также при автоматическом (робот) переносе",
+  "tk.priority": "Важность",
   "tk.smsText": "Текст SMS",
   "tk.msgText": "Текст сообщения",
   "tk.mediaLink": "Ссылка на медиа",

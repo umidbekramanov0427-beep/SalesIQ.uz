@@ -10817,6 +10817,7 @@ const uz: Record<string, string> = {
   "fn.stagesInFunnel": "Bosqichlarni voronka sozlamalaridagi bildirishnomalardan tanlang.",
   "fn.stagesHint": "Hech biri tanlanmasa — hamma bosqichlarda.",
   "fn.robot": "Avtomatik (robot) o'zgartirganda ham",
+  "tk.priority": "Muhimlik",
   "tk.smsText": "SMS matni",
   "tk.msgText": "Xabar matni",
   "tk.mediaLink": "Media havolasi",

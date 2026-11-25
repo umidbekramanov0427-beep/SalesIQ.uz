@@ -122,11 +122,25 @@ const GROUPS: { key: string; tiles: ActionTile[] }[] = [
   {
     key: "contact",
     tiles: [
-      { key: "message", icon: MessageSquare, type: "send_message" },
+      {
+        key: "message",
+        icon: MessageSquare,
+        type: "send_message",
+        patch: { text: "Assalomu alaykum, {{name}}!" },
+      },
       { key: "igReply", icon: MessageCircle, type: "send_message", off: "igComments" },
       { key: "card", icon: LayoutTemplate, type: "send_card" },
       { key: "tgChat", icon: Send, type: "tg_chat_message" },
-      { key: "sms", icon: Smartphone, type: "send_message", patch: { channel: "sms", once: true } },
+      {
+        key: "sms",
+        icon: Smartphone,
+        type: "send_message",
+        patch: {
+          channel: "sms",
+          once: true,
+          text: "Assalomu alaykum, {{name}}! Murojaatingiz qabul qilindi, tez orada siz bilan bog'lanamiz.",
+        },
+      },
       { key: "saleCongrats", icon: PartyPopper, type: "sale_congrats" },
     ],
   },

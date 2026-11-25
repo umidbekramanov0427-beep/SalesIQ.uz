@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bot, History, Loader2, Pencil, Plus, ShieldAlert, Trash2, X, Zap } from "lucide-react";
 import {
   CONDITION_OPS,
@@ -23,7 +24,9 @@ import {
   ActionEditor,
   AddActionSelect,
   DurationInput,
+  Inline,
   actionIsComplete,
+  bareCls,
   blankAction,
   inputCls,
   type ActionEditorOptions,
@@ -375,6 +378,44 @@ export function RuleDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, rule, column?.id, funnel, preset]);
 
+  const [noteOpen, setNoteOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const isPhone =
+    typeof document !== "undefined" && document.documentElement.classList.contains("phone");
+  const [pos, setPos] = useState<{ left: number; top: number; maxH: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!open || isPhone) return;
+    const el = column ? document.querySelector(`[data-stage-col="${column.id}"]`) : null;
+    const r = el?.getBoundingClientRect();
+    const W = 470;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const left = Math.max(12, Math.min(r ? r.left : (vw - W) / 2, vw - W - 12));
+    const top = Math.max(12, Math.min(r ? r.top + 44 : 80, vh - 320));
+    setPos({ left, top, maxH: vh - top - 12 });
+  }, [open, isPhone, column]);
+  // Closes on a click outside it (not on the selects' own pop-ups) or Esc.
+  useEffect(() => {
+    if (!open || isPhone) return;
+    const onDown = (e: MouseEvent) => {
+      const el = e.target as Element | null;
+      if (!el || panelRef.current?.contains(el)) return;
+      if (el.closest("[data-radix-popper-content-wrapper], [role=dialog], [role=alertdialog]"))
+        return;
+      onOpenChange(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onOpenChange(false);
+    document.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, isPhone, onOpenChange]);
+  useEffect(() => {
+    if (open) setNoteOpen(false);
+  }, [open]);
+
   if (!draft) return null;
   const set = (patch: Partial<RuleDraft>) => setDraft({ ...draft, ...patch });
   const type = draft.trigger_type as AutomationTriggerType;
@@ -436,264 +477,282 @@ export function RuleDialog({
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="amo-skin max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {rule ? t("dp.editTrigger") : t("dp.newTrigger")}
-            {column ? ` · ${column.name}` : ""}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-5">
-          <section className="space-y-2">
-            <p className="text-[13px] font-semibold text-foreground">{t("tk.forAll")}</p>
-            {conds.map((c, i) => (
-              <div key={i} className="grid grid-cols-[1.2fr_1fr_1.2fr_auto] gap-1.5">
-                <select
-                  value={c.field}
-                  onChange={(e) =>
-                    setConds(
-                      conds.map((x, j) =>
-                        j === i ? { ...x, field: e.target.value, value: "" } : x,
-                      ),
-                    )
-                  }
-                  className={inputCls}
-                >
-                  {CONDITION_FIELDS.map((f) => (
-                    <option key={f} value={f}>
-                      {t(`dp.cond.${f}`)}
-                    </option>
-                  ))}
-                  {options.customFields.map((cf) => (
-                    <option key={cf.key} value={`custom:${cf.key}`}>
-                      {cf.label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={c.operator}
-                  onChange={(e) =>
-                    setConds(
-                      conds.map((x, j) => (j === i ? { ...x, operator: e.target.value } : x)),
-                    )
-                  }
-                  className={inputCls}
-                >
-                  {CONDITION_OPS.map((o) => (
-                    <option key={o} value={o}>
-                      {t(`dp.op.${o}`)}
-                    </option>
-                  ))}
-                </select>
-                {c.field === "owner_id" ? (
-                  <select
-                    value={c.value}
-                    onChange={(e) =>
-                      setConds(conds.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
-                    }
-                    className={inputCls}
-                  >
-                    <option value="">{t("dp.chooseEmployee")}</option>
-                    {options.profiles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.full_name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    value={c.value}
-                    type={["budget", "paid_amount"].includes(c.field) ? "number" : "text"}
-                    onChange={(e) =>
-                      setConds(conds.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
-                    }
-                    placeholder={t("dp.value")}
-                    className={inputCls}
-                  />
-                )}
-                <button
-                  type="button"
-                  aria-label={t("dp.remove")}
-                  onClick={() => setConds(conds.filter((_, j) => j !== i))}
-                  className="grid h-10 w-8 place-items-center rounded-md text-subtle hover:text-destructive"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setConds([...conds, { field: "budget", operator: "eq", value: "" }])}
-              className="inline-flex items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
-            >
-              <Plus className="h-3.5 w-3.5" /> {t("tk.addCond")}
-            </button>
-          </section>
-
-          <section className="space-y-2">
-            <p className="text-[13px] font-semibold text-foreground">{t("tk.run")}</p>
+  // 5CRM: the form floats beside the column that was clicked, the board
+  // stays in view behind it; it can be pulled bigger by its corner.
+  const body = (
+    <div className="text-[13.5px] text-foreground">
+      <section className="space-y-2 bg-[var(--amo-quiet,var(--muted))] px-4 py-4">
+        <p className="text-[14px] text-foreground">{t("tk.forAll")}</p>
+        {conds.map((c, i) => (
+          <div key={i} className="grid grid-cols-[1.2fr_1fr_1.2fr_auto] gap-1.5">
             <select
-              value={type}
-              onChange={(e) => set({ trigger_type: e.target.value })}
+              value={c.field}
+              onChange={(e) =>
+                setConds(
+                  conds.map((x, j) => (j === i ? { ...x, field: e.target.value, value: "" } : x)),
+                )
+              }
               className={inputCls}
             >
-              {allowed.slice(0, column ? 2 : allowed.length).map((tt) => (
-                <option key={tt} value={tt}>
-                  {t(`dp.trigger.${tt}`)}
+              {CONDITION_FIELDS.map((f) => (
+                <option key={f} value={f}>
+                  {t(`dp.cond.${f}`)}
                 </option>
               ))}
-              {column && (
-                <optgroup label={t("tk.otherEvents")}>
-                  {allowed.slice(2).map((tt) => (
-                    <option key={tt} value={tt}>
-                      {t(`dp.trigger.${tt}`)}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
+              {options.customFields.map((cf) => (
+                <option key={cf.key} value={`custom:${cf.key}`}>
+                  {cf.label}
+                </option>
+              ))}
             </select>
-            {type === "stage_stuck" && (
-              <div>
-                <p className="mb-1 text-xs text-muted-foreground">{t("dp.stuckFor")}</p>
-                <DurationInput
-                  minutes={draft.trigger_after_minutes ?? 60}
-                  onChange={(m) => set({ trigger_after_minutes: m })}
-                />
-              </div>
-            )}
-            {type === "daily" && (
-              <div>
-                <p className="mb-1 text-xs text-muted-foreground">{t("dp.dailyAt")}</p>
-                <input
-                  type="time"
-                  value={(draft.trigger_time ?? "09:00").slice(0, 5)}
-                  onChange={(e) => set({ trigger_time: e.target.value || "09:00" })}
-                  className={`${inputCls} w-32`}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">{t("dp.dailyHint")}</p>
-              </div>
-            )}
-            {type === "lead_created" && (
-              <input
-                value={draft.trigger_source ?? ""}
-                onChange={(e) => set({ trigger_source: e.target.value || null })}
-                placeholder={t("dp.sourceFilter")}
-                className={inputCls}
-              />
-            )}
-            {type === "tag_added" && (
-              <input
-                value={draft.trigger_tag ?? ""}
-                onChange={(e) => set({ trigger_tag: e.target.value || null })}
-                placeholder={t("dp.tag")}
-                className={inputCls}
-              />
-            )}
-            {type === "message_received" && (
+            <select
+              value={c.operator}
+              onChange={(e) =>
+                setConds(conds.map((x, j) => (j === i ? { ...x, operator: e.target.value } : x)))
+              }
+              className={inputCls}
+            >
+              {CONDITION_OPS.map((o) => (
+                <option key={o} value={o}>
+                  {t(`dp.op.${o}`)}
+                </option>
+              ))}
+            </select>
+            {c.field === "owner_id" ? (
               <select
-                value={draft.trigger_channel ?? ""}
-                onChange={(e) => set({ trigger_channel: e.target.value || null })}
+                value={c.value}
+                onChange={(e) =>
+                  setConds(conds.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
+                }
                 className={inputCls}
               >
-                <option value="">{t("dp.anyChannel")}</option>
-                <option value="telegram">{t("dp.channel.telegram")}</option>
+                <option value="">{t("dp.chooseEmployee")}</option>
+                {options.profiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name}
+                  </option>
+                ))}
               </select>
+            ) : (
+              <input
+                value={c.value}
+                type={["budget", "paid_amount"].includes(c.field) ? "number" : "text"}
+                onChange={(e) =>
+                  setConds(conds.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
+                }
+                placeholder={t("dp.value")}
+                className={inputCls}
+              />
             )}
-          </section>
+            <button
+              type="button"
+              aria-label={t("dp.remove")}
+              onClick={() => setConds(conds.filter((_, j) => j !== i))}
+              className="grid h-10 w-8 place-items-center rounded-md text-subtle hover:text-destructive"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => setConds([...conds, { field: "budget", operator: "eq", value: "" }])}
+          className="flex h-10 w-full items-center rounded-[3px] border border-border bg-background/40 px-3 text-left text-muted-foreground hover:text-foreground"
+        >
+          {t("tk.addCond")}
+        </button>
+      </section>
 
-          <section>
-            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-subtle">
-              {t("dp.delay")}
-            </p>
+      <div className="space-y-3 px-4 py-4">
+        <Inline label={t("tk.run")}>
+          <select
+            data-bare
+            value={type}
+            onChange={(e) => set({ trigger_type: e.target.value })}
+            className={bareCls}
+          >
+            {allowed.slice(0, column ? 2 : allowed.length).map((tt) => (
+              <option key={tt} value={tt}>
+                {t(`dp.trigger.${tt}`)}
+              </option>
+            ))}
+            {column && (
+              <optgroup label={t("tk.otherEvents")}>
+                {allowed.slice(2).map((tt) => (
+                  <option key={tt} value={tt}>
+                    {t(`dp.trigger.${tt}`)}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </Inline>
+        {type === "stage_stuck" && (
+          <div>
+            <p className="mb-1 text-xs text-muted-foreground">{t("dp.stuckFor")}</p>
+            <DurationInput
+              minutes={draft.trigger_after_minutes ?? 60}
+              onChange={(m) => set({ trigger_after_minutes: m })}
+            />
+          </div>
+        )}
+        {type === "daily" && (
+          <div>
+            <p className="mb-1 text-xs text-muted-foreground">{t("dp.dailyAt")}</p>
+            <input
+              type="time"
+              value={(draft.trigger_time ?? "09:00").slice(0, 5)}
+              onChange={(e) => set({ trigger_time: e.target.value || "09:00" })}
+              className={`${inputCls} w-32`}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">{t("dp.dailyHint")}</p>
+          </div>
+        )}
+        {type === "lead_created" && (
+          <input
+            value={draft.trigger_source ?? ""}
+            onChange={(e) => set({ trigger_source: e.target.value || null })}
+            placeholder={t("dp.sourceFilter")}
+            className={inputCls}
+          />
+        )}
+        {type === "tag_added" && (
+          <input
+            value={draft.trigger_tag ?? ""}
+            onChange={(e) => set({ trigger_tag: e.target.value || null })}
+            placeholder={t("dp.tag")}
+            className={inputCls}
+          />
+        )}
+        {type === "message_received" && (
+          <select
+            value={draft.trigger_channel ?? ""}
+            onChange={(e) => set({ trigger_channel: e.target.value || null })}
+            className={inputCls}
+          >
+            <option value="">{t("dp.anyChannel")}</option>
+            <option value="telegram">{t("dp.channel.telegram")}</option>
+          </select>
+        )}
+        {draft.delay_minutes > 0 && (
+          <div>
+            <p className="mb-1 text-[12.5px] text-muted-foreground">{t("dp.delay")}</p>
             <DurationInput
               minutes={draft.delay_minutes}
               onChange={(m) => set({ delay_minutes: m })}
             />
-            <p className="mt-1 text-xs text-muted-foreground">{t("dp.delayHint")}</p>
-          </section>
+          </div>
+        )}
 
-          <section className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wide text-subtle">{t("dp.then")}</p>
-            {actions.map((a, i) => (
-              <ActionEditor
-                key={i}
-                action={a}
-                options={options}
-                onChange={(next) => setActions(actions.map((x, j) => (j === i ? next : x)))}
-                onRemove={() => setActions(actions.filter((_, j) => j !== i))}
-              />
-            ))}
-            <AddActionSelect onAdd={(type) => setActions([...actions, blankAction(type)])} />
-          </section>
-
-          <input
-            value={draft.name}
-            onChange={(e) => set({ name: e.target.value })}
-            placeholder={t("dp.namePlaceholder")}
-            className={inputCls}
+        {actions.map((a, i) => (
+          <ActionEditor
+            key={i}
+            action={a}
+            options={options}
+            onChange={(next) => setActions(actions.map((x, j) => (j === i ? next : x)))}
+            {...(actions.length > 1
+              ? { onRemove: () => setActions(actions.filter((_, j) => j !== i)) }
+              : {})}
           />
-          <section className="space-y-1.5">
-            <p className="text-xs font-bold uppercase tracking-wide text-subtle">{t("dp.note")}</p>
-            <textarea
-              value={draft.note ?? ""}
-              onChange={(e) => set({ note: e.target.value.slice(0, 500) })}
-              rows={2}
-              placeholder={t("dp.notePh")}
-              className={`${inputCls} h-auto py-2`}
-            />
-          </section>
-          {column && type === "stage_enter" && !rule && (
-            <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-[13px] font-medium text-foreground">
-              <span>
-                {t("tk.daily.label")}
-                <span className="mt-0.5 block text-[11.5px] font-normal text-muted-foreground">
-                  {t("tk.daily.hint", { stage: column.name })}
-                </span>
-              </span>
-              <input
-                type="time"
-                value={dailyAt}
-                onChange={(e) => setDailyAt(e.target.value)}
-                className={`${inputCls} w-32`}
-              />
-            </label>
-          )}
-          {column && type === "stage_enter" && (
-            <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-[13px] font-medium text-foreground">
-              <span>
-                {t("dp.applyExisting")}
-                <span className="mt-0.5 block text-[11.5px] font-normal text-muted-foreground">
-                  {t("dp.applyExistingHint", { stage: column.name })}
-                </span>
-              </span>
-              <Switch checked={toExisting} onCheckedChange={setToExisting} />
-            </label>
-          )}
-        </div>
+        ))}
+        {actions.length === 0 ? (
+          <AddActionSelect onAdd={(type) => setActions([blankAction(type)])} />
+        ) : (
+          <label className="relative inline-flex cursor-pointer items-center gap-1 text-[12.5px] font-semibold text-primary hover:underline">
+            <Plus className="h-3.5 w-3.5" /> {t("tk.addAction")}
+            <span className="absolute inset-0 opacity-0">
+              <AddActionSelect onAdd={(type) => setActions([...actions, blankAction(type)])} />
+            </span>
+          </label>
+        )}
 
-        <DialogFooter>
+        {noteOpen || draft.note ? (
+          <textarea
+            value={draft.note ?? ""}
+            onChange={(e) => set({ note: e.target.value.slice(0, 500) })}
+            rows={2}
+            placeholder={t("tk.notePh")}
+            className={`${inputCls} h-auto py-2`}
+          />
+        ) : (
           <button
             type="button"
-            onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 items-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+            onClick={() => setNoteOpen(true)}
+            className="ml-4 text-[12.5px] font-semibold text-muted-foreground hover:text-foreground"
           >
-            {t("tk.cancel")}
+            + {t("tk.addNote")}
           </button>
+        )}
+
+        {column && type === "stage_enter" && (
+          <label className="flex items-center gap-2.5 pt-1">
+            <input
+              type="checkbox"
+              checked={toExisting}
+              onChange={(e) => setToExisting(e.target.checked)}
+            />
+            {t("tk.applyExisting")}
+          </label>
+        )}
+        {column && type === "stage_enter" && !rule && (
+          <div className="flex items-center justify-between gap-3">
+            <span className="whitespace-nowrap">{t("tk.daily.label")}</span>
+            <input
+              type="time"
+              value={dailyAt}
+              onChange={(e) => setDailyAt(e.target.value)}
+              className="h-8 w-[104px] shrink-0 rounded-[3px] border border-border bg-[var(--amo-quiet,var(--background))] px-2 text-[13px] text-foreground outline-none focus:border-primary/60"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-4 pt-2">
           <button
             type="button"
             disabled={!valid || save.isPending || applyExisting.isPending}
             onClick={() => void submit()}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-[4px] bg-primary px-4 text-[14px] font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("tk.done")}
           </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="text-[14px] font-semibold text-muted-foreground hover:text-foreground"
+          >
+            {t("tk.cancel")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Phones: the same form as a sheet over the page.
+  if (isPhone) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="amo-skin tf-form max-h-[90dvh] overflow-y-auto p-0">
+          <DialogTitle className="sr-only">
+            {rule ? t("dp.editTrigger") : t("dp.newTrigger")}
+          </DialogTitle>
+          {body}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  if (!open || !pos) return null;
+  return createPortal(
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-label={rule ? t("dp.editTrigger") : t("dp.newTrigger")}
+      style={{ left: pos.left, top: pos.top, maxHeight: pos.maxH }}
+      className="amo-skin tf-form fixed z-[65] w-[470px] min-w-[380px] max-w-[92vw] resize overflow-auto rounded-[4px] border border-border bg-card shadow-[0_18px_48px_-12px_rgba(0,0,0,0.55)] motion-safe:animate-in motion-safe:fade-in-0"
+    >
+      {body}
+    </div>,
+    document.body,
   );
 }
 

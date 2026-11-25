@@ -2731,3 +2731,19 @@ html[data-shape="wide"] main[data-page-root] :is(button, input, select, textarea
 html[data-shape="large"] main[data-page-root] :is(button, input, select, textarea):not(:is(button, a) *) {
   zoom: 1.12;
 }
+
+/* Trigger forms (Voronka sozlamalari), 5CRM's way: square-ish fields on the
+   panel's quiet tone, 40px tall. The bare selects inside <Inline> keep none. */
+.tf-form :is(input:not([type="checkbox"]):not([type="radio"]):not([data-bare]), select:not([data-bare]), textarea) {
+  border-radius: 3px;
+  background-color: var(--amo-quiet, var(--background));
+  font-size: 13.5px;
+}
+.tf-form :is(input:not([type="checkbox"]):not([type="radio"]):not([data-bare]), select:not([data-bare])) {
+  height: 40px;
+}
+.tf-form input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+}
