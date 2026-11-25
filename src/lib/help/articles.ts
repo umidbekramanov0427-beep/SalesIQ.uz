@@ -1182,8 +1182,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "The **AI analyst** (Marketing → AI analyst) works out the figures from your data: leads, qualified leads, prepaid, paid in full, money received, spend, CPL, CPQL, CAC, ROAS — against the previous period. The AI only explains them and recommends. On top: project, period and **so'm / $** (Central Bank rate).",
       },
       {
-        uz: "**Kval lid** = telefonni ko'targan **va** vebinarni ko'rgan lid. Telefonni ko'targani qo'ng'iroqlardan o'zi aniqlanadi. «Vebinarni ko'rdi» ni sotuvchi lid kartasidagi **Kval** blokida belgilaydi (yoki AI qo'ng'iroq tahlilidan topadi). Kval emas bo'lsa — sababi: noto'g'ri raqam, raqam yo'q, ko'tarmadi, ko'rmadi, boshqa. Belgilanmasa kval raqamlari bo'sh chiqadi.",
-        ru: "**Квал-лид** = взял трубку **и** смотрел вебинар. «Взял трубку» определяется по звонкам само. «Смотрел вебинар» отмечает менеджер в блоке **Квал** карточки лида (или находит ИИ при анализе звонка). Если не квал — причина: неверный номер, нет номера, не взял, не смотрел, другое. Без отметок квал-цифры будут пустыми.",
+        uz: "**Kval lid** = telefonni ko'targan **va** vebinarni ko'rgan lid. Telefonni ko'targani qo'ng'iroqlardan o'zi aniqlanadi. «Vebinarni ko'rdi» botdagi «Men efirdaman» tugmasidan yoki AI qo'ng'iroq tahlilidan belgilanadi. Kval emas bo'lsa — sababi: noto'g'ri raqam, raqam yo'q, ko'tarmadi, ko'rmadi, boshqa. Belgilanmasa kval raqamlari bo'sh chiqadi.",
+        ru: "**Квал-лид** = взял трубку **и** смотрел вебинар. «Взял трубку» определяется по звонкам само. «Смотрел вебинар» ставится кнопкой «Я в эфире» в боте или ИИ при анализе звонка. Если не квал — причина: неверный номер, нет номера, не взял, не смотрел, другое. Без отметок квал-цифры будут пустыми.",
         en: "A **qualified lead** = picked up the phone **and** watched the webinar. Picking up is read from the calls. \"Watched\" is marked by the rep in the lead card's **Qualification** block (or found by the AI in a call). If not qualified — the reason: wrong number, no number, didn't pick up, didn't watch, other. Without marks the qualified figures stay empty.",
       },
       {
