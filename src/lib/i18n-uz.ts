@@ -587,6 +587,8 @@ const uz: Record<string, string> = {
   "hover.created": "Yaratilgan",
   "hover.updated": "Yangilangan",
   "hover.full": "To'liq sahifa",
+  "salesp.deleteAgree": "Roziman: bu voronkaning barcha manbalari, bosqichlari va triggerlari qaytarib bo'lmaydigan tarzda o'chiriladi.",
+  "salesp.deleteYes": "O'chirish",
   "amo.stageMenu": "Etap sozlamasi",
   "amo.anyColor": "Istalgan rang",
   "amo.hiddenNow": "hozir yashirin",

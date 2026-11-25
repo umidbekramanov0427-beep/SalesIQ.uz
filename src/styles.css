@@ -719,6 +719,19 @@ body.funnel-skin [data-radix-popper-content-wrapper] {
   color-scheme: dark;
 }
 
+/* Voronka sozlamalari (funnels_.settings.tsx and its funnel panel), dark:
+   the colours sampled from 5CRM's settings page -- a navy header and grid,
+   a darker sidebar whose cards are only an outline on it. */
+.dark .fs-skin {
+  --background: #142e41;
+  --amo-head: #142e41;
+  --amo-quiet: #0f2130;
+  --card: #0f2130;
+  --border: #2c4356;
+  --amo-divider: #26445a;
+  --input: #34506a;
+}
+
 /* Admin console (lib/theme.tsx: html.admin-console on /admin and
    /integrations): a workspace with a plain ground, hairline-bordered
    panels and a flat signal blue for what is live -- the "connections"

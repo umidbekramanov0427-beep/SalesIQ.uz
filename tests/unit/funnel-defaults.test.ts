@@ -4,7 +4,7 @@ import { en } from "@/lib/i18n-en";
 describe("funnel default stages", () => {
   it("opens like amoCRM: unsorted first, one won and one lost at the end", () => {
     const s = DEFAULT_FUNNEL_STAGES;
-    expect(s.length).toBe(7);
+    expect(s.length).toBe(6);
     expect(isClosingStage(s[0]!)).toBe(false);
     expect(s.filter((x) => x.is_won).length).toBe(1);
     expect(s.filter((x) => x.is_lost).length).toBe(1);
@@ -18,7 +18,7 @@ describe("funnel default stages", () => {
   });
 
   it("fills an empty funnel and adds only the missing closing stages", () => {
-    expect(missingDefaultStages([]).length).toBe(7);
+    expect(missingDefaultStages([]).length).toBe(6);
     const open = { is_won: false, is_lost: false };
     expect(missingDefaultStages([open]).map((d) => d.nameKey)).toEqual([
       "fs.def.won",

@@ -1,6 +1,7 @@
 import { defaultHints } from "@/lib/stage-hints";
 
-// The stages a new funnel opens with, as in amoCRM / 5CRM: an "unsorted"
+// The stages a new funnel opens with, as in amoCRM (Неразобранное,
+// Первичный контакт, Переговоры, Принимают решение, Успешно / Закрыто): an "unsorted"
 // first stage, the working stages, then the two closing stages -- a won sale
 // and closed-not-sold. The closing stages are system stages: the board shows
 // them only as drop zones at the bottom while a lead is dragged (PipelineBoard)
@@ -35,7 +36,7 @@ export const DEFAULT_FUNNEL_STAGES: readonly DefaultStage[] = [
   },
   {
     nameKey: "fs.def.negotiation",
-    color: "#f59e0b",
+    color: "#eab308",
     probability: 35,
     is_won: false,
     is_lost: false,
@@ -43,16 +44,8 @@ export const DEFAULT_FUNNEL_STAGES: readonly DefaultStage[] = [
   },
   {
     nameKey: "fs.def.decision",
-    color: "#8b5cf6",
+    color: "#f97316",
     probability: 55,
-    is_won: false,
-    is_lost: false,
-    stage_value: "expected",
-  },
-  {
-    nameKey: "fs.def.contract",
-    color: "#06b6d4",
-    probability: 80,
     is_won: false,
     is_lost: false,
     stage_value: "expected",

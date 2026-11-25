@@ -581,6 +581,8 @@ const ru: Record<string, string> = {
   "hover.created": "Создан",
   "hover.updated": "Изменён",
   "hover.full": "Открыть полностью",
+  "salesp.deleteAgree": "Я согласен(на), что все источники, статусы и триггеры этой воронки будут удалены без возможности восстановления.",
+  "salesp.deleteYes": "Удалить",
   "amo.stageMenu": "Настройка этапа",
   "amo.anyColor": "Любой цвет",
   "amo.hiddenNow": "сейчас скрыт",

@@ -19,6 +19,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,6 +69,72 @@ export function SalesPanel({
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<(typeof pipelines)[number] | null>(null);
+  const [agree, setAgree] = useState(false);
+  async function confirmDelete() {
+    const p = toDelete;
+    if (!p) return;
+    setBusy(p.id);
+    try {
+      await deletePipeline.mutateAsync(p.id);
+      toast.success(t("salesp.deleted"));
+      setToDelete(null);
+      setAgree(false);
+      onMenu?.(false);
+    } catch (err) {
+      toast.error(describeError(err, t("fs.saveFailed")));
+    } finally {
+      setBusy(null);
+    }
+  }
+  const deleteWindow = (
+    <Dialog
+      open={!!toDelete}
+      onOpenChange={(v) => {
+        if (!v) {
+          setToDelete(null);
+          setAgree(false);
+          onMenu?.(false);
+        }
+      }}
+    >
+      <DialogContent className="amo-skin max-w-[440px] rounded-[6px] p-6">
+        <DialogTitle className="pr-6 text-[16px] font-medium leading-snug">
+          {t("salesp.deleteConfirm", { name: toDelete?.name ?? "" })}
+        </DialogTitle>
+        <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-[13px] leading-snug text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={agree}
+            onChange={(e) => setAgree(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+          />
+          {t("salesp.deleteAgree")}
+        </label>
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            type="button"
+            disabled={!agree || busy === toDelete?.id}
+            onClick={() => void confirmDelete()}
+            className="h-9 rounded-[4px] bg-destructive px-4 text-[13px] font-semibold text-white disabled:opacity-40"
+          >
+            {t("salesp.deleteYes")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setToDelete(null);
+              setAgree(false);
+              onMenu?.(false);
+            }}
+            className="h-9 px-2 text-[13px] font-semibold text-muted-foreground hover:text-foreground"
+          >
+            {t("common.cancel")}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 
   const sorted = useMemo(
     () => [...pipelines].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
@@ -75,7 +142,23 @@ export function SalesPanel({
   );
   const isArchived = (p: (typeof sorted)[number]) =>
     !!(p as { archived_at?: string | null }).archived_at;
-  const live = sorted.filter((p) => !isArchived(p));
+  // A funnel can live only in its stages (made before funnels had their own
+  // row): it is listed too, without the set-up menu.
+  const orphans = useMemo(() => {
+    const known = new Set(pipelines.map((p) => p.name));
+    const names = new Set<string>();
+    for (const st of stages) {
+      const n = st.pipeline_name || "";
+      if (n && !known.has(n) && !st.pipeline_id) names.add(n);
+    }
+    return [...names]
+      .sort()
+      .map(
+        (name) =>
+          ({ id: `name:${name}`, name, position: 9999 }) as unknown as (typeof sorted)[number],
+      );
+  }, [pipelines, stages]);
+  const live = [...sorted.filter((p) => !isArchived(p)), ...orphans];
   const archived = sorted.filter(isArchived);
 
   const open = (name: string) => {
@@ -109,7 +192,8 @@ export function SalesPanel({
       setAdding(false);
       setNewName("");
       toast.success(t("fs.funnelCreated"));
-      open(name);
+      onDone();
+      void navigate({ to: "/funnels/settings", search: { funnel: name } });
     } catch (err) {
       toast.error(describeError(err, t("fs.saveFailed")));
     } finally {
@@ -190,9 +274,8 @@ export function SalesPanel({
         toast.error(t("salesp.hasLeads", { n: count ?? 0 }));
         return;
       }
-      if (!window.confirm(t("salesp.deleteConfirm", { name: p.name }))) return;
-      await deletePipeline.mutateAsync(p.id);
-      toast.success(t("salesp.deleted"));
+      onMenu?.(true);
+      setToDelete(p);
     } catch (err) {
       toast.error(describeError(err, t("fs.saveFailed")));
     } finally {
@@ -217,7 +300,7 @@ export function SalesPanel({
         {p.name}
       </button>
       {busy === p.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-      {canSetUp && (
+      {canSetUp && !p.id.startsWith("name:") && (
         <DropdownMenu onOpenChange={(o) => onMenu?.(o)}>
           <DropdownMenuTrigger asChild>
             <button
@@ -270,6 +353,7 @@ export function SalesPanel({
   if (archiveView)
     return (
       <Shell>
+        {deleteWindow}
         <button
           type="button"
           onClick={() => setArchiveView(false)}
@@ -291,6 +375,7 @@ export function SalesPanel({
 
   return (
     <Shell>
+      {deleteWindow}
       <p className="px-5 pb-3 pt-5 text-[13px] font-bold uppercase tracking-[0.08em] text-foreground">
         {t("salesp.title")}
       </p>

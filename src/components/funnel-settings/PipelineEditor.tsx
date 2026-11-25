@@ -9,6 +9,7 @@ import {
   Circle,
   CircleCheck,
   CircleDashed,
+  ChevronDown,
   CircleX,
   CopyCheck,
   Eraser,
@@ -162,6 +163,7 @@ function SourcesColumn({
   const update = useUpdatePipeline();
   const { data: forms = [] } = useWebForms();
   const [dupOpen, setDupOpen] = useState(false);
+  const [modesOpen, setModesOpen] = useState(false);
   const [pickOpen, setPickOpen] = useState(false);
   const mode = asDedupeMode(pipeline.dedupe_mode);
   const mine = forms.filter((f) => f.default_pipeline_id === pipeline.id);
@@ -191,24 +193,51 @@ function SourcesColumn({
           </p>
         </AmoCard>
 
-        <AmoCard title={t("fs.duplicates")}>
-          <p className="mt-1 text-[12.5px] leading-snug text-muted-foreground">
-            {t("amo.dupQuestion")}
+        {/* 5CRM keeps this card short: on/off, what the chosen mode does,
+            «Qoidalarni sozlash»; the four modes open only when asked. */}
+        <AmoCard
+          title={t("fs.duplicates")}
+          toggle={
+            <AmoToggle
+              checked={mode !== "off"}
+              disabled={!canManage}
+              label={t("fs.duplicates")}
+              onChange={(v) => save({ dedupe_mode: v ? "repeat" : "off" })}
+            />
+          }
+        >
+          <p className="mt-1 line-clamp-3 text-[12.5px] leading-snug text-muted-foreground">
+            {mode === "off" ? t("amo.dupQuestion") : t(`fs.dup.${mode}Desc`)}
           </p>
-          <DedupeModePicker
-            mode={mode}
-            canManage={canManage}
-            onPick={(m) => save({ dedupe_mode: m })}
-          />
-          {mode !== "off" && (
+          {modesOpen && (
+            <DedupeModePicker
+              mode={mode}
+              canManage={canManage}
+              onPick={(m) => save({ dedupe_mode: m })}
+            />
+          )}
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
             <button
               type="button"
-              onClick={() => setDupOpen(true)}
-              className="mt-2.5 text-[13px] font-semibold text-primary underline decoration-primary/40 underline-offset-[3px] transition-colors hover:decoration-primary"
+              onClick={() => setModesOpen((v) => !v)}
+              className="inline-flex items-center gap-1 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              aria-expanded={modesOpen}
             >
-              {t("amo.dupRules")}
+              {mode === "off" ? t("fs.dup.off") : t(`fs.dup.${mode}`)}
+              <ChevronDown
+                className={cn("h-4 w-4 transition-transform", modesOpen && "rotate-180")}
+              />
             </button>
-          )}
+            {mode !== "off" && (
+              <button
+                type="button"
+                onClick={() => setDupOpen(true)}
+                className="text-[13px] font-semibold text-primary underline decoration-primary/40 underline-offset-[3px] transition-colors hover:decoration-primary"
+              >
+                {t("amo.dupRules")}
+              </button>
+            )}
+          </div>
         </AmoCard>
 
         {mine.length === 0 ? (
@@ -869,7 +898,7 @@ function StageColumn({
       )}
     >
       {/* Header: pinned while the triggers scroll under it. */}
-      <div className="sticky top-0 z-10 bg-background">
+      <div className="sticky top-0 z-10 bg-[var(--amo-quiet)]">
         <div className="group/head relative flex h-[38px] items-center gap-1 px-2">
           {movable ? (
             <span

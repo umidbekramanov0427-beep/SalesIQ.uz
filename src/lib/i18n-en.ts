@@ -581,6 +581,8 @@ export const en: Record<string, string> = {
   "hover.created": "Created",
   "hover.updated": "Updated",
   "hover.full": "Full page",
+  "salesp.deleteAgree": "I agree that all sources, stages and triggers of this funnel will be deleted for good.",
+  "salesp.deleteYes": "Delete",
   "amo.stageMenu": "Stage settings",
   "amo.anyColor": "Any colour",
   "amo.hiddenNow": "hidden now",

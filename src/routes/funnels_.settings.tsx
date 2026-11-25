@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFunnelSkin } from "@/lib/funnel-skin";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useIsMutating } from "@tanstack/react-query";
@@ -9,6 +10,8 @@ import {
   Bot,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Columns3,
   Copy,
   Globe,
@@ -25,7 +28,6 @@ import { toast } from "sonner";
 import { CrmGate } from "@/components/CrmGate";
 import { EmbeddedPage } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AutomationsTab,
   RuleDialog,
@@ -213,7 +215,7 @@ function FunnelSettingsPage() {
   const tabLabel = (k: SettingsTab) => t(`fs.tab.${k}`);
 
   return (
-    <div className="amo-skin -mx-4 -mb-4 -mt-4 flex h-[calc(100%+2rem)] flex-col bg-background text-foreground md:-mx-6 md:-mb-6 md:h-[calc(100%+2.5rem)] phone:-mx-3 phone:-mt-3 phone:h-auto">
+    <div className="amo-skin fs-skin -mx-4 -mb-4 -mt-4 flex h-[calc(100%+2rem)] flex-col bg-background text-foreground md:-mx-6 md:-mb-6 md:h-[calc(100%+2.5rem)] phone:-mx-3 phone:-mt-3 phone:h-auto">
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-[var(--amo-head)] px-6 phone:h-auto phone:flex-wrap phone:px-3 phone:py-2">
         {tab !== "stages" && (
           <button
@@ -225,84 +227,36 @@ function FunnelSettingsPage() {
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
           </button>
         )}
-        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="group flex min-w-0 items-center gap-2 rounded-[4px] py-1 pr-1 text-[15px] font-bold uppercase tracking-[0.05em] text-[var(--amo-head-fg)]"
-            >
-              <span className="truncate">{pipeline?.name ?? t("fs.title")}</span>
-              <ChevronDown
-                className={cn(
-                  "h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:text-foreground",
-                  menuOpen && "rotate-180",
-                )}
-              />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="amo-skin w-72 rounded-[6px] p-1.5">
-            <p className="px-2.5 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              {t("amo.funnels")}
-            </p>
-            {sorted.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  go(p.name, "stages");
-                }}
-                className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-2 text-left text-[13px] font-semibold text-foreground hover:bg-accent"
-              >
-                <span className="min-w-0 flex-1 truncate">{p.name}</span>
-                {p.archived_at && (
-                  <Archive
-                    className="h-3.5 w-3.5 text-muted-foreground"
-                    aria-label={t("fs.archive")}
-                  />
-                )}
-                {p.id === pipeline?.id && <Check className="h-4 w-4 text-primary" />}
-              </button>
-            ))}
-            {canManage && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setNewFunnelOpen(true);
-                }}
-                className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-2 text-left text-[13px] font-semibold text-primary hover:bg-accent"
-              >
-                <Plus className="h-4 w-4" /> {t("fs.newFunnel")}
-              </button>
-            )}
-            <div className="my-1.5 h-px bg-border" />
-            <p className="px-2.5 pb-1 pt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              {t("amo.moreSettings")}
-            </p>
-            {TABS.map(({ key, icon: Icon }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  openTab(key);
-                }}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-[4px] px-2.5 py-1.5 text-left text-[13px] text-foreground hover:bg-accent",
-                  tab === key && "bg-accent/70 font-semibold",
-                )}
-              >
-                <Icon className="h-4 w-4 text-muted-foreground" />
-                {key === "stages" ? t("amo.stagesAndTriggers") : tabLabel(key)}
-              </button>
-            ))}
-            {canManage && pipeline && (
-              <>
-                <div className="my-1.5 h-px bg-border" />
-                <button
-                  type="button"
-                  onClick={() => {
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="group flex min-w-0 items-center gap-2 rounded-[4px] py-1 pr-1 text-[15px] font-bold uppercase tracking-[0.05em] text-[var(--amo-head-fg)]"
+        >
+          <span className="truncate">{pipeline?.name ?? t("fs.title")}</span>
+          <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+        </button>
+        {menuOpen && (
+          <FunnelSwitchPanel
+            pipelines={sorted}
+            current={pipeline?.id ?? null}
+            tab={tab}
+            canManage={canManage}
+            onClose={() => setMenuOpen(false)}
+            onPick={(name) => {
+              setMenuOpen(false);
+              go(name, "stages");
+            }}
+            onTab={(key) => {
+              setMenuOpen(false);
+              openTab(key);
+            }}
+            onNew={() => {
+              setMenuOpen(false);
+              setNewFunnelOpen(true);
+            }}
+            onArchive={
+              canManage && pipeline
+                ? () => {
                     setMenuOpen(false);
                     updatePipeline.mutate(
                       {
@@ -316,16 +270,12 @@ function FunnelSettingsPage() {
                         onError: (e) => toast.error(describeError(e, t("fs.saveFailed"))),
                       },
                     );
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-[4px] px-2.5 py-1.5 text-left text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground"
-                >
-                  <Archive className="h-4 w-4" />
-                  {pipeline.archived_at ? t("fs.unarchive") : t("fs.archive")}
-                </button>
-              </>
-            )}
-          </PopoverContent>
-        </Popover>
+                  }
+                : undefined
+            }
+            archivedNow={!!pipeline?.archived_at}
+          />
+        )}
         {tab !== "stages" && (
           <span className="truncate text-[14px] text-muted-foreground">/ {tabLabel(tab)}</span>
         )}
@@ -442,5 +392,131 @@ function FunnelSettingsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/**
+ * 5CRM's funnel switcher in the settings: a full-height panel beside the
+ * rail -- the funnels (the open one in blue), «Voronka qo'shish», the
+ * archived funnels on an inner screen, then the funnel's other settings.
+ */
+function FunnelSwitchPanel({
+  pipelines,
+  current,
+  tab,
+  canManage,
+  onClose,
+  onPick,
+  onTab,
+  onNew,
+  onArchive,
+  archivedNow,
+}: {
+  pipelines: { id: string; name: string; archived_at?: string | null }[];
+  current: string | null;
+  tab: SettingsTab;
+  canManage: boolean;
+  onClose: () => void;
+  onPick: (name: string) => void;
+  onTab: (key: SettingsTab) => void;
+  onNew: () => void;
+  onArchive: (() => void) | undefined;
+  archivedNow: boolean;
+}) {
+  const { t } = useI18n();
+  const [archiveView, setArchiveView] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const live = pipelines.filter((p) => !p.archived_at);
+  const archived = pipelines.filter((p) => p.archived_at);
+  const ROW =
+    "flex w-full items-center gap-2 border-b border-[var(--amo-divider)] px-6 py-3.5 text-left text-[14px] transition-colors hover:bg-accent/50";
+  const rows = (list: typeof pipelines) =>
+    list.map((p) => (
+      <button key={p.id} type="button" onClick={() => onPick(p.name)} className={ROW}>
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate",
+            p.id === current ? "font-medium text-primary" : "text-foreground",
+          )}
+        >
+          {p.name}
+        </span>
+        {p.id === current && <Check className="h-4 w-4 text-primary" />}
+      </button>
+    ));
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-[59]" onClick={onClose} aria-hidden />
+      <aside className="amo-skin fs-skin fixed bottom-0 left-[72px] top-0 z-[60] flex w-[290px] flex-col border-r border-border bg-[var(--amo-quiet)] text-foreground shadow-[8px_0_24px_-12px_rgba(0,0,0,0.5)] motion-safe:animate-in motion-safe:slide-in-from-left-2 phone:left-0 phone:w-full">
+        <button
+          type="button"
+          onClick={() => (archiveView ? setArchiveView(false) : onClose())}
+          className="flex h-16 shrink-0 items-center gap-2 px-6 text-left text-[15px] font-bold uppercase tracking-[0.05em] text-foreground"
+        >
+          {archiveView && <ChevronLeft className="h-4 w-4" />}
+          {archiveView ? t("salesp.archiveTitle") : t("amo.funnels")}
+        </button>
+        <div className="min-h-0 flex-1 overflow-y-auto border-t border-[var(--amo-divider)]">
+          {archiveView ? (
+            archived.length ? (
+              rows(archived)
+            ) : (
+              <p className="px-6 py-4 text-[13px] text-muted-foreground">
+                {t("salesp.archiveEmpty")}
+              </p>
+            )
+          ) : (
+            <>
+              {rows(live)}
+              {canManage && (
+                <button type="button" onClick={onNew} className={cn(ROW, "text-muted-foreground")}>
+                  <span className="flex-1">{t("salesp.add")}</span>
+                  <Plus className="h-4 w-4" />
+                </button>
+              )}
+              <button type="button" onClick={() => setArchiveView(true)} className={ROW}>
+                <span className="flex-1">{t("salesp.archiveTitle")}</span>
+                <span className="text-[12px] tabular-nums text-muted-foreground">
+                  {archived.length}
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <p className="px-6 pb-2 pt-6 text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                {t("amo.moreSettings")}
+              </p>
+              {TABS.map(({ key, icon: Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onTab(key)}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 px-6 py-2 text-left text-[13.5px] text-foreground transition-colors hover:bg-accent/50",
+                    tab === key && "font-semibold text-primary",
+                  )}
+                >
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                  {key === "stages" ? t("amo.stagesAndTriggers") : t(`fs.tab.${key}`)}
+                </button>
+              ))}
+              {onArchive && (
+                <button
+                  type="button"
+                  onClick={onArchive}
+                  className="mt-2 flex w-full items-center gap-2.5 border-t border-[var(--amo-divider)] px-6 py-3 text-left text-[13.5px] text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                >
+                  <Archive className="h-4 w-4" />
+                  {archivedNow ? t("fs.unarchive") : t("fs.archive")}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </aside>
+    </>,
+    document.body,
   );
 }

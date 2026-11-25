@@ -144,6 +144,16 @@ type Widget = {
   installed: boolean | null;
 };
 
+// Each group's icons in their own colour, so the grid reads at a glance.
+const GROUP_ICON: Record<string, string> = {
+  bot: "text-white",
+  work: "text-emerald-300",
+  distribution: "text-amber-300",
+  action: "text-sky-300",
+  contact: "text-pink-300",
+  data: "text-violet-300",
+};
+
 export function TriggerCatalog({
   open,
   onOpenChange,
@@ -240,18 +250,18 @@ export function TriggerCatalog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="amo-skin flex h-[90dvh] max-w-[560px] flex-col gap-0 overflow-hidden rounded-[6px] border-border bg-background p-0 sm:max-w-[560px] [&>button:last-child]:hidden">
+      <DialogContent className="amo-skin flex h-[92dvh] max-w-[960px] flex-col gap-0 overflow-hidden rounded-[8px] border-border bg-background p-0 sm:max-w-[960px] [&>button:last-child]:hidden">
         <DialogTitle className="sr-only">{t("fs.addTrigger")}</DialogTitle>
-        <div className="shrink-0 border-b border-border px-5 pb-3 pt-4">
+        <div className="shrink-0 border-b border-border px-7 pb-4 pt-6">
           <div className="flex items-center gap-3">
-            <label className="flex h-10 flex-1 items-center gap-2.5 rounded-[4px] border border-border bg-card px-3 focus-within:border-primary">
-              <Search className="h-4 w-4 text-muted-foreground" />
+            <label className="flex h-12 flex-1 items-center gap-3 rounded-[6px] border border-border bg-card px-4 focus-within:border-primary">
+              <Search className="h-5 w-5 text-muted-foreground" />
               <input
                 autoFocus
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t("tc.search")}
-                className="h-full flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
+                className="h-full flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-muted-foreground"
               />
             </label>
             <button
@@ -263,14 +273,14 @@ export function TriggerCatalog({
               <X className="h-5 w-5" />
             </button>
           </div>
-          <p className="mt-2.5 text-[12px] text-muted-foreground">
+          <p className="mt-3 text-[14px] text-muted-foreground">
             {t("tc.when")} <b className="font-semibold text-foreground">{stageName}</b>
           </p>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-7 pb-8">
           {/* 5CRM: one flat grid of actions, the salesbots lit first. */}
-          <div className="grid grid-cols-3 gap-2.5 pt-4 phone:grid-cols-2">
+          <div className="grid grid-cols-4 gap-3 pt-5 phone:grid-cols-2">
             {groups.flatMap((g) =>
               g.tiles.map((tile) => (
                 <button
@@ -278,16 +288,25 @@ export function TriggerCatalog({
                   type="button"
                   onClick={() => pick(tile)}
                   className={cn(
-                    "group flex h-[82px] flex-col items-center justify-between rounded-[4px] px-2.5 pb-2 pt-3 text-white transition-[filter,transform] duration-150 hover:brightness-110",
-                    g.key === "bot" ? "bg-[#4a68b8]" : "bg-[#2c4a72]",
+                    "group relative flex h-[124px] flex-col items-center justify-between overflow-hidden rounded-[6px] px-3 pb-3 pt-4 text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition-[filter,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-10px_rgba(0,0,0,0.6)] hover:brightness-110 active:translate-y-0 motion-reduce:transform-none",
+                    g.key === "bot"
+                      ? "bg-[linear-gradient(160deg,#5b7bd0,#4462b0)]"
+                      : "bg-[linear-gradient(160deg,#33557f,#2a4669)]",
                   )}
                 >
-                  <tile.icon
-                    className={cn("h-6 w-6", tile.danger ? "text-rose-200" : "text-white")}
-                    strokeWidth={1.6}
-                  />
-                  <span className="flex h-6 w-full items-center justify-center gap-1 rounded-[3px] border border-white/25 bg-black/15 px-1.5 text-[11.5px] font-medium">
-                    <Plus className="h-3 w-3 shrink-0" />
+                  <span
+                    className={cn(
+                      "grid h-12 w-12 place-items-center rounded-full bg-white/10 ring-1 ring-white/15 transition-transform duration-200 group-hover:scale-110",
+                      GROUP_ICON[g.key] ?? "text-white",
+                    )}
+                  >
+                    <tile.icon
+                      className={cn("h-6 w-6", tile.danger && "text-rose-300")}
+                      strokeWidth={1.7}
+                    />
+                  </span>
+                  <span className="flex h-8 w-full items-center justify-center gap-1.5 rounded-[4px] border border-white/20 bg-black/15 px-2 text-[13px] font-medium transition-colors group-hover:bg-black/25">
+                    <Plus className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">{t(`tc.a.${tile.key}`)}</span>
                   </span>
                 </button>
@@ -297,8 +316,8 @@ export function TriggerCatalog({
 
           {shownWidgets.length > 0 && (
             <section className="pt-6">
-              <h3 className="mb-3 text-[17px] font-medium text-foreground">{t("tc.g.widgets")}</h3>
-              <div className="grid grid-cols-4 gap-3 phone:grid-cols-2">
+              <h3 className="mb-3 text-[18px] font-medium text-foreground">{t("tc.g.widgets")}</h3>
+              <div className="grid grid-cols-5 gap-3 phone:grid-cols-2">
                 {shownWidgets.map((w) => {
                   const body = (
                     <>
