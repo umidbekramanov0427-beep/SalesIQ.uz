@@ -10931,6 +10931,10 @@ const uz: Record<string, string> = {
   "orgmod.desc": "Faqat yoqilganda kompaniyaga ko'rinadi.",
   "orgmod.warehouse": "Ombor",
   "orgmod.warehouse.desc": "Mahsulotlar, qoldiq, buyurtmalar va qayta sotuv",
+  "wh.lead.title": "Xaridlari",
+  "wh.lead.orders": "Buyurtmalar",
+  "wh.lead.spent": "Jami",
+  "wh.lead.avg": "O'rtacha chek",
 };
 
 export default uz;

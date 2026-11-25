@@ -133,6 +133,7 @@ import { Composer, OpenTasksDock, type ComposeMode } from "@/components/lead/Amo
 import { LeadCardSetup } from "@/components/lead/LeadCardSetup";
 import { LeadMoneyRows, PaymentLinkDialog } from "@/components/lead/LeadPayments";
 import { LeadRefundToggle } from "@/components/lead/LeadRefund";
+import { LeadWarehouseBlock } from "@/components/warehouse/LeadWarehouseBlock";
 import { RecordingLink } from "@/components/audio/RecordingLink";
 import { useRecordingUrl } from "@/hooks/use-recording-url";
 import { ChatFile, ClientAvatar, ReactionPicker } from "@/components/lead/ChatParts";
@@ -1815,6 +1816,8 @@ function LeadPanel({
                     {topRow[k]()}
                   </FieldRow>
                 ))}
+
+                <LeadWarehouseBlock leadId={lead.id} leadName={lead.contactName || lead.name} />
 
                 {groupBoxes.length > 0 && (
                   <div className="space-y-2.5 pt-3">

@@ -10729,4 +10729,8 @@ export const en: Record<string, string> = {
   "orgmod.desc": "Shown to the company only when switched on.",
   "orgmod.warehouse": "Warehouse",
   "orgmod.warehouse.desc": "Products, stock, orders and repeat sales",
+  "wh.lead.title": "Purchases",
+  "wh.lead.orders": "Orders",
+  "wh.lead.spent": "Total",
+  "wh.lead.avg": "Avg check",
 };

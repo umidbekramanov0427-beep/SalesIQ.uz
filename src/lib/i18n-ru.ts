@@ -10758,6 +10758,10 @@ const ru: Record<string, string> = {
   "orgmod.desc": "Видны компании только когда включены.",
   "orgmod.warehouse": "Склад",
   "orgmod.warehouse.desc": "Товары, остатки, заказы и повторные продажи",
+  "wh.lead.title": "Покупки",
+  "wh.lead.orders": "Заказы",
+  "wh.lead.spent": "Всего",
+  "wh.lead.avg": "Средний чек",
 };
 
 export default ru;
