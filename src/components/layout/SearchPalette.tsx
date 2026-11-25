@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { NAV_ITEMS, appRoleOf, canOpenPath, navItemsFor } from "@/lib/nav";
+import { useOrgModules } from "@/hooks/crm/warehouse";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { SEARCH_CATALOG, catalogMatches } from "@/lib/search-catalog";
 import { cn } from "@/lib/utils";
@@ -101,6 +102,7 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
   const { user } = useAuth();
   const navigate = useNavigate();
   const crmEnabled = useCrmEnabled();
+  const orgModules = useOrgModules();
   const role = appRoleOf(user);
   const isPlatformOwner = user?.role === "platform_owner";
   const { data: leads = [], isFetching } = useGlobalLeadSearch(query, open);
@@ -139,7 +141,9 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
     const q = query.trim();
     const pages = isPlatformOwner
       ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-      : navItemsFor(role, crmEnabled).filter((i) => canOpenSection(accessRules, role, i.to));
+      : navItemsFor(role, crmEnabled, orgModules).filter((i) =>
+          canOpenSection(accessRules, role, i.to),
+        );
     const pageResults: Result[] = pages
       .filter((i) => !q || catalogMatches(`${t(`nav.${i.to}`)} ${i.label} ${i.to}`, q))
       .slice(0, 8)

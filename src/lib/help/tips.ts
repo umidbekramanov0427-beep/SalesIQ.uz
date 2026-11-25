@@ -73,6 +73,69 @@ export const TIPS: Record<string, Tip> = {
       en: "Tabs: Overview (main figures, plan vs actual, channels, managers, tasks, calls), Rating, Conversion. Arrange the cards with «Customize».",
     },
   },
+  "nav:/warehouse": {
+    what: {
+      uz: "Ombor — mahsulotlar, qoldiq, yangidan yetkazilgangacha buyurtmalar va qayta sotuv. Faqat modul yoqilgan kompaniyada ko'rinadi.",
+      ru: "Склад — товары, остатки, заказы от нового до доставленного и повторные продажи. Виден только при подключённом модуле.",
+      en: "Warehouse — products, stock, orders from new to delivered and repeat sales. Shown only to companies with the module on.",
+    },
+  },
+  "wh.kpi.today": {
+    what: {
+      uz: "Bugun yaratilgan buyurtmalar (bekor qilinganlarsiz) va ularning summasi.",
+      ru: "Заказы, созданные сегодня (без отменённых), и их сумма.",
+      en: "Orders created today (cancelled excluded) and their sum.",
+    },
+  },
+  "wh.kpi.transit": {
+    what: {
+      uz: "Mijozga yo'lda turgan buyurtmalar; ostida — hali yig'ilayotganlari.",
+      ru: "Заказы в пути к клиенту; ниже — сколько ещё собирается.",
+      en: "Orders on the way to the client; below — how many are still being packed.",
+    },
+  },
+  "wh.kpi.repeat": {
+    what: {
+      uz: "Tovari 7 kun ichida tugaydigan mijozlar (o'z xaridlari oralig'iga qarab) va taxminiy summa.",
+      ru: "Клиенты, у которых товар закончится за 7 дней (по интервалу их заказов), и ожидаемая сумма.",
+      en: "Clients whose goods run out within 7 days, from the gaps between their own orders, and the expected sum.",
+    },
+  },
+  "wh.kpi.value": {
+    what: {
+      uz: "Ombordagi qoldiq × tannarx, barcha omborlar bo'yicha.",
+      ru: "Остаток × себестоимость по всем складам.",
+      en: "Stock on hand × cost price, over all warehouses.",
+    },
+  },
+  "wh.kpi.repeaters": {
+    what: {
+      uz: "Ikki va undan ko'p buyurtmasi yetkazilgan mijozlar ulushi.",
+      ru: "Доля клиентов с двумя и более доставленными заказами.",
+      en: "Share of clients with two or more delivered orders.",
+    },
+  },
+  "wh.kpi.soon": {
+    what: {
+      uz: "Tovari bir hafta ichida tugaydigan mijozlar.",
+      ru: "Клиенты, у кого товар закончится в течение недели.",
+      en: "Clients whose goods run out within a week.",
+    },
+  },
+  "wh.kpi.dormant": {
+    what: {
+      uz: "Odatdagi keyingi xaridi 60 kundan ko'p kechikkan mijozlar.",
+      ru: "Клиенты, опоздавшие с обычным заказом более чем на 60 дней.",
+      en: "Clients more than 60 days past their usual next order.",
+    },
+  },
+  "wh.kpi.repeatRevenue": {
+    what: {
+      uz: "Bu oy avval xarid qilgan mijozlarning yetkazilgan buyurtmalari summasi.",
+      ru: "Сумма доставленных в этом месяце заказов от уже покупавших клиентов.",
+      en: "This month's delivered orders from clients who had bought before.",
+    },
+  },
   "nav:/funnels": {
     what: {
       uz: "Voronkalar — lidlar bosqichma-bosqich kanban doskada: yangi lid kelishidan to'lovgacha.",

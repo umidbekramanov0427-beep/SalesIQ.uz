@@ -24,6 +24,7 @@ import { useMainScrollMemory } from "@/lib/scroll-memory";
 import { trail } from "@/lib/session-trail";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { useOrgModules } from "@/hooks/crm/warehouse";
 import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn, setDateFormatPref } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
@@ -79,6 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isPlatformOwner = user?.role === "platform_owner";
   const role = appRoleOf(user);
   const crmEnabled = useCrmEnabled();
+  const orgModules = useOrgModules();
   // A page outside this role's menu (e.g. an intern typing /dashboard)
   // sends them home instead of rendering it.
   // Sozlamalar → Umumiy: the company's date format, set before the page renders.
@@ -98,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const menuItems = isPlatformOwner
     ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-    : navItemsFor(role, crmEnabled).filter(
+    : navItemsFor(role, crmEnabled, orgModules).filter(
         (i) => (!i.adminOnly || isAdmin) && canOpenSection(accessRules, role, i.to),
       );
 

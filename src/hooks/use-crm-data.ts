@@ -34,3 +34,4 @@ export * from "./crm/desk";
 export * from "./crm/phone-center";
 export * from "./crm/businesses";
 export * from "./crm/call-review";
+export * from "./crm/warehouse";

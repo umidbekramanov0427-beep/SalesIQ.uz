@@ -49,6 +49,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TlsAllowedRouteImport } from './routes/tls-allowed'
+import { Route as WarehouseRouteImport } from './routes/warehouse'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AccountDeviceUnlockRouteImport } from './routes/account.device-unlock'
@@ -226,6 +227,7 @@ import { Route as PlatformMeetingSettingsRouteImport } from './routes/platform.m
 import { Route as PlatformNotificationsRouteImport } from './routes/platform.notifications'
 import { Route as PlatformOpsApiRouteImport } from './routes/platform.ops-api'
 import { Route as PlatformOrgFactsRouteImport } from './routes/platform.org-facts'
+import { Route as PlatformOrgModulesRouteImport } from './routes/platform.org-modules'
 import { Route as PlatformPartnersRouteImport } from './routes/platform.partners'
 import { Route as PlatformPartnersApiRouteImport } from './routes/platform.partners-api'
 import { Route as PlatformPaymentCredentialsRouteImport } from './routes/platform.payment-credentials'
@@ -539,6 +541,11 @@ const TermsRoute = TermsRouteImport.update({
 const TlsAllowedRoute = TlsAllowedRouteImport.update({
   id: '/tls-allowed',
   path: '/tls-allowed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WarehouseRoute = WarehouseRouteImport.update({
+  id: '/warehouse',
+  path: '/warehouse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93ListToolsRoute =
@@ -1452,6 +1459,11 @@ const PlatformOrgFactsRoute = PlatformOrgFactsRouteImport.update({
   path: '/platform/org-facts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformOrgModulesRoute = PlatformOrgModulesRouteImport.update({
+  id: '/platform/org-modules',
+  path: '/platform/org-modules',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlatformPartnersRoute = PlatformPartnersRouteImport.update({
   id: '/platform/partners',
   path: '/platform/partners',
@@ -2105,6 +2117,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
   '/tls-allowed': typeof TlsAllowedRoute
+  '/warehouse': typeof WarehouseRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/device-unlock': typeof AccountDeviceUnlockRoute
@@ -2279,6 +2292,7 @@ export interface FileRoutesByFullPath {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/org-facts': typeof PlatformOrgFactsRoute
+  '/platform/org-modules': typeof PlatformOrgModulesRoute
   '/platform/partners': typeof PlatformPartnersRoute
   '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -2438,6 +2452,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
   '/tls-allowed': typeof TlsAllowedRoute
+  '/warehouse': typeof WarehouseRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/device-unlock': typeof AccountDeviceUnlockRoute
@@ -2612,6 +2627,7 @@ export interface FileRoutesByTo {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/org-facts': typeof PlatformOrgFactsRoute
+  '/platform/org-modules': typeof PlatformOrgModulesRoute
   '/platform/partners': typeof PlatformPartnersRoute
   '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -2772,6 +2788,7 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/terms': typeof TermsRoute
   '/tls-allowed': typeof TlsAllowedRoute
+  '/warehouse': typeof WarehouseRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/account/device-unlock': typeof AccountDeviceUnlockRoute
@@ -2946,6 +2963,7 @@ export interface FileRoutesById {
   '/platform/notifications': typeof PlatformNotificationsRoute
   '/platform/ops-api': typeof PlatformOpsApiRoute
   '/platform/org-facts': typeof PlatformOrgFactsRoute
+  '/platform/org-modules': typeof PlatformOrgModulesRoute
   '/platform/partners': typeof PlatformPartnersRoute
   '/platform/partners-api': typeof PlatformPartnersApiRoute
   '/platform/payment-credentials': typeof PlatformPaymentCredentialsRoute
@@ -3107,6 +3125,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/terms'
     | '/tls-allowed'
+    | '/warehouse'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/device-unlock'
@@ -3281,6 +3300,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/org-facts'
+    | '/platform/org-modules'
     | '/platform/partners'
     | '/platform/partners-api'
     | '/platform/payment-credentials'
@@ -3440,6 +3460,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/terms'
     | '/tls-allowed'
+    | '/warehouse'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/device-unlock'
@@ -3614,6 +3635,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/org-facts'
+    | '/platform/org-modules'
     | '/platform/partners'
     | '/platform/partners-api'
     | '/platform/payment-credentials'
@@ -3773,6 +3795,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/terms'
     | '/tls-allowed'
+    | '/warehouse'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/account/device-unlock'
@@ -3947,6 +3970,7 @@ export interface FileRouteTypes {
     | '/platform/notifications'
     | '/platform/ops-api'
     | '/platform/org-facts'
+    | '/platform/org-modules'
     | '/platform/partners'
     | '/platform/partners-api'
     | '/platform/payment-credentials'
@@ -4107,6 +4131,7 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   TermsRoute: typeof TermsRoute
   TlsAllowedRoute: typeof TlsAllowedRoute
+  WarehouseRoute: typeof WarehouseRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AccountDeviceUnlockRoute: typeof AccountDeviceUnlockRoute
@@ -4214,6 +4239,7 @@ export interface RootRouteChildren {
   PlatformNotificationsRoute: typeof PlatformNotificationsRoute
   PlatformOpsApiRoute: typeof PlatformOpsApiRoute
   PlatformOrgFactsRoute: typeof PlatformOrgFactsRoute
+  PlatformOrgModulesRoute: typeof PlatformOrgModulesRoute
   PlatformPartnersRoute: typeof PlatformPartnersRoute
   PlatformPartnersApiRoute: typeof PlatformPartnersApiRoute
   PlatformPaymentCredentialsRoute: typeof PlatformPaymentCredentialsRoute
@@ -4570,6 +4596,13 @@ declare module '@tanstack/react-router' {
       path: '/tls-allowed'
       fullPath: '/tls-allowed'
       preLoaderRoute: typeof TlsAllowedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/warehouse': {
+      id: '/warehouse'
+      path: '/warehouse'
+      fullPath: '/warehouse'
+      preLoaderRoute: typeof WarehouseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -5809,6 +5842,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/org-facts'
       fullPath: '/platform/org-facts'
       preLoaderRoute: typeof PlatformOrgFactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/org-modules': {
+      id: '/platform/org-modules'
+      path: '/platform/org-modules'
+      fullPath: '/platform/org-modules'
+      preLoaderRoute: typeof PlatformOrgModulesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/partners': {
@@ -7076,6 +7116,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   TermsRoute: TermsRoute,
   TlsAllowedRoute: TlsAllowedRoute,
+  WarehouseRoute: WarehouseRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
@@ -7184,6 +7225,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformNotificationsRoute: PlatformNotificationsRoute,
   PlatformOpsApiRoute: PlatformOpsApiRoute,
   PlatformOrgFactsRoute: PlatformOrgFactsRoute,
+  PlatformOrgModulesRoute: PlatformOrgModulesRoute,
   PlatformPartnersRoute: PlatformPartnersRoute,
   PlatformPartnersApiRoute: PlatformPartnersApiRoute,
   PlatformPaymentCredentialsRoute: PlatformPaymentCredentialsRoute,

@@ -24,6 +24,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SectionCard, Pill, ChannelActionButton, IconTile } from "@/components/layout/Primitives";
+import { OrgModulesCard } from "@/components/platform/OrgModulesCard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SubdomainCard } from "@/components/settings/SubdomainCard";
 import { SharedBotExtend } from "@/components/owner/SharedBotExtend";
@@ -682,91 +683,96 @@ function OrgDetailPage() {
         )}
 
         {section === "plan" && (
-          <SectionCard icon={CalendarClock} tone="emerald" title={t("orgcard.plan")}>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <Label htmlFor="detail-plan">{t("platform.orgPlan")}</Label>
-                <select
-                  id="detail-plan"
-                  value={plan}
-                  onChange={(e) => setPlan(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                >
-                  {PLAN_IDS.map((p) => (
-                    <option key={p} value={p}>
-                      {PLAN_LABELS[p]}
-                    </option>
-                  ))}
-                </select>
+          <>
+            <SectionCard icon={CalendarClock} tone="emerald" title={t("orgcard.plan")}>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <Label htmlFor="detail-plan">{t("platform.orgPlan")}</Label>
+                  <select
+                    id="detail-plan"
+                    value={plan}
+                    onChange={(e) => setPlan(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    {PLAN_IDS.map((p) => (
+                      <option key={p} value={p}>
+                        {PLAN_LABELS[p]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="detail-extra-seats">{t("platform.extraSeatsLabel")}</Label>
+                  <Input
+                    id="detail-extra-seats"
+                    type="number"
+                    min={0}
+                    value={extraSeats}
+                    onChange={(e) => setExtraSeats(e.target.value)}
+                  />
+                  <p className="mt-1.5 text-xs text-subtle">
+                    {t("platform.seatUsageHint", {
+                      used: String(orgUsers.length),
+                      limit:
+                        effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats) === null
+                          ? t("platform.seatLimitUnlimited")
+                          : String(
+                              effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats),
+                            ),
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="detail-ends">{t("orgcard.endsOn")}</Label>
+                  <Input
+                    id="detail-ends"
+                    type="date"
+                    value={endsOn}
+                    onChange={(e) => setEndsOn(e.target.value)}
+                  />
+                  <p className="mt-1.5 text-xs text-subtle">{t(`platform.phase.${phase}`)}</p>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="detail-extra-seats">{t("platform.extraSeatsLabel")}</Label>
-                <Input
-                  id="detail-extra-seats"
-                  type="number"
-                  min={0}
-                  value={extraSeats}
-                  onChange={(e) => setExtraSeats(e.target.value)}
+              <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+                  checked={unlimitedSeats}
+                  onChange={(e) => setUnlimitedSeats(e.target.checked)}
                 />
-                <p className="mt-1.5 text-xs text-subtle">
-                  {t("platform.seatUsageHint", {
-                    used: String(orgUsers.length),
-                    limit:
-                      effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats) === null
-                        ? t("platform.seatLimitUnlimited")
-                        : String(effectiveSeatLimit(plan, Number(extraSeats) || 0, unlimitedSeats)),
-                  })}
-                </p>
-              </div>
-              <div>
-                <Label htmlFor="detail-ends">{t("orgcard.endsOn")}</Label>
-                <Input
-                  id="detail-ends"
-                  type="date"
-                  value={endsOn}
-                  onChange={(e) => setEndsOn(e.target.value)}
-                />
-                <p className="mt-1.5 text-xs text-subtle">{t(`platform.phase.${phase}`)}</p>
-              </div>
-            </div>
-            <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm text-foreground">
-              <input
-                type="checkbox"
-                className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-                checked={unlimitedSeats}
-                onChange={(e) => setUnlimitedSeats(e.target.checked)}
-              />
-              <span>
-                {t("platform.unlimitedSeats")}
-                <span className="block text-xs text-subtle">
-                  {t("platform.unlimitedSeatsHint")}
+                <span>
+                  {t("platform.unlimitedSeats")}
+                  <span className="block text-xs text-subtle">
+                    {t("platform.unlimitedSeatsHint")}
+                  </span>
                 </span>
-              </span>
-            </label>
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void savePlan()}
-                className={primaryBtn}
-              >
-                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("common.save")}
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void grantPaidMonth()}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-success px-4 text-sm font-semibold text-success-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {t("platform.grantPaidMonth")}
-              </button>
-            </div>
-            <SharedBotExtend
-              orgId={org.id}
-              until={(org as { shared_bot_until?: string | null }).shared_bot_until}
-            />
-          </SectionCard>
+              </label>
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void savePlan()}
+                  className={primaryBtn}
+                >
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t("common.save")}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void grantPaidMonth()}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-success px-4 text-sm font-semibold text-success-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {t("platform.grantPaidMonth")}
+                </button>
+              </div>
+              <SharedBotExtend
+                orgId={org.id}
+                until={(org as { shared_bot_until?: string | null }).shared_bot_until}
+              />
+            </SectionCard>
+            <OrgModulesCard orgId={orgId} />
+          </>
         )}
 
         {section === "freeze" && (

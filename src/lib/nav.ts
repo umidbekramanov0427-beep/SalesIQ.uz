@@ -27,6 +27,7 @@ import {
   BellRing,
   Megaphone,
   SlidersHorizontal,
+  Package,
 } from "lucide-react";
 import type { Feature } from "@/lib/plan-gating";
 import type { SessionUser } from "@/lib/auth";
@@ -79,6 +80,8 @@ export type NavItem = {
   optional?: boolean;
   // Platform owner menu: which group of OwnerSidebar the item sits in.
   ownerGroup?: "business" | "control" | "comms" | "system";
+  // An add-on module (org_modules): shown only to companies that have it on.
+  module?: "warehouse";
 };
 
 // Sidebar is intentionally a short, fixed list — everything else (Leads,
@@ -103,6 +106,15 @@ export const NAV_ITEMS: NavItem[] = [
     icon: SquareKanban,
     group: "general",
     crmOnly: true,
+  },
+  {
+    label: "Warehouse",
+    to: "/warehouse",
+    tone: "amber",
+    icon: Package,
+    group: "general",
+    crmOnly: true,
+    module: "warehouse",
   },
   {
     label: "Inbox",
@@ -272,11 +284,18 @@ export function moduleItemsFor(role: AppRole | null, crmEnabled = true): NavItem
 }
 
 // The company nav as one role sees it (platform-owner items excluded).
-export function navItemsFor(role: AppRole | null, crmEnabled = true): NavItem[] {
+export function navItemsFor(
+  role: AppRole | null,
+  crmEnabled = true,
+  modules: readonly string[] = [],
+): NavItem[] {
   if (!role) return [];
   return NAV_ITEMS.filter(
     (i) =>
-      !i.platformOwnerOnly && (!i.roles || i.roles.includes(role)) && (crmEnabled || !i.crmOnly),
+      !i.platformOwnerOnly &&
+      (!i.roles || i.roles.includes(role)) &&
+      (crmEnabled || !i.crmOnly) &&
+      (!i.module || modules.includes(i.module)),
   );
 }
 
