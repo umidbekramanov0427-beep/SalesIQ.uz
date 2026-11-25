@@ -2,10 +2,9 @@
 // what they spend, when they will need goods again, and one click to repeat
 // the last order or start a new one.
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Plus, Repeat2 } from "lucide-react";
+import { ChevronDown, Plus, Repeat2, Star } from "lucide-react";
 import { OrderDialog, type OrderDraft } from "@/components/warehouse/WarehouseDialogs";
-import { useHasModule, useOrders } from "@/hooks/crm/warehouse";
+import { useHasModule, useOrders, type OrderWithItems } from "@/hooks/crm/warehouse";
 import { useI18n } from "@/lib/i18n";
 import { formatUzs } from "@/lib/currency";
 import { repeatCandidates } from "@/lib/warehouse";
@@ -22,10 +21,13 @@ export function LeadWarehouseBlock({ leadId, leadName }: { leadId: string; leadN
 function Block({ leadId, leadName }: { leadId: string; leadName: string }) {
   const { t } = useI18n();
   const { data: orders = [] } = useOrders(leadId);
-  const [dlg, setDlg] = useState<{ open: boolean; initial?: OrderDraft | undefined; key: number }>({
-    open: false,
-    key: 0,
-  });
+  const [dlg, setDlg] = useState<{
+    open: boolean;
+    initial?: OrderDraft | undefined;
+    order?: OrderWithItems | undefined;
+    key: number;
+  }>({ open: false, key: 0 });
+  const [all, setAll] = useState(false);
   const delivered = orders.filter((o) => o.status === "delivered");
   const total = delivered.reduce((s, o) => s + o.total, 0);
   const forecast = useMemo(
@@ -44,12 +46,27 @@ function Block({ leadId, leadName }: { leadId: string; leadName: string }) {
   );
   const lead = { id: leadId, name: leadName, owner_id: null, phone: null };
   const last = delivered[0];
-  const open = (initial?: OrderDraft) => setDlg((s) => ({ open: true, initial, key: s.key + 1 }));
+  const open = (initial?: OrderDraft) =>
+    setDlg((s) => ({ open: true, initial, order: undefined, key: s.key + 1 }));
+  const view = (order: OrderWithItems) =>
+    setDlg((s) => ({ open: true, initial: undefined, order, key: s.key + 1 }));
+  // Two delivered orders or more: a regular client of the warehouse.
+  const regular = delivered.length >= 2;
+  const shown = all ? orders : orders.slice(0, 3);
   const due = forecast?.dueInDays;
   return (
     <div className="mt-3 rounded-lg border border-border bg-card p-3">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-bold uppercase tracking-wide">{t("wh.lead.title")}</span>
+        <span className="flex items-center gap-2">
+          <span className="text-[12px] font-bold uppercase tracking-wide">
+            {t("wh.lead.title")}
+          </span>
+          {regular && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-300">
+              <Star className="h-3 w-3" /> {t("wh.lead.regular")}
+            </span>
+          )}
+        </span>
         <button
           type="button"
           onClick={() => open({ lead, lines: [] })}
@@ -107,26 +124,40 @@ function Block({ leadId, leadName }: { leadId: string; leadName: string }) {
           )}
         </div>
       )}
-      {orders.slice(0, 3).map((o) => (
-        <div
+      {shown.map((o) => (
+        <button
           key={o.id}
-          className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 text-[13px]"
+          type="button"
+          onClick={() => view(o)}
+          className="mt-2 flex w-full items-center justify-between gap-2 border-t border-border/60 pt-2 text-left text-[13px] hover:text-primary"
         >
-          <Link
-            to="/warehouse"
-            search={{ tab: "orders" }}
-            className="font-semibold hover:underline"
-          >
-            №{o.number} · {t(`wh.st.${o.status}`)}
-          </Link>
-          <span className="tabular-nums">{formatUzs(o.total)}</span>
-        </div>
+          <span className="min-w-0 truncate">
+            <b>№{o.number}</b> · {t(`wh.st.${o.status}`)}
+            <span className="text-muted-foreground">
+              {" "}
+              · {new Date(o.created_at).toLocaleDateString("ru-RU")}
+            </span>
+          </span>
+          <span className="shrink-0 tabular-nums">{formatUzs(o.total)}</span>
+        </button>
       ))}
+      {orders.length > 3 && (
+        <button
+          type="button"
+          onClick={() => setAll((v) => !v)}
+          className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-semibold text-primary hover:underline"
+        >
+          <ChevronDown className={all ? "h-3.5 w-3.5 rotate-180" : "h-3.5 w-3.5"} />
+          {all ? t("wh.lead.less") : t("wh.lead.all", { n: orders.length })}
+        </button>
+      )}
       {dlg.open && (
         <OrderDialog
           key={dlg.key}
           open
           initial={dlg.initial}
+          order={dlg.order}
+          leadName={leadName}
           onOpenChange={(v) => !v && setDlg((s) => ({ ...s, open: false }))}
         />
       )}

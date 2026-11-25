@@ -272,6 +272,40 @@ export function useUpdateOrder() {
   });
 }
 
+/** Saves an opened order: its fields, and (until it leaves the stock) its lines. */
+export function useSaveOrder() {
+  const { user } = useAuth();
+  const done = useInvalidateWarehouse();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      patch: T["orders"]["Update"];
+      lines?: OrderLine[] | undefined;
+    }) => {
+      const { error } = await supabase.from("orders").update(input.patch).eq("id", input.id);
+      if (error) throw error;
+      if (!input.lines) return;
+      // Replaced as a whole; the order's total is recounted by the database.
+      const { error: e1 } = await supabase.from("order_items").delete().eq("order_id", input.id);
+      if (e1) throw e1;
+      const rows = input.lines
+        .filter((l) => l.qty > 0)
+        .map((l) => ({
+          organization_id: user!.organizationId!,
+          order_id: input.id,
+          product_id: l.productId,
+          qty: l.qty,
+          price: l.price,
+        }));
+      if (rows.length) {
+        const { error: e2 } = await supabase.from("order_items").insert(rows);
+        if (e2) throw e2;
+      }
+    },
+    onSuccess: done,
+  });
+}
+
 export type LeadBrief = { id: string; name: string; owner_id: string | null; phone: string | null };
 
 /** Names (and owners) of the orders' clients. */

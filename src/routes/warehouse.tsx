@@ -572,6 +572,8 @@ function OrdersBoard() {
   const d = useWarehouseData();
   const update = useUpdateOrder();
   const [drag, setDrag] = useState<string | null>(null);
+  // The order opened for viewing / editing (a click on its card).
+  const [opened, setOpened] = useState<OrderWithItems | null>(null);
   const pName = new Map(d.products.map((p) => [p.id, p]));
   async function move(id: string, status: string) {
     try {
@@ -617,7 +619,11 @@ function OrdersBoard() {
                   key={o.id}
                   draggable
                   onDragStart={() => setDrag(o.id)}
-                  className="cursor-grab rounded-xl border border-border bg-card p-3 text-[13.5px] shadow-sm active:cursor-grabbing"
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("a, button")) return;
+                    setOpened(o);
+                  }}
+                  className="cursor-pointer rounded-xl border border-border bg-card p-3 text-[13.5px] shadow-sm transition-colors hover:border-primary/50 active:cursor-grabbing"
                 >
                   <div className="flex items-center justify-between">
                     <b className="tabular-nums">№{o.number}</b>
@@ -675,6 +681,15 @@ function OrdersBoard() {
           </section>
         );
       })}
+      {opened && (
+        <OrderDialog
+          key={opened.id}
+          open
+          order={opened}
+          leadName={opened.lead_id ? d.leads.get(opened.lead_id)?.name : undefined}
+          onOpenChange={(v) => !v && setOpened(null)}
+        />
+      )}
     </div>
   );
 }

@@ -9,9 +9,13 @@ import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/lib/i18n";
 import { describeError } from "@/lib/utils";
 import { formatUzs } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 import {
+  ORDER_STATUSES,
   useAddMoves,
   useCreateOrder,
+  useSaveOrder,
+  type OrderWithItems,
   useOrderLeadSearch,
   useProductStock,
   useProducts,
@@ -328,34 +332,85 @@ export function OrderDialog({
   onOpenChange,
   initial,
   onCreated,
+  order,
+  leadName,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial?: OrderDraft | undefined;
   onCreated?: () => void;
+  /** An existing order: the dialog opens it for viewing and editing. */
+  order?: OrderWithItems | undefined;
+  leadName?: string | undefined;
 }) {
   const { t } = useI18n();
   const { data: products = [] } = useProducts();
   const { data: stock } = useProductStock();
   const create = useCreateOrder();
-  const [lead, setLead] = useState<LeadBrief | null>(initial?.lead ?? null);
+  const save = useSaveOrder();
+  // Once the goods have left the stock the lines are fixed (the stock
+  // journal already holds them); everything else can still change.
+  const locked = !!order?.stock_out_at;
+  const [status, setStatus] = useState(order?.status ?? "new");
+  const [paid, setPaid] = useState(order?.paid_status ?? "unpaid");
+  const [tracking, setTracking] = useState(order?.tracking ?? "");
+  const [deliveryAt, setDeliveryAt] = useState(order?.delivery_at?.slice(0, 10) ?? "");
+  const [note, setNote] = useState(order?.note ?? "");
+  const [lead, setLead] = useState<LeadBrief | null>(
+    order
+      ? order.lead_id
+        ? { id: order.lead_id, name: leadName ?? "—", owner_id: null, phone: null }
+        : null
+      : (initial?.lead ?? null),
+  );
   const [leadQ, setLeadQ] = useState("");
   const found = useOrderLeadSearch(leadQ);
   const [lines, setLines] = useState<Line[]>(
     () =>
-      initial?.lines.map((l) => ({
+      (order
+        ? order.items.map((i) => ({ productId: i.product_id, qty: i.qty, price: i.price }))
+        : initial?.lines
+      )?.map((l) => ({
         productId: l.productId,
         qty: String(l.qty),
         price: String(l.price),
       })) ?? [],
   );
-  const [discount, setDiscount] = useState("");
-  const [delivery, setDelivery] = useState<"courier" | "post" | "pickup" | "">("");
-  const [address, setAddress] = useState("");
+  const [discount, setDiscount] = useState(order?.discount_pct ? String(order.discount_pct) : "");
+  const [delivery, setDelivery] = useState<"courier" | "post" | "pickup" | "">(
+    (order?.delivery_method as "courier" | "post" | "pickup" | null) ?? "",
+  );
+  const [address, setAddress] = useState(order?.delivery_address ?? "");
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const subtotal = lines.reduce((s, l) => s + num(l.qty) * num(l.price), 0);
   const total = Math.round(subtotal * (1 - Math.min(100, num(discount)) / 100));
   async function submit() {
+    if (order) {
+      try {
+        await save.mutateAsync({
+          id: order.id,
+          patch: {
+            lead_id: lead?.id ?? null,
+            status,
+            paid_status: paid,
+            tracking: tracking.trim() || null,
+            delivery_at: deliveryAt ? new Date(`${deliveryAt}T12:00:00`).toISOString() : null,
+            note: note.trim() || null,
+            delivery_method: delivery || null,
+            delivery_address: address || null,
+            ...(locked ? {} : { discount_pct: Math.min(100, num(discount)) }),
+          },
+          lines: locked
+            ? undefined
+            : lines.map((l) => ({ productId: l.productId, qty: num(l.qty), price: num(l.price) })),
+        });
+        toast.success(t("wh.order.saved"));
+        onOpenChange(false);
+      } catch (e) {
+        toast.error(describeError(e, t("wh.failed")));
+      }
+      return;
+    }
     try {
       await create.mutateAsync({
         leadId: lead?.id ?? null,
@@ -377,8 +432,33 @@ export function OrderDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t("wh.order.new")}</DialogTitle>
+          <DialogTitle>
+            {order ? t("wh.order.title", { n: order.number }) : t("wh.order.new")}
+          </DialogTitle>
         </DialogHeader>
+        {order && (
+          // Where the order is: one click moves it (the lead's stage follows).
+          <div className="flex flex-wrap gap-1">
+            {[...ORDER_STATUSES, "cancelled" as const].map((s) => (
+              <button
+                key={s}
+                type="button"
+                aria-pressed={status === s}
+                onClick={() => setStatus(s)}
+                className={cn(
+                  "rounded-md border px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+                  status === s
+                    ? s === "cancelled"
+                      ? "border-destructive bg-destructive/10 text-destructive"
+                      : "border-primary bg-primary/10 text-primary"
+                    : "border-border text-foreground/80 hover:border-primary/40",
+                )}
+              >
+                {t(`wh.st.${s}`)}
+              </button>
+            ))}
+          </div>
+        )}
         <Field label={t("wh.order.client")}>
           {lead ? (
             <div className="flex h-10 items-center justify-between rounded-lg border border-border px-3 text-[14px]">
@@ -448,6 +528,7 @@ export function OrderDialog({
                     <td className="px-3 py-2">
                       <input
                         className={`${fieldCls} w-20`}
+                        disabled={locked}
                         inputMode="decimal"
                         value={l.qty}
                         onChange={(e) =>
@@ -460,6 +541,7 @@ export function OrderDialog({
                     <td className="px-3 py-2">
                       <input
                         className={`${fieldCls} w-28`}
+                        disabled={locked}
                         inputMode="decimal"
                         value={l.price}
                         onChange={(e) =>
@@ -476,8 +558,9 @@ export function OrderDialog({
                       <button
                         type="button"
                         aria-label={t("common.delete")}
+                        disabled={locked}
                         onClick={() => setLines((all) => all.filter((_, j) => j !== i))}
-                        className="rounded-md p-1.5 text-muted-foreground hover:text-destructive"
+                        className="rounded-md p-1.5 text-muted-foreground hover:text-destructive disabled:opacity-30"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -488,18 +571,23 @@ export function OrderDialog({
             </tbody>
           </table>
         </div>
-        <ProductPicker
-          products={products}
-          exclude={new Set(lines.map((l) => l.productId))}
-          onPick={(p) =>
-            setLines((all) => [...all, { productId: p.id, qty: "1", price: String(p.price) }])
-          }
-        />
+        {locked ? (
+          <p className="text-[12.5px] text-muted-foreground">{t("wh.order.locked")}</p>
+        ) : (
+          <ProductPicker
+            products={products}
+            exclude={new Set(lines.map((l) => l.productId))}
+            onPick={(p) =>
+              setLines((all) => [...all, { productId: p.id, qty: "1", price: String(p.price) }])
+            }
+          />
+        )}
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label={t("wh.order.discount")}>
             <input
               className={fieldCls}
               inputMode="decimal"
+              disabled={locked}
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
               placeholder="0"
@@ -525,19 +613,57 @@ export function OrderDialog({
             />
           </Field>
         </div>
+        {order && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label={t("wh.order.paid")}>
+              <select className={fieldCls} value={paid} onChange={(e) => setPaid(e.target.value)}>
+                <option value="unpaid">{t("wh.paid.unpaid")}</option>
+                <option value="partial">{t("wh.paid.partial")}</option>
+                <option value="paid">{t("wh.paid.paid")}</option>
+              </select>
+            </Field>
+            <Field label={t("wh.order.deliveryAt")}>
+              <input
+                type="date"
+                className={fieldCls}
+                value={deliveryAt}
+                onChange={(e) => setDeliveryAt(e.target.value)}
+              />
+            </Field>
+            <Field label={t("wh.order.tracking")}>
+              <input
+                className={fieldCls}
+                value={tracking}
+                onChange={(e) => setTracking(e.target.value)}
+              />
+            </Field>
+            <div className="sm:col-span-3">
+              <Field label={t("wh.note")}>
+                <input
+                  className={fieldCls}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </Field>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
           <div className="text-[20px] font-bold tabular-nums">{formatUzs(total)}</div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
-            <Button onClick={() => void submit()} disabled={!valid || create.isPending}>
-              {create.isPending ? (
+            <Button
+              onClick={() => void submit()}
+              disabled={(!valid && !locked) || create.isPending || save.isPending}
+            >
+              {create.isPending || save.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Plus className="h-4 w-4" />
+                !order && <Plus className="h-4 w-4" />
               )}
-              {t("wh.order.create")}
+              {order ? t("common.save") : t("wh.order.create")}
             </Button>
           </div>
         </div>
