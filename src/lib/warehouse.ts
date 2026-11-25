@@ -100,12 +100,58 @@ export function dormant(list: RepeatCandidate[], days = 60): RepeatCandidate[] {
 }
 
 /** Default stages of a new warehouse funnel and the order status each stands for. */
-export const WAREHOUSE_STAGES: { name: string; color: string; orderStatus: string | null }[] = [
-  { name: "Yangi mijoz", color: "#94A3B8", orderStatus: null },
-  { name: "Buyurtma", color: "#3B82F6", orderStatus: "new" },
-  { name: "Tayyorlanmoqda", color: "#F59E0B", orderStatus: "preparing" },
-  { name: "Yig'ilmoqda", color: "#8B5CF6", orderStatus: "picking" },
-  { name: "Yo'lda", color: "#0EA5E9", orderStatus: "shipped" },
-  { name: "Yetkazildi", color: "#10B981", orderStatus: "delivered" },
-  { name: "Qayta sotuv", color: "#F97316", orderStatus: null },
+export const WAREHOUSE_STAGES: {
+  name: string;
+  color: string;
+  orderStatus: string | null;
+  stageValue: "new" | "in_work" | "expected" | "sale" | "refused";
+  probability: number;
+  isWon?: boolean;
+  isLost?: boolean;
+}[] = [
+  { name: "Yangi mijoz", color: "#94A3B8", orderStatus: null, stageValue: "new", probability: 10 },
+  {
+    name: "Buyurtma",
+    color: "#3B82F6",
+    orderStatus: "new",
+    stageValue: "in_work",
+    probability: 40,
+  },
+  {
+    name: "Tayyorlanmoqda",
+    color: "#F59E0B",
+    orderStatus: "preparing",
+    stageValue: "in_work",
+    probability: 60,
+  },
+  {
+    name: "Yig'ilmoqda",
+    color: "#8B5CF6",
+    orderStatus: "picking",
+    stageValue: "expected",
+    probability: 75,
+  },
+  {
+    name: "Yo'lda",
+    color: "#0EA5E9",
+    orderStatus: "shipped",
+    stageValue: "expected",
+    probability: 90,
+  },
+  {
+    name: "Yetkazildi",
+    color: "#10B981",
+    orderStatus: "delivered",
+    stageValue: "sale",
+    probability: 100,
+    isWon: true,
+  },
+  {
+    name: "Bekor qilindi",
+    color: "#EF4444",
+    orderStatus: "cancelled",
+    stageValue: "refused",
+    probability: 0,
+    isLost: true,
+  },
 ];

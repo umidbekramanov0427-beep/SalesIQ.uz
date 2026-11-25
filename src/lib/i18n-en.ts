@@ -10733,4 +10733,9 @@ export const en: Record<string, string> = {
   "wh.lead.orders": "Orders",
   "wh.lead.spent": "Total",
   "wh.lead.avg": "Avg check",
+  "fs.funnelKind": "Funnel type",
+  "fs.kind.sales": "Sales",
+  "fs.kind.sales.desc": "Services, courses, deals",
+  "fs.kind.warehouse": "Warehouse orders",
+  "fs.kind.warehouse.desc": "Stages move the order and stock",
 };

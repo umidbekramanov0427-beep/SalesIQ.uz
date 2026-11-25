@@ -55,6 +55,8 @@ import {
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_FUNNEL_STAGES, defaultStageRows, createStageRows } from "@/lib/funnel-defaults";
+import { WAREHOUSE_STAGES } from "@/lib/warehouse";
+import { useHasModule } from "@/hooks/crm/warehouse";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 
@@ -124,6 +126,9 @@ function FunnelSettingsPage() {
   );
   const [newFunnelOpen, setNewFunnelOpen] = useState(false);
   const [newFunnelName, setNewFunnelName] = useState("");
+  // Ombor module: a funnel is ordinary sales or warehouse orders.
+  const hasWarehouse = useHasModule("warehouse");
+  const [newFunnelKind, setNewFunnelKind] = useState<"sales" | "warehouse">("sales");
   const [menuOpen, setMenuOpen] = useState(false);
   const [copying, setCopying] = useState(false);
   const canManage = user?.role === "super_admin" || user?.role === "platform_owner";
@@ -148,20 +153,38 @@ function FunnelSettingsPage() {
     const name = newFunnelName.trim();
     if (!name || !user?.organizationId) return;
     try {
+      const warehouse = hasWarehouse && newFunnelKind === "warehouse";
       const created = await createPipeline.mutateAsync({
         name,
         organization_id: user.organizationId,
         position: sorted.length,
+        ...(warehouse ? { kind: "warehouse" } : {}),
       });
       // Like amoCRM: a new funnel opens with its stages ready, the won and
-      // lost ones included.
+      // lost ones included. A warehouse funnel's stages stand for order
+      // statuses (moving a lead moves its order, see 20270207).
       await createStageRows(
-        defaultStageRows(DEFAULT_FUNNEL_STAGES, t, {
-          organization_id: user.organizationId,
-          pipeline_id: created.id,
-          pipeline_name: name,
-          from: 0,
-        }),
+        warehouse
+          ? WAREHOUSE_STAGES.map((st, i) => ({
+              name: st.name,
+              key: `custom-${crypto.randomUUID()}`,
+              organization_id: user.organizationId!,
+              pipeline_id: created.id,
+              pipeline_name: name,
+              color: st.color,
+              probability: st.probability,
+              position: i,
+              is_won: !!st.isWon,
+              is_lost: !!st.isLost,
+              stage_value: st.stageValue,
+              order_status: st.orderStatus,
+            }))
+          : defaultStageRows(DEFAULT_FUNNEL_STAGES, t, {
+              organization_id: user.organizationId,
+              pipeline_id: created.id,
+              pipeline_name: name,
+              from: 0,
+            }),
         (row) => createStage.mutateAsync(row),
       );
       setNewFunnelOpen(false);
@@ -378,6 +401,32 @@ function FunnelSettingsPage() {
               placeholder={t("fs.funnelName")}
               className="h-10 w-full rounded-[4px] border border-border bg-background px-3 text-sm outline-none focus:border-primary"
             />
+            {hasWarehouse && (
+              <div
+                className="grid grid-cols-2 gap-2"
+                role="radiogroup"
+                aria-label={t("fs.funnelKind")}
+              >
+                {(["sales", "warehouse"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    role="radio"
+                    aria-checked={newFunnelKind === k}
+                    onClick={() => setNewFunnelKind(k)}
+                    className={cn(
+                      "rounded-[4px] border px-3 py-2.5 text-left text-[13px]",
+                      newFunnelKind === k ? "border-primary bg-primary/5" : "border-border",
+                    )}
+                  >
+                    <span className="block font-semibold">{t(`fs.kind.${k}`)}</span>
+                    <span className="block text-[12px] text-muted-foreground">
+                      {t(`fs.kind.${k}.desc`)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
             <button
               type="submit"
               disabled={!newFunnelName.trim() || createPipeline.isPending || createStage.isPending}

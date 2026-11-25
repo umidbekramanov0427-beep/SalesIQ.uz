@@ -1,4 +1,5 @@
 import { useFunnelSkin } from "@/lib/funnel-skin";
+import { WarehouseOrdersScope } from "@/components/warehouse/LeadOrderChip";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CardBoard } from "@/components/dashboard/HomeBoard";
 import { CardTools, useCardChrome } from "@/components/layout/CardTools";
@@ -615,6 +616,7 @@ function FunnelDetail({
   onAutoRefreshChange: (v: boolean) => void;
 }) {
   const { t } = useI18n();
+  const { data: boardPipelines = [] } = usePipelines();
   const { format } = useCurrency();
   const canViewRevenue = usePermission("View revenue");
   const navigate = useNavigate();
@@ -1603,35 +1605,41 @@ function FunnelDetail({
       ) : view === "kanban" ? (
         // Straight on the page, no card around it -- amoCRM's columns sit
         // on the plain background.
-        <PipelineBoard
-          funnel={name}
-          leads={shownLeads}
-          // A stage hidden in Voronka sozlamalari (the eye) has no column.
-          stages={boardStages}
-          sortBy={sortBy}
-          showClosed={showClosed}
-          liveIds={liveIds}
-          leading={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="body" />}
-          leadingHead={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="head" />}
-          // Tick boxes only while "Ommaviy amallar" is on.
-          {...(selecting
-            ? {
-                selection: {
-                  ids: selected,
-                  onToggle: toggleSelected,
-                  onSetMany: (ids: string[], on: boolean) =>
-                    setSelected((prev) => {
-                      const next = new Set(prev);
-                      for (const id of ids) {
-                        if (on) next.add(id);
-                        else next.delete(id);
-                      }
-                      return next;
-                    }),
-                },
-              }
-            : {})}
-        />
+        <WarehouseOrdersScope
+          isWarehouseFunnel={boardPipelines.some(
+            (p) => p.name === name && (p as { kind?: string }).kind === "warehouse",
+          )}
+        >
+          <PipelineBoard
+            funnel={name}
+            leads={shownLeads}
+            // A stage hidden in Voronka sozlamalari (the eye) has no column.
+            stages={boardStages}
+            sortBy={sortBy}
+            showClosed={showClosed}
+            liveIds={liveIds}
+            leading={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="body" />}
+            leadingHead={<MissedCallsColumn funnelLeadIds={funnelLeadIds} part="head" />}
+            // Tick boxes only while "Ommaviy amallar" is on.
+            {...(selecting
+              ? {
+                  selection: {
+                    ids: selected,
+                    onToggle: toggleSelected,
+                    onSetMany: (ids: string[], on: boolean) =>
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        for (const id of ids) {
+                          if (on) next.add(id);
+                          else next.delete(id);
+                        }
+                        return next;
+                      }),
+                  },
+                }
+              : {})}
+          />
+        </WarehouseOrdersScope>
       ) : (
         <SectionCard>
           {shownLeads.length === 0 ? (

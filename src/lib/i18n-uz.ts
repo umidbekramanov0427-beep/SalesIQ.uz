@@ -10935,6 +10935,11 @@ const uz: Record<string, string> = {
   "wh.lead.orders": "Buyurtmalar",
   "wh.lead.spent": "Jami",
   "wh.lead.avg": "O'rtacha chek",
+  "fs.funnelKind": "Voronka turi",
+  "fs.kind.sales": "Oddiy sotuv",
+  "fs.kind.sales.desc": "Xizmat, kurs, bitimlar",
+  "fs.kind.warehouse": "Ombor (buyurtmalar)",
+  "fs.kind.warehouse.desc": "Bosqich buyurtma va qoldiqni o'zgartiradi",
 };
 
 export default uz;

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LeadOrderChip } from "@/components/warehouse/LeadOrderChip";
 import { Link } from "@tanstack/react-router";
 import {
   Timer,
@@ -460,6 +461,7 @@ export function KanbanLeadCard({
             )}
           </div>
         )}
+        {!preview && <LeadOrderChip leadId={l.id} />}
       </div>
     </div>
   );

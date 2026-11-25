@@ -10762,6 +10762,11 @@ const ru: Record<string, string> = {
   "wh.lead.orders": "Заказы",
   "wh.lead.spent": "Всего",
   "wh.lead.avg": "Средний чек",
+  "fs.funnelKind": "Тип воронки",
+  "fs.kind.sales": "Обычные продажи",
+  "fs.kind.sales.desc": "Услуги, курсы, сделки",
+  "fs.kind.warehouse": "Склад (заказы)",
+  "fs.kind.warehouse.desc": "Этап меняет заказ и остаток",
 };
 
 export default ru;
