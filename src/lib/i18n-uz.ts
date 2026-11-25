@@ -8219,6 +8219,17 @@ const uz: Record<string, string> = {
   "fs.tab.colors": "Lid ranglari",
   "lcolor.desc":
     "Qoidaga mos lid kartasi voronka doskasida rangga bo'yaladi. Birinchi mos kelgan qoida rangni belgilaydi.",
+  "lcolor.auto.title": "Avtomatik ranglar",
+  "lcolor.auto.desc":
+    "Karta foni lidning holatiga qarab o'zi o'zgaradi: vazifa bugunga, vazifa muddati o'tgan, sotuv bo'ldi yoki yo'qotildi. Vazifasi keyingi kunlarga qo'yilgan lid o'z rangida qoladi. Pastdagi o'zingizning rang qoidangiz mos kelsa, u ustun turadi.",
+  "lcolor.auto.today": "Vazifa bugunga",
+  "lcolor.auto.todayHint": "To'q yashil: bugun bajariladigan vazifasi bor",
+  "lcolor.auto.overdue": "Vazifa muddati o'tgan",
+  "lcolor.auto.overdueHint": "Qizil: vazifa vaqti o'tib ketgan",
+  "lcolor.auto.won": "Sotuv bilan yakunlandi",
+  "lcolor.auto.wonHint": "Ochiq yashil: lid sotuv bilan yakunlangan",
+  "lcolor.auto.lost": "Yo'qotildi",
+  "lcolor.auto.lostHint": "Ochiq kulrang: lid yo'qotilgan",
   "lcolor.saveFailed": "Ranglarni saqlab bo'lmadi",
   "lcolor.empty": "Hali rang qoidalari yo'q",
   "lcolor.emptyHint":

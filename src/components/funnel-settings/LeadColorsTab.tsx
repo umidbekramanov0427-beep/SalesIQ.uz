@@ -9,6 +9,12 @@ import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 import {
   ALL_FUNNELS,
+  AUTO_CARD,
+  AUTO_STATES,
+  autoCardState,
+  parseAutoColors,
+  withAutoColors,
+  type AutoColors,
   CONDITION_VALUE,
   LEAD_COLOR_CARD,
   LEAD_COLOR_CONDITIONS,
@@ -23,6 +29,7 @@ import {
   type LeadColorConditionKind,
   type LeadColorKey,
   type LeadColorRule,
+  type AutoState,
 } from "@/lib/lead-colors";
 import {
   useLeadCustomFieldDefs,
@@ -142,6 +149,8 @@ export function LeadColorsTab({ funnel }: { funnel: string }) {
     <>
       <PageHeader title={t("fs.tab.colors")} description={t("lcolor.desc")} icon={Palette} />
 
+      <AutoColorsCard funnel={funnel} canManage={canManage} />
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section className="min-w-0">
           {mine.length === 0 ? (
@@ -216,7 +225,16 @@ export function LeadColorsTab({ funnel }: { funnel: string }) {
             ) : (
               <div className="space-y-1.5">
                 {preview.map(({ l, color }) => (
-                  <PreviewCard key={l.id} lead={l} color={color} />
+                  <PreviewCard
+                    key={l.id}
+                    lead={l}
+                    color={color}
+                    auto={
+                      color
+                        ? null
+                        : autoCardState(l, parseAutoColors(settings?.kanban_card_fields, funnel))
+                    }
+                  />
                 ))}
               </div>
             )}
@@ -474,12 +492,21 @@ function IconButton({
 }
 
 // A small stand-in for the board card: name, stage, amount -- painted.
-function PreviewCard({ lead, color }: { lead: CrmLeadView; color: LeadColorKey | null }) {
+function PreviewCard({
+  lead,
+  color,
+  auto,
+}: {
+  lead: CrmLeadView;
+  color: LeadColorKey | null;
+  auto: AutoState | null;
+}) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-card px-2.5 py-2 text-[12.5px] shadow-[0_1px_1px_rgba(16,24,40,0.04)]",
+        "rounded-[3px] border border-[color:var(--amo-card-line)] bg-[var(--amo-card)] px-2.5 py-2 text-[12.5px]",
         color && LEAD_COLOR_CARD[color],
+        auto && AUTO_CARD[auto],
       )}
     >
       <p className="truncate font-semibold text-primary">{lead.contactName || lead.name}</p>
@@ -492,5 +519,76 @@ function PreviewCard({ lead, color }: { lead: CrmLeadView; color: LeadColorKey |
         )}
       </p>
     </div>
+  );
+}
+
+/**
+ * "Avtomatik ranglar": the card's ground follows the lead by itself -- a task
+ * due today (dark green), an overdue task (red), won (light green), lost
+ * (light grey). One switch each, saved for this funnel right away.
+ */
+function AutoColorsCard({ funnel, canManage }: { funnel: string; canManage: boolean }) {
+  const { t } = useI18n();
+  const { data: settings } = useOrgGeneralSettings();
+  const save = useUpdateOrgGeneralSettings();
+  const saved = parseAutoColors(settings?.kanban_card_fields, funnel);
+  const [value, setValue] = useState<AutoColors>(saved);
+  const savedKey = JSON.stringify(saved);
+  useEffect(() => {
+    setValue(JSON.parse(savedKey) as AutoColors);
+  }, [savedKey]);
+  const toggle = (k: AutoState, on: boolean) => {
+    const next = { ...value, [k]: on };
+    setValue(next);
+    save.mutate(
+      {
+        kanban_card_fields: withAutoColors(settings?.kanban_card_fields, funnel, next) as Json,
+      },
+      { onError: (err) => toast.error(describeError(err, t("lcolor.saveFailed"))) },
+    );
+  };
+  return (
+    <section className="mb-6 rounded-2xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+          <Wand2 className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-[14.5px] font-semibold text-foreground">{t("lcolor.auto.title")}</h3>
+          <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted-foreground">
+            {t("lcolor.auto.desc")}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {AUTO_STATES.map((k) => (
+          <label
+            key={k}
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-border px-3 py-2.5"
+          >
+            {/* A small card in that colour. */}
+            <span
+              className={cn(
+                "h-8 w-12 shrink-0 rounded-[3px] border border-[color:var(--amo-card-line)] bg-[var(--amo-card)]",
+                AUTO_CARD[k],
+              )}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-semibold text-foreground">
+                {t(`lcolor.auto.${k}`)}
+              </span>
+              <span className="block text-[12px] text-muted-foreground">
+                {t(`lcolor.auto.${k}Hint`)}
+              </span>
+            </span>
+            <Switch
+              checked={value[k]}
+              disabled={!canManage}
+              onCheckedChange={(v) => toggle(k, v)}
+            />
+          </label>
+        ))}
+      </div>
+    </section>
   );
 }

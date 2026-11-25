@@ -2063,6 +2063,41 @@ html:has(.always-dark) {
 
 /* Lead colouring (src/lib/lead-colors.ts): the stripe on the left edge and a
    wash of the rule's colour over the card's own background. */
+/* Automatic card colours (lead-colors.ts AUTO_CARD): they only reset the
+   card's own two colours, so the card keeps its shape and hover. */
+.lead-auto-today {
+  --amo-card: #cdebd8;
+  --amo-card-line: #86c59f;
+}
+.lead-auto-overdue {
+  --amo-card: #f9dcdc;
+  --amo-card-line: #e8a1a1;
+}
+.lead-auto-won {
+  --amo-card: #e8f8ec;
+  --amo-card-line: #aadcb7;
+}
+.lead-auto-lost {
+  --amo-card: #eef0f3;
+  --amo-card-line: #d2d7dd;
+}
+.dark .lead-auto-today {
+  --amo-card: #16442f;
+  --amo-card-line: #2e7a51;
+}
+.dark .lead-auto-overdue {
+  --amo-card: #4b1d25;
+  --amo-card-line: #8d3642;
+}
+.dark .lead-auto-won {
+  --amo-card: #2c6541;
+  --amo-card-line: #52a06c;
+}
+.dark .lead-auto-lost {
+  --amo-card: #3a4450;
+  --amo-card-line: #5b6775;
+}
+
 .lead-tint {
   border-left-width: 3px;
   border-left-color: var(--lead-tint);

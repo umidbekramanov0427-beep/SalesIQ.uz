@@ -214,3 +214,76 @@ export const LEAD_COLOR_DOT: Record<LeadColorKey, string> = {
   pink: "bg-pink-500",
   gray: "bg-slate-400",
 };
+
+// Automatic card colours (Voronka sozlamalari -> Lid ranglari ->
+// "Avtomatik ranglar"): the card's ground follows the lead's state by itself
+// -- a task due today, an overdue task, won, lost. A task further ahead keeps
+// the card's own colour. Saved per funnel in kanban_card_fields.autoColors;
+// all four are on until a company turns them off. A company's own colour
+// rule, when one matches, wins over these.
+export const AUTO_STATES = ["today", "overdue", "won", "lost"] as const;
+export type AutoState = (typeof AUTO_STATES)[number];
+export type AutoColors = Record<AutoState, boolean>;
+export const AUTO_COLORS_DEFAULT: AutoColors = {
+  today: true,
+  overdue: true,
+  won: true,
+  lost: true,
+};
+
+/** This funnel's switches (missing ones are on). */
+export function parseAutoColors(kanbanCardFields: unknown, funnel: string): AutoColors {
+  const all =
+    kanbanCardFields && typeof kanbanCardFields === "object"
+      ? (kanbanCardFields as Record<string, unknown>)["autoColors"]
+      : undefined;
+  const raw = all && typeof all === "object" ? (all as Record<string, unknown>)[funnel] : undefined;
+  const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return {
+    today: o["today"] !== false,
+    overdue: o["overdue"] !== false,
+    won: o["won"] !== false,
+    lost: o["lost"] !== false,
+  };
+}
+
+/** kanban_card_fields with this funnel's switches written in, other keys kept. */
+export function withAutoColors(
+  kanbanCardFields: unknown,
+  funnel: string,
+  value: AutoColors,
+): Record<string, unknown> {
+  const current =
+    kanbanCardFields && typeof kanbanCardFields === "object"
+      ? (kanbanCardFields as Record<string, unknown>)
+      : {};
+  const all =
+    current["autoColors"] && typeof current["autoColors"] === "object"
+      ? (current["autoColors"] as Record<string, unknown>)
+      : {};
+  return { ...current, autoColors: { ...all, [funnel]: value } };
+}
+
+/** Which automatic colour the card gets now, if any. */
+export function autoCardState(
+  lead: Pick<ColorableLead, "nextFollowUpIso" | "stageIsWon" | "stageIsLost">,
+  on: AutoColors,
+  now: Date = new Date(),
+): AutoState | null {
+  if (lead.stageIsWon) return on.won ? "won" : null;
+  if (lead.stageIsLost) return on.lost ? "lost" : null;
+  if (!lead.nextFollowUpIso) return null;
+  const due = new Date(lead.nextFollowUpIso);
+  if (Number.isNaN(due.getTime())) return null;
+  if (due.getTime() < now.getTime()) return on.overdue ? "overdue" : null;
+  if (due.toDateString() === now.toDateString()) return on.today ? "today" : null;
+  return null;
+}
+
+/** The painted card (.lead-auto-* in styles.css set the card's own colours). */
+export const AUTO_CARD: Record<AutoState, string> = {
+  today: "lead-auto-today",
+  overdue: "lead-auto-overdue",
+  won: "lead-auto-won",
+  lost: "lead-auto-lost",
+};

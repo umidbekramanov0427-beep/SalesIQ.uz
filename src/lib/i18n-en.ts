@@ -8057,6 +8057,17 @@ export const en: Record<string, string> = {
   "fs.tab.colors": "Lead colors",
   "lcolor.desc":
     "Paint lead cards on the board when they match a rule. The first matching rule sets the colour.",
+  "lcolor.auto.title": "Automatic colours",
+  "lcolor.auto.desc":
+    "The card's ground changes by itself with the lead: a task due today, an overdue task, won or lost. A lead whose task is on a later day keeps its own colour. When one of your own colour rules below matches, it wins.",
+  "lcolor.auto.today": "Task due today",
+  "lcolor.auto.todayHint": "Dark green: a task is due today",
+  "lcolor.auto.overdue": "Task overdue",
+  "lcolor.auto.overdueHint": "Red: the task's time has passed",
+  "lcolor.auto.won": "Won",
+  "lcolor.auto.wonHint": "Light green: the lead ended in a sale",
+  "lcolor.auto.lost": "Lost",
+  "lcolor.auto.lostHint": "Light grey: the lead was lost",
   "lcolor.saveFailed": "Couldn't save the colors",
   "lcolor.empty": "No color rules yet",
   "lcolor.emptyHint":

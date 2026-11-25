@@ -21,7 +21,14 @@ import { sortLikeBoard } from "@/lib/lead-distribution";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, stageColorProps } from "@/lib/utils";
-import { LEAD_COLOR_CARD, leadColor, parseLeadColorRules } from "@/lib/lead-colors";
+import {
+  AUTO_CARD,
+  LEAD_COLOR_CARD,
+  autoCardState,
+  leadColor,
+  parseAutoColors,
+  parseLeadColorRules,
+} from "@/lib/lead-colors";
 import { missingRequired } from "@/lib/required-fields";
 import { requiredLabel } from "@/components/lead/lead-card-layout";
 import {
@@ -113,6 +120,11 @@ export function PipelineBoard({
   const colorRules = useMemo(
     () => parseLeadColorRules(orgSettings?.kanban_card_fields),
     [orgSettings],
+  );
+  // ... and the automatic ones (a task due today, overdue, won, lost).
+  const autoColors = useMemo(
+    () => parseAutoColors(orgSettings?.kanban_card_fields, funnel),
+    [orgSettings, funnel],
   );
   const now = Date.now();
   const cardCtx = useMemo(
@@ -456,6 +468,7 @@ export function PipelineBoard({
                   {canCreateDeals && !selecting && <StageQuickAdd stageId={s.id} funnel={funnel} />}
                   {items.map((l) => {
                     const color = colorRules.length ? leadColor(l, colorRules, funnel, now) : null;
+                    const auto = color ? null : autoCardState(l, autoColors, new Date(now));
                     return (
                       <article
                         key={l.id}
@@ -484,6 +497,7 @@ export function PipelineBoard({
                           selection?.ids.has(l.id) &&
                             "border-primary/60 bg-primary/[0.05] ring-1 ring-primary/30",
                           color && LEAD_COLOR_CARD[color],
+                          auto && AUTO_CARD[auto],
                           liveIds?.has(l.id) &&
                             "border-emerald-500/70 ring-2 ring-emerald-500/25 dark:border-emerald-400/60",
                         )}
