@@ -919,7 +919,91 @@ export function ActionEditor({
               {t("tk.none")}
             </button>
           </div>
-          {action.ownerIds.length > 1 && (
+          {/* How the person is chosen (5CRM): in turn, or by how well they work. */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {(["turn", "score"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={(action.mode ?? "turn") === m}
+                onClick={() => onChange({ ...action, mode: m })}
+                className={`rounded-lg border px-2.5 py-2 text-left text-[12.5px] transition-colors ${
+                  (action.mode ?? "turn") === m
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-foreground/85 hover:border-primary/40"
+                }`}
+              >
+                <span className="block font-semibold">{t(`tk.dist.mode.${m}`)}</span>
+                <span className="block text-[11.5px] text-muted-foreground">
+                  {t(`tk.dist.mode.${m}Hint`)}
+                </span>
+              </button>
+            ))}
+          </div>
+          {action.mode === "score" && (
+            <div className="space-y-1 rounded-lg border border-border p-2">
+              <p className="text-[12px] font-semibold text-muted-foreground">
+                {t("tk.dist.scoreTitle")}
+              </p>
+              {(["conv", "speed", "tasks", "active"] as const).map((k) => {
+                const w = action.scoreWeights ?? { conv: 30, speed: 25, tasks: 25, active: 20 };
+                return (
+                  <div key={k} className="flex items-center justify-between gap-2 text-[13px]">
+                    <span className="min-w-0 truncate">{t(`tk.dist.score.${k}`)}</span>
+                    <span className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={w[k]}
+                        onChange={(e) =>
+                          onChange({
+                            ...action,
+                            scoreWeights: {
+                              ...w,
+                              [k]: Math.min(100, Math.max(0, Number(e.target.value) || 0)),
+                            },
+                          })
+                        }
+                        className={`${inputCls} h-8 w-20`}
+                      />
+                      %
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <Lbl text={t("tk.dist.maxUnworked")} />
+              <input
+                type="number"
+                min={0}
+                value={action.maxUnworked ?? 0}
+                onChange={(e) =>
+                  onChange({ ...action, maxUnworked: Math.max(0, Number(e.target.value) || 0) })
+                }
+                className={inputCls}
+              />
+            </label>
+            {(action.maxUnworked ?? 0) > 0 && (
+              <label className="block">
+                <Lbl text={t("tk.dist.unworkedBy")} />
+                <select
+                  value={action.unworkedBy ?? "contact"}
+                  onChange={(e) =>
+                    onChange({ ...action, unworkedBy: e.target.value as "contact" | "stage" })
+                  }
+                  className={inputCls}
+                >
+                  <option value="contact">{t("tk.dist.unworked.contact")}</option>
+                  <option value="stage">{t("tk.dist.unworked.stage")}</option>
+                </select>
+              </label>
+            )}
+          </div>
+          {action.ownerIds.length > 1 && (action.mode ?? "turn") === "turn" && (
             <div className="space-y-1 rounded-lg border border-border p-2">
               <p className="text-[12px] font-semibold text-muted-foreground">
                 {t("tk.dist.weights")}

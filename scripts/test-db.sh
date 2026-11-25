@@ -123,6 +123,8 @@ MIGRATIONS=(
   20270206000000_profile_5crm # twice
   20270207000000_warehouse
   20270207000000_warehouse # twice
+  20270209000000_distribute_score
+  20270209000000_distribute_score # twice
 )
 
 cleanup() { :; }

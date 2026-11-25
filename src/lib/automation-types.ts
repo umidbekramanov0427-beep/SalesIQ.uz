@@ -133,6 +133,14 @@ export type AutomationAction =
       reassignMinutes?: number;
       /** Told when the second person also does nothing. */
       controller?: "rop_or_owner" | "rop" | "none";
+      /** «Navbat bilan» (fewest open leads) or «Samaradorlik bo'yicha» (best score). */
+      mode?: "turn" | "score";
+      /** Score shares, % (default 30/25/25/20). */
+      scoreWeights?: { conv: number; speed: number; tasks: number; active: number };
+      /** Nobody with this many unworked leads gets another (0 = no limit). */
+      maxUnworked?: number;
+      /** Unworked = not contacted yet, or still in the stage it was given in. */
+      unworkedBy?: "contact" | "stage";
     }
   /** Internal (outbox only): the «N daqiqada ishlanmasa» check of a distribute. */
   | {
