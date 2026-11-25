@@ -310,7 +310,11 @@ export function useUpdateNotificationPreferences() {
 // Called after a task is created with a real assignee — checks the
 // assignee's preference (defaulting to on) before writing the notification,
 // so the toggle in Settings actually controls something.
-export async function notifyTaskAssigned(assigneeId: string, taskTitle: string): Promise<void> {
+export async function notifyTaskAssigned(
+  assigneeId: string,
+  taskTitle: string,
+  link = "/funnels?view=tasks",
+): Promise<void> {
   const { data: prefs } = await supabase
     .from("notification_preferences")
     .select("task_assigned")
@@ -322,7 +326,7 @@ export async function notifyTaskAssigned(assigneeId: string, taskTitle: string):
     type: "task_assigned",
     title: taskTitle,
     body: "Sizga yangi vazifa biriktirildi.",
-    link: "/funnels?view=tasks",
+    link,
   });
 
   // The in-app bell above is done at this point (client insert, RLS-backed,
@@ -337,7 +341,7 @@ export async function notifyTaskAssigned(assigneeId: string, taskTitle: string):
         assigneeId,
         title: taskTitle,
         body: "Sizga yangi vazifa biriktirildi.",
-        link: "/funnels?view=tasks",
+        link,
       }),
     });
   } catch {

@@ -9032,6 +9032,7 @@ export type Database = {
           due_notified_at: string | null;
           priority: Database["public"]["Enums"]["priority_level"];
           progress: number;
+          recurrence: string | null;
           status: Database["public"]["Enums"]["task_status"];
           title: string;
           updated_at: string;
@@ -9051,6 +9052,7 @@ export type Database = {
           due_notified_at?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
           progress?: number;
+          recurrence?: string | null;
           status?: Database["public"]["Enums"]["task_status"];
           title: string;
           updated_at?: string;
@@ -9070,6 +9072,7 @@ export type Database = {
           due_notified_at?: string | null;
           priority?: Database["public"]["Enums"]["priority_level"];
           progress?: number;
+          recurrence?: string | null;
           status?: Database["public"]["Enums"]["task_status"];
           title?: string;
           updated_at?: string;

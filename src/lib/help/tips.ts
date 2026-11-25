@@ -8,6 +8,54 @@ import type { L } from "./articles";
 export type Tip = { what: L; calc?: L; act?: L };
 
 export const TIPS: Record<string, Tip> = {
+  "stask.total": {
+    what: {
+      uz: "Jami vazifa — sotuvga bog'liq bo'lmagan xodim vazifalari soni.",
+      ru: "Всего задач — число задач сотрудников, не связанных с продажами.",
+      en: "Total tasks \u2014 the number of staff tasks not tied to a sale.",
+    },
+    calc: {
+      uz: "Rejada, jarayonda va bajarilganlar birga; filtr (xodim, muhimlik) hisobga olinadi.",
+      ru: "В плане, в работе и выполненные вместе; с учётом фильтра (сотрудник, важность).",
+      en: "Planned, in progress and done together, within the filter (person, priority).",
+    },
+  },
+  "stask.done": {
+    what: {
+      uz: "Bajarilgan — tugatilgan vazifalar ulushi.",
+      ru: "Выполнено — доля завершённых задач.",
+      en: "Done \u2014 the share of finished tasks.",
+    },
+    calc: {
+      uz: "Bajarilganlar / jami; chiziq foizni ko'rsatadi.",
+      ru: "Выполненные / всего; полоса показывает процент.",
+      en: "Done / total; the bar shows the percentage.",
+    },
+  },
+  "stask.doing": {
+    what: {
+      uz: "Jarayonda — xodim boshlagan, hali tugatmagan vazifalar.",
+      ru: "В работе — начатые, но не завершённые задачи.",
+      en: "In progress \u2014 started but not finished.",
+    },
+    calc: {
+      uz: "«Jarayonda» ustunidagi kartalar soni.",
+      ru: "Число карточек в колонке «В работе».",
+      en: "Cards in the \u00abIn progress\u00bb column.",
+    },
+  },
+  "stask.overdue": {
+    what: {
+      uz: "Muddati o'tgan — muddati kelib, bajarilmagan vazifalar.",
+      ru: "Просрочено — задачи, срок которых прошёл, а они не выполнены.",
+      en: "Overdue \u2014 past the deadline and not done.",
+    },
+    calc: {
+      uz: "Muddat hozirgi vaqtdan oldin va holati «Bajarildi» emas.",
+      ru: "Срок раньше текущего времени и статус не «Выполнено».",
+      en: "Deadline before now and not marked done.",
+    },
+  },
   "nav:/": {
     what: {
       uz: "Bosh sahifa — kompaniyaning bugungi holati: lidlar, sotuvlar, vazifalar, qo'ng'iroqlar va jamoa intizomi bir joyda.",

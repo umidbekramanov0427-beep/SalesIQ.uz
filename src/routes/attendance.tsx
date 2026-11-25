@@ -1,4 +1,5 @@
 import { RemindersBoard } from "@/components/reminders/RemindersBoard";
+import { StaffTasksBoard } from "@/components/control/StaffTasksBoard";
 import { CollapsibleTable } from "@/components/layout/CollapsibleTable";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
@@ -11,6 +12,7 @@ import {
   Clock,
   Coins,
   Gauge,
+  ListTodo,
   Loader2,
   Megaphone,
   Plus,
@@ -60,7 +62,7 @@ import {
   type NormativeRow,
 } from "@/hooks/use-crm-data";
 
-const TAB_KEYS = ["normativ", "jarimalar", "kpi", "reja", "eslatmalar"] as const;
+const TAB_KEYS = ["vazifalar", "normativ", "jarimalar", "kpi", "reja", "eslatmalar"] as const;
 
 export const Route = createFileRoute("/attendance")({
   validateSearch: (
@@ -988,6 +990,7 @@ function KpiSection() {
 type AttTab = (typeof TAB_KEYS)[number];
 
 const ATT_TABS: { key: AttTab; icon: typeof Gauge; labelKey: string }[] = [
+  { key: "vazifalar", icon: ListTodo, labelKey: "stask.tab" },
   { key: "normativ", icon: Target, labelKey: "attendance.tabNormativ" },
   { key: "jarimalar", icon: Coins, labelKey: "attendance.tabJarimalar" },
   { key: "kpi", icon: Award, labelKey: "attendance.tabKpi" },
@@ -1000,15 +1003,15 @@ function AttendanceAndNormativesPage() {
   const { user } = useAuth();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const tab: AttTab = search.tab ?? "normativ";
+  const tab: AttTab = search.tab ?? "vazifalar";
   const canManage =
     user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
   // Normativ, Jarimalar, KPI and Reja va fakt each have «Sozlash» (heads only).
-  const hasSettings = tab !== "eslatmalar";
+  const hasSettings = tab !== "eslatmalar" && tab !== "vazifalar";
   const pane: PaneMode =
     canManage && hasSettings && search.pane === "settings" ? "settings" : "view";
   const setTab = (next: AttTab) =>
-    void navigate({ search: { tab: next === "normativ" ? undefined : next }, replace: true });
+    void navigate({ search: { tab: next === "vazifalar" ? undefined : next }, replace: true });
   const setPane = (next: PaneMode) =>
     void navigate({
       search: (s) => ({ ...s, pane: next === "settings" ? "settings" : undefined }),
@@ -1031,6 +1034,7 @@ function AttendanceAndNormativesPage() {
       />
       {hasSettings && <PaneSwitch mode={pane} onChange={setPane} canManage={canManage} />}
 
+      {tab === "vazifalar" && <StaffTasksBoard />}
       {tab === "normativ" && (pane === "settings" ? <NormativSettings /> : <NormativesSection />)}
       {tab === "jarimalar" && (pane === "settings" ? <FinesSettings /> : <JarimalarSection />)}
       {tab === "kpi" && (pane === "settings" ? <KpiSettings /> : <KpiSection />)}
