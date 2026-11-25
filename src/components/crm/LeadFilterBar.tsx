@@ -433,7 +433,10 @@ export function FunnelSearchFilter({
   stages,
   fieldDefs,
   meId,
+  extra,
 }: {
+  /** Module groups (the Ombor filter): presets, properties, their count and reset. */
+  extra?: { presets: ReactNode; properties: ReactNode; count: number; reset: () => void } | undefined;
   value: LeadFilterState;
   onChange: (v: LeadFilterState) => void;
   date: DateFilterValue;
@@ -449,7 +452,7 @@ export function FunnelSearchFilter({
   const [open, setOpen] = useState(false);
   const [tagQuery, setTagQuery] = useState("");
   const dateOn = !!(date.from || date.to);
-  const count = activeFilterCount(value, dateOn);
+  const count = activeFilterCount(value, dateOn) + (extra?.count ?? 0);
   const set = (patch: Partial<LeadFilterState>) => onChange({ ...value, ...patch });
 
   const tagCounts = useMemo(() => {
@@ -523,6 +526,7 @@ export function FunnelSearchFilter({
   function reset() {
     onChange({ ...EMPTY_LEAD_FILTERS, funnel: value.funnel, search: value.search });
     onDateChange({ from: null, to: null, label: t("lb.presetAll") });
+    extra?.reset();
   }
 
   return (
@@ -623,10 +627,12 @@ export function FunnelSearchFilter({
                 </div>
               </>
             )}
+            {extra?.presets}
           </div>
 
           {/* Lead properties */}
           <div className="p-4 md:overflow-y-auto">
+            {extra?.properties}
             <ColumnTitle>{t("funnelFilter.properties")}</ColumnTitle>
             <div className="space-y-2">
               <input

@@ -1,5 +1,19 @@
 import { useFunnelSkin } from "@/lib/funnel-skin";
 import { WarehouseOrdersScope } from "@/components/warehouse/LeadOrderChip";
+import {
+  WarehousePresets,
+  WarehouseProperties,
+  useWarehouseLeadFacts,
+} from "@/components/warehouse/WarehouseFilter";
+import { useHasModule } from "@/hooks/crm/warehouse";
+import {
+  EMPTY_WH_FILTER,
+  encodeWhFilter,
+  parseWhFilter,
+  whFilterCount,
+  whLeadMatches,
+  type WhFilter,
+} from "@/lib/warehouse";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CardBoard } from "@/components/dashboard/HomeBoard";
 import { CardTools, useCardChrome } from "@/components/layout/CardTools";
@@ -142,6 +156,7 @@ export const Route = createFileRoute("/funnels")({
     ct?: string | undefined;
     cr?: string | undefined;
     dm?: string | undefined;
+    wh?: string | undefined;
     pmin?: string | undefined;
     pmax?: string | undefined;
     dbmin?: string | undefined;
@@ -173,6 +188,7 @@ export const Route = createFileRoute("/funnels")({
     ct: typeof search["ct"] === "string" ? search["ct"] : undefined,
     cr: typeof search["cr"] === "string" ? search["cr"] : undefined,
     dm: typeof search["dm"] === "string" ? search["dm"] : undefined,
+    wh: typeof search["wh"] === "string" ? search["wh"] : undefined,
     pmin: textParam(search["pmin"]),
     pmax: textParam(search["pmax"]),
     dbmin: textParam(search["dbmin"]),
@@ -812,10 +828,24 @@ function FunnelDetail({
     const ownerIds = new Set(dateScopedLeads.map((l) => l.ownerId).filter(Boolean));
     return (profiles ?? []).filter((p) => ownerIds.has(p.id));
   }, [dateScopedLeads, profiles]);
-  const shownLeads = useMemo(
-    () => filterLeads(dateScopedLeads, { ...filters, funnel: null }, user?.id ?? null),
-    [dateScopedLeads, filters, user?.id],
-  );
+  // Ombor: a warehouse funnel's own filter group (presets + order fields).
+  const hasWarehouse = useHasModule("warehouse");
+  const isWhFunnel =
+    hasWarehouse &&
+    boardPipelines.some((p) => p.name === name && (p as { kind?: string }).kind === "warehouse");
+  const whFilter = useMemo(() => parseWhFilter(search.wh), [search.wh]);
+  const whFacts = useWarehouseLeadFacts(isWhFunnel);
+  const setWhFilter = (f: WhFilter) =>
+    void navigate({
+      to: "/funnels",
+      search: (prev) => ({ ...prev, wh: encodeWhFilter(f) || undefined }),
+      replace: true,
+    });
+  const shownLeads = useMemo(() => {
+    const list = filterLeads(dateScopedLeads, { ...filters, funnel: null }, user?.id ?? null);
+    if (!isWhFunnel || !whFacts || !whFilterCount(whFilter)) return list;
+    return list.filter((l) => whLeadMatches(l.id, whFilter, whFacts));
+  }, [dateScopedLeads, filters, user?.id, isWhFunnel, whFacts, whFilter]);
 
   // The 3 "late funnel" stages the user defined: prepayment ("Predoplata"/
   // "Peredoplata"), half payment ("Yarim to'lov"), and full payment/won
@@ -1013,6 +1043,7 @@ function FunnelDetail({
         pmax: num(next.paid.max),
         dbmin: num(next.debt.min),
         dbmax: num(next.debt.max),
+        wh: prev.wh,
         view,
         from: prev.from,
         to: prev.to,
@@ -1198,6 +1229,18 @@ function FunnelDetail({
               stages={funnelStages}
               fieldDefs={fieldDefs}
               meId={user?.id ?? null}
+              extra={
+                isWhFunnel
+                  ? {
+                      presets: (
+                        <WarehousePresets value={whFilter} onChange={setWhFilter} facts={whFacts} />
+                      ),
+                      properties: <WarehouseProperties value={whFilter} onChange={setWhFilter} />,
+                      count: whFilterCount(whFilter),
+                      reset: () => setWhFilter(EMPTY_WH_FILTER),
+                    }
+                  : undefined
+              }
             />
             <SaveFiltersButton
               changed={funnelSaved.changed}

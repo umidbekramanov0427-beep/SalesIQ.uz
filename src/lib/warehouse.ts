@@ -155,3 +155,117 @@ export const WAREHOUSE_STAGES: {
     isLost: true,
   },
 ];
+
+// The funnel filter's "Ombor" group (warehouse funnels only): three ready
+// presets and the order fields. Kept in the URL as one `wh` value,
+// "p=due;s=new,shipped;pr=<id>,<id>;min=100;max=" (empty parts dropped).
+export type WhPreset = "" | "due" | "dormant" | "noOrder";
+export type WhFilter = {
+  preset: WhPreset;
+  /** Status of the client's latest order. */
+  statuses: string[];
+  /** Bought any of these products. */
+  productIds: string[];
+  /** All delivered orders together, from-to. */
+  spentMin: number | null;
+  spentMax: number | null;
+};
+export const EMPTY_WH_FILTER: WhFilter = {
+  preset: "",
+  statuses: [],
+  productIds: [],
+  spentMin: null,
+  spentMax: null,
+};
+
+export function parseWhFilter(raw: string | undefined | null): WhFilter {
+  const out: WhFilter = { ...EMPTY_WH_FILTER, statuses: [], productIds: [] };
+  for (const part of (raw ?? "").split(";")) {
+    const i = part.indexOf("=");
+    if (i <= 0) continue;
+    const k = part.slice(0, i);
+    const v = decodeURIComponent(part.slice(i + 1));
+    const num = v.trim() === "" || Number.isNaN(Number(v)) ? null : Number(v);
+    if (k === "p" && (v === "due" || v === "dormant" || v === "noOrder")) out.preset = v;
+    else if (k === "s") out.statuses = v.split(",").filter(Boolean);
+    else if (k === "pr") out.productIds = v.split(",").filter(Boolean);
+    else if (k === "min") out.spentMin = num;
+    else if (k === "max") out.spentMax = num;
+  }
+  return out;
+}
+
+export function encodeWhFilter(f: WhFilter): string {
+  const parts: string[] = [];
+  if (f.preset) parts.push(`p=${f.preset}`);
+  if (f.statuses.length) parts.push(`s=${encodeURIComponent(f.statuses.join(","))}`);
+  if (f.productIds.length) parts.push(`pr=${encodeURIComponent(f.productIds.join(","))}`);
+  if (f.spentMin != null) parts.push(`min=${f.spentMin}`);
+  if (f.spentMax != null) parts.push(`max=${f.spentMax}`);
+  return parts.join(";");
+}
+
+export function whFilterCount(f: WhFilter): number {
+  return (
+    (f.preset ? 1 : 0) +
+    (f.statuses.length ? 1 : 0) +
+    (f.productIds.length ? 1 : 0) +
+    (f.spentMin != null || f.spentMax != null ? 1 : 0)
+  );
+}
+
+/** What the filter needs to know about each client, built once from the orders. */
+export type WhLeadFacts = {
+  lastStatus: Map<string, string>;
+  spent: Map<string, number>;
+  products: Map<string, Set<string>>;
+  due: Set<string>;
+  dormant: Set<string>;
+};
+
+export function whLeadFacts(
+  orders: (RepeatOrder & { leadId: string | null })[],
+  now: Date = new Date(),
+): WhLeadFacts {
+  const lastStatus = new Map<string, string>();
+  const lastAt = new Map<string, number>();
+  const spent = new Map<string, number>();
+  const products = new Map<string, Set<string>>();
+  for (const o of orders) {
+    if (!o.leadId) continue;
+    const at = Date.parse(o.createdAt);
+    if (!lastAt.has(o.leadId) || at > lastAt.get(o.leadId)!) {
+      lastAt.set(o.leadId, at);
+      lastStatus.set(o.leadId, o.status);
+    }
+    if (o.status === "delivered") spent.set(o.leadId, (spent.get(o.leadId) ?? 0) + (o.total || 0));
+    if (o.status !== "cancelled") {
+      const set = products.get(o.leadId) ?? new Set<string>();
+      for (const p of o.productIds) set.add(p);
+      products.set(o.leadId, set);
+    }
+  }
+  const list = repeatCandidates(orders, now);
+  return {
+    lastStatus,
+    spent,
+    products,
+    due: new Set(dueSoon(list).map((c) => c.leadId)),
+    dormant: new Set(dormant(list).map((c) => c.leadId)),
+  };
+}
+
+export function whLeadMatches(leadId: string, f: WhFilter, facts: WhLeadFacts): boolean {
+  if (f.preset === "due" && !facts.due.has(leadId)) return false;
+  if (f.preset === "dormant" && !facts.dormant.has(leadId)) return false;
+  if (f.preset === "noOrder" && facts.lastStatus.has(leadId)) return false;
+  if (f.statuses.length && !f.statuses.includes(facts.lastStatus.get(leadId) ?? "")) return false;
+  if (f.productIds.length) {
+    const bought = facts.products.get(leadId);
+    if (!bought || !f.productIds.some((p) => bought.has(p))) return false;
+  }
+  const s = facts.spent.get(leadId) ?? 0;
+  if (f.spentMin != null && s < f.spentMin) return false;
+  if (f.spentMax != null && s > f.spentMax) return false;
+  return true;
+}
