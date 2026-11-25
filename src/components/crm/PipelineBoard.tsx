@@ -13,6 +13,7 @@ import { Check, CircleCheck, CircleX, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAuth } from "@/lib/auth";
+import { hintLevelOf, stageHintFor } from "@/lib/stage-hints";
 import { toastLeadsTrashed } from "@/lib/leads-trash";
 import { KanbanLeadCard } from "@/components/crm/KanbanLeadCard";
 import { StageQuickAdd } from "@/components/crm/StageQuickAdd";
@@ -152,6 +153,9 @@ export function PipelineBoard({
   // The bar's «O'chirish» zone: super admins only, as in the lead card (the
   // lead goes to the trash, with undo).
   const { user } = useAuth();
+  const hintLevel = user
+    ? hintLevelOf({ role: user.role, isIntern: user.isIntern, joinedAt: user.joinedAt })
+    : "master";
   const qc = useQueryClient();
   const canDeleteLead = user?.role === "super_admin" || user?.role === "platform_owner";
   const deleteLead = useDeleteLeadForever();
@@ -355,13 +359,14 @@ export function PipelineBoard({
                   className={cn("mt-2 block h-[2px] rounded-full", line.className)}
                   style={line.style}
                 />
-                {/* The stage's hint for the manager (Voronka sozlamalari). */}
-                {s.hint && (
+                {/* The stage's hint for this person's experience level
+                    (Voronka sozlamalari, stage-hints.ts). */}
+                {stageHintFor(s, hintLevel) && (
                   <p
-                    title={s.hint}
+                    title={stageHintFor(s, hintLevel)}
                     className="mt-1.5 line-clamp-2 rounded-md bg-amber-500/[0.08] px-2 py-1 text-left text-[11.5px] leading-snug text-amber-800 dark:text-amber-200"
                   >
-                    {s.hint}
+                    {stageHintFor(s, hintLevel)}
                   </p>
                 )}
               </header>

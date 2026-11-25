@@ -534,6 +534,42 @@ export const en: Record<string, string> = {
   "fn.d.notify_task_reminder.who": "The task's owner",
   "funnels.day.forecast": "Sales forecast",
   "pipeline.miniMap": "Stage map",
+  "fs.hints.title": "Hints for the «{name}» stage",
+  "fs.hints.levels": "{n} levels",
+  "fs.hints.novice": "Beginner",
+  "fs.hints.noviceDesc": "Add an extra description of the stage for new staff",
+  "fs.hints.experienced": "Experienced",
+  "fs.hints.experiencedDesc":
+    "Add an extra description of the stage for staff with some experience",
+  "fs.hints.master": "Master",
+  "fs.hints.masterDesc": "Add an extra description of the stage for everyone else",
+  "fs.hints.ph": "Description",
+  "fs.hints.useDefault": "Use the standard text",
+  "fs.hint.unsorted.novice":
+    "A new lead. Call or message within 5 minutes: introduce yourself and ask how they found you. After the talk, move the lead to «First contact» and set the next task.",
+  "fs.hint.unsorted.experienced":
+    "Speed matters — reach out within 5 minutes. Find out the source and interest; close an unsuitable lead with a reason.",
+  "fs.hint.unsorted.master": "Contact within 5 minutes, source, next step.",
+  "fs.hint.firstContact.novice":
+    "Learn the client's need: what interested them, what result they expect, when they want to start. Write the answers in a note. After every talk, set a task for the next call.",
+  "fs.hint.firstContact.experienced":
+    "Find out the need, budget and timing and write them down. Briefly explain the right offer and agree on the next step.",
+  "fs.hint.firstContact.master": "Need, budget, timing — find out and agree on the next step.",
+  "fs.hint.negotiation.novice":
+    "Offer the right plan or product and give the price together with its benefit. Write down objections; if the client says «too expensive» or «I'll think», ask your head of sales. Agree on an exact time for the next call.",
+  "fs.hint.negotiation.experienced":
+    "Tie the offer to the client's need and handle objections. Find out who makes the decision.",
+  "fs.hint.negotiation.master": "Offer, objections, decision maker.",
+  "fs.hint.decision.novice":
+    "The client is thinking: call back within 1–2 days and answer their questions. Don't push, but ask for a date: «When can you give an answer?»",
+  "fs.hint.decision.experienced":
+    "Find the remaining doubts, mention a limited offer or bonus, agree on a decision date.",
+  "fs.hint.decision.master": "Close the doubts, fix the decision date.",
+  "fs.hint.contract.novice":
+    "The client agreed. Send the payment link or bank details and check that the payment came through. Once it has, move the lead to «Closed — won».",
+  "fs.hint.contract.experienced":
+    "Send the payment link, agree on a payment date, remind if it is late.",
+  "fs.hint.contract.master": "Watch the payment and close the deal.",
   "amo.stageMenu": "Stage settings",
   "amo.anyColor": "Any colour",
   "amo.hiddenNow": "hidden now",

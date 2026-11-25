@@ -36,6 +36,8 @@ export type SessionUser = {
   // Amaliyotchi (probation) mode -- see 20261016000000_intern_mentor.sql.
   // Read defensively: before that migration runs the columns are absent.
   isIntern: boolean;
+  // When the person's profile was made: their stage hints' level (stage-hints.ts).
+  joinedAt: string | null;
   internshipStartDate: string | null;
   internshipDays: number;
   internGroupLinked: boolean;
@@ -143,6 +145,7 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     telegramLinked: profile.telegram_chat_id != null,
     phoneVerified: profile.phone_verified_at != null,
     isIntern: profile.is_intern === true,
+    joinedAt: profile.created_at ?? null,
     internshipStartDate: profile.internship_start_date ?? null,
     internshipDays: profile.internship_days ?? 14,
     internGroupLinked: profile.intern_group_chat_id != null,

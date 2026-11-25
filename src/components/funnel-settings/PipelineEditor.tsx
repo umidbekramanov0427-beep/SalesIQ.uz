@@ -76,7 +76,16 @@ import type { AutomationAction, AutomationActionType } from "@/lib/automation-ty
 import { asDedupeMode, type DedupeMode } from "@/lib/leads/funnel-dedupe";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { defaultStageRows, missingDefaultStages } from "@/lib/funnel-defaults";
+import { createStageRows, defaultStageRows, missingDefaultStages } from "@/lib/funnel-defaults";
+import {
+  HINT_COLUMN,
+  HINT_LEVELS,
+  defaultHints,
+  guessDefaultStage,
+  hintOfLevel,
+  stageHintFor,
+  type HintLevel,
+} from "@/lib/stage-hints";
 import { STAGE_SWATCHES, nextStageColor } from "@/lib/stage-colors";
 import { stageValueOf, stageValueOverrides, type StageValue } from "@/lib/stage-value";
 import { cn, describeError } from "@/lib/utils";
@@ -634,13 +643,15 @@ function StageGrid({
     setSeeding(true);
     try {
       const from = stages.reduce((m, s) => Math.max(m, s.position + 1), 0);
-      for (const row of defaultStageRows(missing, t, {
-        organization_id: user.organizationId,
-        pipeline_id: pipeline.id,
-        pipeline_name: pipeline.name,
-        from,
-      }))
-        await create.mutateAsync(row);
+      await createStageRows(
+        defaultStageRows(missing, t, {
+          organization_id: user.organizationId,
+          pipeline_id: pipeline.id,
+          pipeline_name: pipeline.name,
+          from,
+        }),
+        (row) => create.mutateAsync(row),
+      );
       toast.success(t("fs.defaultsAdded"));
     } catch (e) {
       fail(t)(e);
@@ -1174,55 +1185,121 @@ function RuleBadges({ stage, pipeline }: { stage: StageRow; pipeline: PipelineRo
   );
 }
 
+// 5CRM's «bosqich uchun maslahatlar»: one text per experience level
+// (stage-hints.ts decides who sees which), edited in one window.
 function HintRow({ stage, canManage }: { stage: StageRow; canManage: boolean }) {
   const { t } = useI18n();
   const update = useUpdateStage();
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState(stage.hint ?? "");
-  useEffect(() => setText(stage.hint ?? ""), [stage.hint]);
+  const stored = (l: HintLevel) => hintOfLevel(stage, l);
+  const [text, setText] = useState<Record<HintLevel, string>>(() => ({
+    novice: stored("novice"),
+    experienced: stored("experienced"),
+    master: stored("master"),
+  }));
+  const reset = () =>
+    setText({
+      novice: stored("novice"),
+      experienced: stored("experienced"),
+      master: stored("master"),
+    });
+  const filled = HINT_LEVELS.filter((l) => stored(l)).length;
+  const shown = stageHintFor(stage, "master");
+  const defKey = guessDefaultStage(stage, t);
+  const defs = defKey ? defaultHints(defKey, t) : null;
+
   function save() {
-    const v = text.trim();
-    if (v !== (stage.hint ?? ""))
-      update.mutate({ id: stage.id, patch: { hint: v || null } }, { onError: fail(t) });
+    const patch: Record<string, string | null> = {};
+    for (const l of HINT_LEVELS) {
+      const v = text[l].trim();
+      if (v !== stored(l)) patch[HINT_COLUMN[l]] = v || null;
+    }
+    if (Object.keys(patch).length)
+      update.mutate(
+        { id: stage.id, patch: patch as never },
+        { onSuccess: () => toast.success(t("fs.saved")), onError: fail(t) },
+      );
     setOpen(false);
   }
+
   return (
-    <Popover open={open} onOpenChange={(v) => (v ? setOpen(true) : save())}>
-      <PopoverTrigger asChild disabled={!canManage}>
-        <button
-          type="button"
-          className="flex min-h-[42px] w-full items-center justify-center border-b border-[var(--amo-divider)] px-4 py-2 text-center transition-colors enabled:hover:bg-accent/30"
-        >
-          {stage.hint ? (
-            <span className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">
-              💡 {stage.hint}
-            </span>
-          ) : (
-            <span className="text-[13px] text-muted-foreground underline decoration-dotted underline-offset-[3px]">
-              {canManage ? t("amo.addHint") : " "}
-            </span>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="amo-skin w-72 rounded-[6px] p-3">
-        <p className="mb-1.5 text-[12px] font-semibold text-foreground">{t("fs.addHint")}</p>
-        <textarea
-          autoFocus
-          rows={4}
-          value={text}
-          onChange={(e) => setText(e.target.value.slice(0, 500))}
-          placeholder={t("fs.hintPh")}
-          className="w-full resize-none rounded-[4px] border border-border bg-background px-2.5 py-2 text-[12.5px] leading-snug text-foreground outline-none focus:border-primary"
-        />
-        <button
-          type="button"
-          onClick={save}
-          className="mt-2 h-8 w-full rounded-[4px] bg-primary text-[12.5px] font-semibold text-primary-foreground"
-        >
-          {t("amo.saveHint")}
-        </button>
-      </PopoverContent>
-    </Popover>
+    <>
+      <button
+        type="button"
+        disabled={!canManage}
+        onClick={() => {
+          reset();
+          setOpen(true);
+        }}
+        className="flex min-h-[42px] w-full items-center justify-center border-b border-[var(--amo-divider)] px-4 py-2 text-center transition-colors enabled:hover:bg-accent/30"
+      >
+        {shown ? (
+          <span className="line-clamp-2 text-[12px] leading-snug text-muted-foreground">
+            💡 {shown}
+            {filled > 1 && (
+              <span className="ml-1 text-[11px] text-primary">
+                · {t("fs.hints.levels", { n: filled })}
+              </span>
+            )}
+          </span>
+        ) : (
+          <span className="text-[13px] text-muted-foreground underline decoration-dotted underline-offset-[3px]">
+            {canManage ? t("amo.addHint") : " "}
+          </span>
+        )}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="amo-skin max-w-[720px] gap-0 rounded-[6px] p-0 [&>button:last-child]:hidden">
+          <div className="flex items-center gap-3 px-8 pb-2 pt-7">
+            <DialogTitle className="min-w-0 flex-1 text-[21px] font-normal text-foreground">
+              {t("fs.hints.title", { name: stage.name })}
+            </DialogTitle>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="px-2 text-[14px] font-semibold text-muted-foreground hover:text-foreground"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              className="h-10 rounded-[5px] border border-border px-4 text-[14px] font-semibold text-foreground hover:bg-accent/40"
+            >
+              {t("common.save")}
+            </button>
+          </div>
+          <div className="space-y-6 px-8 pb-8 pt-2">
+            {HINT_LEVELS.map((l) => (
+              <label key={l} className="block">
+                <span className="block text-[15px] font-semibold text-foreground">
+                  {t(`fs.hints.${l}`)}
+                </span>
+                <span className="mt-0.5 block text-[13.5px] text-muted-foreground">
+                  {t(`fs.hints.${l}Desc`)}
+                </span>
+                <textarea
+                  rows={3}
+                  value={text[l]}
+                  onChange={(e) => setText((p) => ({ ...p, [l]: e.target.value.slice(0, 1000) }))}
+                  placeholder={t("fs.hints.ph")}
+                  className="mt-3 w-full resize-y rounded-[5px] border border-border bg-transparent px-4 py-3 text-[14px] leading-snug text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
+                />
+              </label>
+            ))}
+            {defs && (
+              <button
+                type="button"
+                onClick={() => setText(defs)}
+                className="text-[13px] font-semibold text-primary underline decoration-primary/40 underline-offset-[3px]"
+              >
+                {t("fs.hints.useDefault")}
+              </button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

@@ -539,6 +539,43 @@ const uz: Record<string, string> = {
   "fn.d.notify_task_reminder.who": "Vazifa mas'uliga",
   "funnels.day.forecast": "Sotuv prognozi",
   "pipeline.miniMap": "Etaplar xaritasi",
+  "fs.hints.title": "«{name}» bosqichi uchun maslahatlar",
+  "fs.hints.levels": "{n} daraja",
+  "fs.hints.novice": "Yangi boshlovchi",
+  "fs.hints.noviceDesc": "Yangi xodimlar uchun bosqichning qo'shimcha tavsifini qo'shing",
+  "fs.hints.experienced": "Tajribali xodim",
+  "fs.hints.experiencedDesc":
+    "Biroz tajribasi bor xodimlar uchun bosqichning qo'shimcha tavsifini qo'shing",
+  "fs.hints.master": "Usta",
+  "fs.hints.masterDesc": "Qolgan barcha xodimlar uchun bosqichning qo'shimcha tavsifini qo'shing",
+  "fs.hints.ph": "Tavsif",
+  "fs.hints.useDefault": "Standart matnni qo'yish",
+  "fs.hint.unsorted.novice":
+    "Yangi lid. 5 daqiqa ichida qo'ng'iroq qiling yoki yozing: o'zingizni tanishtiring va qayerdan murojaat qilganini so'rang. Gaplashgach, lidni «Birinchi aloqa»ga o'tkazing va keyingi vazifani qo'ying.",
+  "fs.hint.unsorted.experienced":
+    "Tezlik muhim — 5 daqiqada bog'laning. Manba va qiziqishni aniqlang, keraksiz lidni sababi bilan yoping.",
+  "fs.hint.unsorted.master": "5 daqiqada aloqa, manbani aniqlash, keyingi qadamni belgilash.",
+  "fs.hint.firstContact.novice":
+    "Mijozning ehtiyojini bilib oling: nimaga qiziqdi, qanday natija kutadi, qachon boshlamoqchi. Javoblarni izohga yozing. Har suhbatdan keyin keyingi qo'ng'iroq vazifasini qo'ying.",
+  "fs.hint.firstContact.experienced":
+    "Ehtiyoj, byudjet va muddatni aniqlab, izohga yozing. Mos taklifni qisqa tushuntiring va keyingi qadamni kelishing.",
+  "fs.hint.firstContact.master":
+    "Ehtiyoj, byudjet, muddat — aniqlang va keyingi qadamni kelishing.",
+  "fs.hint.negotiation.novice":
+    "Mijozga mos ta'rif yoki mahsulotni taklif qiling, narxni foydasi bilan birga ayting. E'tirozlarni yozib oling; «qimmat» yoki «o'ylab ko'raman» desa, ROP bilan maslahatlashing. Keyingi qo'ng'iroq vaqtini aniq kelishing.",
+  "fs.hint.negotiation.experienced":
+    "Taklifni mijoz ehtiyojiga bog'lang, e'tirozlarni ishlang. Qarorni kim qabul qilishini bilib oling.",
+  "fs.hint.negotiation.master": "Taklif, e'tirozlar, qaror qabul qiluvchi.",
+  "fs.hint.decision.novice":
+    "Mijoz o'ylayapti: 1–2 kun ichida qayta qo'ng'iroq qiling va savollariga javob bering. Bosim qilmang, lekin aniq muddat so'rang: «Qachon javob bera olasiz?»",
+  "fs.hint.decision.experienced":
+    "Qolgan shubhalarni aniqlang, cheklangan taklif yoki bonusni eslating, qaror muddatini kelishing.",
+  "fs.hint.decision.master": "Shubhalarni yoping, qaror muddatini belgilang.",
+  "fs.hint.contract.novice":
+    "Mijoz rozi bo'ldi. To'lov havolasi yoki rekvizitlarni yuboring va to'lov qilinganini tekshiring. To'lov kelsa, lidni «Muvaffaqiyatli sotuv»ga o'tkazing.",
+  "fs.hint.contract.experienced":
+    "To'lov havolasini yuboring, to'lov muddatini kelishing, kechiksa eslatib turing.",
+  "fs.hint.contract.master": "To'lovni nazorat qiling va bitimni yoping.",
   "amo.stageMenu": "Etap sozlamasi",
   "amo.anyColor": "Istalgan rang",
   "amo.hiddenNow": "hozir yashirin",

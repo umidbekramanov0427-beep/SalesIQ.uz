@@ -1,3 +1,5 @@
+import { defaultHints } from "@/lib/stage-hints";
+
 // The stages a new funnel opens with, as in amoCRM / 5CRM: an "unsorted"
 // first stage, the working stages, then the two closing stages -- a won sale
 // and closed-not-sold. The closing stages are system stages: the board shows
@@ -96,17 +98,44 @@ export function defaultStageRows(
   t: (key: string) => string,
   at: { organization_id: string; pipeline_id: string; pipeline_name: string; from: number },
 ) {
-  return defs.map((d, i) => ({
-    name: t(d.nameKey),
-    key: `custom-${crypto.randomUUID()}`,
-    organization_id: at.organization_id,
-    pipeline_id: at.pipeline_id,
-    pipeline_name: at.pipeline_name,
-    color: d.color,
-    probability: d.probability,
-    position: at.from + i,
-    is_won: d.is_won,
-    is_lost: d.is_lost,
-    stage_value: d.stage_value,
-  }));
+  return defs.map((d, i) => {
+    const hints = d.is_won || d.is_lost ? null : defaultHints(d.nameKey.split(".").pop() ?? "", t);
+    return {
+      name: t(d.nameKey),
+      key: `custom-${crypto.randomUUID()}`,
+      organization_id: at.organization_id,
+      pipeline_id: at.pipeline_id,
+      pipeline_name: at.pipeline_name,
+      color: d.color,
+      probability: d.probability,
+      position: at.from + i,
+      is_won: d.is_won,
+      is_lost: d.is_lost,
+      stage_value: d.stage_value,
+      // The stage's ready-made hints for new / experienced / other staff.
+      ...(hints
+        ? { hint: hints.master, hint_novice: hints.novice, hint_experienced: hints.experienced }
+        : {}),
+    };
+  });
+}
+
+/**
+ * Inserts stage rows one by one; before 20270201 (no hint_novice /
+ * hint_experienced columns yet) a row is retried without those two.
+ */
+export async function createStageRows<R extends Record<string, unknown>>(
+  rows: R[],
+  create: (row: R) => Promise<unknown>,
+): Promise<void> {
+  for (const row of rows) {
+    try {
+      await create(row);
+    } catch (err) {
+      const msg = String((err as { message?: unknown })?.message ?? err);
+      if (!/hint_(novice|experienced)/.test(msg)) throw err;
+      const { hint_novice: _n, hint_experienced: _e, ...rest } = row;
+      await create(rest as R);
+    }
+  }
 }

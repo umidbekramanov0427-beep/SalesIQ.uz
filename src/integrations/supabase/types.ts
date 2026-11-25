@@ -7612,6 +7612,8 @@ export type Database = {
           stage_value: string | null;
           lead_quality: string | null;
           hint: string | null;
+          hint_experienced: string | null;
+          hint_novice: string | null;
           hidden: boolean;
         };
         Insert: {
@@ -7636,6 +7638,8 @@ export type Database = {
           stage_value?: string | null;
           lead_quality?: string | null;
           hint?: string | null;
+          hint_experienced?: string | null;
+          hint_novice?: string | null;
           hidden?: boolean;
         };
         Update: {
@@ -7660,6 +7664,8 @@ export type Database = {
           stage_value?: string | null;
           lead_quality?: string | null;
           hint?: string | null;
+          hint_experienced?: string | null;
+          hint_novice?: string | null;
           hidden?: boolean;
         };
         Relationships: [

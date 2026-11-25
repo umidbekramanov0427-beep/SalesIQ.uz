@@ -51,7 +51,7 @@ import {
   type AutomationRuleRow,
 } from "@/hooks/use-crm-data";
 import { useAuth } from "@/lib/auth";
-import { DEFAULT_FUNNEL_STAGES, defaultStageRows } from "@/lib/funnel-defaults";
+import { DEFAULT_FUNNEL_STAGES, defaultStageRows, createStageRows } from "@/lib/funnel-defaults";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 
@@ -151,13 +151,15 @@ function FunnelSettingsPage() {
       });
       // Like amoCRM: a new funnel opens with its stages ready, the won and
       // lost ones included.
-      for (const row of defaultStageRows(DEFAULT_FUNNEL_STAGES, t, {
-        organization_id: user.organizationId,
-        pipeline_id: created.id,
-        pipeline_name: name,
-        from: 0,
-      }))
-        await createStage.mutateAsync(row);
+      await createStageRows(
+        defaultStageRows(DEFAULT_FUNNEL_STAGES, t, {
+          organization_id: user.organizationId,
+          pipeline_id: created.id,
+          pipeline_name: name,
+          from: 0,
+        }),
+        (row) => createStage.mutateAsync(row),
+      );
       setNewFunnelOpen(false);
       setNewFunnelName("");
       go(name, "stages");

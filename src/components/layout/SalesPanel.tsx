@@ -35,7 +35,7 @@ import {
   usePipelines,
   useUpdatePipeline,
 } from "@/hooks/use-crm-data";
-import { DEFAULT_FUNNEL_STAGES, defaultStageRows } from "@/lib/funnel-defaults";
+import { DEFAULT_FUNNEL_STAGES, defaultStageRows, createStageRows } from "@/lib/funnel-defaults";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError } from "@/lib/utils";
 
@@ -97,13 +97,15 @@ export function SalesPanel({
         organization_id: user.organizationId,
         position: sorted.length,
       });
-      for (const row of defaultStageRows(DEFAULT_FUNNEL_STAGES, t, {
-        organization_id: user.organizationId,
-        pipeline_id: created.id,
-        pipeline_name: name,
-        from: 0,
-      }))
-        await createStage.mutateAsync(row);
+      await createStageRows(
+        defaultStageRows(DEFAULT_FUNNEL_STAGES, t, {
+          organization_id: user.organizationId,
+          pipeline_id: created.id,
+          pipeline_name: name,
+          from: 0,
+        }),
+        (row) => createStage.mutateAsync(row),
+      );
       setAdding(false);
       setNewName("");
       toast.success(t("fs.funnelCreated"));
@@ -141,6 +143,8 @@ export function SalesPanel({
           is_won: s.is_won,
           is_lost: s.is_lost,
           hint: s.hint,
+          hint_novice: s.hint_novice,
+          hint_experienced: s.hint_experienced,
           stage_value: s.stage_value,
           lead_quality: s.lead_quality,
         });
