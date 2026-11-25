@@ -50,7 +50,7 @@ export type AutomationAction =
   | { type: "move_stage"; stageId: string }
   | { type: "close_won" }
   | { type: "close_lost"; reason?: string }
-  | { type: "set_field"; field: string; value: string }
+  | { type: "set_field"; field: string; value: string; onlyEmpty?: boolean }
   | {
       type: "send_message";
       channel: MessageChannel;
@@ -60,8 +60,50 @@ export type AutomationAction =
       files?: MessageFile[];
       /** Telegram buttons under the message; each can answer and tag. */
       buttons?: MessageButton[];
+      /** «Har lidga faqat bir marta»: never twice to the same lead by this rule. */
+      once?: boolean;
+      /** «Media havolasi»: a picture / video / audio link sent with the text. */
+      mediaUrl?: string;
     }
   | { type: "webhook"; url: string }
+  /** «Telegram xabar»: to a staff member's or a group's chat (by chat id). */
+  | { type: "tg_chat_message"; chatId: string; text: string }
+  /** «API'ga yuborish»: the lead's fields to another system, with a key. */
+  | {
+      type: "api_post";
+      url: string;
+      auth: "bearer" | "x-api-key" | "none";
+      key?: string;
+      format: "fields" | "flat";
+      fields: { name: string; label: string; source: string }[];
+    }
+  /** «Sotuv tabrigi»: a personal congratulation on the seller's / head's screen. */
+  | {
+      type: "sale_congrats";
+      to: "owner" | "rop" | "both";
+      lang: "uz" | "ru" | "en";
+      text: string;
+      seconds: number;
+    }
+  /** «Avto yozishma»: reads the chat after a wait and moves the lead. */
+  | {
+      type: "auto_chat";
+      priceStageId: string;
+      mediaStageId: string;
+      waitMinutes: number;
+      keywords: string[];
+    }
+  /** «Karta»: a picture, a text and up to 3 buttons in one message. */
+  | { type: "send_card"; title: string; description?: string; image?: string; buttons: string[] }
+  /** «Lid egaligi»: to the admin, a head of sales, one person or in turn. */
+  | {
+      type: "lead_owner";
+      mode: "admin" | "rop" | "specific" | "roundrobin";
+      ownerId?: string;
+      onlyUnowned?: boolean;
+    }
+  /** «Sifat nazorati»: a tag when the closing reason is one of these. */
+  | { type: "quality_check"; reasons: string[]; tag: string }
   | { type: "start_salesbot"; botId: string }
   | { type: "dedupe"; mode: "merge" | "tag" }
   /** The actions after this one run `minutes` later (queued in the outbox). */
@@ -73,11 +115,11 @@ export type AutomationAction =
   /** «Lid egaligi»: to the owner of the same client's latest other lead. */
   | { type: "previous_owner" }
   /** A lead without a phone takes the number the client wrote in the chat. */
-  | { type: "detect_phone" }
+  | { type: "detect_phone"; stageId?: string }
   /** Moves the lead to another funnel's first open stage. */
-  | { type: "move_funnel"; funnel: string }
+  | { type: "move_funnel"; funnel: string; stageId?: string }
   /** In turn: whoever of these people has the fewest open leads gets it. */
-  | { type: "distribute"; ownerIds: string[] }
+  | { type: "distribute"; ownerIds: string[]; onlyUnowned?: boolean }
   /** Internal: what was left after a delay (only ever in the outbox). */
   | { type: "run_actions"; actions: AutomationAction[] }
   // Salesbot-only: writes a (templated) value such as {{reply}} into the
@@ -131,6 +173,13 @@ export const ACTION_TYPES: AutomationActionType[] = [
   "add_note",
   "dedupe",
   "webhook",
+  "tg_chat_message",
+  "api_post",
+  "sale_congrats",
+  "auto_chat",
+  "send_card",
+  "lead_owner",
+  "quality_check",
 ];
 
 /* ------------------------------ Salesbot ------------------------------ */

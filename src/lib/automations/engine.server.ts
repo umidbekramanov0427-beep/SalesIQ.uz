@@ -34,6 +34,7 @@ import {
   type MessageFile,
 } from "@/lib/automation-types";
 import { phoneKey } from "@/lib/phone-key";
+import { apiPayload, classifyChat } from "@/lib/automations/trigger-kit";
 
 const APP_URL = (process.env["PUBLIC_APP_URL"] ?? "https://salesiq.uz").replace(/\/$/, "");
 
@@ -349,7 +350,20 @@ async function runOutboxAction(item: OutboxRow): Promise<string | null> {
   if (!actor) throw new Error("No user to send as");
 
   if (action.type === "send_message") {
-    const text = renderTemplate(action.text, templateVars(ctx));
+    // «Har lidga faqat bir marta»: this rule has already sent to this lead.
+    if (action.once && item.rule_id) {
+      const { count } = await supabaseAdmin
+        .from("automation_outbox")
+        .select("id", { count: "exact", head: true })
+        .eq("rule_id", item.rule_id)
+        .eq("lead_id", ctx.lead.id)
+        .eq("status", "done")
+        .is("error", null)
+        .neq("id", item.id);
+      if ((count ?? 0) > 0) return "already_sent";
+    }
+    const body = renderTemplate(action.text, templateVars(ctx));
+    const text = action.mediaUrl ? `${body}\n${action.mediaUrl}` : body;
     const res = await sendToLead(
       item.organization_id,
       actor,
@@ -369,6 +383,114 @@ async function runOutboxAction(item: OutboxRow): Promise<string | null> {
       lead: publicLead(ctx),
       sent_at: new Date().toISOString(),
     });
+    return null;
+  }
+  if (action.type === "tg_chat_message") {
+    // «Telegram xabar»: to a staff member's or a group's chat.
+    const chatId = Number(String(action.chatId).trim());
+    if (!Number.isFinite(chatId) || chatId === 0) return "bad_chat_id";
+    await sendTelegramMessage(chatId, renderTemplate(action.text, templateVars(ctx)));
+    return null;
+  }
+  if (action.type === "api_post") {
+    // «API'ga yuborish»: the chosen fields, with the company's key.
+    const lead = { ...publicLead(ctx), ...ctx.lead } as Record<string, unknown>;
+    const res = await fetch(action.url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "user-agent": "SalesIQ-Automation/1.0",
+        ...(action.auth === "bearer" && action.key
+          ? { authorization: `Bearer ${action.key}` }
+          : {}),
+        ...(action.auth === "x-api-key" && action.key ? { "x-api-key": action.key } : {}),
+      },
+      body: JSON.stringify(apiPayload(lead, action.fields ?? [], action.format ?? "fields")),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return null;
+  }
+  if (action.type === "sale_congrats") {
+    // «Sotuv tabrigi»: the congratulation on the seller's and/or head's screen.
+    const ids = new Set<string>();
+    if (action.to !== "rop" && ctx.lead.owner_id) ids.add(ctx.lead.owner_id);
+    if (action.to !== "owner") {
+      const { data: rops } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("organization_id", item.organization_id)
+        .eq("role", "rop");
+      for (const r of rops ?? []) ids.add(r.id);
+    }
+    if (ids.size === 0) return "no_recipient";
+    const { data: stage } = ctx.lead.stage_id
+      ? await supabaseAdmin
+          .from("pipeline_stages")
+          .select("name")
+          .eq("id", ctx.lead.stage_id)
+          .maybeSingle()
+      : { data: null };
+    const text = renderTemplate(action.text, {
+      ...templateVars(ctx),
+      ism: ctx.ownerName ?? "",
+      mijoz: ctx.lead.name,
+      summa: String(ctx.lead.budget ?? ""),
+      bosqich: stage?.name ?? "",
+    })
+      .replace(/\{ism\}/g, ctx.ownerName ?? "")
+      .replace(/\{mijoz\}/g, ctx.lead.name)
+      .replace(/\{summa\}/g, String(ctx.lead.budget ?? ""))
+      .replace(/\{bosqich\}/g, stage?.name ?? "");
+    await supabaseAdmin.from("notifications").insert(
+      [...ids].map((id) => ({
+        organization_id: item.organization_id,
+        user_id: id,
+        type: "SaleCelebrate",
+        title: ctx.ownerName ?? "",
+        body: text,
+        link: `/crm/leads/${ctx.lead.id}`,
+      })),
+    );
+    return null;
+  }
+  if (action.type === "auto_chat") {
+    // «Avto yozishma»: read what the client wrote and move the lead.
+    const { data: msgs } = await supabaseAdmin
+      .from("lead_telegram_messages")
+      .select("text, file_kind")
+      .eq("lead_id", ctx.lead.id)
+      .eq("direction", "in")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    const verdict = classifyChat(
+      (msgs ?? []).map((m) => ({ text: m.text, media: !!m.file_kind })),
+      action.keywords ?? [],
+    );
+    const stageId =
+      verdict === "price" ? action.priceStageId : verdict === "media" ? action.mediaStageId : "";
+    if (!stageId) return verdict ? "no_stage" : "nothing_found";
+    const { error } = await supabaseAdmin.rpc("apply_automation_actions", {
+      p_actions: [{ type: "move_stage", stageId }] as never,
+      p_lead_id: ctx.lead.id,
+      p_organization_id: item.organization_id,
+    });
+    if (error) throw new Error(error.message);
+    return null;
+  }
+  if (action.type === "send_card") {
+    // «Karta»: picture, text and the buttons in one message to the client.
+    const text = [action.title, action.description, action.image].filter(Boolean).join("\n");
+    const res = await sendToLead(
+      item.organization_id,
+      actor,
+      ctx.lead.id,
+      "auto",
+      renderTemplate(text, templateVars(ctx)),
+      undefined,
+      { buttons: (action.buttons ?? []).slice(0, 3) },
+    );
+    if (!res.ok) throw new Error(res.reason ?? `send failed (${res.channel})`);
     return null;
   }
   if (action.type === "start_salesbot") {

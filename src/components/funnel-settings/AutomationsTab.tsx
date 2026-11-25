@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bot, History, Loader2, Pencil, Plus, ShieldAlert, Trash2, Zap } from "lucide-react";
+import { Bot, History, Loader2, Pencil, Plus, ShieldAlert, Trash2, X, Zap } from "lucide-react";
+import {
+  CONDITION_OPS,
+  conditionsToRule,
+  ruleToConditions,
+  type TriggerCondition,
+} from "@/lib/automations/trigger-kit";
 import { toast } from "sonner";
 import { PageHeader, SectionCard } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -23,6 +29,7 @@ import {
   type ActionEditorOptions,
 } from "@/components/automations/ActionEditor";
 import { useI18n } from "@/lib/i18n";
+import { LOSS_REASON_KEYS } from "@/components/crm/RequiredTaskDialog";
 import { useAuth } from "@/lib/auth";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import {
@@ -37,6 +44,7 @@ import {
   useDeleteAutomationRule,
   useLeadCustomFieldDefs,
   useCrmStages,
+  usePipelines,
   useProfilesRaw,
   type AutomationRuleRow,
 } from "@/hooks/use-crm-data";
@@ -53,16 +61,20 @@ import {
 // Rules execute in the database (see 20261017000000_digital_pipeline_salesbots.sql)
 // so they work for leads from any source.
 
+// «Barcha lidlar uchun, qaysiki:» -- the guide's list, then company fields.
 const CONDITION_FIELDS = [
+  "budget",
+  "paid_amount",
+  "owner_id",
+  "tags",
+  "source",
+  "funnel",
+  "region",
+  "city",
   "temperature",
   "priority",
-  "source",
-  "budget",
-  "city",
-  "region",
   "company_name",
 ] as const;
-const CONDITION_OPERATORS = ["eq", "neq", "contains", "gt", "lt"] as const;
 const GENERAL = "__general__";
 const DEFAULT_FUNNEL = "Direct Sales";
 
@@ -210,8 +222,13 @@ function RuleCard({
       </div>
       {rule.condition_field && (
         <p className="text-xs text-muted-foreground">
-          {t("dp.ifShort")}: {t(`dp.cond.${rule.condition_field}`)}{" "}
-          {t(`dp.op.${rule.condition_operator ?? "eq"}`)} «{rule.condition_value}»
+          {t("dp.ifShort")}:{" "}
+          {ruleToConditions(rule)
+            .map(
+              (c) =>
+                `${c.field.startsWith("custom:") ? c.field.slice(7) : t(`dp.cond.${c.field}`)} ${t(`dp.op.${c.operator}`)} «${c.value}»`,
+            )
+            .join(" · ")}
         </p>
       )}
       <ul className="space-y-1">
@@ -316,8 +333,10 @@ export function RuleDialog({
   const save = useSaveAutomationRule();
   const applyExisting = useApplyRuleToStage();
   const [toExisting, setToExisting] = useState(false);
-  const allowed = column
-    ? STAGE_TRIGGERS
+  // 5CRM's «Bajarish:» in a stage column: on entering the stage (default)
+  // or when the lead's owner changes there; our other stage events follow.
+  const allowed: AutomationTriggerType[] = column
+    ? ["stage_enter", "owner_changed", ...STAGE_TRIGGERS.filter((tt) => tt !== "stage_enter")]
     : TRIGGER_TYPES.filter((tt) => !STAGE_TRIGGERS.includes(tt));
   const [draft, setDraft] = useState<RuleDraft | null>(null);
   const [actions, setActions] = useState<AutomationAction[]>([]);
@@ -353,6 +372,8 @@ export function RuleDialog({
   if (!draft) return null;
   const set = (patch: Partial<RuleDraft>) => setDraft({ ...draft, ...patch });
   const type = draft.trigger_type as AutomationTriggerType;
+  const conds = ruleToConditions(draft);
+  const setConds = (list: TriggerCondition[]) => set(conditionsToRule(list));
   const valid =
     actions.length > 0 &&
     actions.every(actionIsComplete) &&
@@ -374,8 +395,13 @@ export function RuleDialog({
           ...(type === "daily"
             ? { trigger_time: draft.trigger_time ?? "09:00" }
             : { trigger_time: undefined }),
-          condition_value: draft.condition_field ? draft.condition_value : null,
-          condition_operator: draft.condition_field ? (draft.condition_operator ?? "eq") : null,
+          // Rows left without a value are dropped.
+          ...conditionsToRule(ruleToConditions(draft).filter((c) => c.value.trim() !== "")),
+          // «Lidda mas'ul almashganda» in a stage column is that stage's.
+          trigger_stage_id:
+            column && (STAGE_TRIGGERS.includes(type) || type === "owner_changed")
+              ? column.id
+              : draft.trigger_stage_id,
           actions,
         },
       });
@@ -402,17 +428,112 @@ export function RuleDialog({
 
         <div className="space-y-5">
           <section className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wide text-subtle">{t("dp.when")}</p>
+            <p className="text-[13px] font-semibold text-foreground">{t("tk.forAll")}</p>
+            {conds.map((c, i) => (
+              <div key={i} className="grid grid-cols-[1.2fr_1fr_1.2fr_auto] gap-1.5">
+                <select
+                  value={c.field}
+                  onChange={(e) =>
+                    setConds(
+                      conds.map((x, j) =>
+                        j === i ? { ...x, field: e.target.value, value: "" } : x,
+                      ),
+                    )
+                  }
+                  className={inputCls}
+                >
+                  {CONDITION_FIELDS.map((f) => (
+                    <option key={f} value={f}>
+                      {t(`dp.cond.${f}`)}
+                    </option>
+                  ))}
+                  {options.customFields.map((cf) => (
+                    <option key={cf.key} value={`custom:${cf.key}`}>
+                      {cf.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={c.operator}
+                  onChange={(e) =>
+                    setConds(
+                      conds.map((x, j) => (j === i ? { ...x, operator: e.target.value } : x)),
+                    )
+                  }
+                  className={inputCls}
+                >
+                  {CONDITION_OPS.map((o) => (
+                    <option key={o} value={o}>
+                      {t(`dp.op.${o}`)}
+                    </option>
+                  ))}
+                </select>
+                {c.field === "owner_id" ? (
+                  <select
+                    value={c.value}
+                    onChange={(e) =>
+                      setConds(conds.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
+                    }
+                    className={inputCls}
+                  >
+                    <option value="">{t("dp.chooseEmployee")}</option>
+                    {options.profiles.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.full_name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={c.value}
+                    type={["budget", "paid_amount"].includes(c.field) ? "number" : "text"}
+                    onChange={(e) =>
+                      setConds(conds.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))
+                    }
+                    placeholder={t("dp.value")}
+                    className={inputCls}
+                  />
+                )}
+                <button
+                  type="button"
+                  aria-label={t("dp.remove")}
+                  onClick={() => setConds(conds.filter((_, j) => j !== i))}
+                  className="grid h-10 w-8 place-items-center rounded-md text-subtle hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setConds([...conds, { field: "budget", operator: "eq", value: "" }])}
+              className="inline-flex items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
+            >
+              <Plus className="h-3.5 w-3.5" /> {t("tk.addCond")}
+            </button>
+          </section>
+
+          <section className="space-y-2">
+            <p className="text-[13px] font-semibold text-foreground">{t("tk.run")}</p>
             <select
               value={type}
               onChange={(e) => set({ trigger_type: e.target.value })}
               className={inputCls}
             >
-              {allowed.map((tt) => (
+              {allowed.slice(0, column ? 2 : allowed.length).map((tt) => (
                 <option key={tt} value={tt}>
                   {t(`dp.trigger.${tt}`)}
                 </option>
               ))}
+              {column && (
+                <optgroup label={t("tk.otherEvents")}>
+                  {allowed.slice(2).map((tt) => (
+                    <option key={tt} value={tt}>
+                      {t(`dp.trigger.${tt}`)}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
             {type === "stage_stuck" && (
               <div>
@@ -463,56 +584,15 @@ export function RuleDialog({
             )}
           </section>
 
-          <section className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-subtle">
-                {t("dp.delay")}
-              </p>
-              <DurationInput
-                minutes={draft.delay_minutes}
-                onChange={(m) => set({ delay_minutes: m })}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">{t("dp.delayHint")}</p>
-            </div>
-            <div>
-              <p className="mb-1 text-xs font-bold uppercase tracking-wide text-subtle">
-                {t("dp.condition")}
-              </p>
-              <div className="grid grid-cols-3 gap-1.5">
-                <select
-                  value={draft.condition_field ?? ""}
-                  onChange={(e) => set({ condition_field: e.target.value || null })}
-                  className={inputCls}
-                >
-                  <option value="">{t("dp.noCondition")}</option>
-                  {CONDITION_FIELDS.map((f) => (
-                    <option key={f} value={f}>
-                      {t(`dp.cond.${f}`)}
-                    </option>
-                  ))}
-                </select>
-                {draft.condition_field && (
-                  <>
-                    <select
-                      value={draft.condition_operator ?? "eq"}
-                      onChange={(e) => set({ condition_operator: e.target.value })}
-                      className={inputCls}
-                    >
-                      {CONDITION_OPERATORS.map((o) => (
-                        <option key={o} value={o}>
-                          {t(`dp.op.${o}`)}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      value={draft.condition_value ?? ""}
-                      onChange={(e) => set({ condition_value: e.target.value })}
-                      className={inputCls}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
+          <section>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-subtle">
+              {t("dp.delay")}
+            </p>
+            <DurationInput
+              minutes={draft.delay_minutes}
+              onChange={(m) => set({ delay_minutes: m })}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">{t("dp.delayHint")}</p>
           </section>
 
           <section className="space-y-2">
@@ -561,12 +641,19 @@ export function RuleDialog({
         <DialogFooter>
           <button
             type="button"
+            onClick={() => onOpenChange(false)}
+            className="inline-flex h-10 items-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+          >
+            {t("tk.cancel")}
+          </button>
+          <button
+            type="button"
             disabled={!valid || save.isPending || applyExisting.isPending}
             onClick={() => void submit()}
             className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("dp.save")}
+            {t("tk.done")}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -582,8 +669,11 @@ export function useRuleEditorOptions(funnel: string): ActionEditorOptions {
   const { data: profiles } = useProfilesRaw();
   const { data: bots } = useSalesbots();
   const { data: customDefs } = useLeadCustomFieldDefs();
+  const { data: pipelines } = usePipelines();
+  const { t } = useI18n();
   return useMemo(() => {
     const all = stages ?? [];
+    const own = (pipelines ?? []).find((p) => p.name === funnel);
     return {
       profiles: (profiles ?? []).map((p) => ({ id: p.id, full_name: p.full_name || p.email })),
       stages: all
@@ -593,8 +683,16 @@ export function useRuleEditorOptions(funnel: string): ActionEditorOptions {
       bots: (bots ?? []).map((b) => ({ id: b.id, name: b.name })),
       customFields: (customDefs ?? []).map((d) => ({ key: d.key, label: d.label })),
       funnels: [...new Set(all.map(funnelOf))].filter((f) => f !== funnel),
+      funnelStages: all
+        .filter((s) => funnelOf(s) !== funnel)
+        .sort((a, b) => a.position - b.position)
+        .map((s) => ({ id: s.id, name: s.name, funnel: funnelOf(s) })),
+      // «Sifat nazorati»: the funnel's own closing reasons, else the defaults.
+      lossReasons: own?.loss_reasons?.length
+        ? own.loss_reasons
+        : LOSS_REASON_KEYS.map((k) => t(`guard.loss.${k}`)),
     };
-  }, [stages, profiles, bots, customDefs, funnel]);
+  }, [stages, profiles, bots, customDefs, pipelines, funnel, t]);
 }
 
 function DigitalPipelinePage({ funnel: funnelParam }: { funnel: string }) {
@@ -635,6 +733,7 @@ function DigitalPipelinePage({ funnel: funnelParam }: { funnel: string }) {
   const generalRules = (rules ?? []).filter(
     (r) =>
       !STAGE_TRIGGERS.includes(r.trigger_type as AutomationTriggerType) &&
+      !(r.trigger_type === "owner_changed" && r.trigger_stage_id) &&
       (r.funnel === null || r.funnel === funnel),
   );
   const rulesForStage = (id: string) =>
