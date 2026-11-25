@@ -3,6 +3,7 @@ import {
   dormant,
   dueSoon,
   encodeWhFilter,
+  parseProductTable,
   parseWhFilter,
   repeatCandidates,
   stockState,
@@ -108,5 +109,34 @@ describe("warehouse funnel filter", () => {
     expect(m("B", { productIds: ["x"] })).toBe(true);
     expect(m("A", { spentMin: 400 })).toBe(true);
     expect(m("B", { spentMin: 400 })).toBe(false);
+  });
+});
+
+describe("parseProductTable", () => {
+  it("reads a pasted Excel table with a header", () => {
+    const rows = parseProductTable(
+      "Nomi\tSKU\tNarx\tTannarx\tQoldiq\nDaftar 48\tD48\t42 000\t30000\t120\n\t\t\t\t\nRuchka\t\t5000\t\t",
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      name: "Daftar 48",
+      sku: "D48",
+      price: 42000,
+      cost: 30000,
+      qty: 120,
+      unit: "dona",
+    });
+    expect(rows[1]).toMatchObject({ name: "Ruchka", sku: null, price: 5000, qty: 0 });
+  });
+
+  it("reads a CSV without a header in the fixed order", () => {
+    const rows = parseProductTable("\"Qog'oz, A4\";A4;Qog'oz;quti;265000;210000;20;7");
+    expect(rows[0]).toMatchObject({
+      name: "Qog'oz, A4",
+      sku: "A4",
+      unit: "quti",
+      minStock: 20,
+      qty: 7,
+    });
   });
 });

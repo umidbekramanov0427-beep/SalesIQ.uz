@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import type { ImportedProduct } from "@/lib/warehouse";
 
 type T = Database["public"]["Tables"];
 export type ProductRow = T["products"]["Row"];
@@ -171,6 +172,77 @@ async function ensureWarehouse(orgId: string): Promise<string> {
     .single();
   if (error) throw error;
   return made.id;
+}
+
+/**
+ * Mahsulotlarni yuklash: each row updates the product with the same SKU (or
+ * name) or adds a new one; a quantity on hand comes in as one kirim.
+ */
+export function useImportProducts() {
+  const { user } = useAuth();
+  const done = useInvalidateWarehouse();
+  return useMutation({
+    mutationFn: async (input: {
+      rows: ImportedProduct[];
+      existing: ProductRow[];
+    }): Promise<{ added: number; updated: number }> => {
+      const org = user!.organizationId!;
+      const key = (sku: string | null, name: string) =>
+        sku ? `s:${sku.toLowerCase()}` : `n:${name.trim().toLowerCase()}`;
+      const known = new Map<string, ProductRow>();
+      for (const p of input.existing) {
+        if (p.sku) known.set(key(p.sku, p.name), p);
+        known.set(key(null, p.name), p);
+      }
+      let added = 0;
+      let updated = 0;
+      const stockIn: { productId: string; qty: number; unitCost: number | null }[] = [];
+      for (const r of input.rows) {
+        const hit = known.get(key(r.sku, r.name)) ?? known.get(key(null, r.name));
+        const row = {
+          organization_id: org,
+          name: r.name,
+          sku: r.sku,
+          category: r.category,
+          unit: r.unit,
+          price: r.price,
+          cost: r.cost,
+          min_stock: r.minStock,
+          updated_at: new Date().toISOString(),
+        };
+        let id = hit?.id;
+        if (hit) {
+          const { error } = await supabase.from("products").update(row).eq("id", hit.id);
+          if (error) throw error;
+          updated++;
+        } else {
+          const { data, error } = await supabase.from("products").insert(row).select("id").single();
+          if (error) throw error;
+          id = data.id;
+          added++;
+        }
+        if (id && r.qty > 0) stockIn.push({ productId: id, qty: r.qty, unitCost: r.cost || null });
+      }
+      if (stockIn.length) {
+        const wh = await ensureWarehouse(org);
+        const { error } = await supabase.from("stock_moves").insert(
+          stockIn.map((l) => ({
+            organization_id: org,
+            product_id: l.productId,
+            warehouse_id: wh,
+            kind: "in",
+            qty: Math.abs(l.qty),
+            unit_cost: l.unitCost,
+            note: "Excel",
+            created_by: user!.id,
+          })),
+        );
+        if (error) throw error;
+      }
+      return { added, updated };
+    },
+    onSuccess: done,
+  });
 }
 
 export type MoveLine = { productId: string; qty: number; unitCost?: number | null };

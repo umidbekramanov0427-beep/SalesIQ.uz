@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { runFileHousekeeping } from "@/lib/files-housekeeping.server";
 import { runLeadsTrashPurge } from "@/lib/leads-trash.server";
+import { runWarehouseRepeatReminders } from "@/lib/warehouse-repeat.server";
 import {
   ensureChatMemberUpdates,
   ensureTelegramWebhookSecret,
@@ -99,6 +100,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await runFileHousekeeping().catch((err) => console.error("[files] tick failed", err));
         // Lidlar savati: deleted leads leave for good after 30 days.
         await runLeadsTrashPurge().catch((err) => console.error("[leads-trash] tick failed", err));
+        // Ombor: a call-back task when a client's goods are about to run out.
+        await runWarehouseRepeatReminders().catch((err) =>
+          console.error("[warehouse-repeat] tick failed", err),
+        );
 
         try {
           const result = await sendDailyReportToLinkedManagers();

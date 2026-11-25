@@ -269,3 +269,109 @@ export function whLeadMatches(leadId: string, f: WhFilter, facts: WhLeadFacts): 
   if (f.spentMax != null && s > f.spentMax) return false;
   return true;
 }
+
+// Mahsulotlarni Excel'dan yuklash: a table pasted from Excel (tab-separated)
+// or a CSV file. The header row is recognised in uz/ru/en; without one the
+// columns are read in this order: name, SKU, category, unit, price, cost,
+// minimum, quantity on hand.
+export type ImportedProduct = {
+  name: string;
+  sku: string | null;
+  category: string | null;
+  unit: string;
+  price: number;
+  cost: number;
+  minStock: number;
+  qty: number;
+};
+
+const IMPORT_COLS: [keyof ImportedProduct, RegExp][] = [
+  ["sku", /^(sku|kod|артикул|код|article)/i],
+  ["category", /^(kategor|категор|categor|guruh|группа)/i],
+  ["unit", /^(birlik|unit|ед|o'lchov)/i],
+  ["cost", /^(tannarx|cost|себест|kirim narx|закуп)/i],
+  ["price", /^(narx|price|цена|sotuv narx)/i],
+  ["minStock", /^(min)/i],
+  ["qty", /^(qoldiq|soni|qty|quantity|остат|кол|miqdor)/i],
+  ["name", /^(nomi|nom|name|наимен|название|mahsulot|товар|product)/i],
+];
+
+const toNumber = (v: string | undefined) => {
+  const n = Number((v ?? "").replace(/[\s ]/g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+};
+
+function splitRow(line: string, sep: string): string[] {
+  if (sep === "\t") return line.split("\t").map((c) => c.trim());
+  // CSV with quotes.
+  const out: string[] = [];
+  let cur = "";
+  let q = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]!;
+    if (ch === '"') {
+      if (q && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else q = !q;
+    } else if (ch === sep && !q) {
+      out.push(cur.trim());
+      cur = "";
+    } else cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+export function parseProductTable(text: string): ImportedProduct[] {
+  const lines = text
+    .replace(/\r/g, "")
+    .split("\n")
+    .filter((l) => l.trim());
+  if (!lines.length) return [];
+  const first = lines[0]!;
+  const sep = first.includes("\t")
+    ? "\t"
+    : first.split(";").length > first.split(",").length
+      ? ";"
+      : ",";
+  const head = splitRow(first, sep);
+  const map = new Map<keyof ImportedProduct, number>();
+  head.forEach((h, i) => {
+    const hit = IMPORT_COLS.find(([key, re]) => re.test(h.trim()) && !map.has(key));
+    if (hit) map.set(hit[0], i);
+  });
+  const hasHeader = map.has("name");
+  const order: (keyof ImportedProduct)[] = [
+    "name",
+    "sku",
+    "category",
+    "unit",
+    "price",
+    "cost",
+    "minStock",
+    "qty",
+  ];
+  const col = (k: keyof ImportedProduct) => (hasHeader ? map.get(k) : order.indexOf(k));
+  const out: ImportedProduct[] = [];
+  for (const line of hasHeader ? lines.slice(1) : lines) {
+    const c = splitRow(line, sep);
+    const at = (k: keyof ImportedProduct) => {
+      const i = col(k);
+      return i == null || i < 0 ? undefined : c[i];
+    };
+    const name = (at("name") ?? "").trim();
+    if (!name) continue;
+    out.push({
+      name,
+      sku: at("sku")?.trim() || null,
+      category: at("category")?.trim() || null,
+      unit: at("unit")?.trim() || "dona",
+      price: toNumber(at("price")),
+      cost: toNumber(at("cost")),
+      minStock: toNumber(at("minStock")),
+      qty: toNumber(at("qty")),
+    });
+  }
+  return out;
+}

@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Boxes,
   CalendarClock,
+  FileUp,
   Moon,
   Package,
   PackagePlus,
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard } from "@/components/layout/Primitives";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
+import { ProductImportDialog } from "@/components/warehouse/ProductImportDialog";
 import {
   OrderDialog,
   ProductDialog,
@@ -444,6 +446,7 @@ function ProductsTab({
   onEdit: (p: ProductRow | null) => void;
   onStock: (kind: MoveKind, productId?: string | null) => void;
 }) {
+  const [importing, setImporting] = useState(false);
   const { t } = useI18n();
   const { data: products = [], isLoading } = useProducts();
   const { data: stock } = useProductStock();
@@ -487,9 +490,13 @@ function ProductsTab({
               ))}
             </select>
           )}
+          <Button size="sm" variant="outline" onClick={() => setImporting(true)}>
+            <FileUp className="h-4 w-4" /> {t("wh.import.button")}
+          </Button>
           <Button size="sm" onClick={() => onEdit(null)}>
             <Plus className="h-4 w-4" /> {t("wh.product.new")}
           </Button>
+          {importing && <ProductImportDialog open onOpenChange={setImporting} />}
         </div>
       }
     >
