@@ -137,7 +137,6 @@ export type LeadFacts = {
     isTrial: boolean;
     active: boolean;
     frozen: boolean;
-    crmEnabled: boolean;
   };
   people: { total: number; active7d: number; seatLimit: number | null; lastSeenAt: string | null };
   people_list: {
@@ -225,7 +224,6 @@ export async function loadLeadFacts(orgId: string, openIssues: number): Promise<
     extra_seats?: number | null;
     unlimited_seats?: boolean | null;
     frozen_at?: string | null;
-    crm_enabled?: boolean | null;
   };
   const seatLimit = effectiveSeatLimit(o.plan, o.extra_seats ?? 0, !!o.unlimited_seats);
   const daysLeft = o.trial_ends_at
@@ -243,7 +241,6 @@ export async function loadLeadFacts(orgId: string, openIssues: number): Promise<
       isTrial: !!o.is_trial,
       active: o.active !== false,
       frozen: !!o.frozen_at,
-      crmEnabled: o.crm_enabled !== false,
     },
     people: { total: ppl.length, active7d, seatLimit, lastSeenAt },
     people_list: ppl.map((p) => ({

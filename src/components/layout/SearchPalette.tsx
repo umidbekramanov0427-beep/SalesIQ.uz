@@ -18,7 +18,6 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { NAV_ITEMS, appRoleOf, canOpenPath, navItemsFor } from "@/lib/nav";
 import { useOrgModules } from "@/hooks/crm/warehouse";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { SEARCH_CATALOG, catalogMatches } from "@/lib/search-catalog";
 import { cn } from "@/lib/utils";
 import { TONE_TILE, type CardTone } from "@/lib/tones";
@@ -101,7 +100,6 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const crmEnabled = useCrmEnabled();
   const orgModules = useOrgModules();
   const role = appRoleOf(user);
   const isPlatformOwner = user?.role === "platform_owner";
@@ -141,9 +139,7 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
     const q = query.trim();
     const pages = isPlatformOwner
       ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-      : navItemsFor(role, crmEnabled, orgModules).filter((i) =>
-          canOpenSection(accessRules, role, i.to),
-        );
+      : navItemsFor(role, orgModules).filter((i) => canOpenSection(accessRules, role, i.to));
     const pageResults: Result[] = pages
       .filter((i) => !q || catalogMatches(`${t(`nav.${i.to}`)} ${i.label} ${i.to}`, q))
       .slice(0, 8)
@@ -161,7 +157,7 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
     const settingResults: Result[] = SEARCH_CATALOG.filter(
       (c) =>
         !isPlatformOwner &&
-        canOpenPath(role, c.to, crmEnabled) &&
+        canOpenPath(role, c.to) &&
         canOpenSection(accessRules, role, c.to) &&
         (!c.minRole || mine >= rank[c.minRole]) &&
         catalogMatches(`${t(c.labelKey)} ${c.keywords}`, q),
@@ -194,7 +190,7 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
     const sectionResults: Result[] = isPlatformOwner
       ? []
       : [
-          ...(canOpenPath(role, "/", crmEnabled)
+          ...(canOpenPath(role, "/")
             ? HOME_TAB_KEYS.map((k) => ({
                 key: `sec-home-${k}`,
                 to: "/",
@@ -203,7 +199,7 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
                 parent: pageName("/"),
               }))
             : []),
-          ...(canOpenPath(role, "/phone", crmEnabled)
+          ...(canOpenPath(role, "/phone")
             ? PHONE_SECTION_KEYS.map((k) => ({
                 key: `sec-phone-${k}`,
                 to: "/phone",
@@ -235,20 +231,18 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
         hint: t(cardDescKey(i)),
         go: () => go(i.to, i.search),
       }));
-    const funnelResults: Result[] = crmEnabled
-      ? funnelNames
-          .filter((f) => catalogMatches(f, q))
-          .slice(0, 6)
-          .map((f) => ({
-            key: `f-${f}`,
-            group: "funnels",
-            icon: Workflow,
-            tone: "violet",
-            label: f,
-            hint: pageName("/funnels"),
-            go: () => go("/funnels", { funnel: f }),
-          }))
-      : [];
+    const funnelResults: Result[] = funnelNames
+      .filter((f) => catalogMatches(f, q))
+      .slice(0, 6)
+      .map((f) => ({
+        key: `f-${f}`,
+        group: "funnels",
+        icon: Workflow,
+        tone: "violet",
+        label: f,
+        hint: pageName("/funnels"),
+        go: () => go("/funnels", { funnel: f }),
+      }));
     const peopleResults: Result[] = seesPeople
       ? profiles
           .filter(
@@ -318,7 +312,6 @@ export function useSearchResults(query: string, open: boolean, onClose: () => vo
     profiles,
     articles,
     role,
-    crmEnabled,
     isPlatformOwner,
     t,
     accessRules,

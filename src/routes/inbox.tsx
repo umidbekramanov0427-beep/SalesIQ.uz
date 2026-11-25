@@ -52,7 +52,6 @@ import {
   type InboxFilter,
   type InboxPreset,
 } from "@/lib/inbox-filter";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn, describeError, stageColorProps } from "@/lib/utils";
 
 // Inbox, like amoCRM's imBox: every client chat (Telegram and Instagram)
@@ -126,7 +125,6 @@ function useSavedInboxFilters(userId: string | undefined) {
 function InboxPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const crmEnabled = useCrmEnabled();
   const { lead: openId } = Route.useSearch();
   const navigate = useNavigate();
   const { data: chats = [], isLoading } = useInboxConversations();
@@ -198,7 +196,6 @@ function InboxPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per chat / new message
   }, [open?.leadId, openLastAt]);
 
-  if (!crmEnabled) return null;
   if (isLoading) return <PageLoader />;
 
   const pick = (id: string | undefined) =>

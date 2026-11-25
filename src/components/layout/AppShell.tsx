@@ -25,7 +25,6 @@ import { trail } from "@/lib/session-trail";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useOrgModules } from "@/hooks/crm/warehouse";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn, setDateFormatPref } from "@/lib/utils";
 import { TONE_TEXT } from "@/lib/tones";
 import { TrialBanner } from "@/components/TrialBanner";
@@ -79,7 +78,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
   const isPlatformOwner = user?.role === "platform_owner";
   const role = appRoleOf(user);
-  const crmEnabled = useCrmEnabled();
   const orgModules = useOrgModules();
   // A page outside this role's menu (e.g. an intern typing /dashboard)
   // sends them home instead of rendering it.
@@ -89,8 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Sozlamalar → Huquqlar can close a section for a role, too.
   const { rules: accessRules } = useAccessRules();
   const pageAllowed =
-    isPlatformOwner ||
-    (canOpenPath(role, pathname, crmEnabled) && canOpenSection(accessRules, role, pathname));
+    isPlatformOwner || (canOpenPath(role, pathname) && canOpenSection(accessRules, role, pathname));
   // Exact match first: several /platform/* sub-pages share the "/platform"
   // prefix, so a plain prefix search would always resolve to the bare
   // "Platform" item instead of e.g. "Users" on /platform/users.
@@ -100,7 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const menuItems = isPlatformOwner
     ? NAV_ITEMS.filter((i) => i.platformOwnerOnly)
-    : navItemsFor(role, crmEnabled, orgModules).filter(
+    : navItemsFor(role, orgModules).filter(
         (i) => (!i.adminOnly || isAdmin) && canOpenSection(accessRules, role, i.to),
       );
 
@@ -156,7 +153,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // content behind the browser's own UI instead of leaving it scrollable
     // into view. 100dvh tracks the real visible viewport as that chrome
     // shows/hides, so it doesn't.
-    <PhoneProvider enabled={crmEnabled && !isPlatformOwner}>
+    <PhoneProvider enabled={!isPlatformOwner}>
       <div className="app-canvas flex h-dvh w-full overflow-hidden bg-canvas">
         {isPlatformOwner ? (
           <OwnerSidebar onEditProfile={() => setProfileOpen(true)} />
@@ -329,10 +326,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           onOpenMenu={() => setMobileOpen(true)}
         />
         <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
-        <LiveNotifications enabled={crmEnabled && !isPlatformOwner} />
-        <IncomingCallPopup enabled={crmEnabled && !isPlatformOwner} />
-        {crmEnabled && !isPlatformOwner && <SaleCelebrationHost />}
-        {crmEnabled && !isPlatformOwner && <MorningBoostHost />}
+        <LiveNotifications enabled={!isPlatformOwner} />
+        <IncomingCallPopup enabled={!isPlatformOwner} />
+        {!isPlatformOwner && <SaleCelebrationHost />}
+        {!isPlatformOwner && <MorningBoostHost />}
         {!isPlatformOwner && <AiAssistantFab />}
         {!isPlatformOwner && <WelcomeTour />}
       </div>

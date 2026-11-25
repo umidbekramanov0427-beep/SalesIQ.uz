@@ -31,7 +31,6 @@ import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/lib/auth";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { findCardNumbers } from "@/lib/reply-rules";
@@ -458,7 +457,6 @@ export function Composer({
   const { t } = useI18n();
   const { user } = useAuth();
   const qc = useQueryClient();
-  const crmEnabled = useCrmEnabled();
   const canCreateTasks = usePermission("Create tasks");
   const { data: profiles = [] } = useProfilesRaw();
   const { data: bots = [] } = useSalesbots();
@@ -503,7 +501,7 @@ export function Composer({
     requestAnimationFrame(() => areaRef.current?.focus());
   }, [focusKey]);
 
-  const effectiveMode: ComposeMode = !crmEnabled && mode === "chat" ? "note" : mode;
+  const effectiveMode: ComposeMode = mode;
   const contactName = lead.contactName || lead.name;
   const busy =
     createActivity.isPending ||
@@ -712,7 +710,7 @@ export function Composer({
   }
 
   const modes: ComposeMode[] = [
-    ...(crmEnabled ? (["chat"] as const) : []),
+    "chat" as const,
     "note",
     ...(canCreateTasks ? (["task"] as const) : []),
   ];

@@ -2,8 +2,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { OwnerHeader } from "@/components/owner/OwnerPage";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  BarChart3,
-  Blocks,
   Loader2,
   ShieldAlert,
   Trash2,
@@ -48,7 +46,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn, roleTone, timeAgo } from "@/lib/utils";
@@ -78,7 +75,6 @@ const ORG_SECTIONS = [
   "access",
   "plan",
   "freeze",
-  "modules",
   "users",
   "status",
   "danger",
@@ -474,10 +470,6 @@ function OrgDetailPage() {
     );
   }
 
-  function setCrmEnabled(on: boolean) {
-    return patchOrg({ crm_enabled: on }, on ? t("platform.crmOnToast") : t("platform.crmOffToast"));
-  }
-
   async function applyDeleteUser(profile: OwnerProfileRow) {
     setDeletingUserId(profile.id);
     try {
@@ -536,13 +528,6 @@ function OrgDetailPage() {
           : org.active
             ? t("platform.active")
             : t("platform.inactive"),
-      },
-      {
-        id: "modules",
-        icon: Blocks,
-        tone: "violet",
-        title: t("platform.modulesTitle"),
-        hint: org.crm_enabled ? t("platform.moduleCrmOn") : t("platform.moduleCrmOff"),
       },
       {
         id: "users",
@@ -828,52 +813,6 @@ function OrgDetailPage() {
                 </button>
               </div>
             )}
-          </SectionCard>
-        )}
-
-        {section === "modules" && (
-          <SectionCard
-            icon={Blocks}
-            tone="violet"
-            title={t("platform.modulesTitle")}
-            description={t("platform.modulesDesc")}
-          >
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <BarChart3 className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">
-                    {t("platform.moduleAnalytics")}
-                  </p>
-                  <p className="mt-0.5 text-xs leading-snug text-subtle">
-                    {t("platform.moduleAnalyticsDesc")}
-                  </p>
-                </div>
-                <Pill tone="success">{t("platform.moduleAlwaysOn")}</Pill>
-              </div>
-              <label
-                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
-                  org.crm_enabled ? "border-primary/40 bg-primary/5" : "border-border bg-surface"
-                }`}
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <Blocks className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">{t("platform.moduleCrm")}</p>
-                  <p className="mt-0.5 text-xs leading-snug text-subtle">
-                    {t("platform.moduleCrmDesc")}
-                  </p>
-                </div>
-                <Switch
-                  checked={org.crm_enabled === true}
-                  disabled={busy}
-                  onCheckedChange={(v) => void setCrmEnabled(v)}
-                />
-              </label>
-            </div>
           </SectionCard>
         )}
 

@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CrmGate } from "@/components/CrmGate";
 import { PlanGate } from "@/components/PlanGate";
 import {
   PC_SECTIONS,
@@ -21,7 +20,7 @@ function PhonePage() {
   const { s } = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
-    <CrmGate>
+    <>
       <PlanGate feature="telephony">
         <PhoneCenterPage
           section={s ?? "main"}
@@ -30,6 +29,6 @@ function PhonePage() {
           }
         />
       </PlanGate>
-    </CrmGate>
+    </>
   );
 }

@@ -54,7 +54,6 @@ import {
   type TelephonyFieldKey,
   type TelephonyProvider,
 } from "@/hooks/use-crm-data";
-import { CrmGate } from "@/components/CrmGate";
 import { TelegramRosterPanel } from "@/components/telegram/TelegramRoster";
 import { copyText } from "@/lib/clipboard";
 
@@ -73,11 +72,7 @@ export const Route = createFileRoute("/admin/telephony")({
       },
     ],
   }),
-  component: () => (
-    <CrmGate>
-      <AdminTelephonyPage />
-    </CrmGate>
-  ),
+  component: () => <AdminTelephonyPage />,
 });
 
 const PROVIDER_ICONS: Record<TelephonyProvider, React.ComponentType<{ className?: string }>> = {

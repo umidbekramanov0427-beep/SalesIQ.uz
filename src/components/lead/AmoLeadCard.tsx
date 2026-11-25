@@ -78,7 +78,6 @@ import { isHiddenByLimit } from "@/lib/field-visibility";
 import { missingRequired } from "@/lib/required-fields";
 import { requiredLabel } from "@/components/lead/lead-card-layout";
 import { useAuth } from "@/lib/auth";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { cn, describeError, stageColorProps, stageTintProps } from "@/lib/utils";
@@ -976,7 +975,6 @@ function LeadPanel({
   const router = useRouter();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const crmEnabled = useCrmEnabled();
   const { data: igLink } = useLeadInstagramLink(lead.id);
   const [payOpen, setPayOpen] = useState(false);
   const { format: formatMoney } = useCurrency();
@@ -1160,16 +1158,12 @@ function LeadPanel({
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="amo-skin w-56 p-1">
-        {crmEnabled && (
-          <MenuRow icon={Phone} label={t("amo.phone.call")} onClick={() => call(number)} />
-        )}
-        {crmEnabled && (
-          <MenuRow
-            icon={Send}
-            label={t("amo.phone.telegram")}
-            onClick={() => onComposeChat("telegram")}
-          />
-        )}
+        <MenuRow icon={Phone} label={t("amo.phone.call")} onClick={() => call(number)} />
+        <MenuRow
+          icon={Send}
+          label={t("amo.phone.telegram")}
+          onClick={() => onComposeChat("telegram")}
+        />
         <MenuRow
           icon={Copy}
           label={t("amo.phone.copy")}
@@ -1639,26 +1633,24 @@ function LeadPanel({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="amo-skin w-60">
-                  {crmEnabled && lead.phone && (
+                  {lead.phone && (
                     <DropdownMenuItem onSelect={() => call(lead.phone)}>
                       <Phone className="mr-2 h-4 w-4" /> {t("amo.phone.call")}
                     </DropdownMenuItem>
                   )}
-                  {crmEnabled && (
-                    <>
-                      <DropdownMenuItem onSelect={actions.openTelegram}>
-                        <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={actions.openEmail}>
-                        <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
-                      </DropdownMenuItem>
-                      <StartSalesbotMenuItems leadId={lead.id} />
-                      <DropdownMenuItem onSelect={() => setPayOpen(true)}>
-                        <CreditCard className="mr-2 h-4 w-4" /> {t("lpay.menu")}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
+                  <>
+                    <DropdownMenuItem onSelect={actions.openTelegram}>
+                      <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={actions.openEmail}>
+                      <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
+                    </DropdownMenuItem>
+                    <StartSalesbotMenuItems leadId={lead.id} />
+                    <DropdownMenuItem onSelect={() => setPayOpen(true)}>
+                      <CreditCard className="mr-2 h-4 w-4" /> {t("lpay.menu")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
                   <DropdownMenuItem onSelect={actions.openUpload}>
                     <Upload className="mr-2 h-4 w-4" /> {t("la.uploadAudio")}
                   </DropdownMenuItem>
@@ -1842,19 +1834,17 @@ function LeadPanel({
                   </div>
                 )}
                 {/* 5CRM's money rows: the deal, what is paid, what is owed. */}
-                {crmEnabled && (
-                  <div className="space-y-1 pt-2">
-                    <LeadMoneyRows
-                      leadId={lead.id}
-                      total={lead.budget}
-                      row={(label, value) => (
-                        <FieldRow key={label} label={label}>
-                          <span className="tabular-nums">{value}</span>
-                        </FieldRow>
-                      )}
-                    />
-                  </div>
-                )}
+                <div className="space-y-1 pt-2">
+                  <LeadMoneyRows
+                    leadId={lead.id}
+                    total={lead.budget}
+                    row={(label, value) => (
+                      <FieldRow key={label} label={label}>
+                        <span className="tabular-nums">{value}</span>
+                      </FieldRow>
+                    )}
+                  />
+                </div>
               </div>
 
               {/* The client's Instagram Direct chat */}
@@ -1862,7 +1852,7 @@ function LeadPanel({
                 <div className="border-t border-[var(--amo-divider)] bg-[var(--amo-head)] px-6 py-4">
                   <button
                     type="button"
-                    disabled={!crmEnabled}
+
                     onClick={() => onComposeChat("instagram")}
                     className="flex w-full items-center gap-3 text-left disabled:cursor-default"
                   >
@@ -1877,11 +1867,9 @@ function LeadPanel({
                         Instagram Direct{igLink.username ? ` · @${igLink.username}` : ""}
                       </span>
                     </span>
-                    {crmEnabled && (
-                      <span className="shrink-0 text-[13px] font-semibold text-primary">
-                        {t("amo.ig.write")}
-                      </span>
-                    )}
+                    <span className="shrink-0 text-[13px] font-semibold text-primary">
+                      {t("amo.ig.write")}
+                    </span>
                   </button>
                 </div>
               )}
@@ -2952,7 +2940,6 @@ export function AmoLeadCard({
 }) {
   const { t } = useI18n();
   const phone = usePhone();
-  const crmEnabled = useCrmEnabled();
   const items = useFeed(lead);
   const { rows: taskRows } = useLeadTasksView(lead);
   const [query, setQuery] = useState("");
@@ -3081,7 +3068,7 @@ export function AmoLeadCard({
         >
           {lead.name}
         </p>
-        {crmEnabled && lead.phone && (
+        {lead.phone && (
           <button
             type="button"
             aria-label={t("amo.phone.call")}

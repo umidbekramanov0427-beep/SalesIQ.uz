@@ -42,7 +42,6 @@ import {
   type SidebarConfig,
 } from "@/lib/sidebar-config";
 import { TONE_TEXT } from "@/lib/tones";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn, describeError } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/sidebar")({
@@ -106,7 +105,6 @@ function AdminSidebarPage() {
 // live preview of the result. Nothing changes until "Saqlash".
 function SidebarEditor() {
   const { t } = useI18n();
-  const crmEnabled = useCrmEnabled();
   const saved = useSidebarConfig();
   const save = useSaveSidebarConfig();
   const [draft, setDraft] = useState<SidebarConfig>(saved);
@@ -114,20 +112,13 @@ function SidebarEditor() {
   useEffect(() => setDraft(JSON.parse(savedKey) as SidebarConfig), [savedKey]);
   const dirty = JSON.stringify(draft) !== savedKey;
 
-  const available = useMemo(
-    () => [...STANDARD, ...MODULE_NAV_ITEMS].filter((i) => crmEnabled || !i.crmOnly),
-    [crmEnabled],
-  );
+  const available = useMemo(() => [...STANDARD, ...MODULE_NAV_ITEMS], []);
   // What the sidebar shows, grouped the way it draws them (ungrouped,
   // then Asosiy / Tahlil / Nazorat); arrows move within a group.
   const shown = groupOrder(resolveSidebar(available, draft));
   const shownPaths = shown.map((i) => i.to);
-  const hiddenStandard = STANDARD.filter(
-    (i) => (crmEnabled || !i.crmOnly) && !shownPaths.includes(i.to),
-  );
-  const unpinned = MODULE_NAV_ITEMS.filter(
-    (i) => (crmEnabled || !i.crmOnly) && !shownPaths.includes(i.to),
-  );
+  const hiddenStandard = STANDARD.filter((i) => !shownPaths.includes(i.to));
+  const unpinned = MODULE_NAV_ITEMS.filter((i) => !shownPaths.includes(i.to));
 
   const toggle = (item: NavItem) =>
     setDraft((d) => (item.optional ? togglePinned(d, item.to) : toggleHidden(d, item.to)));

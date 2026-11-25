@@ -25,7 +25,6 @@ import {
   Palette,
 } from "lucide-react";
 import { toast } from "sonner";
-import { CrmGate } from "@/components/CrmGate";
 import { EmbeddedPage } from "@/components/layout/Primitives";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -74,11 +73,7 @@ export const Route = createFileRoute("/funnels_/settings")({
     tab: TABS.some((x) => x.key === search["tab"]) ? (search["tab"] as SettingsTab) : undefined,
   }),
   head: () => ({ meta: [{ title: "Voronka sozlamalari — SalesIQ" }] }),
-  component: () => (
-    <CrmGate>
-      <FunnelSettingsPage />
-    </CrmGate>
-  ),
+  component: () => <FunnelSettingsPage />,
 });
 
 // The old /admin/... addresses redirect to their tab.

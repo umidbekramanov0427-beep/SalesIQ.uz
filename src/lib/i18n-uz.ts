@@ -447,26 +447,7 @@ const uz: Record<string, string> = {
   "sb.code.dialogTitle": "Suhbatni ham SalesIQ'dan yuritish (ixtiyoriy)",
   "sb.code.dialogDesc":
     "Botingiz voronka triggerlari va lid sahifasidan ishga tushishi, mijoz xabarlarini olishi kerak bo'lsa — manzilini kiriting va saqlang. Har bir so'rov maxfiy kalit bilan imzolanadi.",
-  "crm.offTitle": "CRM moduli o'chirilgan",
-  "crm.offDesc":
-    "Kompaniyangiz SalesIQ'dan analitika uchun foydalanadi. Voronkalar, lid manbalari, telefoniya, triggerlar va salesbotlar CRM moduliga kiradi.",
-  "crm.offHint": "Yoqish uchun SalesIQ jamoasiga murojaat qiling.",
   "crm.backToAdmin": "Admin panelga qaytish",
-  "platform.modulesTitle": "Modullar",
-  "platform.modulesDesc":
-    "Kompaniya SalesIQ'dan nima uchun foydalanadi. O'zgarish foydalanuvchilarda sahifa qayta yuklanganda kuchga kiradi.",
-  "platform.moduleAnalytics": "Analitika",
-  "platform.moduleAnalyticsDesc":
-    "Reyting, boshqaruv paneli, kunlik hisobot, audio va lid tahlili, amoCRM / Bitrix24 sinxroni",
-  "platform.moduleAlwaysOn": "Doim yoqilgan",
-  "platform.moduleCrm": "CRM",
-  "platform.moduleCrmDesc":
-    "O'z voronkalari, lid manbalari, veb-formalar, telefoniya, messenjerlar, triggerlar, salesbotlar, shartnomalar",
-  "platform.moduleCrmOn": "Yoqilgan — kompaniya admin panelida “CRM sozlamalari” ko'rinadi",
-  "platform.moduleCrmOff":
-    "O'chirilgan — faqat analitika; CRM sozlamalari yashirin, triggerlar ishlamaydi",
-  "platform.crmOnToast": "CRM moduli yoqildi",
-  "platform.crmOffToast": "CRM moduli o'chirildi",
   "audio.clickToAnalyze": "Qo'ng'iroqni tahlil qilish uchun bosing",
   "audio.noLead": "Lid biriktirilmagan",
   "audio.sortLabel": "Saralash",

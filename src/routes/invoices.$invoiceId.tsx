@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { BackButton } from "@/components/layout/BackButton";
-import { CrmGate } from "@/components/CrmGate";
 import { Party, Sign } from "@/components/invoices/DocParts";
 import { InvoiceStatusPill } from "@/components/invoices/InvoiceStatusPill";
 import {
@@ -34,11 +33,7 @@ import { cn, describeError } from "@/lib/utils";
 
 export const Route = createFileRoute("/invoices/$invoiceId")({
   head: () => ({ meta: [{ title: "Hisob-faktura — SalesIQ" }] }),
-  component: () => (
-    <CrmGate>
-      <InvoicePage />
-    </CrmGate>
-  ),
+  component: () => <InvoicePage />,
 });
 
 const dmy = (iso: string | null | undefined) =>

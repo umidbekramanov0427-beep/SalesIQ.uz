@@ -46,7 +46,6 @@ import { InfoTip, type CardTone } from "@/components/layout/Primitives";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { cn } from "@/lib/utils";
 import {
   useAiOnboarding,
@@ -148,7 +147,6 @@ const TELEPHONY: {
 
 export function useAdminCatalog(): CatalogGroup[] {
   const { t } = useI18n();
-  const crmEnabled = useCrmEnabled();
   const { data: counts } = useSetupCounts();
   const amo = useAmoConnectionStatus();
   const bitrix = useBitrix24ConnectionStatus();
@@ -159,9 +157,9 @@ export function useAdminCatalog(): CatalogGroup[] {
   const aiOnboarding = useAiOnboarding();
   const sidebar = useSidebarConfig();
   const didox = useDidoxStatus();
-  const instagram = useInstagramAccount(crmEnabled);
-  const orgBotState = useOrgBot(crmEnabled);
-  const payments = usePaymentMerchant(crmEnabled);
+  const instagram = useInstagramAccount();
+  const orgBotState = useOrgBot();
+  const payments = usePaymentMerchant();
   const followups = useFollowupSettings();
 
   const counted = (table: CountedTable): Status | undefined => {
@@ -222,7 +220,7 @@ export function useAdminCatalog(): CatalogGroup[] {
       // Pages most companies don't need every day: each card opens it, and
       // its switch puts it into the sidebar.
       key: "modules",
-      items: MODULE_NAV_ITEMS.filter((m) => crmEnabled || !m.crmOnly).map((m) => ({
+      items: MODULE_NAV_ITEMS.map((m) => ({
         key: `module:${m.to}`,
         to: m.to,
         icon: m.icon,
@@ -265,38 +263,36 @@ export function useAdminCatalog(): CatalogGroup[] {
     },
   ];
 
-  if (crmEnabled) {
-    groups.push({
-      key: "crm",
-      items: [
-        {
-          key: "callSettings",
-          to: "/admin/call-settings",
-          icon: PhoneCall,
-          tone: "emerald",
-        },
-        {
-          key: "phoneFormat",
-          to: "/admin/phone-format",
-          icon: Phone,
-          tone: "emerald",
-        },
-        {
-          key: "replyRules",
-          to: "/admin/reply-rules",
-          icon: AlarmClock,
-          tone: "amber",
-        },
-        {
-          key: "contracts",
-          to: "/admin/contract-templates",
-          icon: FileSignature,
-          tone: "slate",
-          status: counted("contract_templates"),
-        },
-      ],
-    });
-  }
+  groups.push({
+    key: "crm",
+    items: [
+      {
+        key: "callSettings",
+        to: "/admin/call-settings",
+        icon: PhoneCall,
+        tone: "emerald",
+      },
+      {
+        key: "phoneFormat",
+        to: "/admin/phone-format",
+        icon: Phone,
+        tone: "emerald",
+      },
+      {
+        key: "replyRules",
+        to: "/admin/reply-rules",
+        icon: AlarmClock,
+        tone: "amber",
+      },
+      {
+        key: "contracts",
+        to: "/admin/contract-templates",
+        icon: FileSignature,
+        tone: "slate",
+        status: counted("contract_templates"),
+      },
+    ],
+  });
 
   const integrations: CatalogItem[] = [
     {
@@ -316,107 +312,103 @@ export function useAdminCatalog(): CatalogGroup[] {
       status: connected(bitrix.isFetched, !!bitrix.data),
     },
   ];
-  if (crmEnabled) {
-    integrations.push(
-      {
-        key: "telegramBot",
-        to: "/integrations/telegram-bot",
-        icon: Bot,
-        tone: "sky",
-        logo: { src: "/brand/telegram.svg" },
-        status: connected(orgBotState.isFetched, !!orgBotState.data?.bot),
-      },
-      {
-        key: "telegramLink",
-        to: "/daily-report-settings",
-        icon: MessageSquareText,
-        tone: "sky",
-        logo: { src: "/brand/telegram.svg" },
-        status: profiles
-          ? connected(
-              true,
-              profiles.some((p) => p.telegram_chat_id),
-            )
-          : undefined,
-      },
-      {
-        key: "telegramApp",
-        to: "/integrations/telegram-app",
-        icon: MessageSquareText,
-        tone: "sky",
-        logo: { src: "/brand/telegram.svg" },
-      },
-      {
-        key: "instagram",
-        to: "/integrations/instagram",
-        icon: MessageSquareText,
-        tone: "rose",
-        logo: { domain: "instagram.com" },
-        status: connected(instagram.isFetched, !!instagram.data?.account),
-      },
-      {
-        key: "sms",
-        to: "/integrations/sms",
-        icon: MessageSquareText,
-        tone: "amber",
-        logo: { domain: "eskiz.uz" },
-        status: connected(sms.isFetched, !!sms.data?.connected),
-      },
-      {
-        key: "email",
-        to: "/integrations/email",
-        icon: Mail,
-        tone: "rose",
-        status: connected(smtp.isFetched, !!smtp.data?.connected),
-      },
-      {
-        key: "payments",
-        to: "/integrations/payments",
-        icon: CreditCard,
-        tone: "emerald",
-        logo: { domain: "payme.uz" },
-        status: connected(
-          payments.isFetched,
-          !!(payments.data?.paymeReady || payments.data?.clickReady),
-        ),
-      },
-      {
-        key: "didox",
-        to: "/admin/invoices",
-        icon: Receipt,
-        tone: "amber",
-        logo: { domain: "didox.uz" },
-        status: connected(didox.isFetched, !!didox.data?.connected),
-      },
-      { key: "webhook", to: "/integrations/webhook", icon: Code2, tone: "slate" },
-      { key: "apiKeys", to: "/admin/api", icon: KeyRound, tone: "slate" },
-      {
-        key: "outgoingWebhooks",
-        to: "/admin/telephony",
-        search: { provider: "webhooks" },
-        icon: PhoneOutgoing,
-        tone: "slate",
-      },
-    );
-  }
+  integrations.push(
+    {
+      key: "telegramBot",
+      to: "/integrations/telegram-bot",
+      icon: Bot,
+      tone: "sky",
+      logo: { src: "/brand/telegram.svg" },
+      status: connected(orgBotState.isFetched, !!orgBotState.data?.bot),
+    },
+    {
+      key: "telegramLink",
+      to: "/daily-report-settings",
+      icon: MessageSquareText,
+      tone: "sky",
+      logo: { src: "/brand/telegram.svg" },
+      status: profiles
+        ? connected(
+            true,
+            profiles.some((p) => p.telegram_chat_id),
+          )
+        : undefined,
+    },
+    {
+      key: "telegramApp",
+      to: "/integrations/telegram-app",
+      icon: MessageSquareText,
+      tone: "sky",
+      logo: { src: "/brand/telegram.svg" },
+    },
+    {
+      key: "instagram",
+      to: "/integrations/instagram",
+      icon: MessageSquareText,
+      tone: "rose",
+      logo: { domain: "instagram.com" },
+      status: connected(instagram.isFetched, !!instagram.data?.account),
+    },
+    {
+      key: "sms",
+      to: "/integrations/sms",
+      icon: MessageSquareText,
+      tone: "amber",
+      logo: { domain: "eskiz.uz" },
+      status: connected(sms.isFetched, !!sms.data?.connected),
+    },
+    {
+      key: "email",
+      to: "/integrations/email",
+      icon: Mail,
+      tone: "rose",
+      status: connected(smtp.isFetched, !!smtp.data?.connected),
+    },
+    {
+      key: "payments",
+      to: "/integrations/payments",
+      icon: CreditCard,
+      tone: "emerald",
+      logo: { domain: "payme.uz" },
+      status: connected(
+        payments.isFetched,
+        !!(payments.data?.paymeReady || payments.data?.clickReady),
+      ),
+    },
+    {
+      key: "didox",
+      to: "/admin/invoices",
+      icon: Receipt,
+      tone: "amber",
+      logo: { domain: "didox.uz" },
+      status: connected(didox.isFetched, !!didox.data?.connected),
+    },
+    { key: "webhook", to: "/integrations/webhook", icon: Code2, tone: "slate" },
+    { key: "apiKeys", to: "/admin/api", icon: KeyRound, tone: "slate" },
+    {
+      key: "outgoingWebhooks",
+      to: "/admin/telephony",
+      search: { provider: "webhooks" },
+      icon: PhoneOutgoing,
+      tone: "slate",
+    },
+  );
   groups.push({ key: "integrations", items: integrations });
 
-  if (crmEnabled) {
-    groups.push({
-      key: "telephony",
-      items: [
-        ...TELEPHONY.map((p) => ({
-          key: `tel_${p.id}`,
-          to: "/admin/telephony",
-          search: { provider: p.id },
-          icon: p.icon,
-          tone: p.tone,
-          ...(p.logo ? { logo: p.logo } : {}),
-          status: connected(telephony.isFetched, !!telephony.data?.[p.id]?.connected),
-        })),
-      ],
-    });
-  }
+  groups.push({
+    key: "telephony",
+    items: [
+      ...TELEPHONY.map((p) => ({
+        key: `tel_${p.id}`,
+        to: "/admin/telephony",
+        search: { provider: p.id },
+        icon: p.icon,
+        tone: p.tone,
+        ...(p.logo ? { logo: p.logo } : {}),
+        status: connected(telephony.isFetched, !!telephony.data?.[p.id]?.connected),
+      })),
+    ],
+  });
 
   groups.push({
     key: "ai",

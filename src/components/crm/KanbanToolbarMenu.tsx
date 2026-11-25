@@ -31,7 +31,6 @@ import { KanbanCardSettingsDialog } from "@/components/crm/KanbanCardSettingsDia
 import { LeadImportDialog } from "@/components/crm/LeadImportDialog";
 import { downloadCsv } from "@/lib/export-csv";
 import { useAuth } from "@/lib/auth";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { useI18n } from "@/lib/i18n";
 import { useOrgAccess } from "@/lib/use-org-access";
 import type { CrmLeadView } from "@/hooks/use-crm-data";
@@ -84,7 +83,6 @@ export function KanbanToolbarMenu({
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const { user } = useAuth();
-  const crmEnabled = useCrmEnabled();
   const canImport = user?.role === "super_admin" || user?.role === "rop";
   // Duplicate merging is a company-wide clean-up -- super admin only.
   const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
@@ -184,7 +182,7 @@ export function KanbanToolbarMenu({
               <DropdownMenuSeparator />
             </>
           )}
-          {canImport && crmEnabled && (
+          {canImport && (
             <DropdownMenuItem asChild>
               <Link to="/funnels/settings" search={{ funnel, tab: "automations" }}>
                 <Workflow className="h-4 w-4" /> {t("pipeline.toolbar.automation")}
@@ -216,21 +214,21 @@ export function KanbanToolbarMenu({
           >
             <Download className="h-4 w-4" /> {t("pipeline.toolbar.export")}
           </DropdownMenuItem>
-          {isAdmin && crmEnabled && (
+          {isAdmin && (
             <DropdownMenuItem asChild>
               <Link to="/funnels/settings" search={{ funnel, tab: "duplicates" }}>
                 <Copy className="h-4 w-4" /> {t("crm.item.dupControlTitle")}
               </Link>
             </DropdownMenuItem>
           )}
-          {isAdmin && crmEnabled && (
+          {isAdmin && (
             <DropdownMenuItem asChild>
               <Link to="/funnels/settings" search={{ funnel, tab: "tasks" }}>
                 <AlarmClock className="h-4 w-4" /> {t("taskControl.title")}
               </Link>
             </DropdownMenuItem>
           )}
-          {isAdmin && crmEnabled && (
+          {isAdmin && (
             <DropdownMenuItem asChild>
               <Link to="/funnels/settings" search={{ funnel, tab: "colors" }}>
                 <Palette className="h-4 w-4" /> {t("fs.tab.colors")}

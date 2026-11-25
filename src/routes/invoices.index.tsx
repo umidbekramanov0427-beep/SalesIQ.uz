@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, Clock, FileText, Plus, Receipt, Settings } from "lucide-react";
-import { CrmGate } from "@/components/CrmGate";
 import { InvoiceEditorDialog } from "@/components/invoices/InvoiceEditorDialog";
 import { InvoiceStatusPill } from "@/components/invoices/InvoiceStatusPill";
 import { PageHeader, SectionCard, StatCard } from "@/components/layout/Primitives";
@@ -13,11 +12,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/invoices/")({
   head: () => ({ meta: [{ title: "Hisob-fakturalar — SalesIQ" }] }),
-  component: () => (
-    <CrmGate>
-      <InvoicesPage />
-    </CrmGate>
-  ),
+  component: () => <InvoicesPage />,
 });
 
 type Filter = "all" | InvoiceRow["status"];

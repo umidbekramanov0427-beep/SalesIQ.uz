@@ -44,7 +44,6 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Switch } from "@/components/ui/switch";
 import { cn, describeError, timeAgo } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
-import { useCrmEnabled } from "@/lib/use-org-access";
 import { useCurrency } from "@/lib/currency";
 import { renderContractTemplate } from "@/lib/contracts";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -1573,7 +1572,6 @@ function LeadWorkspace() {
   const phone = usePhone();
   // CRM actions (call, messengers, salesbot, contracts, telephony) only when
   // the company's CRM module is on; analytics-only companies don't see them.
-  const crmEnabled = useCrmEnabled();
   const [aiOutput, setAiOutput] = useState<string | null>(null);
   const [activeAiAction, setActiveAiAction] = useState<string | null>(null);
 
@@ -1941,29 +1939,26 @@ function LeadWorkspace() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {crmEnabled && (
-                  <>
-                    <DropdownMenuItem
-                      disabled={!lead.phone || phone.calling}
-                      onSelect={() => {
-                        if (lead.phone)
-                          phone.call(lead.phone, { leadId: lead.id, name: lead.name });
-                      }}
-                    >
-                      <Phone className="mr-2 h-4 w-4" /> {t("lead.actionCall")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setEmailDialogOpen(true)}>
-                      <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setTelegramDialogOpen(true)}>
-                      <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
-                    </DropdownMenuItem>
-                    <StartSalesbotMenuItems leadId={lead.id} />
-                    <DropdownMenuItem onSelect={() => setInvoiceOpen(true)}>
-                      <Receipt className="mr-2 h-4 w-4" /> {t("inv.fromLead")}
-                    </DropdownMenuItem>
-                  </>
-                )}
+                <>
+                  <DropdownMenuItem
+                    disabled={!lead.phone || phone.calling}
+                    onSelect={() => {
+                      if (lead.phone) phone.call(lead.phone, { leadId: lead.id, name: lead.name });
+                    }}
+                  >
+                    <Phone className="mr-2 h-4 w-4" /> {t("lead.actionCall")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setEmailDialogOpen(true)}>
+                    <Mail className="mr-2 h-4 w-4" /> {t("lead.actionEmail")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setTelegramDialogOpen(true)}>
+                    <Send className="mr-2 h-4 w-4" /> {t("lead.actionTelegram")}
+                  </DropdownMenuItem>
+                  <StartSalesbotMenuItems leadId={lead.id} />
+                  <DropdownMenuItem onSelect={() => setInvoiceOpen(true)}>
+                    <Receipt className="mr-2 h-4 w-4" /> {t("inv.fromLead")}
+                  </DropdownMenuItem>
+                </>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -2000,48 +1995,46 @@ function LeadWorkspace() {
       >
         <div className="min-w-0 space-y-10">
           {/* Telegram chat link */}
-          {crmEnabled && (
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
-              <div className="flex min-w-0 items-start gap-3">
-                <Send className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  {lead.telegram ? (
-                    <p className="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-foreground">
-                      <span className="shrink-0">Telegram:</span>
-                      {/^@?[A-Za-z0-9_]{3,64}$/.test(lead.telegram.trim()) ? (
-                        <a
-                          href={`https://t.me/${lead.telegram.trim().replace(/^@/, "")}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="truncate text-sky-600 hover:underline dark:text-sky-400"
-                        >
-                          {lead.telegram.trim().startsWith("@")
-                            ? lead.telegram.trim()
-                            : `@${lead.telegram.trim()}`}
-                        </a>
-                      ) : (
-                        <span className="truncate">{lead.telegram}</span>
-                      )}
-                      <CopyButton value={lead.telegram.trim()} />
-                    </p>
-                  ) : (
-                    <p className="text-[15px] font-semibold text-foreground">
-                      {t("la.telegramNotLinked")}
-                    </p>
-                  )}
-                  <p className="text-sm text-muted-foreground">{t("la.telegramHint")}</p>
-                </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <Send className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0">
+                {lead.telegram ? (
+                  <p className="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-foreground">
+                    <span className="shrink-0">Telegram:</span>
+                    {/^@?[A-Za-z0-9_]{3,64}$/.test(lead.telegram.trim()) ? (
+                      <a
+                        href={`https://t.me/${lead.telegram.trim().replace(/^@/, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate text-sky-600 hover:underline dark:text-sky-400"
+                      >
+                        {lead.telegram.trim().startsWith("@")
+                          ? lead.telegram.trim()
+                          : `@${lead.telegram.trim()}`}
+                      </a>
+                    ) : (
+                      <span className="truncate">{lead.telegram}</span>
+                    )}
+                    <CopyButton value={lead.telegram.trim()} />
+                  </p>
+                ) : (
+                  <p className="text-[15px] font-semibold text-foreground">
+                    {t("la.telegramNotLinked")}
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground">{t("la.telegramHint")}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setTelegramDialogOpen(true)}
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-foreground px-4 text-sm font-semibold text-background transition-opacity hover:opacity-90"
-              >
-                <Link2 className="h-4 w-4" />
-                {lead.telegram ? t("la.telegramWrite") : t("la.telegramConnect")}
-              </button>
             </div>
-          )}
+            <button
+              type="button"
+              onClick={() => setTelegramDialogOpen(true)}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-foreground px-4 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+            >
+              <Link2 className="h-4 w-4" />
+              {lead.telegram ? t("la.telegramWrite") : t("la.telegramConnect")}
+            </button>
+          </div>
 
           <section>
             <LeadSectionHeading
@@ -2110,25 +2103,23 @@ function LeadWorkspace() {
             <LeadSectionHeading icon={Layers} title={t("la.more3")} />
             <div className="space-y-5">
               <div className="flex flex-nowrap gap-1 overflow-x-auto rounded-2xl border border-border bg-surface p-1">
-                {TABS.filter((tb) => crmEnabled || (tb !== "Contracts" && tb !== "Telephony")).map(
-                  (tb) => (
-                    <button
-                      key={tb}
-                      onClick={() => setTab(tb)}
-                      className={cn(
-                        "shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm",
-                        // On a computer these calls are in the history panel
-                        // beside the card; phones don't show that panel.
-                        tb === "Telephony" && "hidden phone:inline-block",
-                        tab === tb
-                          ? "bg-background text-foreground shadow-soft"
-                          : "text-muted-foreground hover:bg-accent",
-                      )}
-                    >
-                      {t(`lead.tab.${tb}`)}
-                    </button>
-                  ),
-                )}
+                {TABS.map((tb) => (
+                  <button
+                    key={tb}
+                    onClick={() => setTab(tb)}
+                    className={cn(
+                      "shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm",
+                      // On a computer these calls are in the history panel
+                      // beside the card; phones don't show that panel.
+                      tb === "Telephony" && "hidden phone:inline-block",
+                      tab === tb
+                        ? "bg-background text-foreground shadow-soft"
+                        : "text-muted-foreground hover:bg-accent",
+                    )}
+                  >
+                    {t(`lead.tab.${tb}`)}
+                  </button>
+                ))}
               </div>
 
               {tab === "Notes" && (
@@ -2299,7 +2290,7 @@ function LeadWorkspace() {
                 </SectionCard>
               )}
 
-              {crmEnabled && tab === "Contracts" && <ContractsTab lead={lead} />}
+              {tab === "Contracts" && <ContractsTab lead={lead} />}
 
               {tab === "Assistant" && (
                 <div className="space-y-5">
@@ -2314,8 +2305,7 @@ function LeadWorkspace() {
                 </div>
               )}
 
-              {crmEnabled &&
-                tab === "Telephony" &&
+              {tab === "Telephony" &&
                 showSection("telephonyCalls") &&
                 sectionElements["telephonyCalls"]}
             </div>

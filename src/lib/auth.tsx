@@ -61,10 +61,6 @@ export type SessionUser = {
   orgIsTrial: boolean;
   // <subdomain>.salesiq.uz of the user's company, if it has one.
   orgSubdomain: string | null;
-  // The CRM part of the platform (own funnels, lead sources, telephony,
-  // salesbots, triggers...) -- switched on per company by the platform
-  // owner. Off = analytics only.
-  orgCrmEnabled: boolean;
   // The admin let this person into the marketing panel (marketolog and
   // admins always are). Absent before the marketing-panel migration.
   marketingAccess: boolean;
@@ -109,7 +105,6 @@ type OrgFields = {
   plan: string;
   is_trial?: boolean | null;
   subdomain?: string | null;
-  crm_enabled?: boolean | null;
   frozen_at?: string | null;
   frozen_reason?: string | null;
 };
@@ -155,9 +150,6 @@ function toSessionUser(profile: Profile, org: OrgFields | null): SessionUser {
     orgPlan: org?.plan ?? null,
     orgIsTrial: org?.is_trial === true,
     orgSubdomain: org?.subdomain ?? null,
-    // Before the CRM-module migration the column doesn't exist at all
-    // (undefined): keep everything visible, as it was.
-    orgCrmEnabled: org ? org.crm_enabled !== false : false,
     // Frozen by the platform owner (org.active is false at the same time).
     orgFrozen: org?.frozen_at != null,
     orgFrozenReason: org?.frozen_reason ?? null,

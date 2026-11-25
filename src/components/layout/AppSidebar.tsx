@@ -59,7 +59,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { InboxPanel } from "@/components/inbox/InboxPanel";
 import { useAuth } from "@/lib/auth";
 import { useOrgModules } from "@/hooks/crm/warehouse";
-import { useCrmEnabled, useOrgAccess } from "@/lib/use-org-access";
+import { useOrgAccess } from "@/lib/use-org-access";
 import {
   useCrmFunnelNames,
   useMarkNotificationRead,
@@ -619,7 +619,6 @@ export function AppSidebar({
   const { user } = useAuth();
   const orgAccess = useOrgAccess();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const crmEnabled = useCrmEnabled();
   const orgModules = useOrgModules();
   // The company's own sidebar: standard sections it kept, modules it
   // pinned, in its order (Admin panel → Yon menyu).
@@ -631,7 +630,7 @@ export function AppSidebar({
   const companyLogo = orgGeneral?.company_logo_url ?? null;
   const [logoPanel, setLogoPanel] = useState(false);
   const resolved = resolveSidebar(
-    [...navItemsFor(role, crmEnabled, orgModules), ...moduleItemsFor(role, crmEnabled)],
+    [...navItemsFor(role, orgModules), ...moduleItemsFor(role)],
     sidebarConfig,
   ).filter((i) => canOpenSection(accessRules, role, i.to));
   // AI yordamchi is not in the menu: its floating button opens it.

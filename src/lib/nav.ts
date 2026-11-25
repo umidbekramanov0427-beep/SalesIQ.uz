@@ -59,9 +59,6 @@ export type NavItem = {
   // on the page itself (AppShell redirects a hidden page to home), so a
   // hidden item can't simply be opened by typing its URL.
   roles?: AppRole[];
-  // Only when the company's CRM module is on (platform owner's switch).
-  // Analytics-only companies don't get the page at all -- nor its data.
-  crmOnly?: boolean;
   // Only the platform operator (role: platform_owner) sees this item —
   // they belong to no single company, so every other nav item (which
   // shows a company's own CRM data) is hidden from them instead.
@@ -105,7 +102,6 @@ export const NAV_ITEMS: NavItem[] = [
     tone: "violet",
     icon: SquareKanban,
     group: "general",
-    crmOnly: true,
   },
   {
     label: "Warehouse",
@@ -113,7 +109,6 @@ export const NAV_ITEMS: NavItem[] = [
     tone: "amber",
     icon: Package,
     group: "general",
-    crmOnly: true,
     module: "warehouse",
   },
   {
@@ -122,7 +117,6 @@ export const NAV_ITEMS: NavItem[] = [
     tone: "sky",
     icon: MessagesSquare,
     group: "general",
-    crmOnly: true,
     roles: REP_UP,
   },
   {
@@ -270,52 +264,33 @@ export const MODULE_NAV_ITEMS: NavItem[] = [
     tone: "amber",
     icon: Receipt,
     group: "control",
-    crmOnly: true,
     optional: true,
   },
 ];
 
 /** The extra modules one role may pin (same role / CRM rules as the standard sections). */
-export function moduleItemsFor(role: AppRole | null, crmEnabled = true): NavItem[] {
+export function moduleItemsFor(role: AppRole | null): NavItem[] {
   if (!role) return [];
-  return MODULE_NAV_ITEMS.filter(
-    (i) => (!i.roles || i.roles.includes(role)) && (crmEnabled || !i.crmOnly),
-  );
+  return MODULE_NAV_ITEMS.filter((i) => !i.roles || i.roles.includes(role));
 }
 
 // The company nav as one role sees it (platform-owner items excluded).
-export function navItemsFor(
-  role: AppRole | null,
-  crmEnabled = true,
-  modules: readonly string[] = [],
-): NavItem[] {
+export function navItemsFor(role: AppRole | null, modules: readonly string[] = []): NavItem[] {
   if (!role) return [];
   return NAV_ITEMS.filter(
     (i) =>
       !i.platformOwnerOnly &&
       (!i.roles || i.roles.includes(role)) &&
-      (crmEnabled || !i.crmOnly) &&
       (!i.module || modules.includes(i.module)),
   );
-}
-
-// CRM work pages: the funnel board and the lead / contact / company
-// registers. With the CRM module off they don't open at all. A single
-// lead's page (/crm/leads/<id>) stays: Audio tahlil links to it.
-const CRM_ONLY_PATHS = ["/funnels"];
-
-function isCrmOnlyPath(pathname: string): boolean {
-  if (pathname === "/crm/leads" || pathname === "/crm/leads/") return true;
-  return CRM_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 
 // False when `pathname` is a nav page (or a page under one) this role
 // doesn't get. Pages outside the nav (lead cards, inbox...) and the admin
 // sub-pages aren't decided here -- they keep their own checks, since a ROP
 // does open a few of those (automations, salesbots).
-export function canOpenPath(role: AppRole | null, pathname: string, crmEnabled = true): boolean {
+export function canOpenPath(role: AppRole | null, pathname: string): boolean {
   if (!role) return true;
-  if (!crmEnabled && isCrmOnlyPath(pathname)) return false;
   const item =
     NAV_ITEMS.find((i) => i.to === pathname) ??
     NAV_ITEMS.find((i) => i.to !== "/" && i.to !== "/admin" && pathname.startsWith(i.to + "/"));

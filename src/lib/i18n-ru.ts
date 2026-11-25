@@ -442,26 +442,7 @@ const ru: Record<string, string> = {
   "sb.code.dialogTitle": "Вести диалог и из SalesIQ (необязательно)",
   "sb.code.dialogDesc":
     "Если бот должен запускаться триггерами воронки и со страницы лида и получать сообщения клиентов — укажите его адрес и сохраните. Каждый запрос подписывается секретным ключом.",
-  "crm.offTitle": "Модуль CRM выключен",
-  "crm.offDesc":
-    "Ваша компания использует SalesIQ для аналитики. Воронки, источники лидов, телефония, триггеры и салесботы входят в модуль CRM.",
-  "crm.offHint": "Чтобы включить его, свяжитесь с командой SalesIQ.",
   "crm.backToAdmin": "Назад в админ-панель",
-  "platform.modulesTitle": "Модули",
-  "platform.modulesDesc":
-    "Для чего компания использует SalesIQ. Изменения применятся при следующей загрузке страницы у пользователей.",
-  "platform.moduleAnalytics": "Аналитика",
-  "platform.moduleAnalyticsDesc":
-    "Рейтинг, дашборд, ежедневный отчёт, аудио- и лид-аналитика, синхронизация amoCRM / Bitrix24",
-  "platform.moduleAlwaysOn": "Всегда включено",
-  "platform.moduleCrm": "CRM",
-  "platform.moduleCrmDesc":
-    "Свои воронки, источники лидов, веб-формы, телефония, мессенджеры, триггеры, салесботы, договоры",
-  "platform.moduleCrmOn": "Включено — компания видит «Настройки CRM» в админ-панели",
-  "platform.moduleCrmOff":
-    "Выключено — только аналитика; настройки CRM скрыты, триггеры не работают",
-  "platform.crmOnToast": "Модуль CRM включён",
-  "platform.crmOffToast": "Модуль CRM выключен",
   "audio.clickToAnalyze": "Нажмите, чтобы проанализировать звонок",
   "audio.noLead": "Лид не привязан",
   "audio.sortLabel": "Сортировка",

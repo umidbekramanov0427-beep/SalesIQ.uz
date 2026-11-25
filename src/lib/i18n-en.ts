@@ -443,25 +443,7 @@ export const en: Record<string, string> = {
   "sb.code.dialogTitle": "Also run the conversation from SalesIQ (optional)",
   "sb.code.dialogDesc":
     "If your bot should be started by funnel triggers and from lead pages and receive client messages, enter its address and save. Every request is signed with the secret key.",
-  "crm.offTitle": "The CRM module is off",
-  "crm.offDesc":
-    "Your company uses SalesIQ for analytics. Funnels, lead sources, telephony, triggers and salesbots are part of the CRM module.",
-  "crm.offHint": "To switch it on, contact the SalesIQ team.",
   "crm.backToAdmin": "Back to admin panel",
-  "platform.modulesTitle": "Modules",
-  "platform.modulesDesc":
-    "What this company uses SalesIQ for. Changes apply on the users' next page load.",
-  "platform.moduleAnalytics": "Analytics",
-  "platform.moduleAnalyticsDesc":
-    "Rating, dashboard, daily report, audio and lead analytics, amoCRM / Bitrix24 sync",
-  "platform.moduleAlwaysOn": "Always on",
-  "platform.moduleCrm": "CRM",
-  "platform.moduleCrmDesc":
-    "Own funnels, lead sources, web forms, telephony, messengers, triggers, salesbots, contracts",
-  "platform.moduleCrmOn": "On — the company sees “CRM settings” in its admin panel",
-  "platform.moduleCrmOff": "Off — analytics only; CRM settings are hidden and triggers don't run",
-  "platform.crmOnToast": "CRM module switched on",
-  "platform.crmOffToast": "CRM module switched off",
   "audio.clickToAnalyze": "Click to analyze this call",
   "audio.noLead": "No lead linked",
   "audio.sortLabel": "Sort",

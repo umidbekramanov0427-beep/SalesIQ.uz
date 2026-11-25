@@ -17,7 +17,6 @@ import { AmoCrmSettingsSection } from "@/components/settings/AmoCrmSettingsSecti
 import { ConnectionStrip } from "@/components/admin/ConnectionMap";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { PlanGate } from "@/components/PlanGate";
-import { CrmGate } from "@/components/CrmGate";
 import {
   AmoCrmCard,
   Bitrix24Card,
@@ -62,7 +61,6 @@ function AmoImportLink() {
 type Page = {
   icon: LucideIcon;
   tone: CardTone;
-  crmOnly?: boolean;
   manageOnly?: boolean;
   render: () => React.ReactNode;
 };
@@ -96,49 +94,42 @@ const PAGES: Record<string, Page> = {
   sms: {
     icon: MessageSquareText,
     tone: "amber",
-    crmOnly: true,
     manageOnly: true,
     render: () => <SmsProviderCard />,
   },
   email: {
     icon: Mail,
     tone: "rose",
-    crmOnly: true,
     manageOnly: true,
     render: () => <SmtpEmailCard />,
   },
   webhook: {
     icon: Webhook,
     tone: "primary",
-    crmOnly: true,
     manageOnly: true,
     render: () => <WebhookQuickCreateCard />,
   },
   instagram: {
     icon: Instagram,
     tone: "rose",
-    crmOnly: true,
     manageOnly: true,
     render: () => <InstagramCard />,
   },
   payments: {
     icon: CreditCard,
     tone: "emerald",
-    crmOnly: true,
     manageOnly: true,
     render: () => <PaymentsCard />,
   },
   "telegram-bot": {
     icon: Bot,
     tone: "sky",
-    crmOnly: true,
     manageOnly: true,
     render: () => <OrgBotCard />,
   },
   "telegram-app": {
     icon: Send,
     tone: "sky",
-    crmOnly: true,
     manageOnly: true,
     render: () => <TelegramMiniAppCard />,
   },
@@ -197,7 +188,7 @@ function IntegrationPage() {
         description={t(`hub.item.${key}.desc`)}
       />
       <ConnectionStrip itemKey={key} />
-      <div className="max-w-4xl">{page.crmOnly ? <CrmGate>{body}</CrmGate> : body}</div>
+      <div className="max-w-4xl">{body}</div>
     </>
   );
 }
