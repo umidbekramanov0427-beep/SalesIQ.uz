@@ -121,6 +121,8 @@ MIGRATIONS=(
   20270205000000_automation_5crm_more # twice
   20270206000000_profile_5crm
   20270206000000_profile_5crm # twice
+  20270207000000_warehouse
+  20270207000000_warehouse # twice
 )
 
 cleanup() { :; }

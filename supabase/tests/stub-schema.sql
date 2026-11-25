@@ -122,3 +122,6 @@ alter table leads add column if not exists custom_fields jsonb;
 -- Profile (20270206).
 alter table profiles add column if not exists position text, add column if not exists avatar_url text;
 create table if not exists security_settings (organization_id uuid primary key, ip_allowlist jsonb not null default '[]');
+
+-- Warehouse (20270207).
+alter table pipelines add column if not exists position int default 0;
