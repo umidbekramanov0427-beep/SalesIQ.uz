@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { useOpenNotificationLink } from "./open-link";
 import {
   decidePopup,
+  isPopupKind,
   leadIdFromLink,
   staysOpen,
   systemTag,
@@ -17,6 +18,15 @@ import {
   type PopupKind,
 } from "@/lib/live-notifications";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_CORNER,
+  PREVIEW_EVENT,
+  cornerClass,
+  onCornerChange,
+  readCorner,
+  type NotifyCorner,
+  type NotifyPreview,
+} from "@/lib/notify-display";
 
 // Live notifications, without a page refresh: a client's message ("Mijozdan
 // xabar keldi") and task reminders (15 minutes before, at the deadline, 15
@@ -238,13 +248,51 @@ export function LiveNotifications({ enabled }: { enabled: boolean }) {
     void markRead({ link: pathname });
   }, [enabled, pathname, markRead]);
 
+  // Where the deck sits (Bildirishnomalar → «Ekranda qayerda chiqsin»).
+  const [corner, setCorner] = useState<NotifyCorner>(DEFAULT_CORNER);
+  useEffect(() => {
+    setCorner(readCorner());
+    return onCornerChange(setCorner);
+  }, []);
+  // «Ekranda ko'rish»: a sample card, on this screen only.
+  useEffect(() => {
+    const onPreview = (e: Event) => {
+      const p = (e as CustomEvent<NotifyPreview>).detail;
+      const type = (isPopupKind(p.type) ? p.type : "task_assigned") as PopupKind;
+      const key = `preview-${Date.now()}`;
+      setCards((prev) =>
+        [
+          {
+            id: key,
+            key,
+            type,
+            title: p.title,
+            body: p.body,
+            link: null,
+            read: false,
+            created_at: new Date().toISOString(),
+          },
+          ...prev,
+        ].slice(0, MAX_CARDS),
+      );
+      setTimeout(() => setCards((prev) => prev.filter((c) => c.key !== key)), SHOW_FOR_MS);
+    };
+    window.addEventListener(PREVIEW_EVENT, onPreview);
+    return () => window.removeEventListener(PREVIEW_EVENT, onPreview);
+  }, []);
+
   if (!enabled || cards.length === 0) return null;
   // One deck, not a growing column: the newest card in front, the older
   // ones tucked behind it with only their lower edge showing, so a burst of
   // messages never climbs up the screen. Closing the front card brings the
   // next one forward.
   return (
-    <div className="pointer-events-none fixed bottom-24 left-3 z-[60] w-[min(300px,calc(100vw-24px))] lg:bottom-6 lg:left-[92px]">
+    <div
+      className={cn(
+        "pointer-events-none fixed z-[60] w-[min(300px,calc(100vw-24px))]",
+        cornerClass(corner),
+      )}
+    >
       {cards.slice(0, DECK_DEPTH).map((c, i) => (
         <LiveCard
           key={c.key}

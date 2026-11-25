@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { GeneralNotifyPanel } from "@/components/settings/GeneralNotifyPanel";
 import { shrinkLogo } from "@/lib/shrink-logo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsMutating } from "@tanstack/react-query";
@@ -1900,6 +1901,7 @@ function SettingsPage() {
             {section === "personalization" && <PersonalizationSection />}
             {section === "notifications" && (
               <div className="space-y-5">
+                <GeneralNotifyPanel />
                 {isManager && <NotificationsSection />}
                 <PersonalNotificationsCard />
                 <TelegramLinkCard />
