@@ -591,7 +591,7 @@ function OrdersBoard() {
           <section
             key={s}
             aria-label={t(`wh.st.${s}`)}
-            className="flex min-w-[250px] flex-1 flex-col gap-2"
+            className="flex min-w-[215px] flex-1 flex-col gap-2"
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => {
               if (drag) void move(drag, s);
@@ -760,20 +760,14 @@ function RepeatTab({ onReorder }: { onReorder: (d: OrderDraft) => void }) {
         tone="emerald"
         info={t("wh.repeatList.info")}
         actions={
-          <div className="ctl-track inline-flex">
-            {(["soon", "dormant", "all"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                className="ctl-tab"
-                aria-selected={mode === m}
-                data-state={mode === m ? "active" : undefined}
-                onClick={() => setMode(m)}
-              >
-                {t(`wh.mode.${m}`)}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            value={mode}
+            onChange={setMode}
+            options={(["soon", "dormant", "all"] as const).map((k) => ({
+              value: k,
+              label: t(`wh.mode.${k}`),
+            }))}
+          />
         }
       >
         {list.length === 0 ? (

@@ -5,6 +5,7 @@ import { Loader2, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/lib/i18n";
 import { describeError } from "@/lib/utils";
 import { formatUzs } from "@/lib/currency";
@@ -243,20 +244,14 @@ export function StockDialog({
         <DialogHeader>
           <DialogTitle>{t("wh.move.title")}</DialogTitle>
         </DialogHeader>
-        <div className="ctl-track inline-flex self-start">
-          {(["in", "out", "writeoff"] as const).map((k) => (
-            <button
-              key={k}
-              type="button"
-              className="ctl-tab"
-              aria-selected={kind === k}
-              data-state={kind === k ? "active" : undefined}
-              onClick={() => setKind(k)}
-            >
-              {t(`wh.move.${k}`)}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          value={kind}
+          onChange={setKind}
+          options={(["in", "out", "writeoff"] as const).map((k) => ({
+            value: k,
+            label: t(`wh.move.${k}`),
+          }))}
+        />
         <div className="space-y-2">
           {lines.map((l, i) => {
             const p = byId.get(l.productId);
