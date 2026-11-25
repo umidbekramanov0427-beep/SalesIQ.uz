@@ -436,7 +436,8 @@ export function FunnelSearchFilter({
   extra,
 }: {
   /** Module groups (the Ombor filter): presets, properties, their count and reset. */
-  extra?: { presets: ReactNode; properties: ReactNode; count: number; reset: () => void } | undefined;
+  extra?:
+    { presets: ReactNode; properties: ReactNode; count: number; reset: () => void } | undefined;
   value: LeadFilterState;
   onChange: (v: LeadFilterState) => void;
   date: DateFilterValue;

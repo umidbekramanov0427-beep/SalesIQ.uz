@@ -297,7 +297,7 @@ const IMPORT_COLS: [keyof ImportedProduct, RegExp][] = [
 ];
 
 const toNumber = (v: string | undefined) => {
-  const n = Number((v ?? "").replace(/[\s ]/g, "").replace(",", "."));
+  const n = Number((v ?? "").replace(/[\s\u00a0]/g, "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
 };
 
