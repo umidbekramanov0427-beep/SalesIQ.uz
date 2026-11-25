@@ -70,7 +70,7 @@ import {
   useNotificationsView,
 } from "@/hooks/use-crm-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { SalesPanel } from "@/components/layout/SalesPanel";
+import { SALES_PANEL_EVENT, SalesPanel } from "@/components/layout/SalesPanel";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -446,12 +446,37 @@ function FunnelsNavGroup({
   const [panel, setPanel] = useState(false);
   const panelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuOpen = useRef(false);
+  const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!panel) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPanel(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [panel]);
+  // The funnel's name card on the board opens the same panel (5CRM's
+  // «Sotuv»); opened by a click it stays until a click outside it.
+  const [pinned, setPinned] = useState(false);
+  useEffect(() => {
+    const open = () => {
+      if (panelTimer.current) clearTimeout(panelTimer.current);
+      setPinned(true);
+      setPanel(true);
+    };
+    window.addEventListener(SALES_PANEL_EVENT, open);
+    return () => window.removeEventListener(SALES_PANEL_EVENT, open);
+  }, []);
+  useEffect(() => {
+    if (!panel || !pinned) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuOpen.current) return;
+      const el = e.target as Element | null;
+      if (panelRef.current?.contains(el) || el?.closest("[data-sales-panel-trigger]")) return;
+      setPanel(false);
+      setPinned(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [panel, pinned]);
 
   if (collapsed) {
     // 5CRM's «Sotuv» panel: hovering the rail's Voronkalar opens the list of
@@ -465,7 +490,7 @@ function FunnelsNavGroup({
       panelTimer.current = setTimeout(() => {
         // A funnel's «⋯» menu portals outside the panel: keep the panel
         // while it is open.
-        if (!menuOpen.current) setPanel(false);
+        if (!menuOpen.current && !pinned) setPanel(false);
       }, 250);
     };
     return (
@@ -496,13 +521,17 @@ function FunnelsNavGroup({
         {panel &&
           createPortal(
             <div
+              ref={panelRef}
               onMouseEnter={enter}
               onMouseLeave={leave}
               className="amo-skin fixed bottom-0 left-[72px] top-0 z-[60] flex w-[290px] flex-col border-r border-border bg-card text-foreground shadow-[8px_0_24px_-12px_rgba(0,0,0,0.45)] phone:hidden"
             >
               <SalesPanel
                 {...(activeFunnel ? { activeFunnel } : {})}
-                onDone={() => setPanel(false)}
+                onDone={() => {
+                  setPanel(false);
+                  setPinned(false);
+                }}
                 onMenu={(o) => (menuOpen.current = o)}
               />
             </div>,

@@ -46,6 +46,9 @@ import { cn, describeError } from "@/lib/utils";
 // companies, files, all leads, refunds) and the archived funnels on an inner
 // screen. Setting funnels up is the company admin's; others only open them.
 
+/** Fired (on window) to open the «Sotuv» panel beside the rail. */
+export const SALES_PANEL_EVENT = "salesiq:sales-panel";
+
 export function SalesPanel({
   activeFunnel,
   onDone,

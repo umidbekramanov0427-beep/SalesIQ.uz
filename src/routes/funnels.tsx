@@ -99,6 +99,7 @@ import {
 } from "@/hooks/use-crm-data";
 import { FitText } from "@/components/ui/fit-text";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SALES_PANEL_EVENT } from "@/components/layout/SalesPanel";
 import {
   Check as CheckIcon,
   ChevronDown as ChevronDownIcon,
@@ -1706,6 +1707,14 @@ function FunnelPickerCard({ name }: { name: string }) {
       <PopoverTrigger asChild>
         <button
           type="button"
+          data-sales-panel-trigger
+          onClick={(e) => {
+            // Computers: the rail's «Sotuv» panel (funnels, add, contacts,
+            // companies, files, all leads, archive). Phones keep the list.
+            if (document.documentElement.classList.contains("phone")) return;
+            e.preventDefault();
+            window.dispatchEvent(new Event(SALES_PANEL_EVENT));
+          }}
           aria-label={t("funnels.pick")}
           className="group flex h-10 max-w-[300px] items-center gap-2.5 rounded-xl border border-border bg-background/40 pl-1.5 pr-3 shadow-sm transition-colors hover:border-primary/60 hover:bg-accent data-[state=open]:border-primary phone:max-w-[170px]"
         >
