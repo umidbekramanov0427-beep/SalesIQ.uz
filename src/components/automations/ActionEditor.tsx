@@ -1,4 +1,38 @@
-import { Plus, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  ArrowLeftRight,
+  BadgeCheck,
+  Bot,
+  Braces,
+  CalendarPlus,
+  CheckCheck,
+  CircleX,
+  CopyCheck,
+  Crown,
+  Eraser,
+  LayoutTemplate,
+  ListTree,
+  MessageSquare,
+  MessagesSquare,
+  PartyPopper,
+  PencilLine,
+  Plus,
+  ScanSearch,
+  Send,
+  Shuffle,
+  StickyNote,
+  Tag,
+  Timer,
+  Trash2,
+  Trophy,
+  Undo2,
+  UserCheck,
+  UserCog,
+  Waypoints,
+  Webhook,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { celebrate } from "@/components/team/TeamMoments";
 import {
   TASK_DUE,
@@ -50,6 +84,38 @@ const API_SOURCES = [
   "manager",
   "company",
 ] as const;
+
+/** The icon on each action's row (the same ones as in the trigger catalog). */
+const ACTION_ICON: Partial<Record<AutomationActionType, LucideIcon>> = {
+  send_message: MessageSquare,
+  create_task: CalendarPlus,
+  close_tasks: CheckCheck,
+  add_tag: Tag,
+  remove_tag: Eraser,
+  move_stage: ArrowLeftRight,
+  move_funnel: Waypoints,
+  assign_owner: UserCog,
+  previous_owner: UserCheck,
+  release_owner: Undo2,
+  distribute: Shuffle,
+  lead_owner: Crown,
+  start_salesbot: Bot,
+  close_won: Trophy,
+  close_lost: CircleX,
+  set_field: PencilLine,
+  add_note: StickyNote,
+  dedupe: CopyCheck,
+  webhook: Webhook,
+  api_post: Braces,
+  delay: Timer,
+  detect_phone: ScanSearch,
+  tg_chat_message: Send,
+  sale_congrats: PartyPopper,
+  auto_chat: MessagesSquare,
+  send_card: LayoutTemplate,
+  quality_check: BadgeCheck,
+  run_actions: ListTree,
+};
 
 export const inputCls =
   "h-9 w-full min-w-0 rounded-lg border border-border bg-background px-2.5 text-sm outline-none focus:border-primary/50";
@@ -228,6 +294,33 @@ export function DurationInput({
   );
 }
 
+/**
+ * 5CRM's select with its label inside the box («Kimga:* Lid mas'uli»,
+ * «Birlik:* soat», «Avtorizatsiya: Bearer token»). The select itself is bare.
+ */
+export function Inline({
+  label,
+  req,
+  children,
+}: {
+  label: string;
+  req?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label className="flex h-10 w-full min-w-0 items-center gap-2 rounded-[3px] border border-border bg-[var(--amo-quiet,var(--background))] pl-3 text-[13.5px] focus-within:border-primary/60">
+      <span className="shrink-0 text-muted-foreground">
+        {label}
+        {req && <span className="text-destructive">*</span>}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+/** The bare select inside <Inline>. */
+export const bareCls = "h-full min-w-0 flex-1 bg-transparent pr-2 text-foreground outline-none";
+
 /** A field label in 5CRM's way: the name, a red * when it is required. */
 function Lbl({ text, req }: { text: string; req?: boolean }) {
   return (
@@ -267,10 +360,13 @@ export function ActionEditor({
   options: ActionEditorOptions;
 }) {
   const { t } = useI18n();
+  const Icon = ACTION_ICON[action.type] ?? Zap;
   return (
-    <div className="space-y-2 rounded-xl border border-border bg-surface/50 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-subtle">
+    <div className="space-y-3">
+      {/* 5CRM: the action's own row -- icon, name, «← Boshqa amal». */}
+      <div className="flex h-10 items-center gap-2 rounded-[3px] bg-[var(--amo-head,var(--accent))] px-3">
+        <Icon className="h-4 w-4 shrink-0 text-primary" />
+        <span className="min-w-0 truncate text-[13.5px] font-semibold text-foreground">
           {t(`dp.action.${action.type}`)}
         </span>
         {/* 5CRM's «← Boshqa amal»: swap this step for another kind. */}
@@ -325,35 +421,48 @@ export function ActionEditor({
               className={inputCls}
             />
           )}
-          <textarea
-            value={action.text}
-            onChange={(e) => onChange({ ...action, text: e.target.value })}
-            rows={3}
-            placeholder={t("dp.messagePlaceholder")}
-            className={`${inputCls} h-auto py-2`}
-          />
+          <label className="block">
+            <Lbl text={action.channel === "sms" ? t("tk.smsText") : t("tk.msgText")} req />
+            <textarea
+              value={action.text}
+              onChange={(e) => onChange({ ...action, text: e.target.value })}
+              rows={3}
+              placeholder={t("dp.messagePlaceholder")}
+              className={`${inputCls} h-auto py-2`}
+            />
+          </label>
           <p className="text-[11px] text-subtle">{t("dp.placeholdersHint")}</p>
-          <input
-            value={action.mediaUrl ?? ""}
-            onChange={(e) => onChange({ ...action, mediaUrl: e.target.value })}
-            placeholder={t("tk.mediaUrl")}
-            className={inputCls}
-          />
-          {!!action.mediaUrl?.trim() && (
-            <select
-              value={action.mediaKind ?? ""}
-              onChange={(e) => {
-                const { mediaKind: _k, ...rest } = action;
-                const v = e.target.value as "photo" | "video" | "document" | "";
-                onChange(v ? { ...rest, mediaKind: v } : rest);
-              }}
-              className={inputCls}
-            >
-              <option value="">{t("tk.media.link")}</option>
-              <option value="photo">{t("tk.media.photo")}</option>
-              <option value="video">{t("tk.media.video")}</option>
-              <option value="document">{t("tk.media.document")}</option>
-            </select>
+          {action.channel !== "sms" && (
+            <>
+              <label className="block">
+                <Lbl text={t("tk.mediaLink")} />
+                <input
+                  value={action.mediaUrl ?? ""}
+                  onChange={(e) => onChange({ ...action, mediaUrl: e.target.value })}
+                  placeholder="https://… (ixtiyoriy)"
+                  className={inputCls}
+                />
+              </label>
+              {!!action.mediaUrl?.trim() && (
+                <Inline label={t("tk.mediaKind")}>
+                  <select
+                    data-bare
+                    value={action.mediaKind ?? ""}
+                    onChange={(e) => {
+                      const { mediaKind: _k, ...rest } = action;
+                      const v = e.target.value as "photo" | "video" | "document" | "";
+                      onChange(v ? { ...rest, mediaKind: v } : rest);
+                    }}
+                    className={bareCls}
+                  >
+                    <option value="">{t("tk.media.link")}</option>
+                    <option value="photo">{t("tk.media.photo")}</option>
+                    <option value="video">{t("tk.media.video")}</option>
+                    <option value="document">{t("tk.media.document")}</option>
+                  </select>
+                </Inline>
+              )}
+            </>
           )}
           <Check
             checked={!!action.once}
@@ -370,31 +479,54 @@ export function ActionEditor({
       )}
 
       {action.type === "create_task" && (
-        <div className="grid gap-2 sm:grid-cols-2">
-          <input
-            value={action.title}
-            onChange={(e) => onChange({ ...action, title: e.target.value })}
-            placeholder={t("dp.taskTitle")}
-            className={`${inputCls} sm:col-span-2`}
-          />
-          <select
-            value={action.assigneeId ?? ""}
-            onChange={(e) =>
-              onChange(
-                e.target.value
-                  ? { ...action, assigneeId: e.target.value }
-                  : (({ assigneeId: _omit, ...rest }) => rest)(action),
-              )
-            }
-            className={inputCls}
-          >
-            <option value="">{t("dp.taskAssigneeOwner")}</option>
-            {options.profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.full_name}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
+            <Lbl text={t("tk.taskText")} />
+            <input
+              value={action.title}
+              onChange={(e) => onChange({ ...action, title: e.target.value })}
+              placeholder={t("tk.taskTextPh")}
+              className={inputCls}
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <Lbl text={t("tk.note")} />
+            <textarea
+              value={action.description ?? ""}
+              onChange={(e) =>
+                onChange(
+                  e.target.value
+                    ? { ...action, description: e.target.value }
+                    : (({ description: _d, ...rest }) => rest)(action),
+                )
+              }
+              rows={3}
+              className={`${inputCls} h-auto py-2`}
+            />
+          </label>
+          <div className="sm:col-span-2">
+            <Inline label={t("tk.to") + ":"}>
+              <select
+                data-bare
+                value={action.assigneeId ?? ""}
+                onChange={(e) =>
+                  onChange(
+                    e.target.value
+                      ? { ...action, assigneeId: e.target.value }
+                      : (({ assigneeId: _omit, ...rest }) => rest)(action),
+                  )
+                }
+                className={bareCls}
+              >
+                <option value="">{t("tk.leadOwner")}</option>
+                {options.profiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name}
+                  </option>
+                ))}
+              </select>
+            </Inline>
+          </div>
           <select
             value={action.priority ?? "Normal"}
             onChange={(e) => onChange({ ...action, priority: e.target.value as Priority })}
@@ -501,23 +633,26 @@ export function ActionEditor({
       )}
 
       {action.type === "set_field" && (
-        <div className="grid gap-2 sm:grid-cols-2">
-          <select
-            value={action.field}
-            onChange={(e) => onChange({ ...action, field: e.target.value, value: "" })}
-            className={inputCls}
-          >
-            {BASE_FIELDS.map((f) => (
-              <option key={f} value={f}>
-                {t(`dp.field.${f}`)}
-              </option>
-            ))}
-            {options.customFields.map((f) => (
-              <option key={f.key} value={`custom:${f.key}`}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-3">
+          <Inline label={t("tk.field")} req>
+            <select
+              data-bare
+              value={action.field}
+              onChange={(e) => onChange({ ...action, field: e.target.value, value: "" })}
+              className={bareCls}
+            >
+              {BASE_FIELDS.map((f) => (
+                <option key={f} value={f}>
+                  {t(`dp.field.${f}`)}
+                </option>
+              ))}
+              {options.customFields.map((f) => (
+                <option key={f.key} value={`custom:${f.key}`}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </Inline>
           {action.field === "priority" ? (
             <select
               value={action.value}
@@ -609,7 +744,7 @@ export function ActionEditor({
 
       {action.type === "delay" && (
         <>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid gap-3">
             <label>
               <Lbl text={t("tk.wait.n")} req />
               <input
@@ -625,9 +760,9 @@ export function ActionEditor({
                 className={inputCls}
               />
             </label>
-            <label>
-              <Lbl text={t("tk.wait.unit")} req />
+            <Inline label={t("tk.wait.unit") + ":"} req>
               <select
+                data-bare
                 value={waitParts(action.minutes).unit}
                 onChange={(e) =>
                   onChange({
@@ -635,7 +770,7 @@ export function ActionEditor({
                     minutes: waitMinutes(waitParts(action.minutes).n, e.target.value as WaitUnit),
                   })
                 }
-                className={inputCls}
+                className={bareCls}
               >
                 {(["minute", "hour", "day"] as WaitUnit[]).map((u) => (
                   <option key={u} value={u}>
@@ -643,7 +778,7 @@ export function ActionEditor({
                   </option>
                 ))}
               </select>
-            </label>
+            </Inline>
           </div>
           <p className="text-[11px] text-subtle">{t("dp.delayActionHint")}</p>
         </>
@@ -853,13 +988,13 @@ export function ActionEditor({
       )}
 
       {action.type === "lead_owner" && (
-        <div className="grid gap-2 sm:grid-cols-2">
-          <label className="block">
-            <Lbl text={t("tk.mode")} req />
+        <div className="grid gap-3">
+          <Inline label={t("tk.mode") + ":"} req>
             <select
+              data-bare
               value={action.mode}
               onChange={(e) => onChange({ ...action, mode: e.target.value as typeof action.mode })}
-              className={inputCls}
+              className={bareCls}
             >
               {(["admin", "rop", "specific", "roundrobin"] as const).map((m) => (
                 <option key={m} value={m}>
@@ -867,7 +1002,7 @@ export function ActionEditor({
                 </option>
               ))}
             </select>
-          </label>
+          </Inline>
           {action.mode === "specific" && (
             <label className="block">
               <Lbl text={t("tk.operator")} req />
@@ -967,14 +1102,14 @@ export function ActionEditor({
       )}
 
       {action.type === "sale_congrats" && (
-        <div className="space-y-2">
-          <div className="grid gap-2 sm:grid-cols-3">
-            <label className="block">
-              <Lbl text={t("tk.to")} req />
+        <div className="space-y-3">
+          <div className="grid gap-3">
+            <Inline label={t("tk.to") + ":"} req>
               <select
+                data-bare
                 value={action.to}
                 onChange={(e) => onChange({ ...action, to: e.target.value as typeof action.to })}
-                className={inputCls}
+                className={bareCls}
               >
                 {(["owner", "rop", "both"] as const).map((v) => (
                   <option key={v} value={v}>
@@ -982,7 +1117,7 @@ export function ActionEditor({
                   </option>
                 ))}
               </select>
-            </label>
+            </Inline>
             <label className="block">
               <Lbl text={t("tk.lang")} req />
               <select
@@ -1018,7 +1153,34 @@ export function ActionEditor({
               className={`${inputCls} h-auto py-2`}
             />
           </label>
-          <p className="text-[11px] text-subtle">{"{ism} {mijoz} {summa} {bosqich}"}</p>
+          {/* 5CRM: tap a variable to add it; the card below shows the result. */}
+          <div className="flex flex-wrap gap-1.5">
+            {["{ism}", "{mijoz}", "{summa}", "{bosqich}"].map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() =>
+                  onChange({
+                    ...action,
+                    text: `${action.text}${action.text.endsWith(" ") || !action.text ? "" : " "}${v}`,
+                  })
+                }
+                className="rounded-full border border-border px-2.5 py-0.5 text-[12px] text-muted-foreground hover:border-primary hover:text-primary"
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 rounded-[3px] border border-border bg-[var(--amo-quiet,var(--background))] p-3 text-[12.5px] leading-snug text-foreground">
+            <PartyPopper className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>
+              {action.text
+                .replace(/\{ism\}/g, "Nodira")
+                .replace(/\{mijoz\}/g, "Aziz Karimov")
+                .replace(/\{summa\}/g, "1 200 000")
+                .replace(/\{bosqich\}/g, "Sotildi")}
+            </span>
+          </div>
           <button
             type="button"
             onClick={() =>
@@ -1138,7 +1300,7 @@ export function ActionEditor({
       )}
 
       {action.type === "api_post" && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label className="block">
             <Lbl text={t("tk.api.url")} req />
             <input
@@ -1148,21 +1310,21 @@ export function ActionEditor({
               className={inputCls}
             />
           </label>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <label className="block">
-              <Lbl text={t("tk.api.auth")} />
+          <div className="grid gap-3">
+            <Inline label={t("tk.api.auth") + ":"}>
               <select
+                data-bare
                 value={action.auth}
                 onChange={(e) =>
                   onChange({ ...action, auth: e.target.value as typeof action.auth })
                 }
-                className={inputCls}
+                className={bareCls}
               >
                 <option value="bearer">Bearer token</option>
                 <option value="x-api-key">X-API-Key</option>
                 <option value="none">{t("tk.api.noKey")}</option>
               </select>
-            </label>
+            </Inline>
             {action.auth !== "none" && (
               <label className="block">
                 <Lbl text={t("tk.api.key")} req />
@@ -1175,19 +1337,19 @@ export function ActionEditor({
                 />
               </label>
             )}
-            <label className="block">
-              <Lbl text={t("tk.api.format")} />
+            <Inline label={t("tk.api.format") + ":"}>
               <select
+                data-bare
                 value={action.format}
                 onChange={(e) =>
                   onChange({ ...action, format: e.target.value as typeof action.format })
                 }
-                className={inputCls}
+                className={bareCls}
               >
                 <option value="fields">{'{"fields":[{type, label, value}]}'}</option>
                 <option value="flat">{'{"type": "value"}'}</option>
               </select>
-            </label>
+            </Inline>
           </div>
           <Lbl text={t("tk.api.fields")} />
           <div className="space-y-1.5">

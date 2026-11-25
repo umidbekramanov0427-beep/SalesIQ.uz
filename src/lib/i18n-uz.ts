@@ -10817,6 +10817,19 @@ const uz: Record<string, string> = {
   "fn.stagesInFunnel": "Bosqichlarni voronka sozlamalaridagi bildirishnomalardan tanlang.",
   "fn.stagesHint": "Hech biri tanlanmasa — hamma bosqichlarda.",
   "fn.robot": "Avtomatik (robot) o'zgartirganda ham",
+  "tk.smsText": "SMS matni",
+  "tk.msgText": "Xabar matni",
+  "tk.mediaLink": "Media havolasi",
+  "tk.mediaKind": "Media turi:",
+  "tk.taskText": "Vazifa matni",
+  "tk.taskTextPh": "Masalan: Mijozga qayta qo'ng'iroq",
+  "tk.note": "Izoh",
+  "tk.leadOwner": "Lid mas'uli",
+  "tk.field": "Maydon:",
+  "tk.addAction": "Yana amal qo'shish",
+  "tk.notePh": "Bu trigger nima uchun kerak (ixtiyoriy)",
+  "tk.applyExisting": "Triggerni voronkaning joriy bosqichidagi barcha lidlarga qo'llash",
+  "tk.addNote": "Izoh yozish",
 };
 
 export default uz;
