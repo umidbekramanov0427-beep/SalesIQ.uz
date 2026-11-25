@@ -32,6 +32,7 @@ import {
   XCircle,
   type LucideIcon,
   FileText,
+  Hourglass,
   Workflow,
   Lock,
 } from "lucide-react";
@@ -325,158 +326,53 @@ function HeatBar({ hot, warm, cold }: { hot: number; warm: number; cold: number 
 }
 
 function FunnelList({
-  funnels: allFunnels,
+  funnels: _funnels,
   isLoading,
 }: {
   funnels: FunnelStat[];
   isLoading: boolean;
 }) {
+  // No page of funnel cards any more (5CRM / amoCRM): «Voronkalar» opens the
+  // funnel used last and the rail's panel switches funnels and opens the
+  // sales directory. What is left here is that directory -- contacts,
+  // companies, files -- each opened from the panel, with no tab row.
   const { t } = useI18n();
   const { sec } = Route.useSearch();
-  // 5CRM's archived funnels: old launches hidden from the list.
-  const { data: pipelines = [] } = usePipelines();
-  const archived = new Set(
-    pipelines.filter((p) => (p as { archived_at?: string | null }).archived_at).map((p) => p.name),
-  );
-  const [showArchive, setShowArchive] = useState(false);
-  const funnels = allFunnels.filter((f) => archived.has(f.name) === showArchive);
   const { user } = useAuth();
-  // Funnel setup is the company's: super admins (and the platform owner).
   const canSetUp = user?.role === "super_admin" || user?.role === "platform_owner";
-  const { format } = useCurrency();
+  const SEC = {
+    contacts: [t("dir.tab.contacts"), UserRound],
+    companies: [t("dir.tab.companies"), Building2],
+    files: [t("dir.tab.files"), FileText],
+  } as const;
 
-  return (
-    <>
-      <PageHeader
-        icon={Workflow}
-        tone="violet"
-        title={t("funnels.title")}
-        description={t("funnels.navigatorDesc")}
-        actions={
-          canSetUp ? (
-            <Link
-              to="/funnels/settings"
-              className="inline-flex h-10 items-center gap-2 rounded-xl ctl-soft px-4 text-sm font-semibold text-foreground"
-            >
-              <Settings2 className="h-4 w-4 text-primary" /> {t("funnels.settings")}
-            </Link>
-          ) : undefined
-        }
-      />
-
-      {/* 5CRM "Sotuv": funnels, contacts, companies, files -- one place. */}
-      <nav className="phone-tabs mb-5 flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1">
-        {(
-          [
-            [undefined, t("dir.tab.funnels"), Workflow],
-            ["contacts", t("dir.tab.contacts"), UserRound],
-            ["companies", t("dir.tab.companies"), Building2],
-            ["files", t("dir.tab.files"), FileText],
-          ] as const
-        ).map(([key, label, Icon]) => (
-          <Link
-            key={key ?? "funnels"}
-            to="/funnels"
-            search={key ? { sec: key } : {}}
-            className={cn(
-              "inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold transition-colors",
-              sec === key
-                ? "bg-primary/12 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
-          >
-            <Icon className="h-4 w-4" /> {label}
-          </Link>
-        ))}
-        <Link
-          to="/crm/leads"
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <List className="h-4 w-4" /> {t("dir.tab.allLeads")}
-        </Link>
-        {/* Pul qaytarish opens as its own panel, with a way back here. */}
-        <Link
-          to="/refunds"
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-300"
-        >
-          <Undo2 className="h-4 w-4" /> {t("refund.title")}
-        </Link>
-        {!sec && archived.size > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowArchive((v) => !v)}
-            className={cn(
-              "ml-auto inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-3.5 text-[13px] font-semibold transition-colors",
-              showArchive
-                ? "bg-amber-500/12 text-amber-700 dark:text-amber-300"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
-          >
-            <Archive className="h-4 w-4" /> {t("dir.tab.archive", { n: archived.size })}
-          </button>
-        )}
-      </nav>
-
-      {sec === "contacts" ? (
-        <ContactsTab />
-      ) : sec === "companies" ? (
-        <CompaniesTab />
-      ) : sec === "files" ? (
-        <FilesTab />
-      ) : (
-        <>
-          {isLoading && (
-            <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
-            </div>
-          )}
-
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {funnels.map((f) => (
+  if (!sec)
+    return (
+      <div className="grid min-h-[50vh] place-items-center text-center">
+        {isLoading ? (
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        ) : (
+          <div className="max-w-sm space-y-3">
+            <Workflow className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="text-[15px] font-semibold text-foreground">{t("fs.noFunnels")}</p>
+            {canSetUp && (
               <Link
-                key={f.name}
-                to="/funnels"
-                search={{ funnel: f.name }}
-                className="surface-card group relative block overflow-hidden p-5 transition-all hover:border-primary/30 hover:shadow-elevated"
+                to="/funnels/settings"
+                className="ctl-lit inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold"
               >
-                <div className="flex items-center justify-between gap-2">
-                  {/* This list is the CRM's own funnels only (useFunnelListStats);
-                  amoCRM pipelines live in the analytics pages. */}
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">
-                    <Workflow className="h-3 w-3" /> CRM
-                  </span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-subtle transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                </div>
-
-                <div className="mt-3 flex items-end justify-between gap-3">
-                  <p className="min-w-0 truncate text-base font-bold text-foreground">{f.name}</p>
-                  <div className="min-w-0 max-w-[50%] shrink-0 text-right">
-                    <p className="text-2xl font-extrabold leading-none text-foreground">
-                      <FitText>{f.count}</FitText>
-                    </p>
-                    <p className="mt-1 text-[11px] text-subtle">{t("dash.hero.leads")}</p>
-                  </div>
-                </div>
-
-                <HeatBar hot={f.hot} warm={f.warm} cold={f.cold} />
-
-                <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
-                  <span className="font-semibold text-foreground">{format(f.value)}</span>
-                  <span className="font-semibold text-success">
-                    {f.conversion}% {t("funnels.conversion")}
-                  </span>
-                </div>
+                <Settings2 className="h-4 w-4" /> {t("funnels.settings")}
               </Link>
-            ))}
-
-            {funnels.length === 0 && !isLoading && (
-              <p className="col-span-full py-10 text-center text-sm text-muted-foreground">
-                {t("funnels.noLeads")}
-              </p>
             )}
           </div>
-        </>
-      )}
+        )}
+      </div>
+    );
+
+  const [title, Icon] = SEC[sec];
+  return (
+    <>
+      <PageHeader icon={Icon} tone="violet" title={title} />
+      {sec === "contacts" ? <ContactsTab /> : sec === "companies" ? <CompaniesTab /> : <FilesTab />}
     </>
   );
 }
@@ -1347,6 +1243,7 @@ function FunnelDetail({
               <Plus className="h-4 w-4" />
               <span className="hidden xl:inline">{t("newLead.button")}</span>
             </button>
+            <TrialChip />
           </div>
         </div>
         {selecting && (
@@ -1775,5 +1672,30 @@ function FunnelDetail({
         stages={funnelStages}
       />
     </div>
+  );
+}
+
+/**
+ * 5CRM's trial reminder at the top right of the funnel: how many days the
+ * free trial has left, «Faollashtirish» opens Hisob va to'lov.
+ */
+function TrialChip() {
+  const { t } = useI18n();
+  const { user } = useAuth();
+  if (!user?.orgIsTrial || !user.orgTrialEndsAt) return null;
+  const left = Math.max(
+    0,
+    Math.ceil((new Date(user.orgTrialEndsAt).getTime() - Date.now()) / 86_400_000),
+  );
+  return (
+    <Link
+      to="/billing"
+      className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 text-[12.5px] font-semibold text-primary transition-colors hover:bg-primary/15 phone:hidden"
+    >
+      <Hourglass className="h-4 w-4" />
+      <span className="hidden 2xl:inline">{t("trialChip.left", { n: left })}</span>
+      <span className="2xl:hidden">{left}</span>
+      <span className="underline underline-offset-2">{t("trialChip.activate")}</span>
+    </Link>
   );
 }

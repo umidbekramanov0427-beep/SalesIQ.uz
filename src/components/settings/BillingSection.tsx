@@ -1,5 +1,11 @@
 import { useState, type ReactNode } from "react";
 import {
+  BILLING_MONTHS,
+  bonusMonths,
+  periodAmount,
+  type BillingMonths,
+} from "@/lib/billing-periods";
+import {
   CalendarClock,
   CheckCircle2,
   ExternalLink,
@@ -90,6 +96,7 @@ export function BillingSection() {
   const access = useOrgAccess();
   const [sending, setSending] = useState(false);
   const [payingWith, setPayingWith] = useState<SubscriptionPaymentProvider | null>(null);
+  const [months, setMonths] = useState<BillingMonths>(1);
 
   if (!user?.organizationId) {
     return (
@@ -129,7 +136,7 @@ export function BillingSection() {
   async function payWith(provider: SubscriptionPaymentProvider) {
     setPayingWith(provider);
     try {
-      const { payUrl } = await createPayment.mutateAsync(provider);
+      const { payUrl } = await createPayment.mutateAsync({ provider, months });
       window.open(payUrl, "_blank", "noreferrer");
     } catch (err) {
       toast.error(describeError(err, t("trial.paymentFailed")));
@@ -266,72 +273,150 @@ export function BillingSection() {
           title={t("trial.payTitle")}
           info={t("trial.payInfo")}
         >
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3.5">
-            <p className="text-sm text-muted-foreground">
-              {t("trial.subscriptionPrice")}:{" "}
-              <span className="font-semibold text-foreground">
-                {formatCurrency(billingStatus!.priceUzs)}
-              </span>
-              {billingStatus!.extraSeats > 0 && (
-                <span className="ml-1.5 text-xs text-subtle">
-                  ({t("trial.extraSeatsIncluded", { count: String(billingStatus!.extraSeats) })})
-                </span>
-              )}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {billingStatus!.paymeConnected && (
-                <button
-                  type="button"
-                  onClick={() => void payWith("payme")}
-                  disabled={payingWith !== null}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  {payingWith === "payme" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Wallet className="h-4 w-4" />
-                  )}
-                  Payme
-                </button>
-              )}
-              {billingStatus!.clickConnected && (
-                <button
-                  type="button"
-                  onClick={() => void payWith("click")}
-                  disabled={payingWith !== null}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  {payingWith === "click" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Wallet className="h-4 w-4" />
-                  )}
-                  Click
-                </button>
+          {/* 5CRM's «Hisob va to'lov»: how long to pay for on the left, the
+              price worked out on the right, then the provider. */}
+          <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+            <div className="space-y-4">
+              <div>
+                <p className="mb-2 text-[13px] font-semibold text-foreground">
+                  {t("bill.howLong")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {BILLING_MONTHS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      aria-pressed={months === m}
+                      onClick={() => setMonths(m)}
+                      className={cn(
+                        "inline-flex h-10 items-center gap-1.5 rounded-xl border px-4 text-[13.5px] font-semibold transition-colors",
+                        months === m
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:bg-accent",
+                      )}
+                    >
+                      {t("bill.months", { n: m })}
+                      {bonusMonths(m) > 0 && (
+                        <span
+                          className={cn(
+                            "rounded-full px-1.5 text-[11px] font-bold",
+                            months === m ? "bg-white/20" : "text-success",
+                          )}
+                        >
+                          +{bonusMonths(m)}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-surface p-4">
+                <p className="text-[12.5px] text-muted-foreground">
+                  {t("bill.totalFor", { n: months })} ·{" "}
+                  {user.orgPlan ? PLAN_LABELS[normalizePlan(user.orgPlan)] : "—"} ·{" "}
+                  {t("bill.people", { n: seats })}
+                </p>
+                <p className="mt-1 text-[34px] font-bold leading-tight tabular-nums text-foreground">
+                  {formatCurrency(periodAmount(billingStatus!.priceUzs, months))}
+                </p>
+                <p className="text-[12.5px] text-muted-foreground">
+                  {t("bill.perMonth", { sum: formatCurrency(billingStatus!.priceUzs) })}
+                  {bonusMonths(months) > 0 && ` · ${t("bill.bonus", { n: bonusMonths(months) })}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <p className="text-[14px] font-semibold text-foreground">{t("bill.calc")}</p>
+              <dl className="mt-3 space-y-2 text-[13px]">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">{t("bill.planMonthly")}</dt>
+                  <dd className="tabular-nums text-foreground">
+                    {formatCurrency(
+                      billingStatus!.priceUzs -
+                        billingStatus!.extraSeats * billingStatus!.extraSeatPriceUzs,
+                    )}
+                  </dd>
+                </div>
+                {billingStatus!.extraSeats > 0 && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">
+                      {t("bill.extraSeats", { n: billingStatus!.extraSeats })}
+                    </dt>
+                    <dd className="tabular-nums text-foreground">
+                      {formatCurrency(billingStatus!.extraSeats * billingStatus!.extraSeatPriceUzs)}
+                    </dd>
+                  </div>
+                )}
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">{t("bill.monthsPaid")}</dt>
+                  <dd className="tabular-nums text-foreground">× {months}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">{t("bill.free")}</dt>
+                  <dd className="tabular-nums text-success">
+                    {bonusMonths(months) > 0 ? `+${bonusMonths(months)}` : "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3 border-t border-border pt-2 text-[14px] font-semibold">
+                  <dt className="text-foreground">{t("bill.toPay")}</dt>
+                  <dd className="tabular-nums text-foreground">
+                    {formatCurrency(periodAmount(billingStatus!.priceUzs, months))}
+                  </dd>
+                </div>
+              </dl>
+              <div className="mt-4 grid gap-2">
+                {billingStatus!.paymeConnected && (
+                  <button
+                    type="button"
+                    onClick={() => void payWith("payme")}
+                    disabled={payingWith !== null}
+                    className="ctl-lit inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold disabled:opacity-60"
+                  >
+                    {payingWith === "payme" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wallet className="h-4 w-4" />
+                    )}
+                    {t("bill.buyWith", { p: "Payme" })}
+                  </button>
+                )}
+                {billingStatus!.clickConnected && (
+                  <button
+                    type="button"
+                    onClick={() => void payWith("click")}
+                    disabled={payingWith !== null}
+                    className="ctl-lit inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold disabled:opacity-60"
+                  >
+                    {payingWith === "click" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wallet className="h-4 w-4" />
+                    )}
+                    {t("bill.buyWith", { p: "Click" })}
+                  </button>
+                )}
+                {pendingRequest ? (
+                  <p className="flex items-center justify-center gap-2 text-[12.5px] font-medium text-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    {t("trial.requestPending")}
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void sendRequest()}
+                    disabled={sending}
+                    className="ctl-soft inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-[13px] font-semibold disabled:opacity-60"
+                  >
+                    {sending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {t("bill.legal")}
+                  </button>
+                )}
+              </div>
+              {pendingPayment && (
+                <p className="mt-2 text-xs text-subtle">{t("trial.paymentPending")}</p>
               )}
             </div>
-          </div>
-          {pendingPayment && (
-            <p className="mt-2 text-xs text-subtle">{t("trial.paymentPending")}</p>
-          )}
-
-          <div className="mt-3 flex items-center gap-2">
-            {pendingRequest ? (
-              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                {t("trial.requestPending")}
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={() => void sendRequest()}
-                disabled={sending}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-60"
-              >
-                {sending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("trial.sendRequest")}
-              </button>
-            )}
           </div>
         </SectionCard>
       )}

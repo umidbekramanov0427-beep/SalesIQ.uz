@@ -6922,6 +6922,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           id: string;
+          months: number;
           organization_id: string;
           paid_at: string | null;
           pay_url: string;
@@ -6937,6 +6938,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           id?: string;
+          months?: number;
           organization_id: string;
           paid_at?: string | null;
           pay_url?: string;
@@ -6952,6 +6954,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           id?: string;
+          months?: number;
           organization_id?: string;
           paid_at?: string | null;
           pay_url?: string;

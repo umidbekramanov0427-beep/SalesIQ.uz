@@ -473,7 +473,12 @@ function FunnelsNavGroup({
         <div onMouseEnter={enter} onMouseLeave={leave}>
           <Link
             to={item.to}
-            onClick={() => setPanel(false)}
+            // A click opens the funnel used last (funnels.tsx) and keeps the
+            // panel open, so the next step can be picked from it.
+            onClick={() => {
+              if (panelTimer.current) clearTimeout(panelTimer.current);
+              setPanel(true);
+            }}
             className={cn(
               "group flex items-center transition-colors duration-150",
               RAIL_ITEM,

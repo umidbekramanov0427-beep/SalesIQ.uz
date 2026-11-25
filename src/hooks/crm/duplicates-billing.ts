@@ -596,11 +596,12 @@ export function useCreateSubscriptionPayment() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (
-      provider: SubscriptionPaymentProvider,
+      arg: SubscriptionPaymentProvider | { provider: SubscriptionPaymentProvider; months: number },
     ): Promise<{ id: string; payUrl: string }> => {
+      const body = typeof arg === "string" ? { provider: arg } : arg;
       const res = await apiFetch("/subscription-payments/create", {
         method: "POST",
-        body: JSON.stringify({ provider }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Could not create the payment link.");

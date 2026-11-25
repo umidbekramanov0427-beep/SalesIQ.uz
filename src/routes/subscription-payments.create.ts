@@ -5,7 +5,7 @@ import {
   type SubscriptionPaymentProvider,
 } from "@/lib/subscription-billing/billing-data.server";
 
-type Body = { provider?: unknown };
+type Body = { provider?: unknown; months?: unknown };
 
 const PROVIDERS: SubscriptionPaymentProvider[] = ["payme", "click"];
 
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/subscription-payments/create")({
             caller.organizationId,
             caller.id,
             provider,
+            typeof body.months === "number" ? body.months : 1,
           );
           return Response.json(result);
         } catch (err) {

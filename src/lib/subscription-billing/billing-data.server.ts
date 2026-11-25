@@ -7,6 +7,7 @@ import { buildPaymeCheckoutUrl } from "./payme.server";
 import { buildClickCheckoutUrl } from "./click.server";
 import { rewardReferral } from "@/lib/referral.server";
 import { effectivePriceUzs, normalizePlan, type Plan } from "@/lib/plan-gating";
+import { isBillingMonths, periodAmount, periodDays } from "@/lib/billing-periods";
 
 export type SubscriptionPaymentProvider = "payme" | "click";
 
@@ -156,7 +157,9 @@ export async function createSubscriptionPaymentLink(
   organizationId: string,
   createdBy: string,
   provider: SubscriptionPaymentProvider,
+  months = 1,
 ): Promise<{ id: string; payUrl: string }> {
+  if (!isBillingMonths(months)) throw new Error("Muddat noto'g'ri tanlangan.");
   const [{ planPrices, extraSeatPriceUzs }, { data: org }] = await Promise.all([
     getPlanPrices(),
     supabaseAdmin
@@ -165,8 +168,14 @@ export async function createSubscriptionPaymentLink(
       .eq("id", organizationId)
       .maybeSingle(),
   ]);
-  const amount = effectivePriceUzs(org?.plan, org?.extra_seats ?? 0, planPrices, extraSeatPriceUzs);
-  if (!amount || amount <= 0) throw new Error("Obuna narxi hali belgilanmagan.");
+  const monthly = effectivePriceUzs(
+    org?.plan,
+    org?.extra_seats ?? 0,
+    planPrices,
+    extraSeatPriceUzs,
+  );
+  if (!monthly || monthly <= 0) throw new Error("Obuna narxi hali belgilanmagan.");
+  const amount = periodAmount(monthly, months);
 
   const { data: creds } = await supabaseAdmin
     .from("platform_payment_credentials")
@@ -181,6 +190,19 @@ export async function createSubscriptionPaymentLink(
     .select("id")
     .single();
   if (error) throw error;
+  // Several months in one payment: the months must be on the row, or the
+  // webhook would extend by one month only -- so without the column
+  // (20270203 not run yet) such a payment is not offered at all.
+  if (months > 1) {
+    const { error: monthsError } = await supabaseAdmin
+      .from("platform_subscription_payments")
+      .update({ months } as never)
+      .eq("id", row.id);
+    if (monthsError) {
+      await supabaseAdmin.from("platform_subscription_payments").delete().eq("id", row.id);
+      throw new Error("Bir necha oylik to'lov hali yoqilmagan — hozircha 1 oyga to'lang.");
+    }
+  }
   // The plan it pays for, printed on its documents (column arrives with
   // 20261129070000_billing_documents.sql; before that this just fails).
   await supabaseAdmin
@@ -220,10 +242,21 @@ export async function reactivateOrgAfterPayment(
     .eq("id", organizationId)
     .maybeSingle();
 
+  // The months this payment bought (20270203); one month when unknown.
+  let days = RENEWAL_DAYS;
+  if (payment) {
+    const { data: paid } = await supabaseAdmin
+      .from("platform_subscription_payments")
+      .select("months")
+      .eq("id", payment.id)
+      .maybeSingle();
+    const months = (paid as { months?: number } | null)?.months;
+    if (typeof months === "number") days = periodDays(months);
+  }
   const now = Date.now();
   const currentEnd = org?.trial_ends_at ? new Date(org.trial_ends_at).getTime() : now;
   const base = Math.max(now, currentEnd);
-  const newEnd = new Date(base + RENEWAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const newEnd = new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
 
   await supabaseAdmin
     .from("organizations")
