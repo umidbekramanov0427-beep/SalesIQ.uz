@@ -674,6 +674,9 @@ body.funnel-skin [data-radix-popper-content-wrapper] {
   --amo-feed: #e6edf5;
   --amo-box: #ffffff;
   --amo-box-line: #c3d3e3;
+  --amo-card: #ffffff;
+  --amo-card-line: #c8d4df;
+  --amo-due: #d97706;
   --amo-quiet: #e9f0f7;
   --amo-quiet-line: #b6c8da;
   --amo-group-line: #bccee0;
@@ -719,6 +722,9 @@ body.funnel-skin [data-radix-popper-content-wrapper] {
   --amo-feed: #0e2330;
   --amo-box: #153145;
   --amo-box-line: #36546c;
+  --amo-card: #153042;
+  --amo-card-line: #4b6176;
+  --amo-due: #ddb348;
   --amo-quiet: #0b2131;
   --amo-quiet-line: #46667f;
   --amo-group-line: #415c70;

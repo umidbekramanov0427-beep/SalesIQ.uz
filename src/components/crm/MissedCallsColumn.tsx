@@ -24,7 +24,7 @@ export function MissedCallsColumn({
   if (items.length === 0) return null;
   if (part === "head")
     return (
-      <header className="w-[86vw] max-w-[320px] shrink-0 px-1 pb-2 pt-1 text-center sm:w-[320px]">
+      <header className="w-[86vw] max-w-[280px] shrink-0 px-1 pb-2 pt-1 text-center sm:w-[280px]">
         <h2 className="truncate text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
           {t("missedCol.title")}
         </h2>
@@ -35,8 +35,8 @@ export function MissedCallsColumn({
       </header>
     );
   return (
-    <section className="flex w-[86vw] max-w-[320px] shrink-0 flex-col sm:w-[320px]">
-      <div className="flex-1 space-y-1.5 pb-2">
+    <section className="flex w-[86vw] max-w-[280px] shrink-0 flex-col sm:w-[280px]">
+      <div className="flex-1 space-y-[5px] pb-2">
         {items.map((c) => (
           <article
             key={c.id}

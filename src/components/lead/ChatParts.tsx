@@ -44,13 +44,12 @@ export function ClientAvatar({
       draggable={false}
     />
   ) : blank ? (
-    <span
-      className={cn(
-        "grid shrink-0 place-items-center rounded-full border border-border bg-foreground/[0.05] text-foreground/30",
-        className,
-      )}
-    >
-      <UserRound className="h-1/2 w-1/2" strokeWidth={1.75} />
+    // amoCRM's empty photo: a light grey disc with a white silhouette.
+    <span className={cn("shrink-0 overflow-hidden rounded-full bg-[#d3d6da]", className)}>
+      <svg viewBox="0 0 32 32" aria-hidden className="h-full w-full">
+        <circle cx="16" cy="12.5" r="5.6" fill="#fff" />
+        <path d="M5.5 29c0-6.4 4.7-10.3 10.5-10.3S26.5 22.6 26.5 29z" fill="#fff" />
+      </svg>
     </span>
   ) : (
     <span

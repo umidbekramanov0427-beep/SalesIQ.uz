@@ -383,7 +383,7 @@ export function PipelineBoard({
             cards pass under it unseen and it moves with them sideways. */}
         <div
           className={cn(
-            "sticky top-0 z-[8] flex min-w-max gap-4 bg-background pt-1.5",
+            "sticky top-0 z-[8] flex min-w-max gap-[10px] bg-background pt-1.5",
             selection && "pl-1.5",
           )}
         >
@@ -392,7 +392,7 @@ export function PipelineBoard({
             <div
               key={s.id}
               {...dropProps(s.id)}
-              className={cn("w-[86vw] max-w-[320px] shrink-0 rounded-xl sm:w-[320px]")}
+              className="w-[86vw] max-w-[280px] shrink-0 sm:w-[280px]"
             >
               <header className="group/col relative px-1 pb-2 pt-1 text-center">
                 {selection && items.length > 0 && (
@@ -409,7 +409,7 @@ export function PipelineBoard({
                     className="absolute -left-1.5 -top-1.5 z-10"
                   />
                 )}
-                <h2 className="truncate text-[13px] font-bold uppercase tracking-[0.04em] text-foreground">
+                <h2 className="truncate text-[12px] font-bold uppercase tracking-[0.07em] text-foreground">
                   {s.name}
                 </h2>
                 <p className="mt-0.5 text-[12px] tabular-nums text-muted-foreground">
@@ -435,7 +435,9 @@ export function PipelineBoard({
             </div>
           ))}
         </div>
-        <div className={cn("flex min-w-max gap-4 pb-14 pt-1 phone:pb-4", selection && "pl-1.5")}>
+        <div
+          className={cn("flex min-w-max gap-[10px] pb-14 pt-1 phone:pb-4", selection && "pl-1.5")}
+        >
           {leading}
           {cols.map(({ s, items }) => {
             return (
@@ -447,10 +449,10 @@ export function PipelineBoard({
                 className={cn(
                   // No box per stage: like amoCRM, every column sits on the one
                   // page background, a header with a colored line over its cards.
-                  "group/stage flex w-[86vw] max-w-[320px] shrink-0 flex-col rounded-xl sm:w-[320px]",
+                  "group/stage flex w-[86vw] max-w-[280px] shrink-0 flex-col sm:w-[280px]",
                 )}
               >
-                <div className="flex-1 space-y-1.5 pb-2">
+                <div className="flex-1 space-y-[5px] pb-2">
                   {canCreateDeals && !selecting && <StageQuickAdd stageId={s.id} funnel={funnel} />}
                   {items.map((l) => {
                     const color = colorRules.length ? leadColor(l, colorRules, funnel, now) : null;
@@ -475,7 +477,8 @@ export function PipelineBoard({
                               })
                         }
                         className={cn(
-                          "group relative cursor-pointer rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] shadow-[0_1px_1px_rgba(16,24,40,0.04)] transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(16,24,40,0.08)] dark:border-white/[0.1] dark:bg-[color-mix(in_oklab,var(--card),white_5%)]",
+                          // amoCRM's card: a flat box with a 1px line, 3px corners.
+                          "group relative cursor-pointer rounded-[3px] border border-[color:var(--amo-card-line)] bg-[var(--amo-card)] pb-1.5 pl-[5px] pr-2 pt-1.5 text-[13px] transition-colors hover:border-primary/60",
                           canMoveDeals && "active:cursor-grabbing",
                           dragged === l.id && "opacity-40",
                           selection?.ids.has(l.id) &&

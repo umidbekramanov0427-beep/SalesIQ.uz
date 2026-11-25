@@ -230,7 +230,7 @@ export function KanbanLeadCard({
   const payDue = debt > 0 || !l.paidAmount ? nextPaymentState(l.nextPaymentDate, new Date()) : null;
   // Up to two lines: a long name is never cut mid-word.
   const titleClass =
-    "min-w-0 line-clamp-2 break-words text-[14px] font-semibold leading-[19px] text-primary";
+    "min-w-0 line-clamp-2 break-words text-[14px] font-normal leading-4 text-primary";
   const TopIcon = layout.top === "owner" ? UserRound : (FIELD_ICON[layout.top] ?? UserRound);
   const hasChips = tags.length > 0 || !!waiting || !!l.stream || debt > 0 || !!payDue;
   const lineIsPhone = layout.line === "phone" || layout.line === "altPhone";
@@ -242,21 +242,21 @@ export function KanbanLeadCard({
   // created time; the client's name (and the amount); the phone and
   // Telegram; then the chips and the task marker.
   return (
-    <div className="flex min-w-0 gap-2.5">
+    <div className="flex min-w-0 gap-[5px]">
       {layout.showProfile && (
         <ClientAvatar
           leadId={l.id}
           name={l.contactName || l.name}
           hasPhoto={!preview && !!chat?.hasPhoto}
           blank
-          className="h-9 w-9"
+          className="h-[33px] w-[33px]"
         />
       )}
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-1.5 text-[12px] leading-4 text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
           {owner ? (
-            <span className="flex min-w-0 items-center gap-1 font-medium text-foreground/75">
-              <TopIcon className="h-3 w-3 shrink-0 text-subtle" />
+            <span className="flex min-w-0 items-center gap-1 text-foreground">
+              {layout.top !== "owner" && <TopIcon className="h-3 w-3 shrink-0 text-subtle" />}
               <span className="truncate">{owner}</span>
             </span>
           ) : (
@@ -297,7 +297,7 @@ export function KanbanLeadCard({
         </div>
 
         {/* 2: the client's name, and the amount on its right. */}
-        <div className="mt-0.5 flex min-w-0 items-baseline gap-2">
+        <div className="flex min-w-0 items-baseline gap-2">
           {preview ? (
             <p className={cn(titleClass, "block flex-1")}>{title}</p>
           ) : (
@@ -311,23 +311,20 @@ export function KanbanLeadCard({
               {title}
             </Link>
           )}
-          {footer && footerIsMoney && (
-            <span className="shrink-0 text-[12px] font-semibold tabular-nums text-foreground/80">
-              {footer}
-            </span>
-          )}
         </div>
 
         {/* 3: how to reach the client -- the phone and Telegram, each whole;
             when both don't fit on one line Telegram goes to the next. */}
         {(line || tgShown) && (
-          <div className="mt-px flex min-w-0 flex-wrap items-center gap-x-2.5 text-[12.5px] leading-[18px] tabular-nums text-foreground/85">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 text-[13px] leading-4 tabular-nums text-foreground">
             {line && (
               <span className="flex min-w-0 items-center gap-1">
-                {LineIcon && <LineIcon className="h-3.5 w-3.5 shrink-0 text-subtle" />}
+                {LineIcon && !lineIsPhone && (
+                  <LineIcon className="h-3.5 w-3.5 shrink-0 text-subtle" />
+                )}
                 <span className="break-all">{line}</span>
                 {!preview && lineIsPhone && (
-                  <CopyButton value={line} className="invisible h-5 w-5 group-hover:visible" />
+                  <CopyButton value={line} className="invisible h-4 w-4 group-hover:visible" />
                 )}
               </span>
             )}
@@ -352,7 +349,7 @@ export function KanbanLeadCard({
           </div>
         )}
         {second && (
-          <p className="flex min-w-0 items-center gap-1 text-[12px] leading-[17px] text-muted-foreground">
+          <p className="flex min-w-0 items-center gap-1 text-[12px] leading-4 text-muted-foreground">
             <span className="shrink-0">{cardFieldLabel(layout.second, ctx)}:</span>
             <span className="break-words text-foreground/75">{second}</span>
           </p>
@@ -361,13 +358,20 @@ export function KanbanLeadCard({
         {/* 4: the state -- the other footer field, patok, payment, the first
             tag (+N) and "the client wrote" on the left, the task marker on
             the right; each whole, the marker moving down when they don't fit. */}
-        {(hasChips || (footer && !footerIsMoney) || layout.showTask) && (
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[12px] leading-[18px]">
+        {(hasChips || footer || layout.showTask) && (
+          <div className="flex min-h-4 min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[12px] leading-4">
             <div className="flex min-w-0 flex-wrap items-center gap-1">
+              {/* amoCRM: the sum in grey, then a small grey dot. */}
+              {footer && footerIsMoney && (
+                <span className="shrink-0 tabular-nums text-muted-foreground">{footer}</span>
+              )}
               {footer && !footerIsMoney && (
                 <span className="min-w-0 break-words text-muted-foreground">
                   <IconLine id={layout.footer}>{footer}</IconLine>
                 </span>
+              )}
+              {!hasChips && (
+                <span className="mx-1 h-[5px] w-[5px] shrink-0 rounded-full bg-[#66747d]" />
               )}
               {l.stream && (
                 <span
@@ -438,23 +442,23 @@ export function KanbanLeadCard({
                       : t("pipeline.noTasks")
                 }
                 className={cn(
-                  "ml-auto inline-flex shrink-0 items-center gap-1 font-semibold tabular-nums",
+                  "ml-auto inline-flex shrink-0 items-center gap-1 tabular-nums",
                   task === "overdue"
                     ? "text-red-600 dark:text-red-400"
                     : task === "planned"
                       ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-amber-600 dark:text-amber-400",
+                      : "text-[var(--amo-due,#d97706)]",
                 )}
               >
                 {task === "none" ? t("pipeline.noTasks") : stamp(l.nextFollowUpIso!, t)}
                 <span
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full",
+                    "h-[5px] w-[5px] rounded-full",
                     task === "overdue"
                       ? "bg-red-500"
                       : task === "planned"
                         ? "bg-emerald-500"
-                        : "bg-amber-500",
+                        : "bg-[var(--amo-due,#d97706)]",
                   )}
                 />
               </span>
