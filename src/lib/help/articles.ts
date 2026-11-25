@@ -1216,6 +1216,41 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "warehouse",
+    group: "crm",
+    open: "/warehouse",
+    title: { uz: "Ombor", ru: "Склад", en: "Warehouse" },
+    summary: {
+      uz: "Mahsulotlar va qoldiq, buyurtmalar tayyorlashdan yetkazishgacha, qayta sotuv. Kompaniyaga modul yoqilganda menyuda chiqadi.",
+      ru: "Товары и остатки, заказы от подготовки до доставки, повторные продажи. Появляется в меню, когда модуль подключён.",
+      en: "Products and stock, orders from preparing to delivery, repeat sales. Appears in the menu once the module is on.",
+    },
+    steps: [
+      {
+        uz: "**Mahsulotlar** tabida **Yangi mahsulot** bilan nomi, kodi, narxi, tannarxi, o'lchov birligi va minimal qoldiqni kiriting. **Kirim / chiqim** tugmasi bilan omborga tovar qo'shasiz, chiqarasiz yoki hisobdan chiqarasiz. Jadvalda qoldiq, rezerv (ochiq buyurtmalardagi) va bo'sh miqdor ko'rinadi.",
+        ru: "Во вкладке **Товары** кнопкой **Новый товар** укажите название, код, цену, себестоимость, единицу и минимальный остаток. Кнопкой **Приход / расход** добавляете, списываете или выдаёте товар. В таблице — остаток, резерв (в открытых заказах) и свободное количество.",
+        en: "In **Products**, **New product** takes the name, code, price, cost, unit and minimum stock. **Stock in / out** adds, issues or writes off goods. The table shows stock, reserved (in open orders) and free quantity.",
+      },
+      {
+        uz: "**Yangi buyurtma**: lidni (mijozni) toping, mahsulot va sonini qo'shing, chegirma va yetkazish usulini tanlang. Buyurtmadagi tovar darhol rezervga olinadi. **Buyurtmalar** doskasida kartani keyingi ustunga suring yoki tugmasini bosing: Yangi → Tayyorlanmoqda → Yig'ilmoqda → Yo'lda → Yetkazildi. «Yo'lda» bo'lganda tovar ombordan o'zi chiqadi, bekor qilinsa qaytadi.",
+        ru: "**Новый заказ**: найдите лид (клиента), добавьте товары и количество, скидку и способ доставки. Товар сразу резервируется. На доске **Заказы** перетащите карточку или нажмите кнопку: Новый → Готовится → Собирается → В пути → Доставлен. На шаге «В пути» товар списывается со склада сам, при отмене — возвращается.",
+        en: "**New order**: find the lead (client), add products and quantities, a discount and delivery. The goods are reserved at once. On the **Orders** board drag a card or press its button: New → Preparing → Packing → On the way → Delivered. On the way, the goods leave the warehouse by themselves; cancelling returns them.",
+      },
+      {
+        uz: "**Qayta sotuv**: har mijozning yetkazilgan buyurtmalari orasidagi o'rtacha kun hisoblanadi va tovari qachon tugashi chiqadi. **Eslatish** mas'ulga bugungi vazifa qo'yadi, **Qayta buyurtma** oxirgi buyurtmani bir bosishda takrorlaydi. Lid kartasidagi **Xaridlari** blokida ham shu ma'lumot va tugma bor.",
+        ru: "**Повторные продажи**: по средней паузе между доставленными заказами клиента считается, когда у него закончится товар. **Напомнить** ставит задачу ответственному на сегодня, **Повторить заказ** повторяет последний заказ в один клик. То же — в блоке **Покупки** карточки лида.",
+        en: "**Repeat sales**: the average gap between a client's delivered orders tells when their goods run out. **Remind** sets today's task for the owner, **Repeat order** repeats the last order in one click. The lead card's **Purchases** block shows the same.",
+      },
+      {
+        uz: "Voronka yaratishda **Ombor (buyurtmalar)** turini tanlasangiz, bosqichlari buyurtma holatiga bog'langan bo'ladi: lidni «Yo'lda»ga sursangiz buyurtma ham yo'lga chiqadi va aksincha. Shu voronka kartalarida oxirgi buyurtma № va holati ko'rinadi.",
+        ru: "Если при создании воронки выбрать тип **Склад (заказы)**, её этапы привязаны к статусам заказа: лид в «В пути» — и заказ в пути, и наоборот. На карточках этой воронки виден № и статус последнего заказа.",
+        en: "A funnel created with the **Warehouse orders** type has stages tied to order statuses: move the lead to On the way and the order follows, and vice versa. Its cards show the latest order's number and status.",
+      },
+    ],
+    notes: [],
+    faq: [],
+  },
+  {
     slug: "refunds",
     group: "crm",
     open: "/refunds",
