@@ -8,6 +8,285 @@ export type Database = {
   };
   public: {
     Tables: {
+      org_modules: {
+        Row: {
+          organization_id: string;
+          module: string;
+          enabled: boolean;
+          until: string | null;
+          note: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          module: string;
+          enabled?: boolean;
+          until?: string | null;
+          note?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          module?: string;
+          enabled?: boolean;
+          until?: string | null;
+          note?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      warehouses: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          address: string | null;
+          responsible_id: string | null;
+          is_default: boolean;
+          archived_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          address?: string | null;
+          responsible_id?: string | null;
+          is_default?: boolean;
+          archived_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          address?: string | null;
+          responsible_id?: string | null;
+          is_default?: boolean;
+          archived_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      products: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          sku: string | null;
+          barcode: string | null;
+          category: string | null;
+          unit: string;
+          price: number;
+          cost: number;
+          min_stock: number;
+          image_url: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          sku?: string | null;
+          barcode?: string | null;
+          category?: string | null;
+          unit?: string;
+          price?: number;
+          cost?: number;
+          min_stock?: number;
+          image_url?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          sku?: string | null;
+          barcode?: string | null;
+          category?: string | null;
+          unit?: string;
+          price?: number;
+          cost?: number;
+          min_stock?: number;
+          image_url?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      stock_levels: {
+        Row: {
+          organization_id: string;
+          product_id: string;
+          warehouse_id: string;
+          qty: number;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          product_id: string;
+          warehouse_id: string;
+          qty?: number;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          product_id?: string;
+          warehouse_id?: string;
+          qty?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      stock_moves: {
+        Row: {
+          id: string;
+          organization_id: string;
+          product_id: string;
+          warehouse_id: string;
+          kind: string;
+          qty: number;
+          unit_cost: number | null;
+          order_id: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          product_id: string;
+          warehouse_id: string;
+          kind: string;
+          qty: number;
+          unit_cost?: number | null;
+          order_id?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          product_id?: string;
+          warehouse_id?: string;
+          kind?: string;
+          qty?: number;
+          unit_cost?: number | null;
+          order_id?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      orders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          number: number;
+          lead_id: string | null;
+          warehouse_id: string | null;
+          status: string;
+          delivery_method: string | null;
+          delivery_address: string | null;
+          delivery_at: string | null;
+          tracking: string | null;
+          discount_pct: number;
+          total: number;
+          paid_status: string;
+          note: string | null;
+          rating: number | null;
+          source: string | null;
+          stock_out_at: string | null;
+          delivered_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          number?: number;
+          lead_id?: string | null;
+          warehouse_id?: string | null;
+          status?: string;
+          delivery_method?: string | null;
+          delivery_address?: string | null;
+          delivery_at?: string | null;
+          tracking?: string | null;
+          discount_pct?: number;
+          total?: number;
+          paid_status?: string;
+          note?: string | null;
+          rating?: number | null;
+          source?: string | null;
+          stock_out_at?: string | null;
+          delivered_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          number?: number;
+          lead_id?: string | null;
+          warehouse_id?: string | null;
+          status?: string;
+          delivery_method?: string | null;
+          delivery_address?: string | null;
+          delivery_at?: string | null;
+          tracking?: string | null;
+          discount_pct?: number;
+          total?: number;
+          paid_status?: string;
+          note?: string | null;
+          rating?: number | null;
+          source?: string | null;
+          stock_out_at?: string | null;
+          delivered_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      order_items: {
+        Row: {
+          id: string;
+          organization_id: string;
+          order_id: string;
+          product_id: string;
+          qty: number;
+          price: number;
+          picked: boolean;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          order_id: string;
+          product_id: string;
+          qty: number;
+          price?: number;
+          picked?: boolean;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          order_id?: string;
+          product_id?: string;
+          qty?: number;
+          price?: number;
+          picked?: boolean;
+        };
+        Relationships: [];
+      };
       ai_agents: {
         Row: {
           active: boolean;
@@ -7603,6 +7882,7 @@ export type Database = {
       };
       pipeline_stages: {
         Row: {
+          order_status: string | null;
           amocrm_pipeline_id: number | null;
           amocrm_status_id: number | null;
           bitrix24_category_id: number | null;
@@ -7629,6 +7909,7 @@ export type Database = {
           hidden: boolean;
         };
         Insert: {
+          order_status?: string | null;
           amocrm_pipeline_id?: number | null;
           amocrm_status_id?: number | null;
           bitrix24_category_id?: number | null;
@@ -7655,6 +7936,7 @@ export type Database = {
           hidden?: boolean;
         };
         Update: {
+          order_status?: string | null;
           amocrm_pipeline_id?: number | null;
           amocrm_status_id?: number | null;
           bitrix24_category_id?: number | null;
@@ -7699,6 +7981,7 @@ export type Database = {
       };
       pipelines: {
         Row: {
+          kind: string;
           color: string;
           created_at: string;
           created_by: string | null;
@@ -7719,6 +8002,7 @@ export type Database = {
           loss_reasons: string[] | null;
         };
         Insert: {
+          kind?: string;
           color?: string;
           created_at?: string;
           created_by?: string | null;
@@ -7739,6 +8023,7 @@ export type Database = {
           loss_reasons?: string[] | null;
         };
         Update: {
+          kind?: string;
           color?: string;
           created_at?: string;
           created_by?: string | null;
@@ -9277,6 +9562,15 @@ export type Database = {
       };
     };
     Views: {
+      product_stock: {
+        Row: {
+          product_id: string;
+          organization_id: string;
+          qty: number;
+          reserved: number;
+        };
+        Relationships: [];
+      };
       missed_call_stats: {
         Row: {
           avg_callback_seconds: number | null;
@@ -9290,6 +9584,7 @@ export type Database = {
       };
     };
     Functions: {
+      org_has_module: { Args: { _module: string }; Returns: boolean };
       public_vcard: {
         Args: { p_code: string };
         Returns: Json;
