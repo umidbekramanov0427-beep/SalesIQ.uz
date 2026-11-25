@@ -10436,6 +10436,8 @@ const ru: Record<string, string> = {
   "tc.d.dedupe": "Объединяет дубль сделки этого клиента.",
   "tc.d.telegram": "Отправляет клиенту сообщение только в Telegram.",
   "tc.d.email": "Отправляет клиенту email.",
+  "funnels.pick": "Выберите воронку",
+  "funnels.pickSettings": "Настройки воронки",
 };
 
 export default ru;

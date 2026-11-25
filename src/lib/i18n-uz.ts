@@ -10602,6 +10602,8 @@ const uz: Record<string, string> = {
   "tc.d.dedupe": "Shu mijozning takror lidini birlashtiradi.",
   "tc.d.telegram": "Mijozga faqat Telegram orqali xabar yuboradi.",
   "tc.d.email": "Mijozga email yuboradi.",
+  "funnels.pick": "Voronkani tanlang",
+  "funnels.pickSettings": "Voronka sozlamalari",
 };
 
 export default uz;

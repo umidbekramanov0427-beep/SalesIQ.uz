@@ -10408,4 +10408,6 @@ export const en: Record<string, string> = {
   "tc.d.dedupe": "Merges this client's duplicate lead.",
   "tc.d.telegram": "Messages the client on Telegram only.",
   "tc.d.email": "Sends the client an email.",
+  "funnels.pick": "Choose a funnel",
+  "funnels.pickSettings": "Funnel settings",
 };

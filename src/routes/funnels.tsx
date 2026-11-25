@@ -98,6 +98,12 @@ import {
   type FunnelStat,
 } from "@/hooks/use-crm-data";
 import { FitText } from "@/components/ui/fit-text";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Check as CheckIcon,
+  ChevronDown as ChevronDownIcon,
+  Settings2 as SettingsIcon,
+} from "lucide-react";
 
 const { search: _s, funnel: _fn, ...FUNNEL_FILTER_DEFAULTS } = EMPTY_LEAD_FILTERS;
 
@@ -1161,10 +1167,10 @@ function FunnelDetail({
           {/* Name, then how many leads and what they're worth -- the sum
               big enough to read at a glance. */}
           <div className="flex min-w-0 shrink-0 items-center gap-3 pr-1 phone:shrink phone:gap-2">
-            <h1 className="max-w-[260px] truncate phone:max-w-[150px] text-[15px] font-extrabold uppercase tracking-wide text-foreground sm:text-base">
-              {name}
-            </h1>
-            <span className="h-7 w-px bg-border" />
+            <FunnelPickerCard name={name} />
+          </div>
+          {/* The count and sum sit a little apart from the funnel card. */}
+          <div className="ml-4 flex min-w-0 shrink-0 items-center phone:ml-1">
             {/* "6 ta lid: 10 013 613 088 so'm" -- the count small, the sum larger. */}
             <p className="flex items-baseline gap-1.5 whitespace-nowrap leading-none">
               <span className="text-[13px] font-medium text-muted-foreground">
@@ -1178,7 +1184,7 @@ function FunnelDetail({
               )}
             </p>
           </div>
-          <div className="order-last flex w-full min-w-0 items-center gap-2 lg:order-none lg:ml-3 lg:w-auto lg:flex-1">
+          <div className="order-last flex w-full min-w-0 items-center gap-2 lg:order-none lg:ml-[34px] lg:w-auto lg:flex-1">
             <FunnelSearchFilter
               value={filters}
               onChange={updateFilters}
@@ -1679,6 +1685,77 @@ function FunnelDetail({
  * 5CRM's trial reminder at the top right of the funnel: how many days the
  * free trial has left, «Faollashtirish» opens Hisob va to'lov.
  */
+/** The funnel's name as a card: a click lists the company's funnels to switch to. */
+function FunnelPickerCard({ name }: { name: string }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const { user: me } = useAuth();
+  const { rules } = useAccessRules();
+  const { data: pipelines = [] } = usePipelines();
+  const list = useMemo(() => {
+    const names = [...pipelines]
+      .filter((p) => !(p as { archived_at?: string | null }).archived_at)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      .map((p) => p.name)
+      .filter((n) => funnelOpen(rules, me?.role, n));
+    return [...new Set([name, ...names])];
+  }, [pipelines, rules, me?.role, name]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={t("funnels.pick")}
+          className="group flex h-10 max-w-[300px] items-center gap-2.5 rounded-xl border border-border bg-background/40 pl-1.5 pr-3 shadow-sm transition-colors hover:border-primary/60 hover:bg-accent data-[state=open]:border-primary phone:max-w-[170px]"
+        >
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+            <Workflow className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 truncate text-[14px] font-extrabold uppercase tracking-wide text-foreground">
+            {name}
+          </span>
+          <ChevronDownIcon className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" sideOffset={8} className="w-[300px] p-1.5">
+        <p className="px-2.5 pb-1.5 pt-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          {t("funnels.pick")}
+        </p>
+        <div className="max-h-[360px] overflow-y-auto">
+          {list.map((n) => (
+            <Link
+              key={n}
+              to="/funnels"
+              search={{ funnel: n }}
+              onClick={() => setOpen(false)}
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium text-foreground hover:bg-accent",
+                n === name && "bg-accent",
+              )}
+            >
+              <Workflow className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate">{n}</span>
+              {n === name && <CheckIcon className="h-4 w-4 shrink-0 text-primary" />}
+            </Link>
+          ))}
+        </div>
+        <div className="mt-1 border-t border-border pt-1">
+          <Link
+            to="/funnels/settings"
+            search={{ funnel: name }}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <SettingsIcon className="h-4 w-4" />
+            {t("funnels.pickSettings")}
+          </Link>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function TrialChip() {
   const { t } = useI18n();
   const { user } = useAuth();
