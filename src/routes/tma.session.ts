@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { validateInitData } from "@/lib/telegram/init-data.server";
+import { botToken } from "@/lib/bot-tokens.server";
 
 // Signs a staff member into SalesIQ from inside the Telegram Mini App with
 // no password: Telegram's signed launch data proves which Telegram user
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/tma/session")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["TELEGRAM_BOT_TOKEN"];
+        const token = botToken("client");
         if (!token) return Response.json({ error: "not_configured" }, { status: 503 });
         const body = (await request.json().catch(() => ({}))) as { initData?: string };
         const valid = validateInitData(body.initData ?? "", token);

@@ -1,7 +1,8 @@
 // Server-only. The platform's three Telegram bots and which one carries a
 // message:
 //   client -- talks to leads and clients (salesbots, lead chats, payment
-//             links, receipts to clients). TELEGRAM_BOT_TOKEN.
+//             links, receipts to clients). The token saved in Platforma ->
+//             Botlar, else TELEGRAM_BOT_TOKEN.
 //   staff  -- talks to the companies' people (tasks, reminders,
 //             reports, sign-in codes). STAFF_TELEGRAM_BOT_TOKEN or the token
 //             saved in Platforma -> Botlar (sealed in platform_private, server-only).
@@ -19,6 +20,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { openSecret, sealSecret } from "@/lib/secret-box.server";
 import { webhookBase } from "@/lib/bot-tokens-url";
+import { pickToken, tokenSource, type TokenSource } from "@/lib/bot-token-pick";
 
 export type BotKind = "client" | "staff" | "ops";
 
@@ -28,27 +30,35 @@ const ENV: Record<BotKind, string> = {
   ops: "OPS_TELEGRAM_BOT_TOKEN",
 };
 
-const saved: { staff: string | null; ops: string | null; at: number } = {
+const saved: { client: string | null; staff: string | null; ops: string | null; at: number } = {
+  client: null,
   staff: null,
   ops: null,
   at: 0,
 };
 
+const COLUMN: Record<BotKind, string> = {
+  client: "client_bot_token_sealed",
+  staff: "staff_bot_token_sealed",
+  ops: "ops_bot_token_sealed",
+};
+
 const envToken = (kind: BotKind) => process.env[ENV[kind]]?.trim() || null;
 
-/** The bot's token: the server setting first, then the one saved in the panel. */
+/** The bot's token: the one saved in the panel first, then the server setting. */
 export function botToken(kind: BotKind): string | null {
-  const env = envToken(kind);
-  if (env) return env;
-  if (kind === "client") return null;
   // Re-read the saved tokens now and then (never blocks the caller).
   if (Date.now() - saved.at > 60_000) void refreshBotTokens();
-  return saved[kind];
+  return pickToken(saved[kind], envToken(kind));
 }
 
-export function botTokenSource(kind: BotKind): "env" | "panel" | null {
-  if (envToken(kind)) return "env";
-  return kind !== "client" && saved[kind] ? "panel" : null;
+export function botTokenSource(kind: BotKind): TokenSource {
+  return tokenSource(saved[kind], envToken(kind));
+}
+
+/** Whether a server setting exists under the panel token (shown on the Botlar page). */
+export function botHasEnvToken(kind: BotKind): boolean {
+  return !!envToken(kind);
 }
 
 let refreshing: Promise<void> | null = null;
@@ -59,18 +69,18 @@ export async function refreshBotTokens(force = false): Promise<void> {
   if (refreshing) return refreshing;
   refreshing = (async () => {
     try {
+      // "*": the client column is newer (20270211) and may not exist yet.
       const { data, error } = await supabaseAdmin
         .from("platform_private")
-        .select("staff_bot_token_sealed, ops_bot_token_sealed")
+        .select("*")
         .eq("id", true)
         .maybeSingle();
       if (!error) {
-        const row = data as {
-          staff_bot_token_sealed?: string | null;
-          ops_bot_token_sealed?: string | null;
-        } | null;
-        saved.staff = row?.staff_bot_token_sealed ? openSecret(row.staff_bot_token_sealed) : null;
-        saved.ops = row?.ops_bot_token_sealed ? openSecret(row.ops_bot_token_sealed) : null;
+        const row = (data ?? {}) as Record<string, string | null | undefined>;
+        for (const k of ["client", "staff", "ops"] as const) {
+          const sealed = row[COLUMN[k]];
+          saved[k] = sealed ? openSecret(sealed) : null;
+        }
       }
     } catch {
       // Before the migration: no saved tokens.
@@ -86,7 +96,7 @@ const TOKEN_RE = /^\d{5,15}:[A-Za-z0-9_-]{30,}$/;
 
 /** Checks a token with Telegram and saves it sealed (null removes it). */
 export async function saveBotToken(
-  kind: "staff" | "ops",
+  kind: BotKind,
   token: string | null,
 ): Promise<{ username: string | null }> {
   let username: string | null = null;
@@ -96,13 +106,16 @@ export async function saveBotToken(
     const me = await getMe(t);
     if (!me)
       throw new Error("Telegram bu tokenni qabul qilmadi: @BotFather'dagi tokenni tekshiring");
-    if (t === envToken("client") || t === botToken(kind === "staff" ? "ops" : "staff")) {
-      throw new Error("Bu token boshqa bot uchun ishlatilyapti: har bot uchun alohida bot oching");
+    const others = (["client", "staff", "ops"] as const).filter((k) => k !== kind);
+    if (others.some((k) => botToken(k) === t)) {
+      throw new Error(
+        "Bu token boshqa bot uchun ishlatilyapti: avval u botning tokenini almashtiring yoki har bot uchun alohida bot oching",
+      );
     }
     username = me.username;
     token = t;
   }
-  const column = kind === "staff" ? "staff_bot_token_sealed" : "ops_bot_token_sealed";
+  const column = COLUMN[kind];
   const { error } = await supabaseAdmin.from("platform_private").upsert(
     {
       id: true,
@@ -113,9 +126,27 @@ export async function saveBotToken(
       onConflict: "id",
     },
   );
-  if (error) throw error;
+  if (error) {
+    if (/column|schema cache/i.test(error.message ?? ""))
+      throw new Error("Bu imkoniyat bazani yangilagandan keyin ishlaydi (migratsiya 20270211).");
+    throw error;
+  }
   await refreshBotTokens(true);
   return { username };
+}
+
+/**
+ * The secret Telegram sends with every update of the client bot (header
+ * X-Telegram-Bot-Api-Secret-Token): TELEGRAM_WEBHOOK_SECRET when set, else
+ * derived from the client bot's token -- so a new token from the panel
+ * gets its own secret, set by ensureClientBot.
+ */
+export function clientWebhookSecret(): string | null {
+  const explicit = process.env["TELEGRAM_WEBHOOK_SECRET"];
+  if (explicit) return explicit;
+  const token = botToken("client");
+  if (!token) return null;
+  return crypto.createHmac("sha256", token).update("salesiq-telegram-webhook").digest("hex");
 }
 
 const meCache = new Map<string, { username: string | null; id: number | null; at: number }>();
@@ -374,6 +405,7 @@ export async function staffChatCount(): Promise<number> {
 /* ---- Setting the staff bot up ------------------------------------------ */
 
 let staffReady: string | null = null;
+let clientReady: string | null = null;
 
 /**
  * The platform's public address, for webhooks: Telegram accepts only a
@@ -385,6 +417,53 @@ export function publicAppUrl(): string {
 }
 
 export type BotHookResult = { ok: boolean; url: string | null; error: string | null };
+
+/**
+ * Points the client bot at /telegram/webhook with its secret and the update
+ * types the platform reads (channel joins included), after its token is
+ * saved in the panel, from "Qayta ulash" and from the 5-minute cron. Once
+ * per token and server instance unless `force`.
+ */
+export async function ensureClientBot(force = false): Promise<BotHookResult> {
+  await refreshBotTokens(force);
+  const token = botToken("client");
+  const secret = clientWebhookSecret();
+  if (!token) return { ok: false, url: null, error: null };
+  if (clientReady === token && !force) return { ok: true, url: null, error: null };
+  const url = `${publicAppUrl()}/telegram/webhook`;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        url,
+        ...(secret ? { secret_token: secret } : {}),
+        allowed_updates: [
+          "message",
+          "edited_message",
+          "channel_post",
+          "edited_channel_post",
+          "callback_query",
+          "my_chat_member",
+          "chat_member",
+          "chat_join_request",
+        ],
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`Telegram setWebhook failed (${res.status}): ${await res.text()}`);
+  } catch (err) {
+    clientReady = null;
+    return {
+      ok: false,
+      url: null,
+      error: err instanceof Error ? err.message.slice(0, 300) : "xato",
+    };
+  }
+  clientReady = token;
+  const hook = await botWebhook("client");
+  return { ok: hook.url === url, url: hook.url, error: hook.error };
+}
 
 /**
  * From the 5-minute cron, right after the token is saved and from "Qayta

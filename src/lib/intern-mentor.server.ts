@@ -7,6 +7,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { callGemini } from "@/lib/gemini.server";
 import { sendTelegramMessage } from "@/lib/telegram-report.server";
 import { internDay, lessonsForDay, type RoadmapLesson } from "@/lib/intern-roadmap";
+import { botToken } from "@/lib/bot-tokens.server";
 
 export const MENTOR_SYSTEM_PROMPT = `SalesIQ.uz platformasining shaxsiy sun'iy intellekt (AI) mentori sifatida harakat qil.
 Vazifang — kompaniyaga yangi kelgan amaliyotchi sotuvchilarga platformadagi "Sinfxona" darsliklarini o'zlashtirishda ko'maklashish, ularni qutlash va yo'naltirish.
@@ -407,7 +408,7 @@ export async function replyToIntern(
 
 /** Downloads a Telegram voice/audio file (Bot API getFile) for Gemini. Null if too big or unavailable. */
 export async function downloadTelegramAudio(fileId: string): Promise<IncomingAudio | null> {
-  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  const token = botToken("client");
   if (!token) return null;
   try {
     const meta = await fetch(

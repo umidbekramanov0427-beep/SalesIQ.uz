@@ -26,6 +26,7 @@ import {
   tgMarkBroken,
   tgSessions,
 } from "@/lib/tg-live.server";
+import { botToken } from "@/lib/bot-tokens.server";
 
 // Marketing paneli's live figures: the platform's Telegram bot reads each
 // connected channel's subscriber count (hourly, from the 5-minute cron) and
@@ -39,7 +40,7 @@ const tashkentDay = (d = new Date()) =>
   new Date(d.getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
 
 function botToken(): string | null {
-  return process.env["TELEGRAM_BOT_TOKEN"] ?? null;
+  return botToken("client") ?? null;
 }
 
 async function memberCount(chat: string | number, fallback?: string | null): Promise<number> {

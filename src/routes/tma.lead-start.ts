@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { telegramDisplayName, validateInitData } from "@/lib/telegram/init-data.server";
+import { botToken } from "@/lib/bot-tokens.server";
 
 // Step 1 of the client-side Mini App (/tma/lead?org=<id>): remembers that
 // this Telegram user opened the Mini App of this organization, so the
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/tma/lead-start")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["TELEGRAM_BOT_TOKEN"];
+        const token = botToken("client");
         if (!token) return Response.json({ error: "not_configured" }, { status: 503 });
         const body = (await request.json().catch(() => ({}))) as {
           initData?: string;

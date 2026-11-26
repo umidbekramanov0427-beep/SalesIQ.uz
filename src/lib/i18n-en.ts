@@ -6680,15 +6680,16 @@ export const en: Record<string, string> = {
   "pbots.clientCounts": "On the trial bot: {trial} companies · With their own bot: {own}",
   "pbots.title": "Platform bots",
   "pbots.info":
-    "Three bots, each for its own people: if one is limited or blocked, the others keep working.",
+    "The platform's three bots, all set here: yours, the companies' (sign-up, sign-in, reports) and the default clients' bot. A token saved here wins over the server setting. A company can connect its own clients' bot in its Botlar page.",
   "pbots.notReady":
     "The database update for bots is not applied yet: tokens can't be saved from here.",
-  "pbots.client.title": "Trial bot (14 days)",
-  "pbots.client.who": "Talks to companies' clients until they connect their own bot",
-  "pbots.staff.title": "Staff bot",
-  "pbots.staff.who": "Talks to the companies' people",
-  "pbots.ops.title": "Platform owner bot",
-  "pbots.ops.who": "Talks only to you, the platform owner",
+  "pbots.client.title": "Clients' bot (default)",
+  "pbots.client.who":
+    "Every company has it from the start for its clients; a company may connect its own instead",
+  "pbots.staff.title": "Companies' bot",
+  "pbots.staff.who": "Companies sign up and sign in through it; their people get reports and tasks",
+  "pbots.ops.title": "Owner's bot",
+  "pbots.ops.who": "Only you: platform health, errors, security, backups",
   "pbots.role.leads": "Lead chats and messages",
   "pbots.role.salesbot": "Salesbots and /start links",
   "pbots.role.payments": "Payment links to clients",
@@ -6701,13 +6702,14 @@ export const en: Record<string, string> = {
   "pbots.role.errors": "Server errors and alerts",
   "pbots.role.security": "Security alerts and support",
   "pbots.role.backup": "Daily backups",
-  "pbots.notConnected": "Not connected — everything goes through the client bot",
-  "pbots.clientMissing": "TELEGRAM_BOT_TOKEN is not set on the server",
+  "pbots.notConnected": "Not connected — its messages go through the clients' bot",
+  "pbots.clientMissing": "No token yet — paste one below",
   "pbots.srcEnv": "Server",
   "pbots.srcPanel": "Panel",
   "pbots.clientNote":
-    "Its token is set on the server (TELEGRAM_BOT_TOKEN): changing it would cut every client's chat, so it is not changed here.",
-  "pbots.envNote": "The token is set on the server (.env.server) and is changed there.",
+    "Salesbot links, the shared trial bot and phone confirmation at sign-up go through this bot. Companies with their own bot use theirs.",
+  "pbots.envNote":
+    "The token from the server settings (.env.server) is in use. A token saved here replaces it; removing it brings the server one back.",
   "pbots.step1": "Open @BotFather in Telegram → /newbot",
   "pbots.step2": "Give it a name and a username ending in “bot”",
   "pbots.step3": "Paste the token it gives here",
@@ -10916,7 +10918,8 @@ export const en: Record<string, string> = {
   "sb.stepDesc.random": "Go on along a random path (A/B/C test)",
   "wh.move.transfer": "Transfer",
   "wh.whs.title": "Warehouses",
-  "wh.whs.desc": "Each warehouse keeps its own stock. Orders and stock documents take the default one unless you choose another.",
+  "wh.whs.desc":
+    "Each warehouse keeps its own stock. Orders and stock documents take the default one unless you choose another.",
   "wh.whs.none": "No warehouse yet — the first stock document makes «Asosiy ombor».",
   "wh.whs.units": "{n} units",
   "wh.whs.default": "Default",
@@ -10935,4 +10938,9 @@ export const en: Record<string, string> = {
   "wh.inbox.regular": "Regular client",
   "wh.inbox.badgeHint": "Delivered orders: {n}",
   "sb.openBot": "Open the bot",
+  "pbots.clientSwapWarn":
+    "Clients who wrote to the current bot will have to press /start in the new one — until then replies to them don't arrive. Companies with their own bot are not affected.",
+  "pbots.removeConfirmEnv":
+    "Remove the token saved in the panel? The bot from the server settings will be used again.",
+  "pbots.role.signup": "Sign-up phone check and sign-in",
 };

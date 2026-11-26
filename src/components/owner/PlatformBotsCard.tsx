@@ -22,13 +22,15 @@ import { cn, describeError } from "@/lib/utils";
 
 // Platforma -> Botlar: the platform's three Telegram bots side by side --
 // who each one talks to, what it carries, whether it is connected and its
-// webhook works, and (for the staff and monitoring bots) a place to paste
-// the token from @BotFather. The client bot's token lives on the server.
+// webhook works, and a place to paste each bot's token from @BotFather. A
+// token saved here wins over the server setting (.env.server), which stays
+// as the fallback.
 
 type Kind = "client" | "staff" | "ops";
 type BotState = {
   username: string | null;
   source: "env" | "panel" | null;
+  hasEnv?: boolean;
   webhook: string | null;
   webhookError: string | null;
 };
@@ -49,7 +51,7 @@ const META: Record<Kind, { icon: LucideIcon; tile: string; roles: string[] }> = 
   staff: {
     icon: Briefcase,
     tile: "bg-violet-500/12 text-violet-700 dark:text-violet-300",
-    roles: ["tasks", "reports", "codes"],
+    roles: ["signup", "tasks", "reports", "codes"],
   },
   ops: {
     icon: ShieldCheck,
@@ -82,7 +84,7 @@ export function PlatformBotsCard() {
             </p>
           )}
           <div className="grid gap-3 xl:grid-cols-3">
-            {(["client", "staff", "ops"] as const).map((k) => (
+            {(["ops", "staff", "client"] as const).map((k) => (
               <BotCard
                 key={k}
                 kind={k}
@@ -239,21 +241,19 @@ function BotCard({
                 ? t("pbots.hookError", { e: bot.webhookError })
                 : t("pbots.hookMissing")}
           </span>
-          {kind !== "client" && bot.source === "panel" && (
-            <button
-              type="button"
-              disabled={reconnect.isPending}
-              onClick={() => reconnect.mutate()}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold underline-offset-2 hover:underline disabled:opacity-60"
-            >
-              {reconnect.isPending ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3 w-3" />
-              )}
-              {t("pbots.reconnect")}
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={reconnect.isPending}
+            onClick={() => reconnect.mutate()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold underline-offset-2 hover:underline disabled:opacity-60"
+          >
+            {reconnect.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
+            {t("pbots.reconnect")}
+          </button>
         </div>
       )}
 
@@ -272,14 +272,13 @@ function BotCard({
             {t("pbots.clientCounts", { trial: trialOrgs, own: orgBots })}
           </p>
         )}
-        {kind === "client" ? (
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
-            {t("pbots.clientNote")}
-          </p>
-        ) : bot.source === "env" ? (
-          <p className="text-[12px] leading-relaxed text-muted-foreground">{t("pbots.envNote")}</p>
-        ) : editing || !connected ? (
+        {editing || !connected ? (
           <div className="space-y-2">
+            {kind === "client" && connected && (
+              <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-[12px] leading-relaxed text-amber-800 dark:text-amber-200">
+                {t("pbots.clientSwapWarn")}
+              </p>
+            )}
             {!connected && (
               <ol className="list-decimal space-y-0.5 pl-4 text-[12px] text-muted-foreground">
                 <li>{t("pbots.step1")}</li>
@@ -325,6 +324,16 @@ function BotCard({
             {kind === "ops" && (
               <p className="text-[12px] text-muted-foreground">{t("pbots.opsStart")}</p>
             )}
+            {kind === "client" && (
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                {t("pbots.clientNote")}
+              </p>
+            )}
+            {bot.source === "env" && (
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                {t("pbots.envNote")}
+              </p>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -335,15 +344,21 @@ function BotCard({
                 <KeyRound className="h-4 w-4" />
                 {t("pbots.change")}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={save.isPending}
-                onClick={() => window.confirm(t("pbots.removeConfirm")) && save.mutate(null)}
-                aria-label={t("pbots.remove")}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {bot.source === "panel" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={save.isPending}
+                  onClick={() =>
+                    window.confirm(
+                      bot.hasEnv ? t("pbots.removeConfirmEnv") : t("pbots.removeConfirm"),
+                    ) && save.mutate(null)
+                  }
+                  aria-label={t("pbots.remove")}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         )}

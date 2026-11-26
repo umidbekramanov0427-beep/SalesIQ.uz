@@ -6758,6 +6758,7 @@ export type Database = {
           meta_app_secret_sealed: string | null;
           youtube_cookies_sealed: string | null;
           id: boolean;
+          client_bot_token_sealed: string | null;
           staff_bot_token_sealed: string | null;
           ops_bot_token_sealed: string | null;
           backup_bind_code: string | null;
@@ -6771,6 +6772,7 @@ export type Database = {
           meta_app_secret_sealed?: string | null;
           youtube_cookies_sealed?: string | null;
           id?: boolean;
+          client_bot_token_sealed?: string | null;
           staff_bot_token_sealed?: string | null;
           ops_bot_token_sealed?: string | null;
           backup_bind_code?: string | null;
@@ -6784,6 +6786,7 @@ export type Database = {
           meta_app_secret_sealed?: string | null;
           youtube_cookies_sealed?: string | null;
           id?: boolean;
+          client_bot_token_sealed?: string | null;
           staff_bot_token_sealed?: string | null;
           ops_bot_token_sealed?: string | null;
           backup_bind_code?: string | null;

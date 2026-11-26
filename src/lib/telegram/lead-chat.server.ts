@@ -3,7 +3,7 @@
 // sends from the lead card, the client's profile photo and reactions on the
 // client's messages. Files stay on Telegram's side and are referred to by
 // file_id; the app streams them through /telegram/lead-file when shown.
-import { orgBot, tokenForChat } from "@/lib/bot-tokens.server";
+import { orgBot, tokenForChat, botToken } from "@/lib/bot-tokens.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type ChatFileKind =
@@ -103,7 +103,7 @@ export async function insertLeadChatMessage(row: LeadChatRow): Promise<void> {
 }
 
 function botToken(): string | null {
-  return process.env["TELEGRAM_BOT_TOKEN"] ?? null;
+  return botToken("client") ?? null;
 }
 
 /** The bot this chat talks to: the company's own bot, else the shared one. */

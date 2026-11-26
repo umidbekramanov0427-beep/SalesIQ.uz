@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { validateInitData } from "@/lib/telegram/init-data.server";
+import { botToken } from "@/lib/bot-tokens.server";
 
 // Polled by /tma/lead after the client shared their number: "done" once
 // the bot has received the contact and created (or found) the lead. Only
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/tma/lead-status")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["TELEGRAM_BOT_TOKEN"];
+        const token = botToken("client");
         if (!token) return Response.json({ error: "not_configured" }, { status: 503 });
         const body = (await request.json().catch(() => ({}))) as {
           initData?: string;

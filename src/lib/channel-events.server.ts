@@ -20,6 +20,7 @@ import {
   tgChannelStats,
   tgMarkBroken,
 } from "@/lib/tg-live.server";
+import { botToken } from "@/lib/bot-tokens.server";
 
 type EventIn = {
   at: string;
@@ -178,7 +179,7 @@ const botIds = new Map<string, number>();
  */
 export async function botIsAdmin(chatId: number, token?: string): Promise<boolean | null> {
   const own = !token;
-  token = token ?? process.env["TELEGRAM_BOT_TOKEN"];
+  token = token ?? botToken("client");
   if (!token) return null;
   try {
     let id = own ? botId : (botIds.get(token) ?? null);

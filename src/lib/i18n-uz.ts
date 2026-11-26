@@ -6827,15 +6827,17 @@ const uz: Record<string, string> = {
   "pbots.clientCounts": "Sinov botida: {trial} ta kompaniya · O'z boti bilan: {own} ta",
   "pbots.title": "Platforma botlari",
   "pbots.info":
-    "Uchta bot, har biri o'z odamlari bilan: biri cheklansa yoki bloklansa, qolganlari ishlashda davom etadi.",
+    "Platformaning uchta boti shu yerda sozlanadi: sizniki, kompaniyalarniki (ro'yxatdan o'tish, kirish, hisobotlar) va standart mijozlar boti. Bu yerda saqlangan token serverdagidan ustun turadi. Kompaniya o'z mijozlari uchun botni o'zining Botlar sahifasida ulaydi.",
   "pbots.notReady":
     "Botlar uchun baza yangilanishi hali qo'llanmagan: tokenni shu yerdan saqlab bo'lmaydi.",
-  "pbots.client.title": "Sinov boti (14 kun)",
-  "pbots.client.who": "Kompaniyalar o'z botini ulaguncha ularning mijozlari bilan gaplashadi",
-  "pbots.staff.title": "Xodimlar boti",
-  "pbots.staff.who": "Kompaniyalar xodimlari bilan gaplashadi",
-  "pbots.ops.title": "Platforma egasi boti",
-  "pbots.ops.who": "Faqat siz — platforma egasi bilan gaplashadi",
+  "pbots.client.title": "Mijozlar boti (standart)",
+  "pbots.client.who":
+    "Har kompaniyada boshidan mijozlari uchun turadi; kompaniya xohlasa o'z botini ulaydi",
+  "pbots.staff.title": "Kompaniyalar boti",
+  "pbots.staff.who":
+    "Kompaniyalar shu orqali ro'yxatdan o'tadi va kiradi; xodimlarga hisobot va vazifalar",
+  "pbots.ops.title": "Egasi boti",
+  "pbots.ops.who": "Faqat siz uchun: platforma holati, xatolar, xavfsizlik, zaxiralar",
   "pbots.role.leads": "Lidlar bilan yozishmalar",
   "pbots.role.salesbot": "Salesbotlar va /start havolalar",
   "pbots.role.payments": "Mijozlarga to'lov havolalari",
@@ -6848,13 +6850,14 @@ const uz: Record<string, string> = {
   "pbots.role.errors": "Server xatolari va ogohlantirishlar",
   "pbots.role.security": "Xavfsizlik ogohlantirishlari va yordam",
   "pbots.role.backup": "Kunlik zaxiralar",
-  "pbots.notConnected": "Ulanmagan — hammasi mijozlar boti orqali ketadi",
-  "pbots.clientMissing": "Serverda TELEGRAM_BOT_TOKEN yo'q",
+  "pbots.notConnected": "Ulanmagan — uning xabarlari mijozlar boti orqali ketyapti",
+  "pbots.clientMissing": "Token qo'yilmagan — pastda kiriting",
   "pbots.srcEnv": "Server",
   "pbots.srcPanel": "Panel",
   "pbots.clientNote":
-    "Uning tokeni serverda (TELEGRAM_BOT_TOKEN): uni almashtirish barcha mijozlar bilan aloqani uzadi, shuning uchun bu yerdan o'zgartirilmaydi.",
-  "pbots.envNote": "Token serverda (.env.server) o'rnatilgan va o'sha yerda o'zgartiriladi.",
+    "Salesbot havolalari, umumiy sinov boti va ro'yxatdan o'tishda telefonni tasdiqlash shu bot orqali ishlaydi. O'z botini ulagan kompaniyalar o'z botidan foydalanadi.",
+  "pbots.envNote":
+    "Hozir serverdagi (.env.server) token ishlayapti. Bu yerga yangi token qo'ysangiz, u ishlaydi; olib tashlasangiz, server tokeniga qaytadi.",
   "pbots.step1": "Telegram'da @BotFather → /newbot",
   "pbots.step2": "Nom va «bot» bilan tugaydigan username bering",
   "pbots.step3": "Bergan tokenni shu yerga joylang",
@@ -11120,7 +11123,8 @@ const uz: Record<string, string> = {
   "sb.stepDesc.random": "Tasodifiy yo'l bilan davom etish (A/B/C test)",
   "wh.move.transfer": "Ko'chirish",
   "wh.whs.title": "Omborlar",
-  "wh.whs.desc": "Har ombor o'z qoldig'ini yuritadi. Buyurtma va kirim/chiqim, boshqasi tanlanmasa, asosiy omborga yoziladi.",
+  "wh.whs.desc":
+    "Har ombor o'z qoldig'ini yuritadi. Buyurtma va kirim/chiqim, boshqasi tanlanmasa, asosiy omborga yoziladi.",
   "wh.whs.none": "Hali ombor yo'q — birinchi kirim «Asosiy ombor»ni o'zi yaratadi.",
   "wh.whs.units": "{n} birlik",
   "wh.whs.default": "Asosiy",
@@ -11139,6 +11143,10 @@ const uz: Record<string, string> = {
   "wh.inbox.regular": "Doimiy mijoz",
   "wh.inbox.badgeHint": "Yetkazilgan buyurtmalar: {n}",
   "sb.openBot": "Botni ochish",
+  "pbots.clientSwapWarn":
+    "Hozirgi bot bilan yozishgan mijozlar yangi botda /start bosishi kerak — shungacha ularga javob bormaydi. O'z botini ulagan kompaniyalarga ta'sir qilmaydi.",
+  "pbots.removeConfirmEnv": "Paneldagi tokenni olib tashlaysizmi? Yana serverdagi bot ishlaydi.",
+  "pbots.role.signup": "Ro'yxatdan o'tishda telefon tasdiqlash va kirish",
 };
 
 export default uz;

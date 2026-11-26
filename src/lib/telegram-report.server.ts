@@ -7,10 +7,10 @@ import { orgPhase } from "@/lib/org-access";
 import { loadAllOrgAccess } from "@/lib/org-access.server";
 import { buildFullDailyReport, buildPersonalDailyReport } from "@/lib/daily-report-builder.server";
 import { appendRowToGoogleSheet } from "@/lib/google-sheets.server";
-import { sendViaChatBot } from "@/lib/bot-tokens.server";
+import { sendViaChatBot, botToken, clientWebhookSecret } from "@/lib/bot-tokens.server";
 
 function requireBotToken(): string {
-  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  const token = botToken("client");
   if (!token) throw new Error("Missing environment variable: TELEGRAM_BOT_TOKEN");
   return token;
 }
@@ -74,11 +74,7 @@ export async function callTelegramMethod(
  * would sign the forger in as that person.
  */
 export function telegramWebhookSecret(): string | null {
-  const explicit = process.env["TELEGRAM_WEBHOOK_SECRET"];
-  if (explicit) return explicit;
-  const token = process.env["TELEGRAM_BOT_TOKEN"];
-  if (!token) return null;
-  return crypto.createHmac("sha256", token).update("salesiq-telegram-webhook").digest("hex");
+  return clientWebhookSecret();
 }
 
 let webhookSecretRegistered = false;
@@ -93,7 +89,7 @@ let webhookSecretRegistered = false;
  */
 export async function ensureTelegramWebhookSecret(origin: string): Promise<void> {
   if (webhookSecretRegistered) return;
-  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  const token = botToken("client");
   const secret = telegramWebhookSecret();
   if (!token || !secret) return;
   const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
@@ -118,7 +114,7 @@ let chatMemberUpdatesOn = false;
  */
 export async function ensureChatMemberUpdates(): Promise<void> {
   if (chatMemberUpdatesOn) return;
-  const token = process.env["TELEGRAM_BOT_TOKEN"];
+  const token = botToken("client");
   const secret = telegramWebhookSecret();
   if (!token) return;
   const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);

@@ -21,7 +21,7 @@ import { runSupportSla } from "@/lib/owner-inbox.server";
 import { refreshChannels } from "@/lib/marketing-live.server";
 import { runRefundReminders } from "@/lib/refunds.server";
 import { runCompanyBackupsDue, runTelegramBackupIfDue } from "@/lib/telegram-backup.server";
-import { ensureStaffBot } from "@/lib/bot-tokens.server";
+import { botTokenSource, ensureClientBot, ensureStaffBot } from "@/lib/bot-tokens.server";
 import { metaSyncDue } from "@/lib/meta-ads.server";
 import { runMarketingAiAuto } from "@/lib/marketing-ai/auto.server";
 
@@ -40,6 +40,14 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await ensureTelegramWebhookSecret(new URL(request.url).origin).catch((err) =>
           console.error("[telegram] could not register webhook secret", err),
         );
+        // A client bot token saved in the panel: its webhook with its own secret.
+        if (botTokenSource("client") === "panel") {
+          await ensureClientBot()
+            .then((r) => {
+              if (r.error) console.error("[telegram] client bot setup failed:", r.error);
+            })
+            .catch((err) => console.error("[telegram] client bot setup failed", err));
+        }
         // The staff bot (Platforma -> Botlar): its webhook and command menu.
         await ensureStaffBot()
           .then((r) => {

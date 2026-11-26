@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requirePlatformOwner } from "@/lib/auth.server";
 
 // Platforma -> Botlar: the platform's three Telegram bots.
-//   GET  -> { ready, bots: { client|staff|ops: { username, source, webhook, webhookError } },
-//             staffChats, trialOrgs, orgBots }
+//   GET  -> { ready, bots: { client|staff|ops: { username, source, hasEnv,
+//             webhook, webhookError } }, staffChats, trialOrgs, orgBots }
 //   POST {kind, action: "reconnect"}  points the bot at our server again ->
 //        { ok, webhookError }.
-//   POST {kind: "staff" | "ops", token: string | null}  saves (checked with
-//        Telegram, sealed) or removes the bot's token. A token set on the
-//        server (STAFF_/OPS_TELEGRAM_BOT_TOKEN) wins and cannot be changed here.
+//   POST {kind: "client" | "staff" | "ops", token: string | null}  saves
+//        (checked with Telegram, sealed) or removes the bot's panel token.
+//        The panel token wins over the server setting (.env.server), which
+//        stays as the fallback when the panel token is removed.
 export const Route = createFileRoute("/platform/bots-api")({
   server: {
     handlers: {
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/platform/bots-api")({
               {
                 username,
                 source: b.botTokenSource(k),
+                hasEnv: b.botHasEnvToken(k),
                 webhook: hook.url,
                 webhookError: hook.error,
               },
@@ -63,11 +65,15 @@ export const Route = createFileRoute("/platform/bots-api")({
           token?: string | null;
           action?: string;
         };
-        if (body.kind !== "staff" && body.kind !== "ops")
+        if (body.kind !== "client" && body.kind !== "staff" && body.kind !== "ops")
           return Response.json({ error: "BAD_REQUEST" }, { status: 400 });
         const b = await import("@/lib/bot-tokens.server");
         // Points the bot at our server again and says what Telegram has.
-        const connect = async (kind: "staff" | "ops") => {
+        const connect = async (kind: "client" | "staff" | "ops") => {
+          if (kind === "client") {
+            const r = await b.ensureClientBot(true);
+            return r.error ?? (r.ok ? null : r.url ? `Webhook: ${r.url}` : "Webhook o'rnatilmadi");
+          }
           if (kind === "staff") {
             const r = await b.ensureStaffBot(true);
             return r.error ?? (r.ok ? null : r.url ? `Webhook: ${r.url}` : "Webhook o'rnatilmadi");
@@ -90,15 +96,12 @@ export const Route = createFileRoute("/platform/bots-api")({
           const webhookError = await connect(body.kind);
           return Response.json({ ok: !webhookError, webhookError });
         }
-        if (b.botTokenSource(body.kind) === "env")
-          return Response.json(
-            { error: "Bu bot tokeni serverda (.env.server) o'rnatilgan — u yerda o'zgartiriladi" },
-            { status: 400 },
-          );
         try {
           const r = await b.saveBotToken(body.kind, body.token?.trim() || null);
           // Point the bot at our webhook right away; a failure is shown.
-          const webhookError = r.username ? await connect(body.kind) : null;
+          // Removed from the panel: the server setting (if any) takes over again.
+          const webhookError =
+            r.username || b.botToken(body.kind) ? await connect(body.kind) : null;
           return Response.json({ ok: true, username: r.username, webhookError });
         } catch (err) {
           return Response.json(
