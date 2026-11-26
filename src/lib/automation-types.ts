@@ -233,6 +233,8 @@ export type BotStep =
       type: "message";
       text: string;
       buttons?: BotButton[];
+      /** A picture, video, voice note, song or file sent with the text (by its link). */
+      media?: BotMedia | undefined;
       next?: string;
       pos?: StepPos;
     }
@@ -254,8 +256,10 @@ export type BotStep =
       type: "condition";
       source: "reply" | "field";
       field?: string;
-      operator: "contains" | "eq" | "neq" | "gt" | "lt" | "any" | "phone";
+      operator: BotOperator;
       value: string;
+      /** Several conditions, all of which must hold (5CRM «+ Shart»); the first is the one above. */
+      rules?: BotRule[] | undefined;
       then?: string;
       else?: string;
       pos?: StepPos;
@@ -280,7 +284,57 @@ export type BotStep =
       pos?: StepPos;
     }
   | { id: string; type: "handoff"; text?: string; pos?: StepPos }
-  | { id: string; type: "stop"; pos?: StepPos };
+  | { id: string; type: "stop"; pos?: StepPos }
+  /** «Reaksiya»: a reaction on the client's last message. */
+  | { id: string; type: "reaction"; emoji?: string; next?: string; pos?: StepPos }
+  /** «Ichki xabar»: a note on the lead only the team sees. */
+  | { id: string; type: "note"; text: string; next?: string; pos?: StepPos }
+  /** «Tekshiruvchi»: is the client's answer a phone / email / number / text? Yes or no. */
+  | {
+      id: string;
+      type: "validate";
+      kind: ReplyKind | "text";
+      /** Where a good answer is written: name / phone / email, or any word (a variable). */
+      saveAs?: string;
+      then?: string;
+      else?: string;
+      pos?: StepPos;
+    }
+  /** «Botni ishga tushirish»: hand the client over to another salesbot at once. */
+  | { id: string; type: "start_bot"; botId: string; pos?: StepPos }
+  /** «O'z qadam (kod)»: call an outside address; its answer is {{http}} (and {{http.key}}). */
+  | {
+      id: string;
+      type: "http";
+      method: "GET" | "POST";
+      url: string;
+      next?: string;
+      pos?: StepPos;
+    }
+  /** «Vidjetlar»: a Telegram message to a team chat or group (by chat id). */
+  | { id: string; type: "tg_widget"; chatId: string; text: string; next?: string; pos?: StepPos }
+  /** «Taqsimlash»: give the lead to a salesperson in turn. */
+  | { id: string; type: "distribute"; next?: string; pos?: StepPos }
+  /** «Yozmoqda…»: show "typing" in the client's chat (or just mark the message as seen). */
+  | { id: string; type: "typing"; mode: "typing" | "read"; next?: string; pos?: StepPos }
+  /** «Javobni saqlash»: write the client's last answer into a lead field. */
+  | { id: string; type: "save_answer"; field: string; next?: string; pos?: StepPos }
+  /** «Tasodifiy yo'l»: go on along one of these steps, picked at random (A/B/C test). */
+  | { id: string; type: "random"; targets: string[]; pos?: StepPos };
+
+/** Media of a bot message (5CRM: voice, audio, picture, video, file). */
+export type BotMediaKind = "voice" | "audio" | "photo" | "video" | "document";
+export type BotMedia = { kind: BotMediaKind; url: string };
+
+/** Condition operators (5CRM: Ichida bor, Bittasi bor, Teng, Teng emas, Katta, Kichik, Bo'sh emas, Bo'sh). */
+export type BotOperator =
+  "contains" | "any_of" | "eq" | "neq" | "gt" | "lt" | "any" | "empty" | "phone";
+export type BotRule = {
+  source: "reply" | "field";
+  field?: string;
+  operator: BotOperator;
+  value: string;
+};
 
 export type BotStepType = BotStep["type"];
 
@@ -294,7 +348,66 @@ export const BOT_STEP_TYPES: BotStepType[] = [
   "ai_reply",
   "handoff",
   "stop",
+  "reaction",
+  "note",
+  "validate",
+  "start_bot",
+  "http",
+  "tg_widget",
+  "distribute",
+  "typing",
+  "save_answer",
+  "random",
 ];
+
+/** 5CRM's «Keyingi qadam» menu: the blocks in three groups. */
+export const BOT_STEP_GROUPS: { key: "talk" | "logic" | "sales"; types: BotStepType[] }[] = [
+  { key: "talk", types: ["message", "reaction", "note", "delay", "wait_reply"] },
+  {
+    key: "logic",
+    types: ["action", "condition", "validate", "start_bot", "http", "tg_widget", "distribute"],
+  },
+  {
+    key: "sales",
+    types: ["ai_reply", "typing", "save_answer", "random", "split", "handoff", "stop"],
+  },
+];
+
+/** One condition: the text compared, the operator, the expected value. */
+export function botCompare(actual: string, operator: string, expected: string): boolean {
+  const a = actual.trim().toLowerCase();
+  const e = expected.trim().toLowerCase();
+  switch (operator) {
+    case "any":
+      return a.length > 0;
+    case "empty":
+      return a.length === 0;
+    case "eq":
+      return a === e;
+    case "neq":
+      return a !== e;
+    case "contains":
+      // Words separated by commas: any one of them (kept for old bots).
+      return e.split(",").some((part) => part.trim() && a.includes(part.trim()));
+    case "any_of":
+      return e.split(",").some((part) => part.trim() && a.includes(part.trim()));
+    case "gt":
+      return Number(a.replace(/\s/g, "")) > Number(e.replace(/\s/g, ""));
+    case "lt":
+      return Number(a.replace(/\s/g, "")) < Number(e.replace(/\s/g, ""));
+    case "phone":
+      return a.replace(/\D/g, "").length >= 9;
+    default:
+      return false;
+  }
+}
+
+/** The step ids a «Tasodifiy yo'l» goes to, from "1,2" (step numbers) or ids. */
+export function randomTarget(targets: string[], roll: number): string | null {
+  const list = targets.filter(Boolean);
+  if (!list.length) return null;
+  return list[Math.min(list.length - 1, Math.floor(roll * list.length))] ?? null;
+}
 
 /** Answer kinds a "wait for reply" step can insist on. */
 export type ReplyKind = "phone" | "email" | "number" | "name";

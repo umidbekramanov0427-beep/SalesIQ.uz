@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import {
   Bot,
+  CheckCheck,
   Clock,
+  Code2,
+  Dices,
+  Heart,
+  Keyboard,
+  PenLine,
+  Send,
+  ShieldCheck,
+  StickyNote,
   Copy,
   Flag,
   GitBranch,
@@ -16,6 +25,7 @@ import {
   Play,
   Plus,
   Square,
+  Shuffle as ShuffleIcon,
   Trash2,
   Zap,
   type LucideIcon,
@@ -54,7 +64,18 @@ export const STEP_ICON: Record<BotStepType, LucideIcon> = {
   ai_reply: Sparkles,
   handoff: Hand,
   stop: Square,
+  reaction: Heart,
+  note: StickyNote,
+  validate: ShieldCheck,
+  start_bot: Play,
+  http: Code2,
+  tg_widget: Send,
+  distribute: ShuffleIcon,
+  typing: Keyboard,
+  save_answer: PenLine,
+  random: Dices,
 };
+void CheckCheck;
 
 /** Accent per step type: [icon chip, soft header background]. */
 export const STEP_TONE: Record<BotStepType, [string, string]> = {
@@ -67,7 +88,31 @@ export const STEP_TONE: Record<BotStepType, [string, string]> = {
   ai_reply: ["bg-indigo-500", "bg-indigo-500/8"],
   handoff: ["bg-rose-500", "bg-rose-500/8"],
   stop: ["bg-slate-500", "bg-slate-500/8"],
+  reaction: ["bg-pink-500", "bg-pink-500/8"],
+  note: ["bg-violet-400", "bg-violet-400/8"],
+  validate: ["bg-teal-500", "bg-teal-500/8"],
+  start_bot: ["bg-blue-500", "bg-blue-500/8"],
+  http: ["bg-slate-600", "bg-slate-600/8"],
+  tg_widget: ["bg-sky-600", "bg-sky-600/8"],
+  distribute: ["bg-amber-600", "bg-amber-600/8"],
+  typing: ["bg-cyan-500", "bg-cyan-500/8"],
+  save_answer: ["bg-lime-600", "bg-lime-600/8"],
+  random: ["bg-fuchsia-600", "bg-fuchsia-600/8"],
 };
+
+/** Blocks with a single "next" exit. */
+const SINGLE_NEXT = new Set<BotStepType>([
+  "action",
+  "delay",
+  "ai_reply",
+  "reaction",
+  "note",
+  "http",
+  "tg_widget",
+  "distribute",
+  "typing",
+  "save_answer",
+]);
 
 type Port = { key: string; label: string; target: string | undefined };
 
@@ -100,20 +145,25 @@ export function portsOf(step: BotStep, t: (k: string) => string): Port[] {
           : []),
       ];
     case "condition":
+    case "validate":
       return [
         { key: "then", label: t("sb.ifYes"), target: step.then },
         { key: "else", label: t("sb.ifNo"), target: step.else },
       ];
+    case "random":
+      return (step.targets.length ? step.targets : ["", ""]).map((target, i) => ({
+        key: `r:${i}`,
+        label: `${t("sb.path")} ${i + 1}`,
+        target: target || undefined,
+      }));
     case "split":
       return [
         { key: "a", label: `A · ${step.percentA}%`, target: step.a },
         { key: "b", label: `B · ${100 - step.percentA}%`, target: step.b },
       ];
-    case "action":
-    case "delay":
-    case "ai_reply":
-      return [{ key: "next", label: t("sb.portNext"), target: step.next }];
     default:
+      if (SINGLE_NEXT.has(step.type))
+        return [{ key: "next", label: t("sb.portNext"), target: (step as { next?: string }).next }];
       return [];
   }
 }
@@ -128,18 +178,22 @@ export function setPortTarget(step: BotStep, key: string, target: string): BotSt
       buttons: (step.buttons ?? []).map((b, j) => (j === i ? { ...b, next: target } : b)),
     };
   }
-  if (key === "then" && step.type === "condition") return { ...step, then: target };
-  if (key === "else" && step.type === "condition") return { ...step, else: target };
+  if (key === "then" && (step.type === "condition" || step.type === "validate"))
+    return { ...step, then: target };
+  if (key === "else" && (step.type === "condition" || step.type === "validate"))
+    return { ...step, else: target };
+  if (key.startsWith("r:") && step.type === "random") {
+    const i = Number(key.slice(2));
+    const targets = step.targets.length ? [...step.targets] : ["", ""];
+    targets[i] = target;
+    return { ...step, targets };
+  }
   if (key === "onTimeout" && step.type === "wait_reply") return { ...step, onTimeout: target };
   if (key === "a" && step.type === "split") return { ...step, a: target };
   if (key === "b" && step.type === "split") return { ...step, b: target };
   if (
     key === "next" &&
-    (step.type === "message" ||
-      step.type === "action" ||
-      step.type === "delay" ||
-      step.type === "ai_reply" ||
-      step.type === "wait_reply")
+    (step.type === "message" || step.type === "wait_reply" || SINGLE_NEXT.has(step.type))
   )
     return { ...step, next: target } as BotStep;
   return step;
@@ -169,14 +223,13 @@ export function normalizeSteps(steps: BotStep[]): BotStep[] {
         };
       }
       case "condition":
+      case "validate":
         return { ...s, then: s.then ?? follow, else: s.else ?? follow };
       case "split":
         return { ...s, a: s.a ?? follow, b: s.b ?? follow };
-      case "action":
-      case "delay":
-      case "ai_reply":
-        return { ...s, next: s.next ?? follow };
       default:
+        if (SINGLE_NEXT.has(s.type))
+          return { ...s, next: (s as { next?: string }).next ?? follow } as BotStep;
         return s;
     }
   });
@@ -346,6 +399,26 @@ export function stepPreview(
       return step.text || t("sb.handoffHint");
     case "stop":
       return t("sb.stopHint");
+    case "reaction":
+      return step.emoji || "❤";
+    case "note":
+      return step.text || t("sb.previewEmptyMessage");
+    case "validate":
+      return `${t(`sb.kind.${step.kind}`)}${step.saveAs ? ` → ${step.saveAs}` : ""}`;
+    case "start_bot":
+      return step.botId ? t("sb.startBotSet") : t("sb.startBotPick");
+    case "http":
+      return `${step.method} ${step.url || "https://…"}`;
+    case "tg_widget":
+      return step.text || t("sb.previewEmptyMessage");
+    case "distribute":
+      return t("sb.noSettings");
+    case "typing":
+      return step.mode === "typing" ? t("sb.typing.typing") : t("sb.typing.read");
+    case "save_answer":
+      return step.field || t("sb.fieldPick");
+    case "random":
+      return t("sb.previewRandom", { n: Math.max(2, step.targets.length) });
   }
 }
 

@@ -22,6 +22,9 @@ import { callGemini } from "@/lib/gemini.server";
 import {
   END_STEP,
   MAX_INVALID_REPLIES,
+  botCompare,
+  randomTarget,
+  type BotRule,
   matchButton,
   renderTemplate,
   replyIsValid,
@@ -34,6 +37,8 @@ import {
   type MessageFile,
 } from "@/lib/automation-types";
 import { phoneKey } from "@/lib/phone-key";
+import { sendViaChatBot } from "@/lib/bot-tokens.server";
+import { callTelegramMethod } from "@/lib/telegram-report.server";
 import { apiPayload, classifyChat, pickByWeight } from "@/lib/automations/trigger-kit";
 
 const APP_URL = (process.env["PUBLIC_APP_URL"] ?? "https://salesiq.uz").replace(/\/$/, "");
@@ -731,6 +736,8 @@ type BotRow = {
   external_secret: string | null;
   enabled: boolean;
   created_by: string | null;
+  /** «Sinov»: the flow runs, but nothing is changed in the CRM. */
+  test_mode?: boolean | null;
 };
 
 type RunContext = {
@@ -856,28 +863,43 @@ function explicitNext(step: BotStep): string | undefined {
   return "next" in step ? step.next : undefined;
 }
 
-function compare(actual: string, operator: string, expected: string) {
-  const a = actual.trim().toLowerCase();
-  const e = expected.trim().toLowerCase();
-  switch (operator) {
-    case "any":
-      return a.length > 0;
-    case "eq":
-      return a === e;
-    case "neq":
-      return a !== e;
-    case "contains":
-      return e.split(",").some((part) => part.trim() && a.includes(part.trim()));
-    case "gt":
-      return Number(a) > Number(e);
-    case "lt":
-      return Number(a) < Number(e);
-    case "phone":
-      return a.replace(/\D/g, "").length >= 9;
-    default:
-      return false;
-  }
+const compare = botCompare;
+
+/** The text a condition rule compares: the client's answer or a lead field. */
+function ruleActual(rule: BotRule, lead: LeadContext, ctx: RunContext): string {
+  if (rule.source === "reply") return ctx.reply ?? "";
+  if (!rule.field) return "";
+  const l = lead.lead as unknown as Record<string, unknown>;
+  if (rule.field.startsWith("custom:"))
+    return String(
+      ((l["custom_fields"] as Record<string, unknown> | null) ?? {})[rule.field.slice(7)] ?? "",
+    );
+  if (rule.field === "tags") return lead.lead.tags.join(",");
+  if (rule.field === "amount") return String(l["budget"] ?? l["expected_revenue"] ?? "");
+  if (rule.field === "stage") return String(l["stage_id"] ?? "");
+  if (rule.field === "owner") return String(l["owner_id"] ?? "");
+  return String(l[rule.field] ?? ctx.vars?.[rule.field] ?? "");
 }
+
+/** The client's Telegram chat (null when the lead has none). */
+async function leadChatId(orgId: string, leadId: string): Promise<number | null> {
+  const { data } = await supabaseAdmin
+    .from("lead_telegram_links")
+    .select("chat_id")
+    .eq("lead_id", leadId)
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  return data?.chat_id ?? null;
+}
+
+/** Media of a bot message by link: Telegram fetches the file from the URL itself. */
+const MEDIA_METHOD = {
+  photo: ["sendPhoto", "photo"],
+  video: ["sendVideo", "video"],
+  audio: ["sendAudio", "audio"],
+  voice: ["sendVoice", "voice"],
+  document: ["sendDocument", "document"],
+} as const;
 
 /** Reply options of a message step (link buttons are not answers). */
 function replyButtons(step: { buttons?: { label: string; next?: string; url?: string }[] }) {
@@ -1079,6 +1101,31 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
     const vars = templateVars(lead, { reply: ctx.reply ?? "", ...ctx.vars });
 
     if (step.type === "message") {
+      // The picture / video / voice / file first, by its link (Telegram only).
+      if (step.media?.url) {
+        const chatId = await leadChatId(run.organization_id, run.lead_id);
+        const [method, field] = MEDIA_METHOD[step.media.kind] ?? MEDIA_METHOD.document;
+        if (chatId) {
+          try {
+            await sendViaChatBot(chatId, (token) =>
+              callTelegramMethod(token, method, { chat_id: chatId, [field]: step.media!.url }),
+            );
+            await supabaseAdmin.from("lead_telegram_messages").insert({
+              organization_id: run.organization_id,
+              lead_id: run.lead_id,
+              direction: "out",
+              sent_by: actor,
+              text: `📎 ${step.media.url}`,
+            });
+          } catch (err) {
+            logLine(
+              run,
+              `Media yuborilmadi: ${err instanceof Error ? err.message : "xato"}`,
+              step.id,
+            );
+          }
+        }
+      }
       let text = renderTemplate(step.text, vars);
       const options = replyButtons(step);
       const links = (step.buttons ?? []).filter((b) => b.url);
@@ -1141,20 +1188,17 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
     }
 
     if (step.type === "condition") {
-      let actual = "";
-      if (step.source === "reply") actual = ctx.reply ?? "";
-      else if (step.field) {
-        const l = lead.lead as unknown as Record<string, unknown>;
-        actual = step.field.startsWith("custom:")
-          ? String(
-              ((l["custom_fields"] as Record<string, unknown> | null) ?? {})[step.field.slice(7)] ??
-                "",
-            )
-          : step.field === "tags"
-            ? lead.lead.tags.join(",")
-            : String(l[step.field] ?? ctx.vars[step.field] ?? "");
-      }
-      const ok = compare(actual, step.operator, step.value);
+      // Every rule must hold: the step's own one and those added with «+ Shart».
+      const rules: BotRule[] = [
+        {
+          source: step.source,
+          ...(step.field ? { field: step.field } : {}),
+          operator: step.operator,
+          value: step.value,
+        },
+        ...(step.rules ?? []),
+      ];
+      const ok = rules.every((r) => compare(ruleActual(r, lead, ctx), r.operator, r.value));
       logLine(run, `Shart: ${ok ? "ha" : "yo'q"}`, step.id);
       stepId = ok ? following(steps, step, step.then) : following(steps, step, step.else);
       continue;
@@ -1162,7 +1206,9 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
 
     if (step.type === "action") {
       const action = renderAction(step.action, vars);
-      if (action.type === "set_contact") {
+      if (bot.test_mode) {
+        logLine(run, `Sinov: amal bajarilmadi (${step.action.type})`, step.id);
+      } else if (action.type === "set_contact") {
         await setContactField(run.organization_id, lead, action.field, action.value);
       } else {
         await supabaseAdmin.rpc("apply_automation_actions", {
@@ -1200,19 +1246,20 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
     }
 
     if (step.type === "handoff") {
-      await supabaseAdmin.rpc("apply_automation_actions", {
-        p_actions: [
-          {
-            type: "create_task",
-            title: `Salesbot "${bot.name}": mijoz bilan bog'laning`,
-            description: step.text ?? ctx.reply ?? undefined,
-            dueInMinutes: 30,
-            priority: "High",
-          },
-        ] as never,
-        p_lead_id: run.lead_id,
-        p_organization_id: run.organization_id,
-      });
+      if (!bot.test_mode)
+        await supabaseAdmin.rpc("apply_automation_actions", {
+          p_actions: [
+            {
+              type: "create_task",
+              title: `Salesbot "${bot.name}": mijoz bilan bog'laning`,
+              description: step.text ?? ctx.reply ?? undefined,
+              dueInMinutes: 30,
+              priority: "High",
+            },
+          ] as never,
+          p_lead_id: run.lead_id,
+          p_organization_id: run.organization_id,
+        });
       logLine(run, "Menejerga topshirildi", step.id);
       await saveRun(run, {
         status: "done",
@@ -1222,6 +1269,192 @@ async function advance(run: RunRow, bot: BotRow, input: ResumeInput | null) {
         finished_at: new Date().toISOString(),
       });
       return;
+    }
+
+    if (step.type === "reaction") {
+      const chatId = await leadChatId(run.organization_id, run.lead_id);
+      const { data: last } = await supabaseAdmin
+        .from("lead_telegram_messages")
+        .select("tg_message_id")
+        .eq("organization_id", run.organization_id)
+        .eq("lead_id", run.lead_id)
+        .eq("direction", "in")
+        .not("tg_message_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const messageId = (last as { tg_message_id?: number } | null)?.tg_message_id;
+      if (chatId && messageId) {
+        await sendViaChatBot(chatId, (token) =>
+          callTelegramMethod(token, "setMessageReaction", {
+            chat_id: chatId,
+            message_id: messageId,
+            reaction: [{ type: "emoji", emoji: step.emoji || "❤" }],
+          }),
+        ).catch(() => undefined);
+      }
+      logLine(run, `Reaksiya: ${step.emoji || "❤"}`, step.id);
+      stepId = following(steps, step, step.next);
+      continue;
+    }
+
+    if (step.type === "typing") {
+      const chatId = await leadChatId(run.organization_id, run.lead_id);
+      if (chatId && step.mode === "typing") {
+        await sendViaChatBot(chatId, (token) =>
+          callTelegramMethod(token, "sendChatAction", { chat_id: chatId, action: "typing" }),
+        ).catch(() => undefined);
+      }
+      logLine(run, step.mode === "typing" ? "Yozmoqda…" : "O'qildi", step.id);
+      stepId = following(steps, step, step.next);
+      continue;
+    }
+
+    if (step.type === "note") {
+      const text = renderTemplate(step.text, vars).trim();
+      if (text && !bot.test_mode) {
+        await supabaseAdmin.rpc("apply_automation_actions", {
+          p_actions: [{ type: "add_note", text }] as never,
+          p_lead_id: run.lead_id,
+          p_organization_id: run.organization_id,
+        });
+      }
+      logLine(run, `${bot.test_mode ? "Sinov: " : ""}Ichki xabar: ${text.slice(0, 120)}`, step.id);
+      stepId = following(steps, step, step.next);
+      continue;
+    }
+
+    if (step.type === "validate" || step.type === "save_answer") {
+      const answer = (ctx.reply ?? "").trim();
+      const ok =
+        step.type === "save_answer"
+          ? answer.length > 0
+          : step.kind === "text"
+            ? answer.length > 0
+            : replyIsValid(step.kind, answer);
+      const target = step.type === "save_answer" ? step.field : step.saveAs;
+      if (ok && target) {
+        ctx.vars[target] = answer;
+        if (!bot.test_mode) {
+          if (target === "name" || target === "phone" || target === "email") {
+            await setContactField(run.organization_id, lead, target, answer);
+          } else {
+            await supabaseAdmin.rpc("apply_automation_actions", {
+              p_actions: [{ type: "set_field", field: target, value: answer }] as never,
+              p_lead_id: run.lead_id,
+              p_organization_id: run.organization_id,
+            });
+          }
+        }
+      }
+      if (step.type === "save_answer") {
+        logLine(run, `Javob saqlandi: ${target}`, step.id);
+        stepId = following(steps, step, step.next);
+      } else {
+        logLine(run, `Tekshiruv: ${ok ? "ha" : "yo'q"}`, step.id);
+        stepId = ok ? following(steps, step, step.then) : following(steps, step, step.else);
+      }
+      continue;
+    }
+
+    if (step.type === "start_bot") {
+      logLine(run, "Boshqa bot ishga tushirildi", step.id);
+      await saveRun(run, {
+        status: "done",
+        current_step: step.id,
+        waiting_for: null,
+        wait_until: null,
+        finished_at: new Date().toISOString(),
+      });
+      if (step.botId && step.botId !== bot.id && !bot.test_mode) {
+        await startSalesbot(run.organization_id, step.botId, run.lead_id, actor);
+      }
+      return;
+    }
+
+    if (step.type === "http") {
+      if (bot.test_mode) {
+        logLine(run, `Sinov: so'rov yuborilmadi (${step.method} ${step.url})`, step.id);
+      } else {
+        try {
+          const url = renderTemplate(step.url, vars);
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 10_000);
+          const res = await fetch(url, {
+            method: step.method,
+            headers: { "content-type": "application/json", "user-agent": "SalesIQ-Salesbot/1.0" },
+            ...(step.method === "POST"
+              ? {
+                  body: JSON.stringify({
+                    lead: publicLead(lead),
+                    vars: ctx.vars,
+                    reply: ctx.reply ?? "",
+                  }),
+                }
+              : {}),
+            signal: controller.signal,
+          }).finally(() => clearTimeout(timer));
+          const body = (await res.text()).slice(0, 2000);
+          ctx.vars["http"] = body;
+          try {
+            const json = JSON.parse(body) as unknown;
+            if (json && typeof json === "object" && !Array.isArray(json)) {
+              for (const [k, v] of Object.entries(json as Record<string, unknown>)) {
+                if (v === null || typeof v !== "object") ctx.vars[`http.${k}`] = String(v ?? "");
+              }
+            }
+          } catch {
+            // not JSON: {{http}} holds the text
+          }
+          logLine(run, `So'rov: ${step.method} ${res.status}`, step.id);
+        } catch (err) {
+          logLine(run, `So'rov xatosi: ${err instanceof Error ? err.message : "xato"}`, step.id);
+        }
+      }
+      stepId = following(steps, step, step.next);
+      continue;
+    }
+
+    if (step.type === "tg_widget") {
+      const text = renderTemplate(step.text, vars).trim();
+      if (text && step.chatId && !bot.test_mode) {
+        await supabaseAdmin.rpc("apply_automation_actions", {
+          p_actions: [{ type: "tg_chat_message", chatId: step.chatId, text }] as never,
+          p_lead_id: run.lead_id,
+          p_organization_id: run.organization_id,
+        });
+      }
+      logLine(run, `${bot.test_mode ? "Sinov: " : ""}Telegram xabar guruhga`, step.id);
+      stepId = following(steps, step, step.next);
+      continue;
+    }
+
+    if (step.type === "distribute") {
+      if (!bot.test_mode) {
+        const { data: reps } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("organization_id", run.organization_id)
+          .eq("role", "sotuv_menejeri");
+        const ownerIds = (reps ?? []).map((r) => r.id);
+        if (ownerIds.length) {
+          await supabaseAdmin.rpc("apply_automation_actions", {
+            p_actions: [{ type: "distribute", ownerIds, onlyUnowned: false }] as never,
+            p_lead_id: run.lead_id,
+            p_organization_id: run.organization_id,
+          });
+        }
+      }
+      logLine(run, `${bot.test_mode ? "Sinov: " : ""}Lid taqsimlandi`, step.id);
+      stepId = following(steps, step, step.next);
+      continue;
+    }
+
+    if (step.type === "random") {
+      const target = randomTarget(step.targets ?? [], Math.random());
+      logLine(run, "Tasodifiy yo'l", step.id);
+      stepId = target ?? END_STEP;
+      continue;
     }
 
     // stop

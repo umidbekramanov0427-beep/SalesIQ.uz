@@ -18,8 +18,12 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
+  BOT_STEP_GROUPS,
   BOT_STEP_TYPES,
   END_STEP,
+  type BotMediaKind,
+  type BotOperator,
+  type BotRule,
   MAX_INVALID_REPLIES,
   REPLY_KINDS,
   type BotStep,
@@ -66,8 +70,61 @@ export function blankStep(type: BotStepType): BotStep {
       return { id, type };
     case "stop":
       return { id, type };
+    case "reaction":
+      return { id, type, emoji: "❤", next: END_STEP };
+    case "note":
+      return { id, type, text: "", next: END_STEP };
+    case "validate":
+      return { id, type, kind: "phone", saveAs: "phone", then: END_STEP, else: END_STEP };
+    case "start_bot":
+      return { id, type, botId: "" };
+    case "http":
+      return { id, type, method: "POST", url: "", next: END_STEP };
+    case "tg_widget":
+      return { id, type, chatId: "", text: "", next: END_STEP };
+    case "distribute":
+      return { id, type, next: END_STEP };
+    case "typing":
+      return { id, type, mode: "typing", next: END_STEP };
+    case "save_answer":
+      return { id, type, field: "", next: END_STEP };
+    case "random":
+      return { id, type, targets: [END_STEP, END_STEP] };
   }
 }
+
+/** The blocks in 5CRM's three groups (Suhbat / Mantiq / Sotuv uchun). */
+function GroupedTypes({
+  compact = false,
+  onPick,
+}: {
+  compact?: boolean;
+  onPick: (t: BotStepType) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className={compact ? "space-y-2" : "space-y-3"}>
+      {BOT_STEP_GROUPS.map((g) => (
+        <div key={g.key}>
+          <p className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-subtle">
+            {t(`sb.group.${g.key}`)}
+          </p>
+          <div className={compact ? "grid grid-cols-2 gap-1.5" : "space-y-1.5"}>
+            {g.types.map((type) => (
+              <StepTypeButton
+                key={type}
+                type={type}
+                compact={compact}
+                onClick={() => onPick(type)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+void BOT_STEP_TYPES;
 
 export function SalesbotBuilder({
   steps,
@@ -145,9 +202,7 @@ function StepPalette({ steps, onAdd }: { steps: BotStep[]; onAdd: (t: BotStepTyp
         </p>
       </div>
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
-        {BOT_STEP_TYPES.map((type) => (
-          <StepTypeButton key={type} type={type} onClick={() => onAdd(type)} />
-        ))}
+        <GroupedTypes onPick={onAdd} />
       </div>
       <div className="space-y-2 border-t border-border bg-surface/60 px-4 py-3 text-[11.5px] leading-snug text-muted-foreground">
         <p className="flex gap-2">
@@ -288,7 +343,11 @@ function StepEditor({
 }) {
   const { t } = useI18n();
   const Icon = STEP_ICON[step.type];
-  const canContinue = step.type !== "handoff" && step.type !== "stop";
+  const canContinue =
+    step.type !== "handoff" &&
+    step.type !== "stop" &&
+    step.type !== "start_bot" &&
+    step.type !== "random";
   const target = (key: "next", label: string) =>
     "next" in step ||
     step.type === "message" ||
@@ -371,6 +430,42 @@ function StepEditor({
                 className={`${inputCls} h-auto py-2`}
               />
               <p className="mt-1 text-[11px] leading-snug text-subtle">{t("sb.messageHint")}</p>
+            </Field>
+            {/* 5CRM: voice / audio / picture / video / file, by a link. */}
+            <Field label={t("sb.media")}>
+              <div className="flex gap-1.5">
+                <select
+                  value={step.media?.kind ?? ""}
+                  onChange={(e) => {
+                    const kind = e.target.value as BotMediaKind | "";
+                    const { media: _m, ...rest } = step;
+                    onChange(
+                      kind ? { ...rest, media: { kind, url: step.media?.url ?? "" } } : rest,
+                    );
+                  }}
+                  className={`${inputCls} w-32 shrink-0`}
+                >
+                  <option value="">{t("sb.mediaNone")}</option>
+                  {(["photo", "video", "voice", "audio", "document"] as const).map((k) => (
+                    <option key={k} value={k}>
+                      {t(`sb.mediaKind.${k}`)}
+                    </option>
+                  ))}
+                </select>
+                {step.media && (
+                  <input
+                    value={step.media.url}
+                    onChange={(e) =>
+                      onChange({ ...step, media: { ...step.media!, url: e.target.value } })
+                    }
+                    placeholder="https://…"
+                    className={inputCls}
+                  />
+                )}
+              </div>
+              {step.media && (
+                <p className="mt-1 text-[11px] leading-snug text-subtle">{t("sb.mediaHint")}</p>
+              )}
             </Field>
             <div className="space-y-2">
               <p className="text-[11px] font-medium text-subtle">{t("sb.buttonsTitle")}</p>
@@ -582,14 +677,14 @@ function StepEditor({
                 }
                 className={inputCls}
               >
-                {(["contains", "eq", "neq", "gt", "lt", "any", "phone"] as const).map((o) => (
+                {OPERATORS.map((o) => (
                   <option key={o} value={o}>
                     {t(`sb.op.${o}`)}
                   </option>
                 ))}
               </select>
             </Field>
-            {step.operator !== "any" && step.operator !== "phone" && (
+            {step.operator !== "any" && step.operator !== "empty" && step.operator !== "phone" && (
               <Field label={t("sb.conditionValue")}>
                 <input
                   value={step.value}
@@ -598,6 +693,33 @@ function StepEditor({
                 />
               </Field>
             )}
+            {/* «+ Shart»: more conditions, every one must hold. */}
+            {(step.rules ?? []).map((r, i) => (
+              <RuleRow
+                key={i}
+                rule={r}
+                customFields={options.customFields}
+                onChange={(nr) =>
+                  onChange({ ...step, rules: step.rules!.map((x, j) => (j === i ? nr : x)) })
+                }
+                onRemove={() => onChange({ ...step, rules: step.rules!.filter((_, j) => j !== i) })}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...step,
+                  rules: [
+                    ...(step.rules ?? []),
+                    { source: "reply", operator: "contains", value: "" },
+                  ],
+                })
+              }
+              className="rounded-lg border border-dashed border-border px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+            >
+              + {t("sb.addRule")}
+            </button>
             <StepTarget
               value={step.then}
               steps={steps}
@@ -625,24 +747,7 @@ function StepEditor({
                 }
                 className={inputCls}
               >
-                {(
-                  [
-                    "set_contact",
-                    "add_tag",
-                    "remove_tag",
-                    "move_stage",
-                    "create_task",
-                    "assign_owner",
-                    "distribute",
-                    "move_funnel",
-                    "close_tasks",
-                    "set_field",
-                    "add_note",
-                    "close_won",
-                    "close_lost",
-                    "webhook",
-                  ] as const
-                ).map((a) => (
+                {BOT_ACTIONS.map((a) => (
                   <option key={a} value={a}>
                     {t(`dp.action.${a}`)}
                   </option>
@@ -738,6 +843,223 @@ function StepEditor({
         )}
 
         {step.type === "stop" && <p className="text-xs text-subtle">{t("sb.stopHint")}</p>}
+
+        {step.type === "reaction" && (
+          <>
+            <Field label={t("sb.reactionEmoji")}>
+              <div className="flex flex-wrap gap-1.5">
+                {["❤", "👍", "🔥", "🙏", "👌", "😊", "🎉", "✅"].map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    aria-pressed={(step.emoji || "❤") === e}
+                    onClick={() => onChange({ ...step, emoji: e })}
+                    className={cn(
+                      "grid h-9 w-9 place-items-center rounded-lg border text-lg",
+                      (step.emoji || "❤") === e ? "border-primary bg-primary/10" : "border-border",
+                    )}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "note" && (
+          <>
+            <Field label={t("sb.noteText")}>
+              <textarea
+                value={step.text}
+                onChange={(e) => onChange({ ...step, text: e.target.value })}
+                rows={4}
+                className={`${inputCls} h-auto py-2`}
+              />
+              <p className="mt-1 text-[11px] text-subtle">{t("sb.noteHint")}</p>
+            </Field>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "validate" && (
+          <>
+            <Field label={t("sb.validateKind")}>
+              <select
+                value={step.kind}
+                onChange={(e) => onChange({ ...step, kind: e.target.value as typeof step.kind })}
+                className={inputCls}
+              >
+                {(["phone", "email", "number", "name", "text"] as const).map((k) => (
+                  <option key={k} value={k}>
+                    {t(`sb.kind.${k}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={t("sb.saveTo")}>
+              <FieldPicker
+                value={step.saveAs ?? ""}
+                customFields={options.customFields}
+                onChange={(v) => onChange({ ...step, saveAs: v })}
+              />
+            </Field>
+            <StepTarget
+              value={step.then}
+              steps={steps}
+              self={step.id}
+              label={t("sb.ifYes")}
+              onChange={(v) => onChange({ ...step, then: v })}
+            />
+            <StepTarget
+              value={step.else}
+              steps={steps}
+              self={step.id}
+              label={t("sb.ifNo")}
+              onChange={(v) => onChange({ ...step, else: v })}
+            />
+          </>
+        )}
+
+        {step.type === "start_bot" && (
+          <Field label={t("sb.startBotPick")}>
+            <select
+              value={step.botId}
+              onChange={(e) => onChange({ ...step, botId: e.target.value })}
+              className={inputCls}
+            >
+              <option value="">—</option>
+              {options.bots.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+
+        {step.type === "http" && (
+          <>
+            <Field label={t("sb.httpUrl")}>
+              <div className="flex gap-1.5">
+                <select
+                  value={step.method}
+                  onChange={(e) => onChange({ ...step, method: e.target.value as "GET" | "POST" })}
+                  className={`${inputCls} w-24 shrink-0`}
+                >
+                  <option value="POST">POST</option>
+                  <option value="GET">GET</option>
+                </select>
+                <input
+                  value={step.url}
+                  onChange={(e) => onChange({ ...step, url: e.target.value })}
+                  placeholder="https://…"
+                  className={inputCls}
+                />
+              </div>
+              <p className="mt-1 text-[11px] leading-snug text-subtle">{t("sb.httpHint")}</p>
+            </Field>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "tg_widget" && (
+          <>
+            <Field label={t("sb.chatId")}>
+              <input
+                value={step.chatId}
+                onChange={(e) => onChange({ ...step, chatId: e.target.value })}
+                placeholder="-100…"
+                className={inputCls}
+              />
+            </Field>
+            <Field label={t("sb.tgText")}>
+              <textarea
+                value={step.text}
+                onChange={(e) => onChange({ ...step, text: e.target.value })}
+                rows={4}
+                className={`${inputCls} h-auto py-2`}
+              />
+            </Field>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "distribute" && (
+          <>
+            <p className="text-xs text-subtle">{t("sb.distributeHint")}</p>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "typing" && (
+          <>
+            <Field label={t("sb.typingMode")}>
+              <select
+                value={step.mode}
+                onChange={(e) => onChange({ ...step, mode: e.target.value as "typing" | "read" })}
+                className={inputCls}
+              >
+                <option value="typing">{t("sb.typing.typing")}</option>
+                <option value="read">{t("sb.typing.read")}</option>
+              </select>
+            </Field>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "save_answer" && (
+          <>
+            <Field label={t("sb.saveTo")}>
+              <FieldPicker
+                value={step.field}
+                customFields={options.customFields}
+                onChange={(v) => onChange({ ...step, field: v })}
+              />
+              <p className="mt-1 text-[11px] text-subtle">{t("sb.saveAnswerHint")}</p>
+            </Field>
+            {target("next", t("sb.then"))}
+          </>
+        )}
+
+        {step.type === "random" && (
+          <>
+            <p className="text-xs text-subtle">{t("sb.randomHint")}</p>
+            {(step.targets.length ? step.targets : ["", ""]).map((v, i) => (
+              <StepTarget
+                key={i}
+                value={v || undefined}
+                steps={steps}
+                self={step.id}
+                label={`${t("sb.path")} ${i + 1}`}
+                onChange={(nv) => {
+                  const targets = step.targets.length ? [...step.targets] : ["", ""];
+                  targets[i] = nv;
+                  onChange({ ...step, targets });
+                }}
+              />
+            ))}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => onChange({ ...step, targets: [...step.targets, END_STEP] })}
+                className="rounded-lg border border-dashed border-border px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+              >
+                + {t("sb.addPath")}
+              </button>
+              {step.targets.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...step, targets: step.targets.slice(0, -1) })}
+                  className="rounded-lg border border-dashed border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent"
+                >
+                  − {t("sb.removePath")}
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {canContinue && (
@@ -745,13 +1067,148 @@ function StepEditor({
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
             {t("sb.addNextTitle")}
           </p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {BOT_STEP_TYPES.map((type) => (
-              <StepTypeButton key={type} type={type} compact onClick={() => onAddNext(type)} />
-            ))}
-          </div>
+          <GroupedTypes compact onPick={onAddNext} />
         </div>
       )}
+    </div>
+  );
+}
+
+const OPERATORS: BotOperator[] = [
+  "contains",
+  "any_of",
+  "eq",
+  "neq",
+  "gt",
+  "lt",
+  "any",
+  "empty",
+  "phone",
+];
+
+/** «Amal bajarish»: the CRM actions a bot step can run (5CRM's 23 and ours). */
+const BOT_ACTIONS = [
+  "set_contact",
+  "create_task",
+  "close_tasks",
+  "distribute",
+  "auto_chat",
+  "assign_owner",
+  "detect_phone",
+  "lead_owner",
+  "send_message",
+  "send_card",
+  "release_owner",
+  "set_field",
+  "add_tag",
+  "quality_check",
+  "remove_tag",
+  "add_note",
+  "move_stage",
+  "move_funnel",
+  "sale_congrats",
+  "tg_chat_message",
+  "webhook",
+  "api_post",
+  "close_won",
+  "close_lost",
+] as const;
+
+/** Where an answer is written: the contact's name / phone / email or a lead field. */
+function FieldPicker({
+  value,
+  customFields,
+  onChange,
+}: {
+  value: string;
+  customFields: { key: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} className={inputCls}>
+      <option value="">{t("sb.fieldPick")}</option>
+      <option value="name">{t("sb.kind.name")}</option>
+      <option value="phone">{t("sb.kind.phone")}</option>
+      <option value="email">{t("sb.kind.email")}</option>
+      <option value="budget">{t("dp.field.budget")}</option>
+      {customFields.map((f) => (
+        <option key={f.key} value={`custom:${f.key}`}>
+          {f.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** One extra condition of a «Shart» block. */
+function RuleRow({
+  rule,
+  customFields,
+  onChange,
+  onRemove,
+}: {
+  rule: BotRule;
+  customFields: { key: string; label: string }[];
+  onChange: (r: BotRule) => void;
+  onRemove: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-1.5 rounded-xl border border-border p-2">
+      <div className="flex gap-1.5">
+        <select
+          value={rule.source === "reply" ? "reply" : (rule.field ?? "")}
+          onChange={(e) => {
+            const v = e.target.value;
+            onChange(
+              v === "reply"
+                ? { source: "reply", operator: rule.operator, value: rule.value }
+                : { ...rule, source: "field", field: v },
+            );
+          }}
+          className={inputCls}
+        >
+          <option value="reply">{t("sb.lastReply")}</option>
+          <option value="tags">{t("sb.fieldTags")}</option>
+          <option value="name">{t("sb.kind.name")}</option>
+          <option value="amount">{t("dp.field.budget")}</option>
+          <option value="source">{t("dp.field.source")}</option>
+          {customFields.map((f) => (
+            <option key={f.key} value={`custom:${f.key}`}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={t("dp.remove")}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-subtle hover:bg-destructive/10 hover:text-destructive"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="flex gap-1.5">
+        <select
+          value={rule.operator}
+          onChange={(e) => onChange({ ...rule, operator: e.target.value as BotOperator })}
+          className={inputCls}
+        >
+          {OPERATORS.map((o) => (
+            <option key={o} value={o}>
+              {t(`sb.op.${o}`)}
+            </option>
+          ))}
+        </select>
+        {rule.operator !== "any" && rule.operator !== "empty" && rule.operator !== "phone" && (
+          <input
+            value={rule.value}
+            onChange={(e) => onChange({ ...rule, value: e.target.value })}
+            className={inputCls}
+          />
+        )}
+      </div>
     </div>
   );
 }
