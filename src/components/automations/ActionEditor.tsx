@@ -619,18 +619,41 @@ export function ActionEditor({
       )}
 
       {action.type === "start_salesbot" && (
-        <select
-          value={action.botId}
-          onChange={(e) => onChange({ ...action, botId: e.target.value })}
-          className={inputCls}
-        >
-          <option value="">{t("dp.chooseBot")}</option>
-          {options.bots.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </select>
+        <div className="space-y-1.5">
+          <select
+            value={action.botId}
+            onChange={(e) => onChange({ ...action, botId: e.target.value })}
+            className={inputCls}
+          >
+            <option value="">{t("dp.chooseBot")}</option>
+            {options.bots.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+          {/* The bot editor opens in a new tab so this form keeps its work. */}
+          <div className="flex flex-wrap gap-3 text-[12px] font-semibold">
+            {action.botId && (
+              <a
+                href={`/funnels/settings?tab=salesbots&bot=${action.botId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
+                {t("sb.openBot")} ↗
+              </a>
+            )}
+            <a
+              href="/funnels/settings?tab=salesbots&bot=new"
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary hover:underline"
+            >
+              + {t("sb.new")} ↗
+            </a>
+          </div>
+        </div>
       )}
 
       {action.type === "close_lost" && (

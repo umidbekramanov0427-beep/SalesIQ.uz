@@ -10961,6 +10961,7 @@ const ru: Record<string, string> = {
   "wh.inbox.client": "Клиент склада",
   "wh.inbox.regular": "Постоянный клиент",
   "wh.inbox.badgeHint": "Доставленных заказов: {n}",
+  "sb.openBot": "Открыть бота",
 };
 
 export default ru;

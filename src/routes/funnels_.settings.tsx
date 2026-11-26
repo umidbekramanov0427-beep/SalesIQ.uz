@@ -68,8 +68,10 @@ import { cn, describeError } from "@/lib/utils";
 export const Route = createFileRoute("/funnels_/settings")({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { funnel?: string | undefined; tab?: SettingsTab | undefined } => ({
+  ): { funnel?: string | undefined; tab?: SettingsTab | undefined; bot?: string | undefined } => ({
     funnel: typeof search["funnel"] === "string" ? (search["funnel"] as string) : undefined,
+    // Salesbots tab: open this bot ("new" = the «Yangi bot» chooser).
+    bot: typeof search["bot"] === "string" ? (search["bot"] as string) : undefined,
     tab: TABS.some((x) => x.key === search["tab"]) ? (search["tab"] as SettingsTab) : undefined,
   }),
   head: () => ({ meta: [{ title: "Voronka sozlamalari — SalesIQ" }] }),

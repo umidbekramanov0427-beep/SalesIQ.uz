@@ -10934,4 +10934,5 @@ export const en: Record<string, string> = {
   "wh.inbox.client": "Warehouse client",
   "wh.inbox.regular": "Regular client",
   "wh.inbox.badgeHint": "Delivered orders: {n}",
+  "sb.openBot": "Open the bot",
 };

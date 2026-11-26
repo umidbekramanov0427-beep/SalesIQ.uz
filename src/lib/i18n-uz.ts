@@ -11138,6 +11138,7 @@ const uz: Record<string, string> = {
   "wh.inbox.client": "Ombor mijozi",
   "wh.inbox.regular": "Doimiy mijoz",
   "wh.inbox.badgeHint": "Yetkazilgan buyurtmalar: {n}",
+  "sb.openBot": "Botni ochish",
 };
 
 export default uz;

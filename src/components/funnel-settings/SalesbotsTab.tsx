@@ -806,6 +806,12 @@ function SalesbotsPage() {
   }
 
   useEffect(() => {
+    // ?bot=<id> opens that bot, ?bot=new the «Yangi bot» chooser (links
+    // from a trigger's «Salesbotni ishga tushirish»); else the first bot.
+    const wanted =
+      typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("bot");
+    if (wanted === "new") return;
+    if (wanted && bots?.some((b) => b.id === wanted)) return setSelected(wanted);
     if (selected === NEW && bots?.length) setSelected(bots[0]!.id);
     // only on first load
     // eslint-disable-next-line react-hooks/exhaustive-deps
