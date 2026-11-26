@@ -1540,9 +1540,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "**Admin → Salesbotlar**ni oching, **Yangi salesbot** → **Tayyor bot: mijozni ro'yxatdan o'tkazish**ni tanlang.",
-        ru: "Откройте **Админ → Сейлзботы**, **Новый салесбот** → **Готовый бот: регистрация клиента**.",
-        en: "Open **Admin → Salesbots**, **New salesbot** → **Ready bot: register a client**.",
+        uz: "**Admin → Salesbotlar**ni oching, **Yangi salesbot** → **Tayyor bot: mijozni ro'yxatdan o'tkazish**ni yoki pastdagi 6 ta **tayyor shablon**dan birini tanlang (salomlashuvchi, xodimga uzatish, pochta orqali taklif, kalit so'z, email yig'ish, ish vaqtidan tashqari).",
+        ru: "Откройте **Админ → Сейлзботы**, **Новый салесбот** → **Готовый бот: регистрация клиента** или один из 6 **готовых шаблонов** ниже (приветствие, передача сотруднику, предложение на почту, ключевое слово, сбор email, нерабочее время).",
+        en: "Open **Admin → Salesbots**, **New salesbot** → **Ready bot: register a client**, or one of the 6 **ready templates** below (greeting, hand to a person, offer by email, keyword, collect an email, outside working hours).",
       },
       {
         uz: "**Oddiy sozlash**da salomlashish, savollar (javob qayerga yozilishi: ism, telefon, izoh...), yakuniy xabar va keyingi CRM amallarini (bosqich, teg, menejerga vazifa) moslang. O'ngda suhbat Telegram'da qanday ko'rinishi chiqadi.",
@@ -1570,6 +1570,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
         uz: "Botingiz Python, Node yoki boshqa tilda yozilgan bo'lsa — **O'z botim (kod)** rejimida maxfiy API manzil yarating va bot mijozni yig'ib bo'lgach unga `name`, `phone`, `message` bilan bitta POST so'rov yuborsin. Tayyor kod namunasi shu yerda.",
         ru: "Если ваш бот написан на Python, Node или другом языке — в режиме **Свой бот (код)** создайте закрытый API-адрес, и пусть бот отправит на него один POST-запрос с `name`, `phone`, `message`. Готовый пример кода там же.",
         en: "If your bot is written in Python, Node or another language, create a private API address in **Your own bot (code)** and have the bot send one POST request with `name`, `phone`, `message`. A ready code sample is right there.",
+      },
+      {
+        uz: "**Ishga tushish sharti**: qo'lda / trigger orqali, **Mijoz yozganda**, **Lid bosqichga tushganda** (bosqichni tanlang), **Mijoz tugmani bosganda**, Telegram botida **/start**, **tugma**, **xabar** yoki **har kuni belgilangan vaqtda** (Toshkent). Mijoz yozganda ishlaydigan bot bitta mijozga 12 soatda bir marta ishga tushadi.",
+        ru: "**Запуск**: вручную / из триггера, **клиент пишет**, **лид попадает на этап** (выберите этап), **клиент нажимает кнопку**, в Telegram-боте — **/start**, **кнопка**, **сообщение** или **каждый день в заданное время** (Ташкент). Бот «клиент пишет» запускается для одного клиента не чаще раза в 12 часов.",
+        en: "**Starts when**: by hand / from a trigger, **the client writes**, **the lead enters a stage** (pick it), **the client presses a button**, and in the Telegram bot **/start**, **a button**, **a message** or **every day at a time** (Tashkent). A «client writes» bot starts for one client at most once in 12 hours.",
+      },
+      {
+        uz: "**Sinov** yoqilganda bot xabar yuboradi, lekin CRM'da hech narsa o'zgarmaydi: amallar, izohlar, maydonlar, taqsimlash va tashqi so'rovlar faqat tarixga «Sinov» deb yoziladi. Shablondan yaratilgan bot o'chiq va sinov rejimida boshlanadi.",
+        ru: "В режиме **Тест** бот отправляет сообщения, но в CRM ничего не меняется: действия, заметки, поля, распределение и внешние запросы только пишутся в историю как «Тест». Бот из шаблона создаётся выключенным и в тестовом режиме.",
+        en: "With **Test** on the bot sends its messages but changes nothing in the CRM: actions, notes, fields, distribution and outside calls are only written to the history as «Test». A bot made from a template starts switched off and in test mode.",
+      },
+      {
+        uz: "**Bot ko'rinishi** — mijoz «Ha» yo'li bo'yicha ko'radigan suhbat. **</>** — botning JSON kodi: nusxa olib boshqa kompaniyaga ko'chiring yoki **Boshqa CRM'dan import** (amoCRM salesbot ham) bilan qo'ying. Kanvasda mini-xarita bor: bosib o'sha joyga o'ting.",
+        ru: "**Вид бота** — диалог, который клиент увидит по пути «Да». **</>** — JSON-код бота: скопируйте в другую компанию или вставьте через **Импорт из другой CRM** (и сейлсбот amoCRM). На холсте есть мини-карта: нажмите, чтобы перейти туда.",
+        en: "**Bot view** shows the chat the client sees along the «Yes» path. **</>** is the bot's JSON: copy it to another company or paste one with **Import from another CRM** (amoCRM salesbots too). The canvas has a mini-map: click it to jump there.",
       },
     ],
     faq: [

@@ -10,7 +10,11 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { ChatMemberUpdate } from "@/lib/channel-events.server";
 import { autoReplyToClient } from "@/lib/auto-reply.server";
-import { handleIncomingLeadMessage, startSalesbot } from "@/lib/automations/engine.server";
+import {
+  handleIncomingLeadMessage,
+  startSalesbot,
+  startTriggeredBots,
+} from "@/lib/automations/engine.server";
 import { forgetChatOrg, orgBot } from "@/lib/bot-tokens.server";
 import { copyChatFile } from "@/lib/files-housekeeping.server";
 import { markFollowupsReplied } from "@/lib/followups.server";
@@ -350,6 +354,8 @@ export async function orgBotNewClient(
     return;
   }
   await refreshChatPhoto({ lead_id: leadId, chat_id: chatId }).catch(() => undefined);
+  // A bot set to «Botda /start bosilganda» greets them instead of the plain line.
+  if (await startTriggeredBots(organizationId, leadId, ["tg_start"], "").catch(() => 0)) return;
   await sendTelegramMessage(
     chatId,
     "Assalomu alaykum! Savolingizni yozing — menejerimiz tez orada javob beradi.",

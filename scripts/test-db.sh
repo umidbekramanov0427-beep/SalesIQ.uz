@@ -125,6 +125,8 @@ MIGRATIONS=(
   20270207000000_warehouse # twice
   20270209000000_distribute_score
   20270209000000_distribute_score # twice
+  20270210000000_salesbot_5crm
+  20270210000000_salesbot_5crm # twice
 )
 
 cleanup() { :; }

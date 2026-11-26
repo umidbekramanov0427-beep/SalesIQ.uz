@@ -660,6 +660,8 @@ function StepEditor({
                 <option value="tags">{t("sb.fieldTags")}</option>
                 <option value="budget">{t("dp.field.budget")}</option>
                 <option value="source">{t("dp.field.source")}</option>
+                <option value="after_hours">{t("sb.field.afterHours")}</option>
+                <option value="hour">{t("sb.field.hour")}</option>
                 <option value="priority">{t("dp.field.priority")}</option>
                 <option value="temperature">{t("dp.field.temperature")}</option>
                 {options.customFields.map((f) => (
@@ -1174,6 +1176,8 @@ function RuleRow({
           <option value="name">{t("sb.kind.name")}</option>
           <option value="amount">{t("dp.field.budget")}</option>
           <option value="source">{t("dp.field.source")}</option>
+          <option value="after_hours">{t("sb.field.afterHours")}</option>
+          <option value="hour">{t("sb.field.hour")}</option>
           {customFields.map((f) => (
             <option key={f.key} value={`custom:${f.key}`}>
               {f.label}

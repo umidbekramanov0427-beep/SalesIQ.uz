@@ -2110,6 +2110,7 @@ export type Database = {
           bot_user_id: number | null;
           connected_at: string;
           default_salesbot_id: string | null;
+          new_subscriber_lead: boolean;
           organization_id: string;
           token_sealed: string;
           updated_at: string;
@@ -2120,6 +2121,7 @@ export type Database = {
           bot_user_id?: number | null;
           connected_at?: string;
           default_salesbot_id?: string | null;
+          new_subscriber_lead?: boolean;
           organization_id: string;
           token_sealed: string;
           updated_at?: string;
@@ -2130,6 +2132,7 @@ export type Database = {
           bot_user_id?: number | null;
           connected_at?: string;
           default_salesbot_id?: string | null;
+          new_subscriber_lead?: boolean;
           organization_id?: string;
           token_sealed?: string;
           updated_at?: string;
@@ -8380,6 +8383,10 @@ export type Database = {
           name: string;
           organization_id: string;
           steps: Json;
+          test_mode: boolean;
+          trigger: string;
+          trigger_stage_id: string | null;
+          trigger_time: string | null;
           updated_at: string;
         };
         Insert: {
@@ -8396,6 +8403,10 @@ export type Database = {
           name: string;
           organization_id: string;
           steps?: Json;
+          test_mode?: boolean;
+          trigger?: string;
+          trigger_stage_id?: string | null;
+          trigger_time?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -8412,6 +8423,10 @@ export type Database = {
           name?: string;
           organization_id?: string;
           steps?: Json;
+          test_mode?: boolean;
+          trigger?: string;
+          trigger_stage_id?: string | null;
+          trigger_time?: string | null;
           updated_at?: string;
         };
         Relationships: [];

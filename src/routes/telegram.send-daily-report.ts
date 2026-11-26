@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { runFileHousekeeping } from "@/lib/files-housekeeping.server";
 import { runLeadsTrashPurge } from "@/lib/leads-trash.server";
 import { runWarehouseRepeatReminders } from "@/lib/warehouse-repeat.server";
+import { runDailySalesbots } from "@/lib/salesbots/daily.server";
 import {
   ensureChatMemberUpdates,
   ensureTelegramWebhookSecret,
@@ -103,6 +104,10 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         // Ombor: a call-back task when a client's goods are about to run out.
         await runWarehouseRepeatReminders().catch((err) =>
           console.error("[warehouse-repeat] tick failed", err),
+        );
+        // Telegram Salesbot «Har kuni belgilangan vaqtda».
+        await runDailySalesbots().catch((err) =>
+          console.error("[daily-salesbots] tick failed", err),
         );
 
         try {

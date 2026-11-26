@@ -10,6 +10,8 @@ export type OrgBotState = {
     username: string;
     link: string;
     defaultSalesbotId: string | null;
+    /** «Yangi obunachiga lid ochilsin» (on until migration 20270210 says otherwise). */
+    newSubscriberLead?: boolean;
     connectedAt: string;
     webhookOk: boolean;
     webhookError: string | null;
@@ -39,6 +41,7 @@ export function useOrgBotAction() {
       body:
         | { action: "connect"; token: string }
         | { action: "default"; salesbotId: string | null }
+        | { action: "newSubscriberLead"; on: boolean }
         | { action: "reconnect" }
         | { action: "disconnect" },
     ) => {

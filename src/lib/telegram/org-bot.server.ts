@@ -9,6 +9,9 @@ import { botToken, forgetOrgBot, getMe, orgBot, publicAppUrl } from "@/lib/bot-t
 import { sealSecret } from "@/lib/secret-box.server";
 import { sharedBotDaysLeft } from "@/lib/telegram/shared-bot";
 
+/** Messages and inline-button presses (Telegram Salesbot «Tugma bosilganda»). */
+const ORG_BOT_UPDATES = ["message", "callback_query"];
+
 const TOKEN_RE = /^\d{5,15}:[A-Za-z0-9_-]{30,}$/;
 
 export type OrgBotStatus = {
@@ -17,6 +20,7 @@ export type OrgBotStatus = {
     username: string;
     link: string;
     defaultSalesbotId: string | null;
+    newSubscriberLead: boolean;
     connectedAt: string;
     webhookOk: boolean;
     webhookError: string | null;
@@ -47,11 +51,7 @@ async function call(token: string, method: string, body: Record<string, unknown>
 /** Everything the connect page shows. */
 export async function orgBotStatus(orgId: string): Promise<OrgBotStatus> {
   const [{ data: row, error }, { data: org }] = await Promise.all([
-    supabaseAdmin
-      .from("org_telegram_bots")
-      .select("username, default_salesbot_id, connected_at")
-      .eq("organization_id", orgId)
-      .maybeSingle(),
+    supabaseAdmin.from("org_telegram_bots").select("*").eq("organization_id", orgId).maybeSingle(),
     supabaseAdmin.from("organizations").select("*").eq("id", orgId).maybeSingle(),
   ]);
   const until = (org as { shared_bot_until?: string | null } | null)?.shared_bot_until ?? null;
@@ -80,6 +80,8 @@ export async function orgBotStatus(orgId: string): Promise<OrgBotStatus> {
       username: row.username,
       link: `https://t.me/${row.username}`,
       defaultSalesbotId: row.default_salesbot_id,
+      newSubscriberLead:
+        (row as { new_subscriber_lead?: boolean | null }).new_subscriber_lead !== false,
       connectedAt: row.connected_at,
       webhookOk,
       webhookError,
@@ -127,7 +129,7 @@ export async function connectOrgBot(
   await call(token, "setWebhook", {
     url: webhookUrl(orgId),
     secret_token: secret,
-    allowed_updates: ["message"],
+    allowed_updates: ORG_BOT_UPDATES,
     drop_pending_updates: true,
   });
   await call(token, "setMyCommands", {
@@ -169,6 +171,16 @@ export async function setOrgBotDefault(orgId: string, salesbotId: string | null)
   forgetOrgBot(orgId);
 }
 
+/** «Yangi obunachiga lid ochilsin»: whether /start alone makes the client a lead. */
+export async function setOrgBotNewSubscriberLead(orgId: string, on: boolean): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("org_telegram_bots")
+    .update({ new_subscriber_lead: on, updated_at: new Date().toISOString() })
+    .eq("organization_id", orgId);
+  if (error) throw error;
+  forgetOrgBot(orgId);
+}
+
 /** Points the webhook at us again (after a server address change, say). */
 export async function reconnectOrgBot(orgId: string): Promise<void> {
   const own = await orgBot(orgId);
@@ -176,7 +188,7 @@ export async function reconnectOrgBot(orgId: string): Promise<void> {
   await call(own.token, "setWebhook", {
     url: webhookUrl(orgId),
     secret_token: own.webhookSecret,
-    allowed_updates: ["message"],
+    allowed_updates: ORG_BOT_UPDATES,
   });
 }
 

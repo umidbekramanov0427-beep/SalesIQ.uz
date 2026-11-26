@@ -23,6 +23,7 @@ import {
   END_STEP,
   MAX_INVALID_REPLIES,
   botCompare,
+  tashkentClock,
   randomTarget,
   type BotRule,
   matchButton,
@@ -787,6 +788,8 @@ export async function startSalesbot(
   botId: string,
   leadId: string,
   actorId?: string | null,
+  /** The client's message that started the bot: the first condition can read it. */
+  firstReply?: string | null,
 ): Promise<{ runId: string } | { error: string }> {
   const bot = await loadBot(botId);
   if (!bot || bot.organization_id !== orgId) return { error: "Bot not found" };
@@ -808,7 +811,7 @@ export async function startSalesbot(
       lead_id: leadId,
       status: "running",
       current_step: bot.steps[0]?.id ?? null,
-      context: { actor } as never,
+      context: { actor, ...(firstReply?.trim() ? { reply: firstReply.trim() } : {}) } as never,
     })
     .select("*")
     .single();
@@ -878,6 +881,8 @@ function ruleActual(rule: BotRule, lead: LeadContext, ctx: RunContext): string {
   if (rule.field === "amount") return String(l["budget"] ?? l["expected_revenue"] ?? "");
   if (rule.field === "stage") return String(l["stage_id"] ?? "");
   if (rule.field === "owner") return String(l["owner_id"] ?? "");
+  if (rule.field === "hour") return String(tashkentClock().hour);
+  if (rule.field === "after_hours") return tashkentClock().afterHours ? "1" : "0";
   return String(l[rule.field] ?? ctx.vars?.[rule.field] ?? "");
 }
 
@@ -1484,7 +1489,10 @@ export async function handleIncomingLeadMessage(
   text: string,
   file: string | null = null,
 ) {
-  if (text.trim() && (await answerMessageButton(orgId, leadId, text))) return;
+  if (text.trim() && (await answerMessageButton(orgId, leadId, text))) {
+    await startTriggeredBots(orgId, leadId, ["button", "tg_button"], text);
+    return;
+  }
   const { data: runs } = await supabaseAdmin
     .from("salesbot_runs")
     .select("*")
@@ -1494,7 +1502,11 @@ export async function handleIncomingLeadMessage(
     .order("updated_at", { ascending: false })
     .limit(1);
   const run = runs?.[0] as unknown as RunRow | undefined;
-  if (!run) return;
+  if (!run) {
+    // Nobody is talking to the client: a bot set to «Mijoz yozganda» starts.
+    if (text.trim()) await startTriggeredBots(orgId, leadId, ["message", "tg_message"], text);
+    return;
+  }
   const bot = await loadBot(run.bot_id);
   if (!bot) return;
   if (bot.kind === "external") {
@@ -1518,6 +1530,55 @@ export async function handleIncomingLeadMessage(
   if (run.status !== "waiting" || run.waiting_for !== "reply") return;
   if (!text.trim()) return;
   await advance(run, bot, { reply: text });
+}
+
+/** A bot started by a client's message doesn't start again for them within this time. */
+const TRIGGER_REPEAT_MS = 12 * 60 * 60_000;
+
+/**
+ * Bots that start on their own (salesbots.trigger, migration 20270210):
+ * «Mijoz yozganda» / «Botga xabar kelganda» and «Tugma bosilganda». The
+ * client's words go in as the first reply, so a keyword condition can read
+ * them; a bot already run for this lead in the last 12 hours is skipped, so
+ * a chatty client isn't greeted on every message. Before the migration the
+ * column is missing and nothing starts.
+ */
+export async function startTriggeredBots(
+  orgId: string,
+  leadId: string,
+  triggers: string[],
+  text: string,
+): Promise<number> {
+  const { data: bots, error } = await supabaseAdmin
+    .from("salesbots")
+    .select("id")
+    .eq("organization_id", orgId)
+    .eq("enabled", true)
+    .in("trigger", triggers)
+    .order("created_at", { ascending: true })
+    .limit(3);
+  if (error || !bots?.length) return 0;
+  const since = new Date(Date.now() - TRIGGER_REPEAT_MS).toISOString();
+  const { data: recent } = await supabaseAdmin
+    .from("salesbot_runs")
+    .select("bot_id")
+    .eq("organization_id", orgId)
+    .eq("lead_id", leadId)
+    .in(
+      "bot_id",
+      bots.map((b) => b.id),
+    )
+    .gte("started_at", since);
+  const done = new Set((recent ?? []).map((r) => r.bot_id));
+  let started = 0;
+  for (const b of bots) {
+    if (done.has(b.id)) continue;
+    const res = await startSalesbot(orgId, b.id, leadId, null, text);
+    if ("runId" in res) started++;
+    // One conversation at a time: the first bot that starts talks.
+    if (started) break;
+  }
+  return started;
 }
 
 /**

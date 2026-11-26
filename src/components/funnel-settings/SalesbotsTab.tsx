@@ -6,10 +6,14 @@ import {
   Code2,
   Copy,
   Download,
+  Eye,
+  FileJson,
+  FlaskConical,
   ListChecks,
   Loader2,
   Plus,
   RefreshCw,
+  RotateCcw,
   ShieldAlert,
   Sparkles,
   Trash2,
@@ -29,6 +33,13 @@ import { normalizeSteps } from "@/components/automations/BotCanvas";
 import { SalesbotBuilder, blankStep } from "@/components/automations/SalesbotBuilder";
 import { ChatPreview, SimpleBotEditor } from "@/components/automations/SimpleBotEditor";
 import { BotSharePanel, CodeBotPanel } from "@/components/automations/BotConnectPanels";
+import {
+  BotJsonDialog,
+  BotPreviewDialog,
+  TriggerPicker,
+  parseBotJson,
+} from "@/components/automations/BotEditorTools";
+import { botTemplate, TEMPLATE_KEYS } from "@/lib/salesbots/templates";
 import { convertAmoSalesbot } from "@/lib/amocrm-salesbot-import";
 import {
   buildSimpleSteps,
@@ -53,6 +64,7 @@ import {
   useSaveSalesbot,
   type SalesbotInput,
   type SalesbotRow,
+  type SalesbotTrigger,
 } from "@/hooks/use-automations";
 import { copyText } from "@/lib/clipboard";
 import { SharedBotNotice } from "@/components/integrations/OrgBotCard";
@@ -83,6 +95,10 @@ const EMPTY: SalesbotInput = {
   external_url: "",
   external_secret: "",
   enabled: true,
+  test_mode: false,
+  trigger: "manual",
+  trigger_stage_id: null,
+  trigger_time: null,
 };
 
 /* ------------------------------ runs ------------------------------ */
@@ -201,6 +217,8 @@ function BotEditor({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSimple, setConfirmSimple] = useState(false);
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
+  const [jsonOpen, setJsonOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     const base: SalesbotInput = bot
@@ -213,6 +231,10 @@ function BotEditor({
           external_url: bot.external_url ?? "",
           external_secret: bot.external_secret ?? "",
           enabled: bot.enabled,
+          test_mode: bot.test_mode ?? false,
+          trigger: (bot.trigger as SalesbotTrigger | undefined) ?? "manual",
+          trigger_stage_id: bot.trigger_stage_id ?? null,
+          trigger_time: bot.trigger_time ?? null,
         }
       : (initial ?? { ...EMPTY, steps: [blankStep("message")] });
     const m = modeOf(base);
@@ -282,7 +304,46 @@ function BotEditor({
         : steps.length === 0
           ? t("sb.needSteps")
           : null;
-  const valid = !invalidReason;
+  const triggerProblem =
+    draft.trigger === "stage_enter" && !draft.trigger_stage_id ? t("sb.trigger.needStage") : null;
+  const valid = !invalidReason && !triggerProblem;
+
+  /** «Bekor qilish»: back to the last saved version (a new bot: back to its start). */
+  function revert() {
+    if (bot && baseline) setDraft(JSON.parse(baseline) as SalesbotInput);
+  }
+
+  /** «Boshqa CRM'dan import»: our JSON, a bare step list, or an amoCRM salesbot export. */
+  function importJson(text: string): string | null {
+    const own = parseBotJson(text);
+    if (own) {
+      set({
+        kind: "builtin",
+        steps: normalizeSteps(own.steps),
+        ...(own.name && !draft.name.trim() ? { name: own.name } : {}),
+      });
+      setMode("canvas");
+      toast.success(t("sb.imported", { count: own.steps.length }));
+      return null;
+    }
+    try {
+      const stageMap = new Map<number, string>();
+      for (const st of stages ?? []) {
+        if (st.amocrm_status_id != null) stageMap.set(st.amocrm_status_id, st.id);
+      }
+      const result = convertAmoSalesbot(JSON.parse(text) as unknown, stageMap);
+      set({
+        kind: "builtin",
+        steps: normalizeSteps(result.steps),
+        ...(!draft.name.trim() ? { name: result.name } : {}),
+      });
+      setMode("canvas");
+      toast.success(t("sb.imported", { count: result.steps.length }));
+      return null;
+    } catch {
+      return t("sb.json.bad");
+    }
+  }
 
   async function submit() {
     try {
@@ -334,7 +395,7 @@ function BotEditor({
         </label>
         <div className="ml-auto flex items-center gap-2">
           {!valid ? (
-            <span className="text-xs text-warning">{invalidReason}</span>
+            <span className="text-xs text-warning">{invalidReason ?? triggerProblem}</span>
           ) : dirty ? (
             <span className="text-xs text-muted-foreground">{t("sb.unsaved")}</span>
           ) : null}
@@ -348,7 +409,83 @@ function BotEditor({
             {t("dp.save")}
           </button>
         </div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 border-t border-border pt-2.5">
+          {draft.kind === "builtin" && (
+            <TriggerPicker
+              trigger={draft.trigger ?? "manual"}
+              stageId={draft.trigger_stage_id ?? null}
+              time={draft.trigger_time ?? null}
+              stages={stageOptions}
+              onChange={(p) => set(p)}
+            />
+          )}
+          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            <label
+              title={t("sb.testHint")}
+              className={cn(
+                "flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-medium",
+                draft.test_mode
+                  ? "border-warning/60 text-warning"
+                  : "border-border text-foreground",
+              )}
+            >
+              <FlaskConical className="h-3.5 w-3.5" />
+              {t("sb.test")}
+              <Switch
+                checked={draft.test_mode ?? false}
+                onCheckedChange={(v) => set({ test_mode: v })}
+              />
+            </label>
+            {draft.kind === "builtin" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(true)}
+                  className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-medium"
+                >
+                  <Eye className="h-3.5 w-3.5" /> {t("sb.botView")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setJsonOpen(true)}
+                  title={t("sb.json.title")}
+                  className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 font-mono text-xs font-semibold"
+                >
+                  <FileJson className="h-3.5 w-3.5" /> {"</>"}
+                </button>
+              </>
+            )}
+            {bot && (
+              <button
+                type="button"
+                disabled={!dirty}
+                onClick={revert}
+                className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-medium disabled:opacity-50"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> {t("sb.cancel")}
+              </button>
+            )}
+            {bot && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                aria-label={t("dp.remove")}
+                title={t("dp.remove")}
+                className="grid h-9 w-9 place-items-center rounded-xl border border-border text-subtle hover:border-destructive/50 hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
+
+      {draft.test_mode && (
+        <div className="flex items-start gap-2 rounded-xl border border-warning/40 p-3 text-xs text-foreground">
+          <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <span>{t("sb.testBanner")}</span>
+        </div>
+      )}
 
       <SegmentedControl
         stretch
@@ -459,15 +596,23 @@ function BotEditor({
 
       {bot && <BotRuns botId={bot.id} />}
 
-      {bot && (
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          className="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-medium text-destructive hover:bg-destructive/10"
-        >
-          <Trash2 className="h-4 w-4" /> {t("dp.remove")}
-        </button>
-      )}
+      <BotJsonDialog
+        open={jsonOpen}
+        onOpenChange={setJsonOpen}
+        value={{
+          name: draft.name,
+          channel: draft.channel,
+          trigger: draft.trigger ?? "manual",
+          steps,
+        }}
+        onImport={importJson}
+      />
+      <BotPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        steps={steps}
+        name={draft.name}
+      />
 
       <ConfirmDialog
         open={confirmSimple}
@@ -570,6 +715,48 @@ function NewBotChooser({ onPick }: { onPick: (draft: SalesbotInput) => void }) {
           </button>
         ))}
       </div>
+
+      <div className="pt-2">
+        <h3 className="text-sm font-semibold text-foreground">{t("sb.t6.title")}</h3>
+        <p className="text-xs text-muted-foreground">{t("sb.t6.desc")}</p>
+      </div>
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+        {TEMPLATE_KEYS.map((k) => {
+          const tpl = botTemplate(k, t);
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() =>
+                onPick({
+                  ...EMPTY,
+                  name: t(`sb.t6.${k}.name`),
+                  steps: tpl.steps,
+                  enabled: false,
+                  test_mode: true,
+                  trigger: tpl.trigger,
+                })
+              }
+              className="group flex items-start gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/50"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Bot className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground">
+                  {t(`sb.t6.${k}.name`)}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                  {t(`sb.t6.${k}.desc`)}
+                </span>
+                <span className="mt-1.5 block text-[11px] font-medium text-subtle">
+                  {t("sb.t6.steps", { n: tpl.steps.length })} · {t(`sb.trigger.${tpl.trigger}`)}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -670,6 +857,7 @@ function SalesbotsPage() {
                   <span className="block text-[11px] text-subtle">
                     {t(`sb.mode.${modeOf(b)}`)}
                     {!b.enabled && ` · ${t("sb.offShort")}`}
+                    {b.test_mode && ` · ${t("sb.test")}`}
                   </span>
                 </span>
               </button>

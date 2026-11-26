@@ -19,6 +19,7 @@ import {
   Shuffle,
   Sparkles,
   LayoutGrid,
+  Map as MapIcon,
   Maximize2,
   MessageSquare,
   Minus,
@@ -463,6 +464,7 @@ export function BotCanvas({
   const [view, setView] = useState({ x: 0, y: 0, zoom: 0.9 });
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
+  const [showMap, setShowMap] = useState(true);
   const byId = useMemo(() => new Map(steps.map((s) => [s.id, s])), [steps]);
 
   const toWorld = useCallback(
@@ -953,6 +955,24 @@ export function BotCanvas({
         </div>
       )}
 
+      {showMap && steps.length > 0 && (
+        <MiniMap
+          steps={steps}
+          view={view}
+          wrap={wrapRef.current}
+          selectedId={selectedId}
+          onCenter={(wx, wy) => {
+            const el = wrapRef.current;
+            if (!el) return;
+            setView((v) => ({
+              ...v,
+              x: el.clientWidth / 2 - wx * v.zoom,
+              y: el.clientHeight / 2 - wy * v.zoom,
+            }));
+          }}
+        />
+      )}
+
       {/* Zoom / layout controls */}
       <div
         className="absolute bottom-3 right-3 flex items-center gap-0.5 rounded-xl border border-border bg-card p-1 shadow-sm"
@@ -999,6 +1019,19 @@ export function BotCanvas({
         >
           <Maximize2 className="h-4 w-4" />
         </button>
+        <button
+          type="button"
+          onClick={() => setShowMap((v) => !v)}
+          aria-pressed={showMap}
+          className={cn(
+            "grid h-8 w-8 place-items-center rounded-lg hover:bg-accent",
+            showMap ? "text-primary" : "text-muted-foreground",
+          )}
+          aria-label={t("sb.miniMap")}
+          title={t("sb.miniMap")}
+        >
+          <MapIcon className="h-4 w-4" />
+        </button>
       </div>
 
       {steps.length === 0 && (
@@ -1011,6 +1044,95 @@ export function BotCanvas({
       <p className="pointer-events-none absolute bottom-3 left-3 max-w-[55%] text-[11px] leading-snug text-subtle">
         {t("sb.canvasHint")}
       </p>
+    </div>
+  );
+}
+
+const MAP_W = 176;
+const MAP_H = 104;
+
+/**
+ * The canvas mini-map (5CRM): every block as a grey bar, the visible part as
+ * a frame. Clicking or dragging on it moves the view there.
+ */
+function MiniMap({
+  steps,
+  view,
+  wrap,
+  selectedId,
+  onCenter,
+}: {
+  steps: BotStep[];
+  view: { x: number; y: number; zoom: number };
+  wrap: HTMLDivElement | null;
+  selectedId: string | null;
+  onCenter: (worldX: number, worldY: number) => void;
+}) {
+  const boxes = steps.map((s) => ({
+    id: s.id,
+    x: s.pos?.x ?? 0,
+    y: s.pos?.y ?? 0,
+    h: nodeHeight(s),
+  }));
+  const vw = (wrap?.clientWidth ?? 800) / view.zoom;
+  const vh = (wrap?.clientHeight ?? 500) / view.zoom;
+  const vx = -view.x / view.zoom;
+  const vy = -view.y / view.zoom;
+  const minX = Math.min(START_POS.x, vx, ...boxes.map((b) => b.x)) - 40;
+  const minY = Math.min(START_POS.y, vy, ...boxes.map((b) => b.y)) - 40;
+  const maxX = Math.max(vx + vw, ...boxes.map((b) => b.x + NODE_W)) + 40;
+  const maxY = Math.max(vy + vh, ...boxes.map((b) => b.y + b.h)) + 40;
+  const k = Math.min(MAP_W / (maxX - minX), MAP_H / (maxY - minY));
+  const ox = (MAP_W - (maxX - minX) * k) / 2;
+  const oy = (MAP_H - (maxY - minY) * k) / 2;
+  const toWorld = (e: PointerEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left - ox) / k + minX,
+      y: (e.clientY - r.top - oy) / k + minY,
+    };
+  };
+  return (
+    <div
+      className="absolute bottom-[58px] right-3 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <svg
+        width={MAP_W}
+        height={MAP_H}
+        className="block cursor-pointer touch-none"
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const w = toWorld(e);
+          onCenter(w.x, w.y);
+        }}
+        onPointerMove={(e) => {
+          if (e.buttons !== 1) return;
+          const w = toWorld(e);
+          onCenter(w.x, w.y);
+        }}
+      >
+        {boxes.map((b) => (
+          <rect
+            key={b.id}
+            x={ox + (b.x - minX) * k}
+            y={oy + (b.y - minY) * k}
+            width={Math.max(3, NODE_W * k)}
+            height={Math.max(2, b.h * k)}
+            rx={2}
+            className={b.id === selectedId ? "fill-primary/60" : "fill-muted-foreground/30"}
+          />
+        ))}
+        <rect
+          x={ox + (vx - minX) * k}
+          y={oy + (vy - minY) * k}
+          width={vw * k}
+          height={vh * k}
+          rx={3}
+          className="fill-primary/5 stroke-primary/60"
+          strokeWidth={1.25}
+        />
+      </svg>
     </div>
   );
 }

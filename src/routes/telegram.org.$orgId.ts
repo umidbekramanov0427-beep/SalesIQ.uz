@@ -9,8 +9,10 @@ import {
   redeemLeadCode,
   startSalesbotChat,
   type TelegramUpdate,
+  type TgMessage,
 } from "@/lib/telegram/client-chat.server";
-import { sendTelegramMessage } from "@/lib/telegram-report.server";
+import { callTelegramMethod, sendTelegramMessage } from "@/lib/telegram-report.server";
+import { startTriggeredBots } from "@/lib/automations/engine.server";
 
 // POST /telegram/org/<company id> -- updates from a company's own Telegram
 // bot (Integratsiyalar -> Telegram bot, org-bot.server.ts). Only clients
@@ -38,7 +40,23 @@ export const Route = createFileRoute("/telegram/org/$orgId")({
         }
         const update = (await request.json().catch(() => ({}))) as TelegramUpdate;
         await withOrgBot(orgId, own.token, async () => {
-          const message = update.message;
+          // An inline button press counts as the client typing its text
+          // (Telegram Salesbot «Tugma bosilganda»); the spinner is cleared.
+          const cq = update.callback_query;
+          if (cq) {
+            await callTelegramMethod(own.token, "answerCallbackQuery", {
+              callback_query_id: cq.id,
+            }).catch(() => undefined);
+          }
+          const message: TgMessage | undefined =
+            update.message ??
+            (cq?.data && cq.message?.chat?.id
+              ? ({
+                  message_id: cq.message.message_id,
+                  chat: { id: cq.message.chat.id, type: cq.message.chat.type ?? "private" },
+                  text: cq.data,
+                } as TgMessage)
+              : undefined);
           const chatId = message?.chat?.id;
           // Only private chats with clients; groups and channels are not for this bot.
           if (!message || !chatId || message.chat?.type !== "private") return;
@@ -68,6 +86,15 @@ export const Route = createFileRoute("/telegram/org/$orgId")({
               viaOrgBot: true,
               onlyOrg: orgId,
             });
+            return;
+          }
+          // «Yangi obunachiga lid ochilsin» off: /start alone only greets;
+          // the client becomes a lead when they first write.
+          if (PLAIN_START_RE.test(text) && !linked && !own.newSubscriberLead) {
+            await sendTelegramMessage(
+              chatId,
+              "Assalomu alaykum! Savolingizni yozing — menejerimiz tez orada javob beradi.",
+            ).catch(() => undefined);
             return;
           }
 
@@ -112,6 +139,8 @@ export const Route = createFileRoute("/telegram/org/$orgId")({
                 );
             }
             if (!PLAIN_START_RE.test(text)) await logIncomingLeadMessage(linked, message);
+            // «Botda /start bosilganda» for a client we already know.
+            else await startTriggeredBots(orgId, linked.lead_id, ["tg_start"], "");
             return;
           }
 

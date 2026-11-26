@@ -7,6 +7,8 @@ import { runProgress, type RunProgress } from "@/lib/automations/run-progress";
 
 type Tables = Database["public"]["Tables"];
 
+const DEFAULT_FUNNEL = "Direct Sales";
+
 export type SalesbotRow = Omit<Tables["salesbots"]["Row"], "steps" | "kind" | "channel"> & {
   steps: BotStep[];
   kind: "builtin" | "external";
@@ -36,6 +38,16 @@ export function useSalesbots() {
   });
 }
 
+export type SalesbotTrigger =
+  | "manual"
+  | "message"
+  | "stage_enter"
+  | "button"
+  | "tg_start"
+  | "tg_button"
+  | "tg_message"
+  | "tg_daily";
+
 export type SalesbotInput = {
   name: string;
   description?: string | null;
@@ -45,33 +57,115 @@ export type SalesbotInput = {
   external_url?: string | null;
   external_secret?: string | null;
   enabled?: boolean;
+  /** Columns from migration 20270210; saved without them until it has run. */
+  test_mode?: boolean;
+  trigger?: SalesbotTrigger;
+  trigger_stage_id?: string | null;
+  trigger_time?: string | null;
 };
+
+const NEW_BOT_COLUMNS = ["test_mode", "trigger", "trigger_stage_id", "trigger_time"] as const;
+
+/** True when PostgREST refused the row because a 20270210 column is missing. */
+function missingBotColumn(err: { message?: string; code?: string } | null): boolean {
+  if (!err) return false;
+  const m = err.message ?? "";
+  return (
+    (err.code === "PGRST204" || err.code === "42703" || /column/i.test(m)) &&
+    NEW_BOT_COLUMNS.some((c) => m.includes(c))
+  );
+}
+
+/** The automation rule that starts a "stage_enter" bot carries this note. */
+export const salesbotRuleNote = (botId: string) => `salesbot:${botId}`;
+
+/**
+ * A bot that starts "when a lead enters a stage" is a stage_enter rule with a
+ * start_salesbot action — the same path every other trigger uses, so the DB
+ * runs it. Saving the bot creates, moves or removes that one rule.
+ */
+async function syncStageRule(
+  orgId: string,
+  userId: string,
+  botId: string,
+  input: SalesbotInput,
+): Promise<void> {
+  const note = salesbotRuleNote(botId);
+  const { data: existing } = await supabase
+    .from("automation_rules")
+    .select("id")
+    .eq("note", note)
+    .limit(1);
+  const ruleId = existing?.[0]?.id;
+  const wanted = input.trigger === "stage_enter" && !!input.trigger_stage_id;
+  if (!wanted) {
+    if (ruleId) await supabase.from("automation_rules").delete().eq("id", ruleId);
+    return;
+  }
+  const { data: stage } = await supabase
+    .from("pipeline_stages")
+    .select("pipeline_name")
+    .eq("id", input.trigger_stage_id!)
+    .maybeSingle();
+  const row = {
+    name: input.name,
+    funnel: stage?.pipeline_name || DEFAULT_FUNNEL,
+    trigger_type: "stage_enter",
+    trigger_stage_id: input.trigger_stage_id!,
+    delay_minutes: 0,
+    actions: [{ type: "start_salesbot", botId }] as unknown as Json,
+    enabled: input.enabled !== false,
+    note,
+  };
+  if (ruleId) {
+    const { error } = await supabase.from("automation_rules").update(row).eq("id", ruleId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("automation_rules")
+      .insert({ ...row, organization_id: orgId, created_by: userId });
+    if (error) throw error;
+  }
+}
 
 export function useSaveSalesbot() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
     mutationFn: async ({ id, input }: { id?: string; input: SalesbotInput }) => {
-      const row = { ...input, steps: input.steps as unknown as Json };
-      if (id) {
-        const { error } = await supabase.from("salesbots").update(row).eq("id", id);
-        if (error) throw error;
-        return id;
-      }
-      const { data, error } = await supabase
-        .from("salesbots")
-        .insert({
-          ...row,
-          organization_id: user!.organizationId!,
-          created_by: user!.id,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return data.id;
+      const full = { ...input, steps: input.steps as unknown as Json };
+      const {
+        test_mode: _t,
+        trigger: _g,
+        trigger_stage_id: _s,
+        trigger_time: _h,
+        ...legacy
+      } = full;
+      const write = async (row: typeof full | typeof legacy) => {
+        if (id) {
+          const { error } = await supabase.from("salesbots").update(row).eq("id", id);
+          return { id, error };
+        }
+        const { data, error } = await supabase
+          .from("salesbots")
+          .insert({ ...row, organization_id: user!.organizationId!, created_by: user!.id })
+          .select("id")
+          .single();
+        return { id: data?.id, error };
+      };
+      let res = await write(full);
+      if (res.error && missingBotColumn(res.error)) res = await write(legacy);
+      if (res.error) throw res.error;
+      const botId = res.id!;
+      await syncStageRule(user!.organizationId!, user!.id, botId, input);
+      return botId;
     },
     // Returned so mutateAsync resolves once the list has the saved bot.
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["salesbots"] }),
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ["salesbots"] }),
+        qc.invalidateQueries({ queryKey: ["automation_rules"] }),
+      ]),
   });
 }
 
@@ -79,6 +173,7 @@ export function useDeleteSalesbot() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      await supabase.from("automation_rules").delete().eq("note", salesbotRuleNote(id));
       const { error } = await supabase.from("salesbots").delete().eq("id", id);
       if (error) throw error;
     },

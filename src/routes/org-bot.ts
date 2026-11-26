@@ -6,12 +6,14 @@ import {
   orgBotStatus,
   reconnectOrgBot,
   setOrgBotDefault,
+  setOrgBotNewSubscriberLead,
 } from "@/lib/telegram/org-bot.server";
 
 // The company's own Telegram bot (Integratsiyalar -> Telegram bot):
 //   GET  /org-bot  -> OrgBotStatus (any member: the salesbot page shows the link)
 //   POST /org-bot  {action: "connect", token} | {action: "default", salesbotId}
-//                  | {action: "reconnect"} | {action: "disconnect"}  (company admin)
+//                  | {action: "newSubscriberLead", on} | {action: "reconnect"}
+//                  | {action: "disconnect"}  (company admin)
 export const Route = createFileRoute("/org-bot")({
   server: {
     handlers: {
@@ -27,6 +29,7 @@ export const Route = createFileRoute("/org-bot")({
           action?: string;
           token?: string;
           salesbotId?: string | null;
+          on?: boolean;
         };
         try {
           if (body.action === "connect") {
@@ -35,6 +38,10 @@ export const Route = createFileRoute("/org-bot")({
           }
           if (body.action === "default") {
             await setOrgBotDefault(me.organizationId, body.salesbotId || null);
+            return Response.json({ ok: true });
+          }
+          if (body.action === "newSubscriberLead") {
+            await setOrgBotNewSubscriberLead(me.organizationId, body.on !== false);
             return Response.json({ ok: true });
           }
           if (body.action === "reconnect") {
@@ -50,7 +57,7 @@ export const Route = createFileRoute("/org-bot")({
           const msg = err instanceof Error ? err.message : String(err);
           return Response.json(
             {
-              error: /org_telegram_bots/.test(msg)
+              error: /org_telegram_bots|new_subscriber_lead/.test(msg)
                 ? "Bu imkoniyat bazani yangilagandan keyin ishlaydi."
                 : msg,
             },

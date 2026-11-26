@@ -182,6 +182,8 @@ export type OrgBot = {
   username: string;
   webhookSecret: string;
   defaultSalesbotId: string | null;
+  /** «Yangi obunachiga lid ochilsin»: /start alone makes a lead (migration 20270210; on before it). */
+  newSubscriberLead: boolean;
 };
 
 const orgBots = new Map<string, { bot: OrgBot | null; at: number }>();
@@ -195,7 +197,7 @@ export async function orgBot(orgId: string): Promise<OrgBot | null> {
   try {
     const { data } = await supabaseAdmin
       .from("org_telegram_bots")
-      .select("organization_id, username, token_sealed, webhook_secret, default_salesbot_id")
+      .select("*")
       .eq("organization_id", orgId)
       .maybeSingle();
     const token = data ? openSecret(data.token_sealed) : null;
@@ -207,6 +209,8 @@ export async function orgBot(orgId: string): Promise<OrgBot | null> {
             username: data.username,
             webhookSecret: data.webhook_secret,
             defaultSalesbotId: data.default_salesbot_id,
+            newSubscriberLead:
+              (data as { new_subscriber_lead?: boolean | null }).new_subscriber_lead !== false,
           }
         : null;
   } catch {

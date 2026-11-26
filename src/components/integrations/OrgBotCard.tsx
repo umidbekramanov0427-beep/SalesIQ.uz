@@ -14,6 +14,7 @@ import {
   Unplug,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import { SectionCard, SettingRow, SettingRows } from "@/components/layout/Primitives";
 import { useOrgBot, useOrgBotAction, type OrgBotState } from "@/hooks/use-crm-data";
 import { useSalesbots } from "@/hooks/use-automations";
@@ -271,6 +272,13 @@ function Connected({ state }: { state: OrgBotState }) {
                 </option>
               ))}
           </select>
+        </SettingRow>
+        <SettingRow title={t("obot.newLead")} description={t("obot.newLeadDesc")}>
+          <Switch
+            checked={bot.newSubscriberLead !== false}
+            disabled={!isAdmin || act.isPending}
+            onCheckedChange={(on) => run({ action: "newSubscriberLead", on }, t("obot.saved"))}
+          />
         </SettingRow>
         {bot.webhookError && (
           <SettingRow title={t("obot.lastError")} description={bot.webhookError}>

@@ -373,6 +373,16 @@ export const BOT_STEP_GROUPS: { key: "talk" | "logic" | "sales"; types: BotStepT
   },
 ];
 
+/**
+ * Tashkent wall clock for «Ish vaqtidan tashqari»: before 9:00, from 18:00
+ * and on Sundays count as outside working hours.
+ */
+export function tashkentClock(now = new Date()): { hour: number; afterHours: boolean } {
+  const t = new Date(now.getTime() + 5 * 3_600_000);
+  const hour = t.getUTCHours();
+  return { hour, afterHours: hour < 9 || hour >= 18 || t.getUTCDay() === 0 };
+}
+
 /** One condition: the text compared, the operator, the expected value. */
 export function botCompare(actual: string, operator: string, expected: string): boolean {
   const a = actual.trim().toLowerCase();
