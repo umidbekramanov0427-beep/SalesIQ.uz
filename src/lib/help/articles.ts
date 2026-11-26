@@ -2537,6 +2537,62 @@ export const HELP_ARTICLES: HelpArticle[] = [
     faq: [],
   },
   {
+    slug: "billing",
+    group: "basics",
+    open: "/billing",
+    title: { uz: "Hisob va to'lov", ru: "Счёт и оплата", en: "Balance and payment" },
+    summary: {
+      uz: "Balansni Click yoki Payme orqali to'ldirish, xodimlar soni, muddat va modullarni tanlab tarifni balansdan sotib olish, avto-yangilash va yuridik shaxs uchun shartnoma.",
+      ru: "Пополнение баланса через Click или Payme, выбор числа сотрудников, срока и модулей, покупка тарифа с баланса, автопродление и договор для юрлица.",
+      en: "Top up the balance with Click or Payme, choose the seats, period and modules, buy the plan from the balance, auto-renew, and a contract for a legal entity.",
+    },
+    need: {
+      uz: "Sotib olish va to'ldirishni kompaniya administratori (super admin) qiladi.",
+      ru: "Покупать и пополнять может администратор компании (super admin).",
+      en: "Buying and topping up is for the company admin (super admin).",
+    },
+    steps: [
+      {
+        uz: "**Hisob balansi**: summani yozing va **Click** yoki **Payme** ni bosing. To'lov tizimining komissiyasi to'lovga qo'shiladi, balansga siz yozgan summa tushadi.",
+        ru: "**Баланс счёта**: введите сумму и нажмите **Click** или **Payme**. Комиссия платёжной системы добавляется к платежу, на баланс поступает введённая сумма.",
+        en: "**Account balance**: type the amount and press **Click** or **Payme**. The payment system's fee is added to the payment; the amount you typed lands on the balance.",
+      },
+      {
+        uz: "**Jamoangizda nechta xodim?** — xodimlar sonini va muddatni tanlang: 3 oy, 6 oy, 9 oy (+1 bepul), 12 oy (+2 bepul). CRM har xodimga hisoblanadi, IP telefoniyani alohida belgilaysiz.",
+        ru: "**Сколько человек в команде?** — выберите число сотрудников и срок: 3, 6, 9 (+1 бесплатно), 12 месяцев (+2 бесплатно). CRM считается за каждого сотрудника, IP-телефонию отмечаете отдельно.",
+        en: "**How many people are in your team?** — choose the seats and the period: 3, 6, 9 (+1 free) or 12 months (+2 free). CRM is charged per seat; IP telephony is a separate tick.",
+      },
+      {
+        uz: "**Modullar**: kerakli modullarni yoqing (AI tahlil, integratsiyalar, avtomatika, ommaviy xabarlar, formalar, imzo, ombor). Faqat yoqilganiga to'laysiz.",
+        ru: "**Модули**: включите нужные (AI-анализ, интеграции, автоматизация, рассылки, формы, подпись, склад). Платите только за включённые.",
+        en: "**Modules**: switch on what you need (AI analysis, integrations, automation, bulk messages, forms, e-signature, warehouse). You pay only for those.",
+      },
+      {
+        uz: "**Narx hisobi** 1-oy va 2-oydan keyingi narxni, jami summani va balansingizni ko'rsatadi. Balans yetsa **Sotib olish** ni bosing — tarif darhol ishga tushadi. Yetmasa, qizil **Yetmayapti** va pastdagi tugma qancha to'lash kerakligini aytadi.",
+        ru: "**Расчёт стоимости** показывает цену первого месяца и со второго, итог и баланс. Если баланса хватает — нажмите **Купить**, тариф заработает сразу. Если нет — красное **Не хватает** и кнопка ниже покажут, сколько доплатить.",
+        en: "**Price breakdown** shows month 1 and from month 2, the total and your balance. When the balance is enough press **Buy** — the plan starts at once. When it is short, the red **Short by** and the button below say how much to pay.",
+      },
+      {
+        uz: "**Balansdan avto-yangilash** yoqilsa, muddat tugashiga bir kun qolganda xuddi shu tarif balansdan qayta sotib olinadi. Balans yetmasa, sizga eslatma keladi.",
+        ru: "С включённым **автопродлением с баланса** за день до конца срока тот же тариф покупается снова. Если баланса не хватает — придёт напоминание.",
+        en: "With **Auto-renew from balance** on, the same plan is bought again a day before the period ends. If the balance is short, you get a reminder.",
+      },
+      {
+        uz: "Kompaniya nomidan bank orqali to'lash uchun **Yuridik shaxs — shartnoma bo'yicha** ni bosing va rekvizitlarni yozing — shartnoma va hisob tayyorlab yuboriladi.",
+        ru: "Чтобы оплатить от компании через банк, нажмите **Юр. лицо — по договору** и заполните реквизиты — договор и счёт подготовят и пришлют.",
+        en: "To pay as a company by bank transfer, press **Legal entity — by contract** and fill in the details — the contract and bill are prepared and sent to you.",
+      },
+    ],
+    notes: [
+      {
+        uz: "Narxlarni platforma egasi belgilaydi. Bank orqali to'langan pul balansga platforma egasi tomonidan qo'shiladi.",
+        ru: "Цены устанавливает владелец платформы. Оплату через банк на баланс зачисляет владелец платформы.",
+        en: "The platform owner sets the prices. A bank transfer is added to the balance by the platform owner.",
+      },
+    ],
+    faq: [],
+  },
+  {
     slug: "billing-docs",
     group: "basics",
     open: "/billing",

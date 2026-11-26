@@ -20,21 +20,40 @@ function toAccessRow(row: Record<string, unknown>): OrgAccessRow {
   };
 }
 
+/** Active modules (org_modules) per company; empty before the table exists. */
+async function activeModules(organizationId?: string): Promise<Map<string, string[]>> {
+  let q = supabaseAdmin.from("org_modules").select("organization_id, module, enabled, until");
+  if (organizationId) q = q.eq("organization_id", organizationId);
+  const { data, error } = await q;
+  const out = new Map<string, string[]>();
+  if (error) return out;
+  const now = Date.now();
+  for (const m of data ?? []) {
+    if (!m.enabled || (m.until && Date.parse(m.until) <= now)) continue;
+    out.set(m.organization_id, [...(out.get(m.organization_id) ?? []), m.module]);
+  }
+  return out;
+}
+
 export async function loadOrgAccess(organizationId: string): Promise<OrgAccessRow | null> {
-  const { data } = await supabaseAdmin
-    .from("organizations")
-    .select("*")
-    .eq("id", organizationId)
-    .maybeSingle();
-  return data ? toAccessRow(data as Record<string, unknown>) : null;
+  const [{ data }, mods] = await Promise.all([
+    supabaseAdmin.from("organizations").select("*").eq("id", organizationId).maybeSingle(),
+    activeModules(organizationId),
+  ]);
+  return data
+    ? { ...toAccessRow(data as Record<string, unknown>), modules: mods.get(organizationId) ?? [] }
+    : null;
 }
 
 export async function loadAllOrgAccess(): Promise<Map<string, OrgAccessRow>> {
-  const { data } = await supabaseAdmin.from("organizations").select("*");
+  const [{ data }, mods] = await Promise.all([
+    supabaseAdmin.from("organizations").select("*"),
+    activeModules(),
+  ]);
   return new Map(
     (data ?? []).map((row) => {
       const access = toAccessRow(row as Record<string, unknown>);
-      return [access.id, access];
+      return [access.id, { ...access, modules: mods.get(access.id) ?? [] }];
     }),
   );
 }

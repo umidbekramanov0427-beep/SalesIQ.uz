@@ -1,12 +1,12 @@
 import { CreditCard } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/Primitives";
-import { BillingSection } from "@/components/settings/BillingSection";
+import { BillingStore } from "@/components/settings/BillingStore";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/billing")({
   head: () => ({
-    meta: [{ title: "Obuna — SalesIQ" }],
+    meta: [{ title: "Hisob va to'lov — SalesIQ" }],
   }),
   component: BillingPage,
 });
@@ -18,10 +18,10 @@ function BillingPage() {
       <PageHeader
         icon={CreditCard}
         tone="emerald"
-        title={t("trial.billingTitle")}
-        description={t("trial.billingDesc")}
+        title={t("billing.pageTitle")}
+        description={t("billing.pageDesc")}
       />
-      <BillingSection />
+      <BillingStore />
     </>
   );
 }

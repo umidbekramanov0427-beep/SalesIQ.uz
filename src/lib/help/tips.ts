@@ -73,6 +73,13 @@ export const TIPS: Record<string, Tip> = {
       en: "Tabs: Overview (main figures, plan vs actual, channels, managers, tasks, calls), Rating, Conversion. Arrange the cards with «Customize».",
     },
   },
+  "page:/billing": {
+    what: {
+      uz: "Tarif va to'lov: balansni Click yoki Payme orqali to'ldirasiz, xodimlar soni, muddat va modullarni tanlab tarifni balansdan sotib olasiz. Avto-yangilash yoqilsa, muddat tugaganda tarif balansdan o'zi yangilanadi.",
+      ru: "Тариф и оплата: пополняете баланс через Click или Payme, выбираете сотрудников, срок и модули и покупаете тариф с баланса. С автопродлением тариф продлевается с баланса сам.",
+      en: "Plan and payment: top up the balance with Click or Payme, choose seats, period and modules, and buy the plan from the balance. With auto-renew the plan renews from the balance by itself.",
+    },
+  },
   "page:/bots": {
     what: {
       uz: "Kompaniyangizning barcha botlari bitta joyda: mijozlar uchun o'z botingiz, salesbotlar, xodimlarning Telegram'i, marketing boti va Mini App. Platformaning o'z botlarini platforma egasi ulaydi.",

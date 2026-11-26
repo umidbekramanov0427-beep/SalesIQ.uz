@@ -1,4 +1,5 @@
 import { useAuth } from "@/lib/auth";
+import { useOrgModules } from "@/hooks/crm/warehouse";
 import type { Feature } from "@/lib/plan-gating";
 import {
   featureLockReason,
@@ -21,7 +22,9 @@ export type OrgAccess = {
 /** The signed-in user's org phase + feature checks -- the client side of org-access.ts. */
 export function useOrgAccess(): OrgAccess {
   const { user } = useAuth();
+  const modules = useOrgModules();
   const org: OrgAccessInput = {
+    modules,
     plan: user?.orgPlan,
     active: user?.orgActive,
     trial_ends_at: user?.orgTrialEndsAt,

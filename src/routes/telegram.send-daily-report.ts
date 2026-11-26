@@ -3,6 +3,7 @@ import { runFileHousekeeping } from "@/lib/files-housekeeping.server";
 import { runLeadsTrashPurge } from "@/lib/leads-trash.server";
 import { runWarehouseRepeatReminders } from "@/lib/warehouse-repeat.server";
 import { runDailySalesbots } from "@/lib/salesbots/daily.server";
+import { runAutoRenewals } from "@/lib/subscription-billing/wallet.server";
 import {
   ensureChatMemberUpdates,
   ensureTelegramWebhookSecret,
@@ -113,6 +114,8 @@ export const Route = createFileRoute("/telegram/send-daily-report")({
         await runWarehouseRepeatReminders().catch((err) =>
           console.error("[warehouse-repeat] tick failed", err),
         );
+        // Hisob va to'lov: «Balansdan avto-yangilash».
+        await runAutoRenewals().catch((err) => console.error("[billing] auto-renew tick failed", err));
         // Telegram Salesbot «Har kuni belgilangan vaqtda».
         await runDailySalesbots().catch((err) =>
           console.error("[daily-salesbots] tick failed", err),

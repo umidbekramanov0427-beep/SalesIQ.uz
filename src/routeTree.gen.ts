@@ -123,6 +123,7 @@ import { Route as AuthHandoffRouteImport } from './routes/auth.handoff'
 import { Route as AutomationsTickRouteImport } from './routes/automations.tick'
 import { Route as BillingDocumentsRouteImport } from './routes/billing.documents'
 import { Route as BillingRenewalRequestRouteImport } from './routes/billing.renewal-request'
+import { Route as BillingWalletRouteImport } from './routes/billing.wallet'
 import { Route as BillingDocRouteImport } from './routes/billing_.doc'
 import { Route as BulkMessageSendRouteImport } from './routes/bulk-message.send'
 import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upload'
@@ -209,6 +210,7 @@ import { Route as PlatformAnnouncementsApiRouteImport } from './routes/platform.
 import { Route as PlatformApplicationsRouteImport } from './routes/platform.applications'
 import { Route as PlatformApplicationsApiRouteImport } from './routes/platform.applications-api'
 import { Route as PlatformBackupSettingsRouteImport } from './routes/platform.backup-settings'
+import { Route as PlatformBillingCatalogRouteImport } from './routes/platform.billing-catalog'
 import { Route as PlatformBotRouteImport } from './routes/platform.bot'
 import { Route as PlatformBotsApiRouteImport } from './routes/platform.bots-api'
 import { Route as PlatformCompaniesRouteImport } from './routes/platform.companies'
@@ -921,6 +923,11 @@ const BillingRenewalRequestRoute = BillingRenewalRequestRouteImport.update({
   path: '/renewal-request',
   getParentRoute: () => BillingRoute,
 } as any)
+const BillingWalletRoute = BillingWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => BillingRoute,
+} as any)
 const BillingDocRoute = BillingDocRouteImport.update({
   id: '/billing_/doc',
   path: '/billing/doc',
@@ -1363,6 +1370,11 @@ const PlatformApplicationsApiRoute = PlatformApplicationsApiRouteImport.update({
 const PlatformBackupSettingsRoute = PlatformBackupSettingsRouteImport.update({
   id: '/platform/backup-settings',
   path: '/platform/backup-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformBillingCatalogRoute = PlatformBillingCatalogRouteImport.update({
+  id: '/platform/billing-catalog',
+  path: '/platform/billing-catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformBotRoute = PlatformBotRouteImport.update({
@@ -2197,6 +2209,7 @@ export interface FileRoutesByFullPath {
   '/automations/tick': typeof AutomationsTickRoute
   '/billing/documents': typeof BillingDocumentsRoute
   '/billing/renewal-request': typeof BillingRenewalRequestRoute
+  '/billing/wallet': typeof BillingWalletRoute
   '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
@@ -2280,6 +2293,7 @@ export interface FileRoutesByFullPath {
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
+  '/platform/billing-catalog': typeof PlatformBillingCatalogRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
   '/platform/companies': typeof PlatformCompaniesRoute
@@ -2533,6 +2547,7 @@ export interface FileRoutesByTo {
   '/automations/tick': typeof AutomationsTickRoute
   '/billing/documents': typeof BillingDocumentsRoute
   '/billing/renewal-request': typeof BillingRenewalRequestRoute
+  '/billing/wallet': typeof BillingWalletRoute
   '/billing/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
@@ -2616,6 +2631,7 @@ export interface FileRoutesByTo {
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
+  '/platform/billing-catalog': typeof PlatformBillingCatalogRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
   '/platform/companies': typeof PlatformCompaniesRoute
@@ -2870,6 +2886,7 @@ export interface FileRoutesById {
   '/automations/tick': typeof AutomationsTickRoute
   '/billing/documents': typeof BillingDocumentsRoute
   '/billing/renewal-request': typeof BillingRenewalRequestRoute
+  '/billing/wallet': typeof BillingWalletRoute
   '/billing_/doc': typeof BillingDocRoute
   '/bulk-message/send': typeof BulkMessageSendRoute
   '/bulk-message/upload': typeof BulkMessageUploadRoute
@@ -2953,6 +2970,7 @@ export interface FileRoutesById {
   '/platform/applications': typeof PlatformApplicationsRoute
   '/platform/applications-api': typeof PlatformApplicationsApiRoute
   '/platform/backup-settings': typeof PlatformBackupSettingsRoute
+  '/platform/billing-catalog': typeof PlatformBillingCatalogRoute
   '/platform/bot': typeof PlatformBotRoute
   '/platform/bots-api': typeof PlatformBotsApiRoute
   '/platform/companies': typeof PlatformCompaniesRoute
@@ -3208,6 +3226,7 @@ export interface FileRouteTypes {
     | '/automations/tick'
     | '/billing/documents'
     | '/billing/renewal-request'
+    | '/billing/wallet'
     | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
@@ -3291,6 +3310,7 @@ export interface FileRouteTypes {
     | '/platform/applications'
     | '/platform/applications-api'
     | '/platform/backup-settings'
+    | '/platform/billing-catalog'
     | '/platform/bot'
     | '/platform/bots-api'
     | '/platform/companies'
@@ -3544,6 +3564,7 @@ export interface FileRouteTypes {
     | '/automations/tick'
     | '/billing/documents'
     | '/billing/renewal-request'
+    | '/billing/wallet'
     | '/billing/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
@@ -3627,6 +3648,7 @@ export interface FileRouteTypes {
     | '/platform/applications'
     | '/platform/applications-api'
     | '/platform/backup-settings'
+    | '/platform/billing-catalog'
     | '/platform/bot'
     | '/platform/bots-api'
     | '/platform/companies'
@@ -3880,6 +3902,7 @@ export interface FileRouteTypes {
     | '/automations/tick'
     | '/billing/documents'
     | '/billing/renewal-request'
+    | '/billing/wallet'
     | '/billing_/doc'
     | '/bulk-message/send'
     | '/bulk-message/upload'
@@ -3963,6 +3986,7 @@ export interface FileRouteTypes {
     | '/platform/applications'
     | '/platform/applications-api'
     | '/platform/backup-settings'
+    | '/platform/billing-catalog'
     | '/platform/bot'
     | '/platform/bots-api'
     | '/platform/companies'
@@ -4233,6 +4257,7 @@ export interface RootRouteChildren {
   PlatformApplicationsRoute: typeof PlatformApplicationsRoute
   PlatformApplicationsApiRoute: typeof PlatformApplicationsApiRoute
   PlatformBackupSettingsRoute: typeof PlatformBackupSettingsRoute
+  PlatformBillingCatalogRoute: typeof PlatformBillingCatalogRoute
   PlatformBotRoute: typeof PlatformBotRoute
   PlatformBotsApiRoute: typeof PlatformBotsApiRoute
   PlatformCompaniesRoute: typeof PlatformCompaniesRoute
@@ -5129,6 +5154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BillingRenewalRequestRouteImport
       parentRoute: typeof BillingRoute
     }
+    '/billing/wallet': {
+      id: '/billing/wallet'
+      path: '/wallet'
+      fullPath: '/billing/wallet'
+      preLoaderRoute: typeof BillingWalletRouteImport
+      parentRoute: typeof BillingRoute
+    }
     '/billing_/doc': {
       id: '/billing_/doc'
       path: '/billing/doc'
@@ -5729,6 +5761,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/backup-settings'
       fullPath: '/platform/backup-settings'
       preLoaderRoute: typeof PlatformBackupSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform/billing-catalog': {
+      id: '/platform/billing-catalog'
+      path: '/platform/billing-catalog'
+      fullPath: '/platform/billing-catalog'
+      preLoaderRoute: typeof PlatformBillingCatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform/bot': {
@@ -6829,11 +6868,13 @@ const AudioAnalyticsRouteWithChildren = AudioAnalyticsRoute._addFileChildren(
 interface BillingRouteChildren {
   BillingDocumentsRoute: typeof BillingDocumentsRoute
   BillingRenewalRequestRoute: typeof BillingRenewalRequestRoute
+  BillingWalletRoute: typeof BillingWalletRoute
 }
 
 const BillingRouteChildren: BillingRouteChildren = {
   BillingDocumentsRoute: BillingDocumentsRoute,
   BillingRenewalRequestRoute: BillingRenewalRequestRoute,
+  BillingWalletRoute: BillingWalletRoute,
 }
 
 const BillingRouteWithChildren =
@@ -7227,6 +7268,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlatformApplicationsRoute: PlatformApplicationsRoute,
   PlatformApplicationsApiRoute: PlatformApplicationsApiRoute,
   PlatformBackupSettingsRoute: PlatformBackupSettingsRoute,
+  PlatformBillingCatalogRoute: PlatformBillingCatalogRoute,
   PlatformBotRoute: PlatformBotRoute,
   PlatformBotsApiRoute: PlatformBotsApiRoute,
   PlatformCompaniesRoute: PlatformCompaniesRoute,

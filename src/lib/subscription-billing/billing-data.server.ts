@@ -236,6 +236,12 @@ export async function reactivateOrgAfterPayment(
   organizationId: string,
   payment: { id: string; amount: number } | null = null,
 ): Promise<void> {
+  // A balance top-up (Hisob va to'lov) credits the balance instead of
+  // extending the period: the company then buys from the balance.
+  if (payment) {
+    const { creditIfTopup } = await import("./wallet.server");
+    if (await creditIfTopup(organizationId, payment)) return;
+  }
   const { data: org } = await supabaseAdmin
     .from("organizations")
     .select("trial_ends_at")

@@ -14,6 +14,7 @@
 //   expired -- trial_ends_at has passed (or the platform owner suspended it).
 //              The whole app is locked except the billing page; data is kept.
 import { effectiveSeatLimit, planHasFeature, type Feature } from "./plan-gating";
+import { modulesGrant } from "./billing-catalog";
 
 export type OrgPhase = "trial" | "paid" | "expired";
 
@@ -26,6 +27,11 @@ export type OrgAccessInput = {
   // should never suddenly lose features because the column isn't there yet.
   is_trial?: boolean | null | undefined;
   unlimited_seats?: boolean | null | undefined;
+  /**
+   * Modules bought in Hisob va to'lov (org_modules, active ones): each opens
+   * its feature whatever the plan (lib/billing-catalog MODULE_FEATURE).
+   */
+  modules?: readonly string[] | null | undefined;
 };
 
 export const TRIAL_LOCKED_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
@@ -61,7 +67,7 @@ export type LockReason = "expired" | "plan" | "trial";
 export function featureLockReason(org: OrgAccessInput, feature: Feature): LockReason | null {
   const phase = orgPhase(org);
   if (phase === "expired") return "expired";
-  if (!planHasFeature(org.plan, feature)) return "plan";
+  if (!planHasFeature(org.plan, feature) && !modulesGrant(org.modules, feature)) return "plan";
   if (phase === "trial" && TRIAL_LOCKED_FEATURES.has(feature)) return "trial";
   return null;
 }

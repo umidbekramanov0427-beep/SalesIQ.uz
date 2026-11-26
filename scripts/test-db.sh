@@ -129,6 +129,8 @@ MIGRATIONS=(
   20270210000000_salesbot_5crm # twice
   20270211000000_client_bot_token
   20270211000000_client_bot_token # twice
+  20270212000000_billing_balance
+  20270212000000_billing_balance # twice
 )
 
 cleanup() { :; }

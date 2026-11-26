@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Pill } from "@/components/layout/Primitives";
+import { BalanceAdjustCard, BillingCatalogCard } from "@/components/owner/BillingCatalogCard";
 import {
   PlatformPaymentSettingsCard,
   SupportContactsCard,
@@ -96,7 +97,13 @@ function OwnerSettingsPage() {
           }))}
         />
         <div className="min-w-0 space-y-4">
-          {tab === "payments" && <PlatformPaymentSettingsCard />}
+          {tab === "payments" && (
+            <>
+              <BillingCatalogCard />
+              <BalanceAdjustCard />
+              <PlatformPaymentSettingsCard />
+            </>
+          )}
           {tab === "requisites" && <RequisitesCard />}
           {tab === "contacts" && <SupportContactsCard />}
           {tab === "meetings" && <MeetingSettingsCard />}
