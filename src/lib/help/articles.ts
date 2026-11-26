@@ -643,9 +643,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Open **Settings** at the bottom of the left menu.",
       },
       {
-        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Shaxsiy ma'lumot, Bildirishnomalar, Xavfsizlik, Ko'rinish, Kompaniya, Obuna, Qo'llanmalar.",
-        ru: "Слева выберите раздел: Личные данные, Уведомления, Безопасность, Внешний вид, Компания, Подписка, Инструкции.",
-        en: "Pick a section on the left: Personal details, Notifications, Security, Appearance, Company, Subscription, Guides.",
+        uz: "Tepadagi **Sozlamalar xaritasi**dan bo'limni tanlang — har kartada uning holati yozilgan (sariq nuqta — sozlanmagan): Shaxsiy ma'lumot, Bildirishnomalar, Xavfsizlik, Ko'rinish, Kompaniya, Obuna, Qo'llanmalar.",
+        ru: "Выберите раздел на **Карте настроек** вверху — на каждой карточке её состояние (жёлтая точка — не настроено): Личные данные, Уведомления, Безопасность, Внешний вид, Компания, Подписка, Инструкции.",
+        en: "Pick a section on the **Settings map** at the top — each card shows where it stands (an amber dot means not set up): Personal details, Notifications, Security, Appearance, Company, Subscription, Guides.",
       },
       {
         uz: "**Shaxsiy ma'lumot**da ism, familiya, telefon, tug'ilgan sana, shahar, lavozim va **holatingiz**ni (Ish joyidaman, Tushlikdaman…) yozing; pastda vaqt mintaqasi, sana va vaqt formati, valyuta. **Saqlash**ni bosing.",

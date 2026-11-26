@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { GeneralNotifyPanel } from "@/components/settings/GeneralNotifyPanel";
 import { shrinkLogo } from "@/lib/shrink-logo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useIsMutating } from "@tanstack/react-query";
+import { useIsMutating, useQuery } from "@tanstack/react-query";
 import {
   BookOpen,
   UserRound,
@@ -12,7 +12,6 @@ import {
   Building2,
   Calendar,
   Check,
-  ChevronDown,
   ClipboardCheck,
   Clock,
   CreditCard,
@@ -39,7 +38,19 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
-import { SectionCard, SettingsLayout } from "@/components/layout/Primitives";
+import { AdminConsoleHeader, SectionCard, SettingsLayout } from "@/components/layout/Primitives";
+import { GuideButton } from "@/components/help/GuideButton";
+import {
+  SettingsMap,
+  type MapState,
+  type SettingsMapItem,
+} from "@/components/settings/SettingsMap";
+import { useMyProfile } from "@/components/profile/my-profile";
+import { getMfaStatus } from "@/lib/mfa";
+import { useTheme } from "@/lib/theme";
+import { useOrgAccess } from "@/lib/use-org-access";
+import { PLAN_LABELS, type Plan } from "@/lib/plan-gating";
+import { HELP_ARTICLES } from "@/lib/help/articles";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n, LANGS } from "@/lib/i18n";
@@ -1721,229 +1732,234 @@ function SettingsPage() {
     if (tab) setCompanyTab(tab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectionParam]);
-  // Each section opens at its top, not at the previous section's offset.
+  // Picking a section on the map brings its settings into view.
   const contentRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (contentRef.current) contentRef.current.scrollTop = 0;
-  }, [section]);
+  const openSection = (key: string) => {
+    setSection(key as SectionKey);
+    requestAnimationFrame(() =>
+      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
 
-  // The first group ("Umumiy") is always visible, uncollapsible -- only
-  // the groups after it (call scoring / lead-CRM / reports) can be
-  // toggled, and they start collapsed on every page load.
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-    () => new Set(ALL_GROUPS.slice(1).map((g) => g.label)),
-  );
-  function toggleGroup(label: string) {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
-      return next;
-    });
-  }
+  // What each card on the map says about where it stands.
+  const { data: profile } = useMyProfile();
+  const { data: mfa } = useQuery({
+    queryKey: ["mfa-status", user?.id],
+    enabled: !!user?.id,
+    queryFn: getMfaStatus,
+    staleTime: 60_000,
+  });
+  const { dark } = useTheme();
+  const access = useOrgAccess();
+  const profileFields = [
+    profile?.full_name,
+    profile?.last_name,
+    profile?.phone ?? user?.phone,
+    profile?.birth_date,
+    profile?.city,
+    profile?.position,
+    profile?.address,
+  ];
+  const filled = profileFields.filter((v) => typeof v === "string" && v.trim()).length;
+  const planLabel = user?.orgPlan ? (PLAN_LABELS[user.orgPlan as Plan] ?? user.orgPlan) : "—";
+  const META: Record<string, { description: string; status: string; state: MapState }> = {
+    personal: {
+      description: t("setmap.d.personal"),
+      status: t("setmap.s.fields", { n: filled, total: profileFields.length }),
+      state: filled === profileFields.length ? "ok" : "todo",
+    },
+    notifications: {
+      description: t("setmap.d.notifications"),
+      status: user?.telegramLinked ? t("setmap.s.tgOn") : t("setmap.s.tgOff"),
+      state: user?.telegramLinked ? "ok" : "todo",
+    },
+    security: {
+      description: t("setmap.d.security"),
+      status: mfa?.enabled ? t("setmap.s.mfaOn") : t("setmap.s.mfaOff"),
+      state: mfa?.enabled ? "ok" : "todo",
+    },
+    appearance: {
+      description: t("setmap.d.appearance"),
+      status: dark ? t("setmap.s.dark") : t("setmap.s.light"),
+      state: "page",
+    },
+    company: {
+      description: isAdmin ? t("setmap.d.company") : t("setmap.d.companyStaff"),
+      status: user?.orgSubdomain ? `${user.orgSubdomain}.salesiq.uz` : t("setmap.s.noAddress"),
+      state: isAdmin ? (user?.orgSubdomain ? "ok" : "todo") : "page",
+    },
+    "/billing": {
+      description: t("setmap.d.billing"),
+      status:
+        access.phase === "trial"
+          ? t("setmap.s.trial", { n: access.trialDaysLeft ?? 0 })
+          : access.phase === "expired"
+            ? t("setmap.s.expired")
+            : planLabel,
+      state: access.phase === "paid" ? "ok" : "todo",
+    },
+    "/daily-report-settings": {
+      description: t("setmap.d.report"),
+      status: t("setmap.open"),
+      state: "page",
+    },
+    guides: {
+      description: t("setmap.d.guides"),
+      status: t("setmap.s.guides", { n: HELP_ARTICLES.length }),
+      state: "page",
+    },
+    reportProblem: {
+      description: t("setmap.d.problem"),
+      status: t("setmap.s.problem"),
+      state: "page",
+    },
+  };
+  const toMapItem = (i: NavItem): SettingsMapItem => {
+    const key = i.type === "section" ? i.key : i.to;
+    const meta = META[key] ?? { description: "", status: "", state: "page" as const };
+    return {
+      key,
+      icon: i.icon,
+      tone: SETTINGS_ICON_TONES.get(i.icon) ?? "primary",
+      title: i.label,
+      ...meta,
+      ...(i.type === "link" ? { to: i.to } : {}),
+    };
+  };
+  const navAll = NAV_GROUPS.flatMap((g) => g.items);
+  const PERSONAL = new Set<string>(["personal", "notifications", "security", "appearance"]);
+  const mapLeft = navAll.filter((i) => i.type === "section" && PERSONAL.has(i.key)).map(toMapItem);
+  const mapRight = navAll
+    .filter((i) => !(i.type === "section" && PERSONAL.has(i.key)))
+    .map(toMapItem);
+  const current = generalItems.find((i) => i.type === "section" && i.key === section);
+  const currentMeta = META[section];
 
   return (
-    // A full-bleed, full-height two-pane layout (not a card floating in
-    // <main>'s normal padding) -- the negative margins cancel <main>'s own
-    // padding (px-4/md:px-6, pt-4, pb-28/md:pb-36) on every side, not just
-    // left/right, so the nav panel can run truly edge-to-edge and
-    // floor-to-ceiling. h-full alone was still landing 112-144px short of
-    // <main>'s real bottom edge: percentage height resolves against
-    // <main>'s CONTENT box, which is already <main>'s own height minus
-    // that padding, so the nav (sized off this same h-full chain) was
-    // being denied exactly the bottom-padding's worth of height too --
-    // measured and confirmed against the actual compiled CSS, not
-    // guessed. The h-[calc(...)] compensates by adding that padding back
-    // to the element's own height, since negative margin alone repositions
-    // a box but doesn't grow it.
-    <div className="-mx-4 -mt-4 -mb-28 flex h-[calc(100%+8rem)] flex-col md:-mx-6 md:-mb-36 md:h-[calc(100%+10rem)] phone:m-0 phone:h-auto">
-      {/* No local page-title bar here -- the global top header already
-          shows "Sozlamalar" for this route (AppShell.tsx), so a second
-          title row directly beneath it just duplicated it and read as an
-          extra, differently-colored band sitting above the nav instead of
-          the nav reaching the very top like the reference. The nav and
-          content panes now start right at the top of this wrapper. */}
+    <SettingsLayout variant="admin" gutter={false}>
+      <div className="mx-auto w-full max-w-[1240px] phone:max-w-none">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <BackButton />
+          <SaveStatus />
+        </div>
+        <AdminConsoleHeader
+          caption={`${t("nav./settings")} · ${PERSONAL.has(section) ? t("setmap.mine") : t("setmap.company")}`}
+          title={current?.label ?? t("nav./settings")}
+          icon={current?.icon}
+          tone={current ? (SETTINGS_ICON_TONES.get(current.icon) ?? "primary") : "primary"}
+          description={currentMeta?.description}
+          actions={
+            <>
+              <label className="relative phone:w-full">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
+                <input
+                  value={navQuery}
+                  onChange={(e) => setNavQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    const first = navAll.find((i) => i.type === "section");
+                    if (first && first.type === "section") openSection(first.key);
+                  }}
+                  placeholder={t("set.search")}
+                  className="h-10 w-[240px] rounded-xl border border-border bg-input pl-9 pr-3 text-[13.5px] text-foreground outline-none transition-colors placeholder:text-subtle focus:border-primary phone:w-full"
+                />
+              </label>
+              <GuideButton />
+            </>
+          }
+        />
 
-      {/* Below lg there's no room for a persistent 256px side nav next to
-          the content pane -- both would get squeezed into slivers and read
-          as broken/overlapping. Flatten every group into one horizontal
-          scroll strip instead (same pattern used for filter bars
-          elsewhere), and only show the real two-pane layout from lg up. */}
-      <div className="flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-background px-4 py-2.5 lg:hidden phone:mb-3 phone:border-b-0 phone:bg-transparent phone-tabs">
-        {NAV_GROUPS.flatMap((group) => group.items).map((item) =>
-          item.type === "section" ? (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setSection(item.key)}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors",
-                section === item.key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-surface text-muted-foreground",
-              )}
-            >
-              <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
-              {item.label}
-            </button>
-          ) : (
-            <Link
-              key={`${item.to}-m`}
-              to={item.to}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
-            >
-              <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
-              {item.label}
-            </Link>
-          ),
+        {/* Phones: the sections as one sideways row of pills. */}
+        <div className="mb-4 hidden gap-2 overflow-x-auto phone:flex phone-tabs">
+          {navAll.map((item) =>
+            item.type === "section" ? (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setSection(item.key)}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors",
+                  section === item.key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-surface text-muted-foreground",
+                )}
+              >
+                <item.icon
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    section !== item.key && settingsIconTone(item.icon),
+                  )}
+                />
+                {item.label}
+              </button>
+            ) : (
+              <Link
+                key={`${item.to}-m`}
+                to={item.to}
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
+              >
+                <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
+                {item.label}
+              </Link>
+            ),
+          )}
+        </div>
+
+        {q && navAll.length === 0 ? (
+          <p className="mb-6 font-mono text-[12.5px] text-muted-foreground">{t("set.nothing")}</p>
+        ) : (
+          <SettingsMap
+            left={mapLeft}
+            right={mapRight}
+            leftCaption={t("setmap.mine")}
+            rightCaption={t("setmap.company")}
+            activeKey={section}
+            onOpen={openSection}
+            core={{
+              name: user?.name ?? "",
+              initials: user?.initials ?? "",
+              avatarUrl: user?.avatarUrl ?? null,
+              role: t(`pf.role.${user?.role ?? "sotuv_menejeri"}`),
+            }}
+          />
         )}
-      </div>
 
-      <div className="flex min-h-0 flex-1">
-        {/* The column itself runs the page's full height (background and
-            border); the menu inside it is pinned to the top of <main>'s
-            scroll area, so it stays put while the content pane scrolls. */}
-        <nav className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
-          <div className="sticky top-0 max-h-dvh space-y-4 overflow-y-auto p-3">
-            <label className="flex h-9 items-center gap-2 rounded-[6px] border border-border bg-card px-2.5 focus-within:border-primary">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <input
-                value={navQuery}
-                onChange={(e) => setNavQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  const first = NAV_GROUPS[0]?.items.find((i) => i.type === "section");
-                  if (first && first.type === "section") setSection(first.key);
-                }}
-                placeholder={t("set.search")}
-                className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
-              />
-            </label>
-            {q && NAV_GROUPS.length === 0 && (
-              <p className="px-3 text-[12.5px] text-muted-foreground">{t("set.nothing")}</p>
-            )}
-            {NAV_GROUPS.map((group, groupIndex) => {
-              const collapsible = groupIndex !== 0 && !q;
-              const collapsed = collapsible && collapsedGroups.has(group.label);
-              return (
-                <div key={group.label}>
-                  {collapsible ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleGroup(group.label)}
-                      className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle transition-colors hover:text-foreground"
-                    >
-                      <span>{group.label}</span>
-                      <span className="flex items-center gap-1">
-                        {group.items.length}
-                        <ChevronDown
-                          className={cn(
-                            "h-3.5 w-3.5 transition-transform",
-                            collapsed && "-rotate-90",
-                          )}
-                        />
-                      </span>
-                    </button>
-                  ) : (
-                    <div className="mb-1 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-                      {group.label}
-                    </div>
-                  )}
-                  {!collapsed && (
-                    <div className="space-y-1">
-                      {group.items.map((item) =>
-                        item.type === "section" ? (
-                          <button
-                            key={item.key}
-                            onClick={() => setSection(item.key)}
-                            className={cn(
-                              "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors",
-                              section === item.key
-                                ? "bg-primary text-primary-foreground shadow-soft"
-                                : "text-muted-foreground hover:bg-mint-border hover:text-mint-foreground",
-                            )}
-                          >
-                            <item.icon
-                              className={cn(
-                                "h-4 w-4 shrink-0",
-                                section !== item.key && settingsIconTone(item.icon),
-                              )}
-                            />
-                            <span className="truncate">{item.label}</span>
-                            {item.badge !== undefined && item.badge > 0 && (
-                              <span className="ml-auto rounded-md bg-background px-1.5 py-0.5 text-[11px] font-semibold text-subtle">
-                                {item.badge}
-                              </span>
-                            )}
-                          </button>
-                        ) : (
-                          <Link
-                            key={item.to}
-                            to={item.to}
-                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
-                          >
-                            <item.icon
-                              className={cn("h-4 w-4 shrink-0", settingsIconTone(item.icon))}
-                            />
-                            <span className="truncate">{item.label}</span>
-                          </Link>
-                        ),
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </nav>
-
-        {/* lg:pr-11 keeps the cards a good centimeter clear of the screen's
-            right edge instead of running right up against it. */}
-        <div
-          ref={contentRef}
-          className="min-w-0 flex-1 overflow-y-auto p-5 pb-6 md:p-6 lg:pr-11 phone:overflow-visible phone:p-0"
-        >
-          <SettingsLayout gutter={false}>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <BackButton />
-              <SaveStatus />
+        <div ref={contentRef} className="scroll-mt-4">
+          {section === "personal" && <PersonalSection />}
+          {section === "guides" && <GuidesSection />}
+          {section === "security" && <SecuritySection />}
+          {section === "appearance" && <AppearanceSection />}
+          {section === "notifications" && (
+            <div className="space-y-5">
+              <GeneralNotifyPanel />
+              {isManager && <NotificationsSection />}
+              <PersonalNotificationsCard />
+              <TelegramLinkCard />
             </div>
-            {section === "personal" && <PersonalSection />}
-            {section === "guides" && <GuidesSection />}
-            {section === "security" && <SecuritySection />}
-            {section === "appearance" && <AppearanceSection />}
-            {section === "notifications" && (
-              <div className="space-y-5">
-                <GeneralNotifyPanel />
-                {isManager && <NotificationsSection />}
-                <PersonalNotificationsCard />
-                <TelegramLinkCard />
-              </div>
-            )}
-            {section === "company" && (
-              <CompanySection isAdmin={isAdmin} tab={companyTab} onTab={setCompanyTab} />
-            )}
-            {/* Each lives in one place: working hours are the shifts in
-                Admin -> Davomat, the subscription is the Billing page. */}
-            {sectionParam === "workSchedule" && <Navigate to="/admin/work-hours" replace />}
-            {(sectionParam === "billing" || sectionParam === "subscription") && (
-              <Navigate to="/billing" replace />
-            )}
-            {/* AI -> amoCRM moved to the amoCRM integration page. */}
-            {section === "amocrm" && (
-              <Navigate to="/integrations/$slug" params={{ slug: "amocrm" }} replace />
-            )}
-            {section === "reportProblem" && <ReportProblemSection />}
-            {/* A real block, not just scroll-container padding -- padding alone
-              on this pane proved unreliable on real mobile Chrome (screenshots
-              showed the last card flush against the viewport edge despite a
-              large pb-* value), so the breathing room below the last section
-              is now guaranteed DOM content instead of CSS that depends on how
-              a given browser computes scrollable overflow around padding. */}
-            <div aria-hidden className="pointer-events-none h-16 md:h-20 phone:hidden" />
-          </SettingsLayout>
+          )}
+          {section === "company" && (
+            <CompanySection isAdmin={isAdmin} tab={companyTab} onTab={setCompanyTab} />
+          )}
+          {/* Each lives in one place: working hours are the shifts in
+              Admin -> Davomat, the subscription is the Billing page. */}
+          {sectionParam === "workSchedule" && <Navigate to="/admin/work-hours" replace />}
+          {(sectionParam === "billing" || sectionParam === "subscription") && (
+            <Navigate to="/billing" replace />
+          )}
+          {/* AI -> amoCRM moved to the amoCRM integration page. */}
+          {section === "amocrm" && (
+            <Navigate to="/integrations/$slug" params={{ slug: "amocrm" }} replace />
+          )}
+          {section === "reportProblem" && <ReportProblemSection />}
+          {/* A real block, not just scroll-container padding -- padding alone
+            on this pane proved unreliable on real mobile Chrome (screenshots
+            showed the last card flush against the viewport edge despite a
+            large pb-* value), so the breathing room below the last section
+            is now guaranteed DOM content instead of CSS that depends on how
+            a given browser computes scrollable overflow around padding. */}
+          <div aria-hidden className="pointer-events-none h-16 md:h-20 phone:hidden" />
         </div>
       </div>
-    </div>
+    </SettingsLayout>
   );
 }
