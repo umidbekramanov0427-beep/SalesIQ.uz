@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
   Boxes,
   ChevronRight,
@@ -148,6 +148,11 @@ const ITEM_KEY: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/integrations/$slug")({
+  // The Telegram bots moved to the one Botlar page.
+  beforeLoad: ({ params }) => {
+    if (params.slug === "telegram-bot") throw redirect({ to: "/bots" });
+    if (params.slug === "telegram-app") throw redirect({ to: "/bots", search: { tab: "app" } });
+  },
   component: IntegrationPage,
 });
 

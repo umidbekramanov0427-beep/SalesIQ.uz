@@ -10943,4 +10943,17 @@ export const en: Record<string, string> = {
   "pbots.removeConfirmEnv":
     "Remove the token saved in the panel? The bot from the server settings will be used again.",
   "pbots.role.signup": "Sign-up phone check and sign-in",
+  "bots.title": "Bots",
+  "bots.desc":
+    "Every bot of your company in one place. Without your own bot, clients talk to the platform's default bot.",
+  "bots.tab.own": "Clients' bot",
+  "bots.tab.salesbots": "Salesbots",
+  "bots.tab.staff": "Team Telegram",
+  "bots.tab.marketing": "Marketing bot",
+  "bots.tab.app": "Mini App",
+  "bots.staff.title": "Your people's Telegram",
+  "bots.staff.desc":
+    "Reports, tasks and sign-in codes reach your people through the platform's companies' bot.",
+  "bots.staff.how":
+    "Each person links once: Profil → Telegram'ni ulash, or the reminder at the top of the screen. The list below shows who is linked.",
 };

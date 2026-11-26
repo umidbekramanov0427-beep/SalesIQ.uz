@@ -774,7 +774,7 @@ function SharedBotBanner() {
   );
 }
 
-function SalesbotsPage() {
+function SalesbotsPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useI18n();
   const { data: bots, isLoading } = useSalesbots();
   const { data: stages } = useCrmStages();
@@ -821,7 +821,9 @@ function SalesbotsPage() {
 
   return (
     <>
-      <PageHeader title={t("sb.title")} icon={Bot} tone="rose" description={t("sb.desc")} />
+      {!embedded && (
+        <PageHeader title={t("sb.title")} icon={Bot} tone="rose" description={t("sb.desc")} />
+      )}
       <SharedBotBanner />
       <div className="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
         <div className="space-y-1.5">
@@ -904,7 +906,7 @@ function SalesbotsPage() {
   );
 }
 
-export function SalesbotsTab() {
+export function SalesbotsTab({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const { t } = useI18n();
   if (
@@ -931,7 +933,7 @@ export function SalesbotsTab() {
   }
   return (
     <PlanGate feature="automation">
-      <SalesbotsPage />
+      <SalesbotsPage embedded={embedded} />
     </PlanGate>
   );
 }

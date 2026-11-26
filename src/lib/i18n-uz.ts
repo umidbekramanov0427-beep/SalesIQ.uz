@@ -11147,6 +11147,19 @@ const uz: Record<string, string> = {
     "Hozirgi bot bilan yozishgan mijozlar yangi botda /start bosishi kerak — shungacha ularga javob bormaydi. O'z botini ulagan kompaniyalarga ta'sir qilmaydi.",
   "pbots.removeConfirmEnv": "Paneldagi tokenni olib tashlaysizmi? Yana serverdagi bot ishlaydi.",
   "pbots.role.signup": "Ro'yxatdan o'tishda telefon tasdiqlash va kirish",
+  "bots.title": "Botlar",
+  "bots.desc":
+    "Kompaniyangizning barcha botlari bitta joyda. O'z botingiz ulanmaguncha mijozlar platformaning standart boti bilan yozishadi.",
+  "bots.tab.own": "Mijozlar boti",
+  "bots.tab.salesbots": "Salesbotlar",
+  "bots.tab.staff": "Xodimlar Telegram'i",
+  "bots.tab.marketing": "Marketing boti",
+  "bots.tab.app": "Mini App",
+  "bots.staff.title": "Xodimlarning Telegram'i",
+  "bots.staff.desc":
+    "Hisobotlar, vazifalar va kirish kodlari xodimlarga platformaning kompaniyalar boti orqali boradi.",
+  "bots.staff.how":
+    "Har xodim bir marta ulaydi: Profil → Telegram'ni ulash yoki ekran tepasidagi eslatma orqali. Kim ulangani pastdagi ro'yxatda.",
 };
 
 export default uz;

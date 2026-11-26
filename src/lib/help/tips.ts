@@ -73,6 +73,13 @@ export const TIPS: Record<string, Tip> = {
       en: "Tabs: Overview (main figures, plan vs actual, channels, managers, tasks, calls), Rating, Conversion. Arrange the cards with «Customize».",
     },
   },
+  "page:/bots": {
+    what: {
+      uz: "Kompaniyangizning barcha botlari bitta joyda: mijozlar uchun o'z botingiz, salesbotlar, xodimlarning Telegram'i, marketing boti va Mini App. Platformaning o'z botlarini platforma egasi ulaydi.",
+      ru: "Все боты компании в одном месте: свой бот для клиентов, сейлсботы, Telegram сотрудников, маркетинговый бот и Mini App. Ботов платформы подключает владелец платформы.",
+      en: "All of the company's bots in one place: your own bot for clients, salesbots, your people's Telegram, the marketing bot and the Mini App. The platform's own bots are set by the platform owner.",
+    },
+  },
   "nav:/warehouse": {
     what: {
       uz: "Ombor — mahsulotlar, qoldiq, yangidan yetkazilgangacha buyurtmalar va qayta sotuv. Faqat modul yoqilgan kompaniyada ko'rinadi.",

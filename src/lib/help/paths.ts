@@ -27,6 +27,7 @@ const GUIDE_FOR_PATH: [string, string][] = [
   ["/reminders", "reminders"],
   ["/refunds", "refunds"],
   ["/warehouse", "warehouse"],
+  ["/bots", "telegram-bot"],
   ["/marketing/ai", "marketing-ai"],
   ["/marketing", "marketing"],
   ["/admin/api", "integrations"],

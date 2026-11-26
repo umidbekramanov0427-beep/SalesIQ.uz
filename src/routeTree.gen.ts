@@ -16,6 +16,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as AudioAnalyticsRouteImport } from './routes/audio-analytics'
 import { Route as BillingRouteImport } from './routes/billing'
+import { Route as BotsRouteImport } from './routes/bots'
 import { Route as BusinessesRouteImport } from './routes/businesses'
 import { Route as CoachingRouteImport } from './routes/coaching'
 import { Route as ContentLibraryRouteImport } from './routes/content-library'
@@ -376,6 +377,11 @@ const AudioAnalyticsRoute = AudioAnalyticsRouteImport.update({
 const BillingRoute = BillingRouteImport.update({
   id: '/billing',
   path: '/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BotsRoute = BotsRouteImport.update({
+  id: '/bots',
+  path: '/bots',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessesRoute = BusinessesRouteImport.update({
@@ -2084,6 +2090,7 @@ export interface FileRoutesByFullPath {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/bots': typeof BotsRoute
   '/businesses': typeof BusinessesRoute
   '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
@@ -2419,6 +2426,7 @@ export interface FileRoutesByTo {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/bots': typeof BotsRoute
   '/businesses': typeof BusinessesRoute
   '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
@@ -2755,6 +2763,7 @@ export interface FileRoutesById {
   '/attendance': typeof AttendanceRoute
   '/audio-analytics': typeof AudioAnalyticsRouteWithChildren
   '/billing': typeof BillingRouteWithChildren
+  '/bots': typeof BotsRoute
   '/businesses': typeof BusinessesRoute
   '/coaching': typeof CoachingRoute
   '/content-library': typeof ContentLibraryRoute
@@ -3092,6 +3101,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/bots'
     | '/businesses'
     | '/coaching'
     | '/content-library'
@@ -3427,6 +3437,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/bots'
     | '/businesses'
     | '/coaching'
     | '/content-library'
@@ -3762,6 +3773,7 @@ export interface FileRouteTypes {
     | '/attendance'
     | '/audio-analytics'
     | '/billing'
+    | '/bots'
     | '/businesses'
     | '/coaching'
     | '/content-library'
@@ -4098,6 +4110,7 @@ export interface RootRouteChildren {
   AttendanceRoute: typeof AttendanceRoute
   AudioAnalyticsRoute: typeof AudioAnalyticsRouteWithChildren
   BillingRoute: typeof BillingRouteWithChildren
+  BotsRoute: typeof BotsRoute
   BusinessesRoute: typeof BusinessesRoute
   CoachingRoute: typeof CoachingRoute
   ContentLibraryRoute: typeof ContentLibraryRoute
@@ -4365,6 +4378,13 @@ declare module '@tanstack/react-router' {
       path: '/billing'
       fullPath: '/billing'
       preLoaderRoute: typeof BillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bots': {
+      id: '/bots'
+      path: '/bots'
+      fullPath: '/bots'
+      preLoaderRoute: typeof BotsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/businesses': {
@@ -7083,6 +7103,7 @@ const rootRouteChildren: RootRouteChildren = {
   AttendanceRoute: AttendanceRoute,
   AudioAnalyticsRoute: AudioAnalyticsRouteWithChildren,
   BillingRoute: BillingRouteWithChildren,
+  BotsRoute: BotsRoute,
   BusinessesRoute: BusinessesRoute,
   CoachingRoute: CoachingRoute,
   ContentLibraryRoute: ContentLibraryRoute,

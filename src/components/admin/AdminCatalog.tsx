@@ -315,7 +315,7 @@ export function useAdminCatalog(): CatalogGroup[] {
   integrations.push(
     {
       key: "telegramBot",
-      to: "/integrations/telegram-bot",
+      to: "/bots",
       icon: Bot,
       tone: "sky",
       logo: { src: "/brand/telegram.svg" },
@@ -323,7 +323,8 @@ export function useAdminCatalog(): CatalogGroup[] {
     },
     {
       key: "telegramLink",
-      to: "/daily-report-settings",
+      to: "/bots",
+      search: { tab: "staff" },
       icon: MessageSquareText,
       tone: "sky",
       logo: { src: "/brand/telegram.svg" },
@@ -336,7 +337,8 @@ export function useAdminCatalog(): CatalogGroup[] {
     },
     {
       key: "telegramApp",
-      to: "/integrations/telegram-app",
+      to: "/bots",
+      search: { tab: "app" },
       icon: MessageSquareText,
       tone: "sky",
       logo: { src: "/brand/telegram.svg" },

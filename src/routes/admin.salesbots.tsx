@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-// Moved into Voronkalar → Sozlash (salesbots tab); old links land there.
+// Salesbots live on the one Botlar page (/bots); old links land there.
 export const Route = createFileRoute("/admin/salesbots")({
   beforeLoad: () => {
-    throw redirect({ to: "/funnels/settings", search: { tab: "salesbots" } });
+    throw redirect({ to: "/bots", search: { tab: "salesbots" } });
   },
 });

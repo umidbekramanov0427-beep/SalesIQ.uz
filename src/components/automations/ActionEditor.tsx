@@ -636,7 +636,7 @@ export function ActionEditor({
           <div className="flex flex-wrap gap-3 text-[12px] font-semibold">
             {action.botId && (
               <a
-                href={`/funnels/settings?tab=salesbots&bot=${action.botId}`}
+                href={`/bots?tab=salesbots&bot=${action.botId}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-primary hover:underline"
@@ -645,7 +645,7 @@ export function ActionEditor({
               </a>
             )}
             <a
-              href="/funnels/settings?tab=salesbots&bot=new"
+              href="/bots?tab=salesbots&bot=new"
               target="_blank"
               rel="noreferrer"
               className="text-primary hover:underline"

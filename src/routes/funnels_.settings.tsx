@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useFunnelSkin } from "@/lib/funnel-skin";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useIsMutating } from "@tanstack/react-query";
 import {
   Archive,
@@ -74,6 +74,11 @@ export const Route = createFileRoute("/funnels_/settings")({
     bot: typeof search["bot"] === "string" ? (search["bot"] as string) : undefined,
     tab: TABS.some((x) => x.key === search["tab"]) ? (search["tab"] as SettingsTab) : undefined,
   }),
+  // Salesbots moved to the one Botlar page; the tab (and its ?bot=) goes there.
+  beforeLoad: ({ search }) => {
+    if (search.tab === "salesbots")
+      throw redirect({ to: "/bots", search: { tab: "salesbots", bot: search.bot } });
+  },
   head: () => ({ meta: [{ title: "Voronka sozlamalari — SalesIQ" }] }),
   component: () => <FunnelSettingsPage />,
 });
