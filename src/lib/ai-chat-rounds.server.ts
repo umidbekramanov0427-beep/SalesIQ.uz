@@ -11,6 +11,7 @@ export type GeminiContent = { role: "user" | "model"; parts: GeminiPart[] };
 
 export type ChatEvent =
   | { t: "delta"; text: string }
+  | { t: "card"; card: import("@/lib/ai/setup-cards").SetupCardSpec }
   | { t: "status"; text: string }
   | { t: "done" }
   | { t: "error"; error: string };

@@ -7,6 +7,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runChatRounds, type ChatEvent, type GeminiContent } from "@/lib/ai-chat-rounds.server";
 import { guideRules, pageIndex, setupProgress } from "@/lib/ai/platform-guide";
 import { loadFirstSteps } from "@/lib/first-steps.server";
+import { SHOW_SETUP_CARD_TOOL, parseSetupCard, setupRules } from "@/lib/ai/setup-cards";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -1016,6 +1017,9 @@ export const Route = createFileRoute("/ai-assistant/chat")({
           );
         }
         const setupMs = Date.now() - startedAt;
+        // Only the company admin gets setup cards (they run admin actions).
+        const canSetUp =
+          !!orgId && (caller?.role === "super_admin" || caller?.role === "platform_owner");
 
         const NAV_GUIDE = `Left menu:
 - / — Bosh sahifa (Home): for heads of sales and admins the dashboard with tabs Umumiy (key numbers, period block and the monthly revenue trend), Reyting (live ranking of reps), Konversiya, Faoliyat, AI tahlil (call figures are in Audio tahlil, loss reasons in Lid tahlili), and a "Hisobot" button (top right) that downloads a report (Excel/PDF) for a chosen period, team and manager. For sales reps this page is the Reyting.
@@ -1080,7 +1084,9 @@ Other pages:
             phone: contact?.support_phone ?? null,
           }) +
           "\n\nMore pages (settings and tools) you may link to:\n" +
-          pageIndex(uzDict);
+          pageIndex(uzDict) +
+          "\n\n" +
+          setupRules(canSetUp);
         // The admin's setup progress, so "where do I start?" gets the real next step.
         if (orgId && caller?.role === "super_admin") {
           const { data: me } = await supabaseAdmin
@@ -1143,7 +1149,10 @@ Other pages:
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.content }],
         }));
-        const functionDeclarations = TOOLS.map((t) => t.function);
+        const functionDeclarations: unknown[] = [
+          ...TOOLS.map((t) => t.function),
+          ...(canSetUp ? [SHOW_SETUP_CARD_TOOL] : []),
+        ];
         const toolContext = toolContextFor(orgId, userId, ownerIds);
 
         const run = (emit: (event: ChatEvent) => void) =>
@@ -1152,7 +1161,22 @@ Other pages:
             systemPrompt,
             contents,
             functionDeclarations,
-            runTool: toolContext ? (name, args) => executeTool(name, args, toolContext) : null,
+            runTool: toolContext
+              ? async (name, args) => {
+                  // A setup card is shown in the chat; the admin fills it in
+                  // and runs it there, so nothing changes from here.
+                  if (name === "show_setup_card") {
+                    const card = canSetUp ? parseSetupCard(args) : null;
+                    if (!card) return { error: "This setup card is not available." };
+                    emit({ t: "card", card });
+                    return {
+                      shown: true,
+                      note: "The card is on the screen now. Say in one short sentence what to check and which button to press. Do not ask for secrets in the chat.",
+                    };
+                  }
+                  return executeTool(name, args, toolContext);
+                }
+              : null,
             emit,
           });
 

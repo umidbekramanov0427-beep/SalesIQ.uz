@@ -19,6 +19,13 @@ import {
   X,
 } from "lucide-react";
 import { renderMessageContent } from "@/components/ai/MessageContent";
+import { SetupCard } from "@/components/ai/SetupCards";
+import {
+  findBotToken,
+  redactBotToken,
+  splitQuickReplies,
+  type SetupCardSpec,
+} from "@/lib/ai/setup-cards";
 import { AiOrbIcon } from "@/components/ai/AiOrbIcon";
 import { SupportChat } from "@/components/ai/SupportChat";
 import { useChatSearch } from "@/components/chat/ChatSearch";
@@ -34,7 +41,25 @@ import { telegramLink } from "@/lib/ai/platform-guide";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
+type Msg = {
+  role: "user" | "assistant";
+  content: string;
+  error?: boolean;
+  /** A setup card the assistant showed (lib/ai/setup-cards.ts); not sent back to the model. */
+  card?: SetupCardSpec;
+  /** A bot token the admin typed into the chat, moved into the card's own field. */
+  token?: string;
+  /** The card's result once it ran. */
+  cardDone?: string;
+  /** «✓ …»: a card's result told to the assistant, shown as a small line. */
+  status?: boolean;
+};
+
+/** What goes to the model: no cards, no error bubbles, no secrets. */
+const forModel = (list: Msg[]) =>
+  list
+    .filter((m) => !m.error && !m.card && m.content.trim())
+    .map(({ role, content }) => ({ role, content }));
 
 // The AI assistant on every page: a button (bottom right until the user
 // drags it elsewhere) that opens a small chat. It sends the page you're on, so "how do I…" is answered from
@@ -82,6 +107,9 @@ export function AiAssistantFab() {
   const supportSearch = useChatSearch(support.data ?? []);
   useSupportRealtime();
   const [messages, setMessages] = useState<Msg[]>([]);
+  // A card can finish after more messages came (the Telegram link waits for the bot).
+  const messagesRef = useRef<Msg[]>([]);
+  messagesRef.current = messages;
   const [input, setInput] = useState("");
   // The answer while it streams in, and whether the assistant is looking
   // something up with its tools meanwhile.
@@ -154,10 +182,33 @@ export function AiAssistantFab() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || chat.isPending) return;
-    const next = [...messages, { role: "user" as const, content: trimmed }];
     setInput("");
+    // A bot token typed into the chat never goes to the model: it moves
+    // into a «connect the bot» card the admin runs here.
+    const token = findBotToken(trimmed);
+    if (token) {
+      setMessages((m) => [
+        ...m,
+        { role: "user", content: redactBotToken(trimmed) },
+        { role: "assistant", content: t("aic.tokenCaught") },
+        { role: "assistant", content: "", card: { kind: "client_bot", prefill: {} }, token },
+      ]);
+      return;
+    }
+    const next = [...messages, { role: "user" as const, content: trimmed }];
     await ask(next);
   }
+
+  /** A card ran: keep its result and let the assistant lead on. */
+  function cardFinished(index: number, summary: string) {
+    const next = messagesRef.current.map((m, i) => {
+      if (i !== index) return m;
+      const { token: _secret, ...rest } = m;
+      return { ...rest, cardDone: summary };
+    });
+    void ask([...next, { role: "user", content: `✓ ${summary}`, status: true }]);
+  }
+
 
   /** The last question again, after an error. */
   function retry() {
@@ -167,17 +218,23 @@ export function AiAssistantFab() {
 
   async function ask(next: Msg[]) {
     setMessages(next);
+    const cards: SetupCardSpec[] = [];
     try {
       const reply = await chat.mutateAsync({
-        messages: next.filter((m) => !m.error).map(({ role, content }) => ({ role, content })),
+        messages: forModel(next),
         page: pathname,
         onText: (text) => {
           setWorking(false);
           setDraft(text);
         },
         onWorking: () => setWorking(true),
+        onCard: (card) => cards.push(card),
       });
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: reply },
+        ...cards.map((card) => ({ role: "assistant" as const, content: "", card })),
+      ]);
     } catch (err) {
       const isTimeout = err instanceof Error && err.message === "TIMEOUT";
       setMessages((m) => [
@@ -383,57 +440,92 @@ export function AiAssistantFab() {
                     ))}
                   </div>
                 )}
-                {messages.map((m, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "whitespace-pre-wrap text-sm",
-                      m.role === "user"
-                        ? "ml-auto max-w-[85%] rounded-2xl bg-primary px-3.5 py-2 text-primary-foreground"
-                        : m.error
-                          ? "max-w-[92%] rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-destructive"
-                          : "max-w-[92%] rounded-xl border border-border bg-card px-3.5 py-2.5 text-foreground",
-                    )}
-                  >
-                    {m.role === "assistant"
-                      ? renderMessageContent(m.content, t("inbox.open"))
-                      : m.content}
-                    {m.error && i === messages.length - 1 && (
-                      <span className="mt-2 flex flex-wrap gap-1.5">
-                        <button
-                          type="button"
-                          onClick={retry}
-                          className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-foreground shadow-sm hover:bg-accent"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" /> {t("fab.retry")}
-                        </button>
-                        {isAdmin ? (
+                {messages.map((m, i) =>
+                  m.card ? (
+                    <SetupCard
+                      key={i}
+                      card={m.card}
+                      token={m.token}
+                      finished={m.cardDone}
+                      onFinished={(summary) => cardFinished(i, summary)}
+                    />
+                  ) : m.status ? (
+                    <p
+                      key={i}
+                      className="ml-auto max-w-[92%] text-right text-[12px] font-semibold text-emerald-700 dark:text-emerald-400"
+                    >
+                      {m.content}
+                    </p>
+                  ) : (
+                    <div
+                      key={i}
+                      className={cn(
+                        "whitespace-pre-wrap text-sm",
+                        m.role === "user"
+                          ? "ml-auto max-w-[85%] rounded-2xl bg-primary px-3.5 py-2 text-primary-foreground"
+                          : m.error
+                            ? "max-w-[92%] rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-destructive"
+                            : "max-w-[92%] rounded-xl border border-border bg-card px-3.5 py-2.5 text-foreground",
+                      )}
+                    >
+                      {m.role === "assistant"
+                        ? renderMessageContent(splitQuickReplies(m.content).text, t("inbox.open"))
+                        : m.content}
+                      {m.role === "assistant" &&
+                        !m.error &&
+                        i === messages.length - 1 &&
+                        !chat.isPending &&
+                        splitQuickReplies(m.content).replies.length > 0 && (
+                          <span className="mt-2.5 flex flex-wrap gap-1.5 whitespace-normal">
+                            {splitQuickReplies(m.content).replies.map((r) => (
+                              <button
+                                key={r}
+                                type="button"
+                                onClick={() => void send(r)}
+                                className="inline-flex min-h-8 items-center rounded-lg border border-primary/40 bg-background px-2.5 py-1 text-left text-[12.5px] font-semibold text-primary hover:bg-primary/10"
+                              >
+                                {r}
+                              </button>
+                            ))}
+                          </span>
+                        )}
+                      {m.error && i === messages.length - 1 && (
+                        <span className="mt-2 flex flex-wrap gap-1.5">
                           <button
                             type="button"
-                            onClick={() => setTab("operator")}
-                            className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-emerald-700 shadow-sm hover:bg-accent dark:text-emerald-300"
+                            onClick={retry}
+                            className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-foreground shadow-sm hover:bg-accent"
                           >
-                            <Headset className="h-3.5 w-3.5" /> {t("fab.toOperator")}
+                            <RotateCcw className="h-3.5 w-3.5" /> {t("fab.retry")}
                           </button>
-                        ) : (
-                          contact && (
-                            <a
-                              href={contact}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-sky-700 shadow-sm hover:bg-accent dark:text-sky-300"
+                          {isAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => setTab("operator")}
+                              className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-emerald-700 shadow-sm hover:bg-accent dark:text-emerald-300"
                             >
-                              <Send className="h-3.5 w-3.5" /> {t("fab.toSupport")}
-                            </a>
-                          )
-                        )}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                              <Headset className="h-3.5 w-3.5" /> {t("fab.toOperator")}
+                            </button>
+                          ) : (
+                            contact && (
+                              <a
+                                href={contact}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-7 items-center gap-1 rounded-lg bg-card px-2.5 text-[12px] font-semibold text-sky-700 shadow-sm hover:bg-accent dark:text-sky-300"
+                              >
+                                <Send className="h-3.5 w-3.5" /> {t("fab.toSupport")}
+                              </a>
+                            )
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  ),
+                )}
                 {draft && (
                   <div className="max-w-[92%] whitespace-pre-wrap rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground">
-                    {renderMessageContent(draft, t("inbox.open"))}
+                    {renderMessageContent(splitQuickReplies(draft).text, t("inbox.open"))}
                   </div>
                 )}
                 {chat.isPending && (!draft || working) && (

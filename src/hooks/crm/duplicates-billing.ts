@@ -962,6 +962,8 @@ export function useAiAssistantChat() {
       onText?: (textSoFar: string) => void;
       // Called when the assistant is looking something up with its tools.
       onWorking?: () => void;
+      // Called when the assistant shows a setup card (lib/ai/setup-cards.ts).
+      onCard?: (card: import("@/lib/ai/setup-cards").SetupCardSpec) => void;
     }): Promise<string> => {
       // The answer streams in (newline-delimited JSON events). fetch() has
       // no timeout of its own, so the request is aborted after 60 s
@@ -1007,12 +1009,15 @@ export function useAiAssistantChat() {
             if (!line) continue;
             const event = JSON.parse(line) as
               | { t: "delta"; text: string }
+              | { t: "card"; card: import("@/lib/ai/setup-cards").SetupCardSpec }
               | { t: "status" }
               | { t: "done" }
               | { t: "error"; error: string };
             if (event.t === "delta") {
               text += event.text;
               input.onText?.(text);
+            } else if (event.t === "card") {
+              input.onCard?.(event.card);
             } else if (event.t === "status") {
               input.onWorking?.();
             } else if (event.t === "error") {
