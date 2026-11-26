@@ -199,11 +199,16 @@ async function handlePhoneVerification(
   const contact = message.contact;
   const fromId = message.from?.id;
   if (!contact?.phone_number || !fromId) return false;
-  const { data: profile } = await supabaseAdmin
+  // One person can have several profiles on the same Telegram (the
+  // platform owner's own and a company admin's): the number is theirs in all.
+  const { data: profiles } = await supabaseAdmin
     .from("profiles")
     .select("id, full_name, organization_id, role")
     .eq("telegram_chat_id", chatId)
-    .maybeSingle();
+    .limit(20);
+  const profile =
+    (profiles ?? []).find((p) => p.role === "super_admin" || p.role === "rop") ??
+    (profiles ?? [])[0];
   if (!profile) return false;
   if (contact.user_id !== fromId) {
     await sendTelegramMessage(
@@ -218,7 +223,10 @@ async function handlePhoneVerification(
   const { error } = await supabaseAdmin
     .from("profiles")
     .update({ phone, phone_verified_at: new Date().toISOString() })
-    .eq("id", profile.id);
+    .in(
+      "id",
+      (profiles ?? []).map((p) => p.id),
+    );
   if (error) {
     console.error("[telegram webhook] phone verification failed", error);
     await sendTelegramMessage(
@@ -613,13 +621,22 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
   // checked first since it's an explicit, admin-initiated action
   // that should never be interrupted by the (auto-started)
   // business-profile flow below.
-  const { data: linkedProfile } = await supabaseAdmin
+  // Several profiles can share this Telegram (one person, the platform
+  // owner's profile and a company's): the one in a running flow first,
+  // then one still to verify its phone, else any.
+  const { data: linkedList } = await supabaseAdmin
     .from("profiles")
     .select(
       "id, organization_id, role, telegram_onboarding_step, telegram_ai_setup_step, phone_verified_at",
     )
     .eq("telegram_chat_id", chatId)
-    .maybeSingle();
+    .limit(20);
+  const linkedProfile =
+    (linkedList ?? []).find((p) => p.telegram_ai_setup_step !== null) ??
+    (linkedList ?? []).find((p) => p.telegram_onboarding_step !== null) ??
+    (linkedList ?? []).find((p) => !p.phone_verified_at) ??
+    (linkedList ?? [])[0] ??
+    null;
   // The staff bot's own link: it is for a company's people, never a
   // client's salesbot -- say how to link, or greet a linked person.
   if (bot === "staff" && PLAIN_START.test(rawText) && update.message) {
@@ -785,12 +802,22 @@ async function handleUpdate(request: Request, bot: "client" | "staff"): Promise<
 
   // The company questionnaire (maybeStartOnboarding) starts once the
   // phone is verified -- see handlePhoneVerification.
-  const { data: linked } = await supabaseAdmin
+  const { data: sameChat } = await supabaseAdmin
     .from("profiles")
-    .select("phone_verified_at")
-    .eq("id", profile.id)
-    .maybeSingle();
-  if (linked?.phone_verified_at) await maybeStartOnboarding(chatId, profile);
+    .select("id, phone, phone_verified_at")
+    .eq("telegram_chat_id", chatId)
+    .limit(20);
+  const self = (sameChat ?? []).find((p) => p.id === profile.id);
+  // This Telegram already proved its number for another profile of the
+  // same person: no need to ask again.
+  const proven = (sameChat ?? []).find((p) => p.phone_verified_at && p.phone);
+  if (!self?.phone_verified_at && proven) {
+    await supabaseAdmin
+      .from("profiles")
+      .update({ phone: proven.phone, phone_verified_at: proven.phone_verified_at })
+      .eq("id", profile.id);
+  }
+  if (self?.phone_verified_at || proven) await maybeStartOnboarding(chatId, profile);
   else await askPhoneVerification(chatId);
 
   return Response.json({ ok: true });
