@@ -1,4 +1,4 @@
-import { DEFAULT_PREFS, readPrefs, vcardCode } from "@/lib/profile-prefs";
+import { DEFAULT_PREFS, readPrefs } from "@/lib/profile-prefs";
 import { qrMatrix } from "@/lib/qr";
 
 describe("readPrefs", () => {
@@ -9,14 +9,6 @@ describe("readPrefs", () => {
       fontSize: "xl",
       timezone: "UTC",
     });
-  });
-});
-
-describe("vcardCode", () => {
-  it("is long enough and has no look-alike letters", () => {
-    const c = vcardCode();
-    expect(c).toHaveLength(12);
-    expect(c).not.toMatch(/[01ilIoO]/);
   });
 });
 

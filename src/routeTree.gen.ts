@@ -131,7 +131,6 @@ import { Route as BulkMessageUploadRouteImport } from './routes/bulk-message.upl
 import { Route as CabinetTokenRouteImport } from './routes/cabinet.$token'
 import { Route as CabinetDataRouteImport } from './routes/cabinet.data'
 import { Route as CabinetLinkRouteImport } from './routes/cabinet.link'
-import { Route as CardCodeRouteImport } from './routes/card.$code'
 import { Route as ContractsTokenRouteImport } from './routes/contracts.$token'
 import { Route as CrmSpeedToLeadRouteImport } from './routes/crm.speed-to-lead'
 import { Route as DailyReportSettingsGenerateNowRouteImport } from './routes/daily-report-settings.generate-now'
@@ -962,11 +961,6 @@ const CabinetDataRoute = CabinetDataRouteImport.update({
 const CabinetLinkRoute = CabinetLinkRouteImport.update({
   id: '/cabinet/link',
   path: '/cabinet/link',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CardCodeRoute = CardCodeRouteImport.update({
-  id: '/card/$code',
-  path: '/card/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContractsTokenRoute = ContractsTokenRouteImport.update({
@@ -2223,7 +2217,6 @@ export interface FileRoutesByFullPath {
   '/cabinet/$token': typeof CabinetTokenRoute
   '/cabinet/data': typeof CabinetDataRoute
   '/cabinet/link': typeof CabinetLinkRoute
-  '/card/$code': typeof CardCodeRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -2562,7 +2555,6 @@ export interface FileRoutesByTo {
   '/cabinet/$token': typeof CabinetTokenRoute
   '/cabinet/data': typeof CabinetDataRoute
   '/cabinet/link': typeof CabinetLinkRoute
-  '/card/$code': typeof CardCodeRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -2902,7 +2894,6 @@ export interface FileRoutesById {
   '/cabinet/$token': typeof CabinetTokenRoute
   '/cabinet/data': typeof CabinetDataRoute
   '/cabinet/link': typeof CabinetLinkRoute
-  '/card/$code': typeof CardCodeRoute
   '/contracts/$token': typeof ContractsTokenRouteWithChildren
   '/crm/speed-to-lead': typeof CrmSpeedToLeadRoute
   '/daily-report-settings/generate-now': typeof DailyReportSettingsGenerateNowRoute
@@ -3243,7 +3234,6 @@ export interface FileRouteTypes {
     | '/cabinet/$token'
     | '/cabinet/data'
     | '/cabinet/link'
-    | '/card/$code'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -3582,7 +3572,6 @@ export interface FileRouteTypes {
     | '/cabinet/$token'
     | '/cabinet/data'
     | '/cabinet/link'
-    | '/card/$code'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -3921,7 +3910,6 @@ export interface FileRouteTypes {
     | '/cabinet/$token'
     | '/cabinet/data'
     | '/cabinet/link'
-    | '/card/$code'
     | '/contracts/$token'
     | '/crm/speed-to-lead'
     | '/daily-report-settings/generate-now'
@@ -4206,7 +4194,6 @@ export interface RootRouteChildren {
   CabinetTokenRoute: typeof CabinetTokenRoute
   CabinetDataRoute: typeof CabinetDataRoute
   CabinetLinkRoute: typeof CabinetLinkRoute
-  CardCodeRoute: typeof CardCodeRoute
   ContractsTokenRoute: typeof ContractsTokenRouteWithChildren
   CrmSpeedToLeadRoute: typeof CrmSpeedToLeadRoute
   DevPhoneRoute: typeof DevPhoneRoute
@@ -5221,13 +5208,6 @@ declare module '@tanstack/react-router' {
       path: '/cabinet/link'
       fullPath: '/cabinet/link'
       preLoaderRoute: typeof CabinetLinkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/card/$code': {
-      id: '/card/$code'
-      path: '/card/$code'
-      fullPath: '/card/$code'
-      preLoaderRoute: typeof CardCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contracts/$token': {
@@ -7225,7 +7205,6 @@ const rootRouteChildren: RootRouteChildren = {
   CabinetTokenRoute: CabinetTokenRoute,
   CabinetDataRoute: CabinetDataRoute,
   CabinetLinkRoute: CabinetLinkRoute,
-  CardCodeRoute: CardCodeRoute,
   ContractsTokenRoute: ContractsTokenRouteWithChildren,
   CrmSpeedToLeadRoute: CrmSpeedToLeadRoute,
   DevPhoneRoute: DevPhoneRoute,

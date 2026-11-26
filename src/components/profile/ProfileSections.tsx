@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -6,21 +6,15 @@ import {
   BookOpen,
   Building2,
   Check,
-  Copy,
-  CreditCard,
-  Download,
-  Eraser,
   Fingerprint,
   Globe2,
   KeyRound,
   Loader2,
   Lock,
   Palette,
-  PenLine,
   Plus,
   QrCode,
   Smartphone,
-  Trophy,
   User,
   X,
 } from "lucide-react";
@@ -33,7 +27,6 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import {
   useMyOrganization,
-  useOrgSubscriptionPayments,
   useSecuritySettings,
   useUpdateSecuritySettings,
 } from "@/hooks/use-crm-data";
@@ -57,10 +50,9 @@ import {
   TIME_ZONES,
   applyLook,
   readPrefs,
-  vcardCode,
   type ProfilePrefs,
 } from "@/lib/profile-prefs";
-import { qrDataUrl, qrSvg } from "@/lib/qr";
+import { qrDataUrl } from "@/lib/qr";
 import { cn, describeError } from "@/lib/utils";
 import {
   NeedsMigrationError,
@@ -452,441 +444,12 @@ type LeadFigure = {
   pipeline_stages: { is_won: boolean | null; is_lost: boolean | null } | null;
 };
 
-function useLeadFigures(scope: "mine" | "org") {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ["profile-figures", scope, user?.id],
-    enabled: !!user?.organizationId,
-    staleTime: 60_000,
-    queryFn: async () => {
-      let q = supabase
-        .from("leads")
-        .select("owner_id, budget, created_at, stage_changed_at, pipeline_stages(is_won, is_lost)")
-        .eq("organization_id", user!.organizationId!)
-        .is("amocrm_id", null)
-        .limit(10_000);
-      if (scope === "mine") q = q.eq("owner_id", user!.id);
-      const { data, error } = await q;
-      if (error) throw error;
-      const rows = (data ?? []) as unknown as LeadFigure[];
-      const month = new Date();
-      month.setDate(1);
-      month.setHours(0, 0, 0, 0);
-      const inMonth = (iso: string | null) => !!iso && new Date(iso) >= month;
-      const won = rows.filter((r) => r.pipeline_stages?.is_won);
-      const lost = rows.filter((r) => r.pipeline_stages?.is_lost);
-      const open = rows.filter((r) => !r.pipeline_stages?.is_won && !r.pipeline_stages?.is_lost);
-      const sum = (list: LeadFigure[]) => list.reduce((s, r) => s + Number(r.budget ?? 0), 0);
-      return {
-        leads: rows.length,
-        monthLeads: rows.filter((r) => inMonth(r.created_at)).length,
-        won: won.length,
-        monthWon: won.filter((r) => inMonth(r.stage_changed_at)).length,
-        lost: lost.length,
-        open: open.length,
-        revenue: sum(won),
-        monthRevenue: sum(won.filter((r) => inMonth(r.stage_changed_at))),
-        agreed: sum(open),
-        conversion: rows.length ? Math.round((won.length / rows.length) * 1000) / 10 : 0,
-      };
-    },
-  });
-}
-
-function Figure({ label, value, sub }: { label: string; value: ReactNode; sub?: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1.5 text-[24px] font-extrabold tabular-nums text-foreground">{value}</p>
-      {sub && <p className="mt-0.5 text-[12px] text-muted-foreground">{sub}</p>}
-    </div>
-  );
-}
-
-/* ------------------------------- 2. Natijalarim ------------------------------- */
-
-export function ResultsSection() {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const { data, isLoading } = useLeadFigures("mine");
-  return (
-    <SectionCard
-      icon={Trophy}
-      tone="amber"
-      title={t("pf.nav.results")}
-      description={t("pf.resultsDesc")}
-    >
-      {isLoading ? (
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      ) : !data || data.leads === 0 ? (
-        <div className="grid place-items-center gap-2 py-10 text-center text-muted-foreground">
-          <BarChart3 className="h-7 w-7" />
-          <p className="text-[13px]">{t("pf.resultsEmpty")}</p>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Figure
-            label={t("pf.r.monthWon")}
-            value={data.monthWon}
-            sub={format(data.monthRevenue)}
-          />
-          <Figure label={t("pf.r.monthLeads")} value={data.monthLeads} />
-          <Figure label={t("pf.r.conversion")} value={`${data.conversion}%`} />
-          <Figure label={t("pf.r.won")} value={data.won} sub={format(data.revenue)} />
-          <Figure label={t("pf.r.open")} value={data.open} sub={format(data.agreed)} />
-          <Figure label={t("pf.r.lost")} value={data.lost} />
-        </div>
-      )}
-    </SectionCard>
-  );
-}
-
-/* ---------------------------- 5. Statistika ---------------------------- */
-
-export function StatsSection() {
-  const { t } = useI18n();
-  const { format } = useCurrency();
-  const { user } = useAuth();
-  const scope = user?.role === "sotuv_menejeri" ? "mine" : "org";
-  const { data, isLoading } = useLeadFigures(scope);
-  return (
-    <SectionCard
-      icon={BarChart3}
-      tone="violet"
-      title={t("pf.nav.stats")}
-      description={t(`pf.statsDesc.${scope}`)}
-    >
-      {isLoading || !data ? (
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Figure label={t("pf.s.total")} value={format(data.revenue)} />
-          <Figure label={t("pf.s.month")} value={format(data.monthRevenue)} />
-          <Figure label={t("pf.s.agreed")} value={format(data.agreed)} />
-          <Figure label={t("pf.s.monthLeads")} value={data.monthLeads} />
-        </div>
-      )}
-    </SectionCard>
-  );
-}
-
-/* --------------------------- 3. Imzo va vizitka --------------------------- */
-
-function SignaturePad({
-  value,
-  onSave,
-  pending,
-}: {
-  value: string | null;
-  onSave: (png: string | null) => void;
-  pending: boolean;
-}) {
-  const { t } = useI18n();
-  const ref = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
-  const [dirty, setDirty] = useState(false);
-
-  useEffect(() => {
-    const c = ref.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, c.width, c.height);
-    if (value) {
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0, c.width, c.height);
-      img.src = value;
-    }
-  }, [value]);
-
-  const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const c = ref.current!;
-    const r = c.getBoundingClientRect();
-    return {
-      x: ((e.clientX - r.left) * c.width) / r.width,
-      y: ((e.clientY - r.top) * c.height) / r.height,
-    };
-  };
-
-  return (
-    <div>
-      <canvas
-        ref={ref}
-        width={720}
-        height={200}
-        aria-label={t("pf.signatureArea")}
-        onPointerDown={(e) => {
-          const ctx = ref.current!.getContext("2d")!;
-          const p = point(e);
-          ctx.lineWidth = 3;
-          ctx.lineCap = "round";
-          ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue(
-            "--foreground",
-          )
-            ? "#1e3a8a"
-            : "#000";
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          drawing.current = true;
-          ref.current!.setPointerCapture(e.pointerId);
-        }}
-        onPointerMove={(e) => {
-          if (!drawing.current) return;
-          const ctx = ref.current!.getContext("2d")!;
-          const p = point(e);
-          ctx.lineTo(p.x, p.y);
-          ctx.stroke();
-          setDirty(true);
-        }}
-        onPointerUp={() => (drawing.current = false)}
-        className="h-[150px] w-full touch-none rounded-xl border border-dashed border-border bg-white"
-      />
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            const c = ref.current!;
-            c.getContext("2d")!.clearRect(0, 0, c.width, c.height);
-            setDirty(true);
-          }}
-          className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[13px] font-semibold"
-        >
-          <Eraser className="h-4 w-4" /> {t("pf.clear")}
-        </button>
-        <button
-          type="button"
-          disabled={!dirty || pending}
-          onClick={() => {
-            const c = ref.current!;
-            const blank = !c
-              .getContext("2d")!
-              .getImageData(0, 0, c.width, c.height)
-              .data.some((v, i) => i % 4 === 3 && v > 0);
-            onSave(blank ? null : c.toDataURL("image/png"));
-            setDirty(false);
-          }}
-          className="ctl-lit inline-flex h-9 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold disabled:opacity-50"
-        >
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          {t("pf.signatureSave")}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export function SignatureSection() {
-  const { t } = useI18n();
-  const { data: me } = useMyProfile();
-  const saver = useSaver();
-  const code = me?.vcard_code ?? null;
-  const link =
-    code && typeof window !== "undefined" ? `${window.location.origin}/card/${code}` : "";
-  const qr = useMemo(() => (link ? qrDataUrl(link) : ""), [link]);
-
-  function download() {
-    const blob = new Blob([qrSvg(link)], { type: "image/svg+xml" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "vizitka-qr.svg";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
-  return (
-    <div className="space-y-5">
-      <SectionCard
-        icon={PenLine}
-        tone="primary"
-        title={t("pf.signature")}
-        description={t("pf.signatureDesc")}
-      >
-        <SignaturePad
-          value={me?.signature_data ?? null}
-          pending={saver.pending}
-          onSave={(png) => void saver.run({ signature_data: png }, t("pf.signatureSaved"))}
-        />
-      </SectionCard>
-      <SectionCard
-        icon={QrCode}
-        tone="emerald"
-        title={t("pf.vcard")}
-        description={t("pf.vcardDesc")}
-        actions={
-          code ? (
-            <button
-              type="button"
-              onClick={() => void saver.run({ vcard_code: null }, t("pf.vcardDeleted"))}
-              className="text-[13px] font-semibold text-destructive hover:underline"
-            >
-              {t("pf.delete")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={saver.pending}
-              onClick={() => void saver.run({ vcard_code: vcardCode() }, t("pf.vcardMade"))}
-              className="ctl-lit inline-flex h-9 items-center gap-1.5 rounded-xl px-4 text-[13px] font-semibold"
-            >
-              <Plus className="h-4 w-4" /> {t("pf.vcardMake")}
-            </button>
-          )
-        }
-      >
-        {code ? (
-          <div className="flex flex-wrap items-start gap-5">
-            <img
-              src={qr}
-              alt={t("pf.vcard")}
-              className="h-40 w-40 rounded-lg border border-border bg-white p-1"
-            />
-            <div className="min-w-0 flex-1 space-y-3">
-              <Field label={t("pf.vcardLink")}>
-                <div className="flex gap-2">
-                  <input readOnly value={link} className={fieldCls} />
-                  <button
-                    type="button"
-                    aria-label={t("pf.copy")}
-                    onClick={() =>
-                      void navigator.clipboard
-                        .writeText(link)
-                        .then(() => toast.success(t("pf.copied")))
-                    }
-                    className="ctl-soft grid h-10 w-10 shrink-0 place-items-center rounded-xl"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
-              </Field>
-              <div className="flex flex-wrap gap-3 text-[13px] font-semibold">
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  {t("pf.vcardOpen")}
-                </a>
-                <button
-                  type="button"
-                  onClick={download}
-                  className="inline-flex items-center gap-1 text-primary hover:underline"
-                >
-                  <Download className="h-3.5 w-3.5" /> {t("pf.vcardDownload")}
-                </button>
-              </div>
-              <p className="text-[12px] text-muted-foreground">{t("pf.vcardHint")}</p>
-            </div>
-          </div>
-        ) : (
-          <p className="text-[13px] text-muted-foreground">{t("pf.vcardNone")}</p>
-        )}
-      </SectionCard>
-    </div>
-  );
-}
-
-/* ----------------------------- 4. Obunalar ----------------------------- */
-
 const stamp = (iso: string | null | undefined) => {
   if (!iso) return "—";
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 };
-
-export function SubscriptionSection() {
-  const { t } = useI18n();
-  const { user } = useAuth();
-  const access = useOrgAccess();
-  const { data: payments = [] } = useOrgSubscriptionPayments();
-  const plan = (user?.orgPlan ?? "start_iq") as Plan;
-  const isAdmin = user?.role === "super_admin" || user?.role === "platform_owner";
-  return (
-    <div className="space-y-5">
-      <SectionCard
-        icon={CreditCard}
-        tone="primary"
-        title={t("pf.nav.subscription")}
-        description={t("pf.subDesc")}
-      >
-        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border p-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("pf.sub.plan")}
-            </p>
-            <p className="mt-1 text-[18px] font-extrabold text-foreground">
-              {PLAN_LABELS[plan] ?? plan}
-              <span
-                className={cn(
-                  "ml-2 rounded-full border px-2 py-0.5 align-middle text-[11px] font-bold",
-                  access.phase === "expired"
-                    ? "border-destructive/50 text-destructive"
-                    : "border-success/50 text-success",
-                )}
-              >
-                {t(`pf.sub.phase.${access.phase}`)}
-              </span>
-            </p>
-            <p className="mt-1 text-[13px] text-muted-foreground">
-              {t("pf.sub.until")}: {stamp(user?.orgTrialEndsAt)}
-              {access.trialDaysLeft !== null &&
-                ` · ${t("pf.sub.daysLeft", { n: access.trialDaysLeft })}`}
-            </p>
-          </div>
-          {isAdmin && (
-            <Link
-              to="/billing"
-              className="ctl-lit inline-flex h-10 items-center rounded-xl px-5 text-sm font-semibold"
-            >
-              {t("pf.sub.pay")}
-            </Link>
-          )}
-        </div>
-      </SectionCard>
-      <SectionCard icon={CreditCard} tone="sky" title={t("pf.sub.history")}>
-        {payments.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">{t("pf.sub.historyEmpty")}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-muted-foreground">
-                  <th className="py-2 pr-3">{t("pf.sub.date")}</th>
-                  <th className="py-2 pr-3">{t("pf.sub.what")}</th>
-                  <th className="py-2 pr-3">{t("pf.sub.via")}</th>
-                  <th className="py-2 pr-3 text-right">{t("pf.sub.amount")}</th>
-                  <th className="py-2 text-right">{t("pf.sub.status")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {payments.map((p) => {
-                  const row = p as typeof p & { months?: number | null };
-                  return (
-                    <tr key={p.id}>
-                      <td className="py-2 pr-3 tabular-nums">{stamp(p.created_at)}</td>
-                      <td className="py-2 pr-3">
-                        {PLAN_LABELS[p.plan as Plan] ?? p.plan}
-                        {row.months ? ` · ${t("pf.sub.months", { n: row.months })}` : ""}
-                      </td>
-                      <td className="py-2 pr-3 capitalize">{p.provider}</td>
-                      <td className="py-2 pr-3 text-right tabular-nums">
-                        {Number(p.amount).toLocaleString("ru-RU")}
-                      </td>
-                      <td className="py-2 text-right">{t(`pf.sub.st.${p.status}`)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
-    </div>
-  );
-}
 
 /* --------------------------- 7. Biznes ma'lumoti --------------------------- */
 

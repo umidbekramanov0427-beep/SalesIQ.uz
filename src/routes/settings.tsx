@@ -4,10 +4,7 @@ import { shrinkLogo } from "@/lib/shrink-logo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsMutating } from "@tanstack/react-query";
 import {
-  BarChart3,
   BookOpen,
-  PenLine,
-  Trophy,
   UserRound,
   Bell,
   Inbox,
@@ -79,11 +76,7 @@ import {
   BusinessInfoSection,
   GuidesSection,
   PersonalSection,
-  ResultsSection,
   SecuritySection,
-  SignatureSection,
-  StatsSection,
-  SubscriptionSection,
 } from "@/components/profile/ProfileSections";
 import { LocationPicker } from "@/components/layout/LocationPicker";
 
@@ -106,7 +99,8 @@ type SectionKey =
   | "workSchedule"
   | "billing"
   | "amocrm"
-  | "reportProblem";
+  | "reportProblem"
+  | "company";
 
 const SECTION_KEYS: SectionKey[] = [
   "personal",
@@ -128,7 +122,11 @@ const SECTION_KEYS: SectionKey[] = [
   "billing",
   "amocrm",
   "reportProblem",
+  "company",
 ];
+
+/** Kompaniya: the company's own settings as tabs of one section. */
+type CompanyTab = "profile" | "general" | "info";
 
 export const Route = createFileRoute("/settings")({
   validateSearch: (search: Record<string, unknown>): { section?: SectionKey | undefined } => ({
@@ -1515,7 +1513,7 @@ type NavItem =
       label: string;
       badge?: number | undefined;
     }
-  | { type: "reportLink"; icon: LucideIcon; label: string };
+  | { type: "link"; to: "/daily-report-settings" | "/billing"; icon: LucideIcon; label: string };
 
 /**
  * What each section holds, for «Sozlama qidirish» (any language the person
@@ -1525,11 +1523,8 @@ type NavItem =
 const SECTION_WORDS: Partial<Record<SectionKey, string>> = {
   personal:
     "shaxsiy ism familiya telefon tug'ilgan manzil shahar lavozim holat status vaqt mintaqa sana valyuta личные",
-  results: "natija natijalarim sotuv konversiya результаты",
-  signature: "imzo vizitka qr подпись визитка",
-  subscription: "obuna tarif to'lov balans billing подписка оплата",
-  stats: "statistika kassa tushum статистика",
-  businessInfo: "biznes kompaniya subdomen tarif бизнес",
+  company:
+    "kompaniya biznes profil rekvizit logotip subdomen domen tarif umumiy valyuta vaqt mintaqa dublikat компания бизнес",
   guides: "qo'llanma yo'riqnoma pdf инструкция",
   security: "xavfsizlik parol password 2fa ikki bosqichli passkey ip qurilma безопасность пароль",
   appearance: "ko'rinish shrift o'lcham rang valyuta внешний вид шрифт",
@@ -1537,8 +1532,6 @@ const SECTION_WORDS: Partial<Record<SectionKey, string>> = {
   personalization:
     "til language язык shrift font rang color accent sana date valyuta currency ko'rinish тема",
   notifications: "bildirishnoma notification push uvedomlenie уведомления telegram bot ovoz sound",
-  business: "biznes kompaniya company rekvizit logotip subdomen domen бизнес",
-  general: "umumiy general valyuta vaqt mintaqa timezone dublikat duplicate лид",
   billing: "obuna tarif to'lov billing подписка оплата",
   reportProblem: "muammo xato bug support yordam проблема",
 };
@@ -1574,6 +1567,41 @@ function SaveStatus() {
   );
 }
 
+/**
+ * Kompaniya: the business profile, the general settings and the account
+ * facts as tabs of one section (a non-admin sees only the facts).
+ */
+function CompanySection({
+  isAdmin,
+  tab,
+  onTab,
+}: {
+  isAdmin: boolean;
+  tab: CompanyTab;
+  onTab: (tab: CompanyTab) => void;
+}) {
+  const { t } = useI18n();
+  if (!isAdmin) return <BusinessInfoSection />;
+  const tabs: { key: CompanyTab; label: string }[] = [
+    { key: "profile", label: t("settings.nav.business") },
+    { key: "general", label: t("settings.nav.general") },
+    { key: "info", label: t("pf.nav.business") },
+  ];
+  return (
+    <div className="space-y-5">
+      <SegmentedControl
+        value={tab}
+        options={["profile", "general", "info"] as const}
+        render={(k) => tabs.find((x) => x.key === k)?.label}
+        onChange={onTab}
+      />
+      {tab === "profile" && <BusinessProfileSection />}
+      {tab === "general" && <GeneralSection />}
+      {tab === "info" && <BusinessInfoSection />}
+    </div>
+  );
+}
+
 function SettingsPage() {
   const { t } = useI18n();
   const [navQuery, setNavQuery] = useState("");
@@ -1590,43 +1618,24 @@ function SettingsPage() {
   const isAdmin = role === "super_admin";
   const isManager = isAdmin || role === "rop";
 
-  // Profil: 5CRM's profile window, section by section (Sozlamalar is where
-  // a person's own things live; the company's follow under it).
-  const profileItems: NavItem[] = [
+  // A person's own things first, then the company's.
+  const generalItems: NavItem[] = [
     { type: "section", key: "personal", icon: UserRound, label: t("pf.nav.personal") },
-    { type: "section", key: "results", icon: Trophy, label: t("pf.nav.results") },
-    { type: "section", key: "signature", icon: PenLine, label: t("pf.nav.signature") },
-    { type: "section", key: "subscription", icon: CreditCard, label: t("pf.nav.subscription") },
-    { type: "section", key: "stats", icon: BarChart3, label: t("pf.nav.stats") },
     {
       type: "section",
       key: "notifications",
       icon: Bell,
       label: t("settings.nav.notifications"),
     },
-    { type: "section", key: "businessInfo", icon: Building2, label: t("pf.nav.business") },
-    { type: "section", key: "guides", icon: BookOpen, label: t("pf.nav.guides") },
     { type: "section", key: "security", icon: ShieldCheck, label: t("pf.nav.security") },
     { type: "section", key: "appearance", icon: Palette, label: t("pf.nav.appearance") },
-  ];
-  const generalItems: NavItem[] = [
-    ...profileItems,
+    { type: "section", key: "company", icon: Building2, label: t("settings.nav.company") },
     ...(isAdmin
       ? ([
-          {
-            type: "section",
-            key: "business",
-            icon: Building2,
-            label: t("settings.nav.business"),
-          },
-          {
-            type: "section",
-            key: "general",
-            icon: SlidersHorizontal,
-            label: t("settings.nav.general"),
-          },
+          { type: "link", to: "/billing", icon: CreditCard, label: t("pf.nav.subscription") },
         ] satisfies NavItem[])
       : []),
+    { type: "section", key: "guides", icon: BookOpen, label: t("pf.nav.guides") },
     {
       type: "section",
       key: "reportProblem",
@@ -1645,7 +1654,8 @@ function SettingsPage() {
             label: t("settings.navGroup.reports"),
             items: [
               {
-                type: "reportLink",
+                type: "link",
+                to: "/daily-report-settings",
                 icon: FileBarChart,
                 label: t("settings.nav.dailyReportSettings"),
               },
@@ -1676,18 +1686,39 @@ function SettingsPage() {
   const allowedSections = new Set(
     generalItems.flatMap((i) => (i.type === "section" ? [i.key] : [])),
   );
-  // Old links: «profile» was two-step sign-in, «personalization» the look.
+  // Old links: «profile» was two-step sign-in, «personalization» the look;
+  // the company's three sections are now tabs of «Kompaniya»; the removed
+  // results / statistics / signature sections open the profile.
   const alias = (k: SectionKey | undefined): SectionKey | undefined =>
-    k === "profile" ? "security" : k === "personalization" ? "appearance" : k;
+    k === "profile"
+      ? "security"
+      : k === "personalization"
+        ? "appearance"
+        : k === "business" || k === "general" || k === "businessInfo"
+          ? "company"
+          : k === "results" || k === "stats" || k === "signature"
+            ? "personal"
+            : k;
+  const tabOf = (k: SectionKey | undefined): CompanyTab | null =>
+    k === "general" && isAdmin
+      ? "general"
+      : k === "businessInfo" || !isAdmin
+        ? "info"
+        : k === "business"
+          ? "profile"
+          : null;
   const [section, setSection] = useState<SectionKey>(() => {
     const k = alias(sectionParam);
     return k && allowedSections.has(k) ? k : "personal";
   });
+  const [companyTab, setCompanyTab] = useState<CompanyTab>(() => tabOf(sectionParam) ?? "profile");
   // A link to another section while already here (the bell's
   // "Hammasini ko'rish") switches to it.
   useEffect(() => {
     const k = alias(sectionParam);
     if (k && allowedSections.has(k)) setSection(k);
+    const tab = tabOf(sectionParam);
+    if (tab) setCompanyTab(tab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectionParam]);
   // Each section opens at its top, not at the previous section's offset.
@@ -1757,8 +1788,8 @@ function SettingsPage() {
             </button>
           ) : (
             <Link
-              key="daily-report-settings-m"
-              to="/daily-report-settings"
+              key={`${item.to}-m`}
+              to={item.to}
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
             >
               <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
@@ -1847,8 +1878,8 @@ function SettingsPage() {
                           </button>
                         ) : (
                           <Link
-                            key="daily-report-settings"
-                            to="/daily-report-settings"
+                            key={item.to}
+                            to={item.to}
                             className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-mint-border hover:text-mint-foreground"
                           >
                             <item.icon
@@ -1878,11 +1909,6 @@ function SettingsPage() {
               <SaveStatus />
             </div>
             {section === "personal" && <PersonalSection />}
-            {section === "results" && <ResultsSection />}
-            {section === "signature" && <SignatureSection />}
-            {section === "subscription" && <SubscriptionSection />}
-            {section === "stats" && <StatsSection />}
-            {section === "businessInfo" && <BusinessInfoSection />}
             {section === "guides" && <GuidesSection />}
             {section === "security" && <SecuritySection />}
             {section === "appearance" && <AppearanceSection />}
@@ -1894,12 +1920,15 @@ function SettingsPage() {
                 <TelegramLinkCard />
               </div>
             )}
-            {section === "business" && <BusinessProfileSection />}
-            {section === "general" && <GeneralSection />}
+            {section === "company" && (
+              <CompanySection isAdmin={isAdmin} tab={companyTab} onTab={setCompanyTab} />
+            )}
             {/* Each lives in one place: working hours are the shifts in
                 Admin -> Davomat, the subscription is the Billing page. */}
             {sectionParam === "workSchedule" && <Navigate to="/admin/work-hours" replace />}
-            {section === "billing" && <Navigate to="/billing" replace />}
+            {(sectionParam === "billing" || sectionParam === "subscription") && (
+              <Navigate to="/billing" replace />
+            )}
             {/* AI -> amoCRM moved to the amoCRM integration page. */}
             {section === "amocrm" && (
               <Navigate to="/integrations/$slug" params={{ slug: "amocrm" }} replace />

@@ -109,13 +109,5 @@ export function rememberedLook(): Pick<ProfilePrefs, "fontSize" | "shapeSize"> {
   }
 }
 
-/** A random code for the open business card link (no look-alike letters). */
-export function vcardCode(length = 12): string {
-  const abc = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => abc[b % abc.length]).join("");
-}
-
 /** The statuses everyone starts with (5CRM's «Holatlar»). */
 export const DEFAULT_STATUSES = ["atWork", "lunch", "meeting", "onCall", "vacation"] as const;

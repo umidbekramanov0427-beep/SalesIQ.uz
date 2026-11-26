@@ -632,9 +632,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
     open: "/settings",
     title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
     summary: {
-      uz: "Profilingiz (10 bo'lim), xavfsizlik, ko'rinish, bildirishnomalar va kompaniya sozlamalari.",
-      ru: "Ваш профиль (10 разделов), безопасность, внешний вид, уведомления и настройки компании.",
-      en: "Your profile (10 sections), security, look, notifications and company settings.",
+      uz: "Profilingiz, bildirishnomalar, xavfsizlik, ko'rinish va kompaniya sozlamalari.",
+      ru: "Ваш профиль, уведомления, безопасность, внешний вид и настройки компании.",
+      en: "Your profile, notifications, security, look and company settings.",
     },
     steps: [
       {
@@ -643,9 +643,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "Open **Settings** at the bottom of the left menu.",
       },
       {
-        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Shaxsiy ma'lumot, Natijalarim, Imzo va vizitka, Obunalar, Statistika, Bildirishnomalar, Biznes ma'lumoti, Qo'llanmalar, Xavfsizlik, Ko'rinish.",
-        ru: "Слева выберите раздел: Личные данные, Мои результаты, Подпись и визитка, Подписка, Статистика, Уведомления, О бизнесе, Инструкции, Безопасность, Внешний вид.",
-        en: "Pick a section on the left: Personal details, My results, Signature and card, Subscription, Statistics, Notifications, Business details, Guides, Security, Appearance.",
+        uz: "Chapdagi ro'yxatdan bo'limni tanlang: Shaxsiy ma'lumot, Bildirishnomalar, Xavfsizlik, Ko'rinish, Kompaniya, Obuna, Qo'llanmalar.",
+        ru: "Слева выберите раздел: Личные данные, Уведомления, Безопасность, Внешний вид, Компания, Подписка, Инструкции.",
+        en: "Pick a section on the left: Personal details, Notifications, Security, Appearance, Company, Subscription, Guides.",
       },
       {
         uz: "**Shaxsiy ma'lumot**da ism, familiya, telefon, tug'ilgan sana, shahar, lavozim va **holatingiz**ni (Ish joyidaman, Tushlikdaman…) yozing; pastda vaqt mintaqasi, sana va vaqt formati, valyuta. **Saqlash**ni bosing.",
@@ -653,9 +653,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "In **Personal details** fill in name, last name, phone, birth date, city, position and your **status** (At work, At lunch…); below are time zone, date and time format and currency. Press **Save**.",
       },
       {
-        uz: "**Imzo va vizitka**da imzongizni chizib saqlang va **QR vizitka** yarating — mijoz QR'ni skanerlab kontaktingizni telefoniga saqlaydi.",
-        ru: "В **Подписи и визитке** нарисуйте и сохраните подпись и создайте **QR-визитку** — клиент сканирует её и сохраняет ваш контакт.",
-        en: "In **Signature and card** draw and save your signature and create a **QR business card** — a client scans it and saves your contact.",
+        uz: "**Kompaniya**da administrator uchta tabni ko'radi: **Biznes profili** (nima sotasiz, kimga, qanday gaplashasiz — AI shundan foydalanadi), **Umumiy** (valyuta, vaqt mintaqasi, dublikatlar, kompaniya manzili) va **Biznes ma'lumoti** (tarif, muddat, hisob). Xodimlar faqat Biznes ma'lumotini ko'radi. **Obuna** tugmasi to'lov sahifasini ochadi — u yerda **To'lovlar tarixi** ham bor.",
+        ru: "В **Компании** администратор видит три вкладки: **Профиль бизнеса** (что продаёте, кому, как общаетесь — им пользуется AI), **Общие** (валюта, часовой пояс, дубли, адрес компании) и **О бизнесе** (тариф, срок, аккаунт). Сотрудники видят только «О бизнесе». **Подписка** открывает страницу оплаты — там же **История платежей**.",
+        en: "In **Company** an admin sees three tabs: **Business profile** (what you sell, to whom, how you talk — the AI uses it), **General** (currency, time zone, duplicates, the company address) and **Business details** (plan, term, account). Staff see only Business details. **Subscription** opens the billing page — the **Payment history** is there too.",
       },
       {
         uz: "**Xavfsizlik**da parolni o'zgartiring, ikki bosqichli kirishni yoqing va **Telefonga tez kirish** QR'i bilan telefondan parolsiz kiring. Administrator shu yerda IP cheklov va **Operator qurilma qulfi**ni yoqadi.",
@@ -685,9 +685,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "**Sign in with Telegram**: once Telegram is linked to your profile, tap «Sign in with Telegram» on the sign-in page — the bot asks you to confirm, and after «Tasdiqlash» the page opens by itself. The request lasts 5 minutes and works only for that page. Without a linked Telegram, sign in with email and password first and link it.",
       },
       {
-        uz: "Kompaniyangizning o'z manzilini (masalan **niholl.salesiq.uz**) SalesIQ beradi. U Sozlamalar → Umumiy bo'limida holati bilan ko'rinadi. Yangi manzilda xodimlar bir marta qayta kiradi.",
-        ru: "Собственный адрес компании (например, **niholl.salesiq.uz**) выдаёт SalesIQ. Он виден со статусом в Настройки → Общие. На новом адресе сотрудники входят один раз заново.",
-        en: "Your company's own address (e.g. **niholl.salesiq.uz**) is assigned by SalesIQ. Settings → General shows it with its status. On the new address everyone signs in once more.",
+        uz: "Kompaniyangizning o'z manzilini (masalan **niholl.salesiq.uz**) SalesIQ beradi. U Sozlamalar → Kompaniya → Umumiy tabida holati bilan ko'rinadi. Yangi manzilda xodimlar bir marta qayta kiradi.",
+        ru: "Собственный адрес компании (например, **niholl.salesiq.uz**) выдаёт SalesIQ. Он виден со статусом в Настройки → Компания → Общие. На новом адресе сотрудники входят один раз заново.",
+        en: "Your company's own address (e.g. **niholl.salesiq.uz**) is assigned by SalesIQ. Settings → Company → General shows it with its status. On the new address everyone signs in once more.",
       },
       {
         uz: "Biror lid, sahifa yoki sozlamani topish uchun logoning ostidagi 🔍 tugmasini bosing yoki ⌘K (Windows'da Ctrl+K) ni bosing.",
