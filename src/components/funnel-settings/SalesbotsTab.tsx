@@ -2,37 +2,49 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Activity,
+  ArrowLeft,
   Bot,
   Code2,
-  Copy,
-  Download,
   Eye,
   FileJson,
   FlaskConical,
   ListChecks,
   Loader2,
+  MoreHorizontal,
   Plus,
   RefreshCw,
   RotateCcw,
+  Send,
   ShieldAlert,
-  Sparkles,
   Trash2,
   Upload,
   UserPlus,
   Workflow,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader, SectionCard } from "@/components/layout/Primitives";
+import { PageHeader, Pill, SectionCard } from "@/components/layout/Primitives";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlanGate } from "@/components/PlanGate";
 import { Switch } from "@/components/ui/switch";
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AdminBackLink } from "@/components/admin/AdminBackLink";
 import { inputCls, type ActionEditorOptions } from "@/components/automations/ActionEditor";
 import { normalizeSteps } from "@/components/automations/BotCanvas";
 import { SalesbotBuilder, blankStep } from "@/components/automations/SalesbotBuilder";
-import { ChatPreview, SimpleBotEditor } from "@/components/automations/SimpleBotEditor";
-import { BotSharePanel, CodeBotPanel } from "@/components/automations/BotConnectPanels";
+import { SimpleBotEditor } from "@/components/automations/SimpleBotEditor";
+import {
+  BotSharePanel,
+  CodeBotPanel,
+  CodeBotSetup,
+} from "@/components/automations/BotConnectPanels";
 import {
   BotJsonDialog,
   BotPreviewDialog,
@@ -66,7 +78,6 @@ import {
   type SalesbotRow,
   type SalesbotTrigger,
 } from "@/hooks/use-automations";
-import { copyText } from "@/lib/clipboard";
 import { SharedBotNotice } from "@/components/integrations/OrgBotCard";
 
 // Salesbots. A bot is an ordered list of steps run server-side
@@ -186,11 +197,38 @@ function BotRuns({ botId }: { botId: string }) {
 
 type Mode = "simple" | "canvas" | "code";
 const MODES: Mode[] = ["simple", "canvas", "code"];
-const MODE_ICON = { simple: ListChecks, canvas: Workflow, code: Code2 } as const;
+const MODE_META = {
+  simple: { icon: ListChecks, tile: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400" },
+  canvas: { icon: Workflow, tile: "bg-violet-500/12 text-violet-600 dark:text-violet-400" },
+  code: { icon: Code2, tile: "bg-sky-500/12 text-sky-600 dark:text-sky-400" },
+} as const;
+const EDITOR_TABS = ["setup", "share", "history"] as const;
+type EditorTab = (typeof EDITOR_TABS)[number];
 
 function modeOf(bot: Pick<SalesbotInput, "kind" | "steps">): Mode {
   if (bot.kind === "external") return "code";
   return parseSimpleBot(bot.steps) ? "simple" : "canvas";
+}
+
+function ModeTile({ mode, size = "md" }: { mode: Mode; size?: "md" | "lg" }) {
+  const { icon: Icon, tile } = MODE_META[mode];
+  return (
+    <span
+      className={cn(
+        "grid shrink-0 place-items-center rounded-xl",
+        size === "lg" ? "h-11 w-11" : "h-10 w-10",
+        tile,
+      )}
+    >
+      <Icon className={size === "lg" ? "h-5 w-5" : "h-[18px] w-[18px]"} />
+    </span>
+  );
+}
+
+function BotStatus({ enabled, test }: { enabled: boolean; test: boolean }) {
+  const { t } = useI18n();
+  if (test) return <Pill tone="warning">{t("sb.test")}</Pill>;
+  return <Pill tone={enabled ? "success" : "neutral"}>{t(enabled ? "sb.on" : "sb.off")}</Pill>;
 }
 
 function BotEditor({
@@ -198,11 +236,13 @@ function BotEditor({
   initial,
   warnings,
   onSaved,
+  onBack,
 }: {
   bot: SalesbotRow | null;
   initial?: SalesbotInput | undefined;
   warnings?: string[] | undefined;
   onSaved: (id: string) => void;
+  onBack: () => void;
 }) {
   const { t } = useI18n();
   const save = useSaveSalesbot();
@@ -214,8 +254,9 @@ function BotEditor({
   const [draft, setDraft] = useState<SalesbotInput>(EMPTY);
   const [baseline, setBaseline] = useState("");
   const [mode, setMode] = useState<Mode>("simple");
+  const [tab, setTab] = useState<EditorTab>("setup");
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmSimple, setConfirmSimple] = useState(false);
+  const [pendingMode, setPendingMode] = useState<Mode | null>(null);
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const [jsonOpen, setJsonOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -270,6 +311,7 @@ function BotEditor({
   const simple = mode === "simple" ? parseSimpleBot(steps) : null;
   const dirty = !!bot && JSON.stringify(draft) !== baseline;
 
+  /** Changes the bot's type (after the confirmation). */
   function switchMode(next: Mode) {
     if (next === mode) return;
     if (next === "code") {
@@ -278,17 +320,17 @@ function BotEditor({
         ...(!draft.external_secret ? { external_secret: randomSecret() } : {}),
       });
     } else if (next === "simple") {
-      if (!parseSimpleBot(steps)) {
-        // Steps from the canvas (or none yet) don't fit the form.
-        if (steps.length > 0 && draft.kind === "builtin") return setConfirmSimple(true);
+      // Steps from the canvas (or none yet) don't fit the form: start from the template.
+      if (!parseSimpleBot(steps))
         set({ kind: "builtin", steps: buildSimpleSteps(registrationBot(t)) });
-      } else set({ kind: "builtin" });
+      else set({ kind: "builtin" });
     } else {
       set({
         kind: "builtin",
         steps: normalizeSteps(steps.length ? steps : [blankStep("message")]),
       });
     }
+    setSelectedStep(null);
     setMode(next);
   }
 
@@ -308,7 +350,7 @@ function BotEditor({
     draft.trigger === "stage_enter" && !draft.trigger_stage_id ? t("sb.trigger.needStage") : null;
   const valid = !invalidReason && !triggerProblem;
 
-  /** «Bekor qilish»: back to the last saved version (a new bot: back to its start). */
+  /** «Bekor qilish»: back to the last saved version. */
   function revert() {
     if (bot && baseline) setDraft(JSON.parse(baseline) as SalesbotInput);
   }
@@ -358,58 +400,126 @@ function BotEditor({
     }
   }
 
-  const share = (row: boolean) => (
-    <BotSharePanel
-      botId={bot?.id ?? null}
-      dirty={dirty}
-      enabled={draft.enabled ?? true}
-      channel={draft.channel}
-      row={row}
-    />
-  );
-
   return (
     <div className="min-w-0 space-y-3">
-      <div className="surface-card flex flex-wrap items-center gap-2 p-2.5">
-        <input
-          value={draft.name}
-          onChange={(e) => set({ name: e.target.value })}
-          placeholder={t("sb.name")}
-          className={cn(inputCls, "h-10 min-w-[200px] flex-1 text-sm font-semibold")}
-        />
-        <select
-          value={draft.channel}
-          onChange={(e) => set({ channel: e.target.value as MessageChannel })}
-          title={t("sb.channel")}
-          className={cn(inputCls, "h-10 w-auto")}
-        >
-          {CHANNELS.map((c) => (
-            <option key={c} value={c}>
-              {t(`dp.channel.${c}`)}
-            </option>
-          ))}
-        </select>
-        <label className="flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-xs font-medium text-foreground">
-          {t("sb.enabled")}
-          <Switch checked={draft.enabled ?? true} onCheckedChange={(v) => set({ enabled: v })} />
-        </label>
-        <div className="ml-auto flex items-center gap-2">
-          {!valid ? (
-            <span className="text-xs text-warning">{invalidReason ?? triggerProblem}</span>
-          ) : dirty ? (
-            <span className="text-xs text-muted-foreground">{t("sb.unsaved")}</span>
-          ) : null}
+      {/* One header for every type: who, state, save. */}
+      <header className="rounded-2xl border border-border bg-card">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
           <button
             type="button"
-            disabled={!valid || save.isPending}
-            onClick={() => void submit()}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            onClick={onBack}
+            aria-label={t("sb.backToList")}
+            title={t("sb.backToList")}
+            className="ctl-soft grid h-9 w-9 shrink-0 place-items-center rounded-xl"
           >
-            {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("dp.save")}
+            <ArrowLeft className="h-4 w-4" />
           </button>
+          <ModeTile mode={mode} />
+          <div className="min-w-[220px] flex-1">
+            <input
+              value={draft.name}
+              onChange={(e) => set({ name: e.target.value })}
+              placeholder={t("sb.name")}
+              className="w-full bg-transparent text-[18px] leading-tight font-bold text-foreground outline-none placeholder:text-subtle"
+            />
+            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>{t(`sb.mode.${mode}`)}</span>
+              <BotStatus enabled={draft.enabled ?? true} test={draft.test_mode ?? false} />
+              {!valid ? (
+                <span className="text-warning">{invalidReason ?? triggerProblem}</span>
+              ) : dirty ? (
+                <span>{t("sb.unsaved")}</span>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {draft.kind === "builtin" && (
+              <label
+                title={t("sb.testHint")}
+                className="flex h-9 items-center gap-2 rounded-xl border border-border px-3 text-xs font-medium text-foreground"
+              >
+                <FlaskConical className="h-3.5 w-3.5 text-warning" />
+                {t("sb.test")}
+                <Switch
+                  checked={draft.test_mode ?? false}
+                  onCheckedChange={(v) => set({ test_mode: v })}
+                />
+              </label>
+            )}
+            <label className="flex h-9 items-center gap-2 rounded-xl border border-border px-3 text-xs font-medium text-foreground">
+              {t("sb.on")}
+              <Switch
+                checked={draft.enabled ?? true}
+                onCheckedChange={(v) => set({ enabled: v })}
+              />
+            </label>
+            <button
+              type="button"
+              disabled={!valid || save.isPending}
+              onClick={() => void submit()}
+              className="ctl-lit inline-flex h-9 items-center gap-2 rounded-xl px-5 text-sm font-semibold disabled:opacity-50"
+            >
+              {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("dp.save")}
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={t("sb.more")}
+                  className="ctl-soft grid h-9 w-9 place-items-center rounded-xl"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60">
+                {draft.kind === "builtin" && (
+                  <DropdownMenuItem onSelect={() => setPreviewOpen(true)}>
+                    <Eye className="h-4 w-4" /> {t("sb.botView")}
+                  </DropdownMenuItem>
+                )}
+                {mode === "canvas" && (
+                  <DropdownMenuItem onSelect={() => setJsonOpen(true)}>
+                    <FileJson className="h-4 w-4" /> {t("sb.json.title")}
+                  </DropdownMenuItem>
+                )}
+                {bot && (
+                  <DropdownMenuItem disabled={!dirty} onSelect={revert}>
+                    <RotateCcw className="h-4 w-4" /> {t("sb.cancel")}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-[11px] font-semibold tracking-wide text-subtle uppercase">
+                  {t("sb.switchType")}
+                </DropdownMenuLabel>
+                {MODES.filter((m) => m !== mode).map((m) => {
+                  const Icon = MODE_META[m].icon;
+                  return (
+                    <DropdownMenuItem key={m} onSelect={() => setPendingMode(m)}>
+                      <Icon className="h-4 w-4" /> {t(`sb.mode.${m}`)}
+                    </DropdownMenuItem>
+                  );
+                })}
+                {bot && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => setConfirmDelete(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" /> {t("dp.remove")}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 border-t border-border pt-2.5">
+        {/* When the bot runs and where it writes. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-4 py-2.5">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            <Zap className="h-3.5 w-3.5 text-amber-500" /> {t("sb.when")}
+          </span>
           {draft.kind === "builtin" && (
             <TriggerPicker
               trigger={draft.trigger ?? "manual"}
@@ -419,91 +529,32 @@ function BotEditor({
               onChange={(p) => set(p)}
             />
           )}
-          <div className="ml-auto flex flex-wrap items-center gap-1.5">
-            <label
-              title={t("sb.testHint")}
-              className={cn(
-                "flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-medium",
-                draft.test_mode
-                  ? "border-warning/60 text-warning"
-                  : "border-border text-foreground",
-              )}
+          <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            {t("sb.channel")}
+            <select
+              value={draft.channel}
+              onChange={(e) => set({ channel: e.target.value as MessageChannel })}
+              className={cn(inputCls, "h-9 w-auto")}
             >
-              <FlaskConical className="h-3.5 w-3.5" />
-              {t("sb.test")}
-              <Switch
-                checked={draft.test_mode ?? false}
-                onCheckedChange={(v) => set({ test_mode: v })}
-              />
-            </label>
-            {draft.kind === "builtin" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setPreviewOpen(true)}
-                  className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-medium"
-                >
-                  <Eye className="h-3.5 w-3.5" /> {t("sb.botView")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setJsonOpen(true)}
-                  title={t("sb.json.title")}
-                  className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 font-mono text-xs font-semibold"
-                >
-                  <FileJson className="h-3.5 w-3.5" /> {"</>"}
-                </button>
-              </>
-            )}
-            {bot && (
-              <button
-                type="button"
-                disabled={!dirty}
-                onClick={revert}
-                className="ctl-soft inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-medium disabled:opacity-50"
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> {t("sb.cancel")}
-              </button>
-            )}
-            {bot && (
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(true)}
-                aria-label={t("dp.remove")}
-                title={t("dp.remove")}
-                className="grid h-9 w-9 place-items-center rounded-xl border border-border text-subtle hover:border-destructive/50 hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+              {CHANNELS.map((c) => (
+                <option key={c} value={c}>
+                  {t(`dp.channel.${c}`)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      </div>
+      </header>
 
       {draft.test_mode && (
-        <div className="flex items-start gap-2 rounded-xl border border-warning/40 p-3 text-xs text-foreground">
+        <div className="flex items-start gap-2 rounded-xl border border-warning/40 bg-card px-3 py-2 text-xs text-foreground">
           <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <span>{t("sb.testBanner")}</span>
         </div>
       )}
 
-      <SegmentedControl
-        stretch
-        value={mode}
-        options={MODES}
-        onChange={switchMode}
-        render={(m) => {
-          const Icon = MODE_ICON[m];
-          return (
-            <span className="inline-flex items-center gap-2">
-              <Icon className="h-4 w-4" /> {t(`sb.mode.${m}`)}
-            </span>
-          );
-        }}
-      />
-
       {warnings && warnings.length > 0 && (
-        <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
+        <div className="rounded-xl border border-warning/40 bg-card p-3 text-xs text-foreground">
           <p className="mb-1 font-semibold">{t("sb.importWarnings")}</p>
           <ul className="list-disc space-y-0.5 pl-4">
             {warnings.map((w, i) => (
@@ -513,88 +564,64 @@ function BotEditor({
         </div>
       )}
 
-      {mode === "simple" && simple ? (
-        <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <SimpleBotEditor
-            value={simple}
-            onChange={(next) => set({ steps: buildSimpleSteps(next) })}
-            stages={stageOptions}
+      <div role="tablist" className="ctl-track inline-flex gap-1 rounded-xl p-1">
+        {EDITOR_TABS.map((k) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={tab === k}
+            data-state={tab === k ? "active" : "inactive"}
+            onClick={() => setTab(k)}
+            className="ctl-tab rounded-lg px-4 py-1.5 text-[13px] font-semibold"
+          >
+            {t(`sb.tab.${k}`)}
+          </button>
+        ))}
+      </div>
+
+      {tab === "share" ? (
+        <div className="max-w-[720px]">
+          <BotSharePanel
+            botId={bot?.id ?? null}
+            dirty={dirty}
+            enabled={draft.enabled ?? true}
+            channel={draft.channel}
           />
-          <div className="space-y-3 xl:sticky xl:top-4">
-            {share(false)}
-            <ChatPreview value={simple} />
-          </div>
         </div>
+      ) : tab === "history" ? (
+        bot ? (
+          <BotRuns botId={bot.id} />
+        ) : (
+          <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            {t("sb.historySaveFirst")}
+          </p>
+        )
+      ) : mode === "simple" && simple ? (
+        <SimpleBotEditor
+          value={simple}
+          onChange={(next) => set({ steps: buildSimpleSteps(next) })}
+          stages={stageOptions}
+        />
       ) : mode === "code" ? (
         <div className="min-w-0 space-y-3">
+          <CodeBotSetup
+            url={draft.external_url ?? ""}
+            secret={draft.external_secret ?? ""}
+            onUrl={(v) => set({ external_url: v })}
+            onRegenerate={() => set({ external_secret: randomSecret() })}
+          />
           <CodeBotPanel />
-          <SectionCard
-            title={t("sb.code.dialogTitle")}
-            icon={Download}
-            tone="sky"
-            description={t("sb.code.dialogDesc")}
-          >
-            <div className="space-y-3">
-              <input
-                value={draft.external_url ?? ""}
-                onChange={(e) => set({ external_url: e.target.value })}
-                placeholder="https://your-bot.example.com/salesiq"
-                className={inputCls}
-              />
-              <div className="flex gap-2">
-                <input
-                  readOnly
-                  value={draft.external_secret ?? ""}
-                  className={cn(inputCls, "font-mono text-xs")}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    void copyText(draft.external_secret ?? "").then(
-                      () => toast.success(t("sb.copied")),
-                      () => toast.error(t("common.copyFailed")),
-                    );
-                  }}
-                  className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
-                  aria-label={t("pc.copy")}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => set({ external_secret: randomSecret() })}
-                  className="rounded-lg border border-border px-2.5 text-subtle hover:text-foreground"
-                  aria-label={t("misc.regenerate")}
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <pre className="overflow-x-auto rounded-xl bg-surface p-3 text-[11px] leading-relaxed text-muted-foreground">
-                {`→ POST ${draft.external_url || "<URL>"}
-  { "event": "start" | "message", "run_id", "lead": {...}, "text"?, "reply_url" }
-  header x-salesiq-signature = HMAC_SHA256(secret, body)
-
-← POST https://salesiq.uz/salesbots/external-reply
-  { "run_id", "text"?, "actions"?: [{ "type": "add_tag", "tag": "..." }], "finish"?: true }
-  header x-salesiq-signature = HMAC_SHA256(secret, body)`}
-              </pre>
-            </div>
-          </SectionCard>
         </div>
       ) : (
-        <>
-          {share(true)}
-          <SalesbotBuilder
-            steps={steps}
-            onChange={(next: BotStep[]) => set({ steps: next })}
-            selectedId={selectedStep}
-            onSelect={setSelectedStep}
-            options={options}
-          />
-        </>
+        <SalesbotBuilder
+          steps={steps}
+          onChange={(next: BotStep[]) => set({ steps: next })}
+          selectedId={selectedStep}
+          onSelect={setSelectedStep}
+          options={options}
+        />
       )}
-
-      {bot && <BotRuns botId={bot.id} />}
 
       <BotJsonDialog
         open={jsonOpen}
@@ -615,16 +642,18 @@ function BotEditor({
       />
 
       <ConfirmDialog
-        open={confirmSimple}
-        onOpenChange={setConfirmSimple}
-        title={t("sb.toSimpleTitle")}
-        description={t("sb.toSimpleDesc")}
-        confirmLabel={t("sb.toSimpleConfirm")}
-        destructive
+        open={!!pendingMode}
+        onOpenChange={(o) => !o && setPendingMode(null)}
+        title={t("sb.switchTitle", { type: pendingMode ? t(`sb.mode.${pendingMode}`) : "" })}
+        description={
+          pendingMode === "simple" && !parseSimpleBot(steps) && steps.length > 0
+            ? t("sb.toSimpleDesc")
+            : t("sb.switchDesc")
+        }
+        confirmLabel={t("sb.switchConfirm")}
         onConfirm={() => {
-          setConfirmSimple(false);
-          set({ kind: "builtin", steps: buildSimpleSteps(registrationBot(t)) });
-          setMode("simple");
+          if (pendingMode) switchMode(pendingMode);
+          setPendingMode(null);
         }}
       />
       <ConfirmDialog
@@ -635,7 +664,7 @@ function BotEditor({
         onConfirm={() =>
           bot &&
           remove.mutate(bot.id, {
-            onSuccess: () => onSaved(NEW),
+            onSuccess: () => onBack(),
             onError: (err) => toast.error(describeError(err, t("dp.saveFailed"))),
           })
         }
@@ -646,118 +675,226 @@ function BotEditor({
 
 /* ------------------------------ new bot ------------------------------ */
 
-function NewBotChooser({ onPick }: { onPick: (draft: SalesbotInput) => void }) {
-  const { t } = useI18n();
-  const choices = [
-    {
-      key: "template",
-      icon: UserPlus,
-      tile: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400",
-      draft: (): SalesbotInput => ({
-        ...EMPTY,
-        name: t("sb.tpl.name"),
-        steps: buildSimpleSteps(registrationBot(t)),
-      }),
-    },
-    {
-      key: "canvas",
-      icon: Workflow,
-      tile: "bg-violet-500/12 text-violet-600 dark:text-violet-400",
-      draft: (): SalesbotInput => ({ ...EMPTY, steps: [blankStep("message")] }),
-    },
-    {
-      key: "code",
-      icon: Code2,
-      tile: "bg-sky-500/12 text-sky-600 dark:text-sky-400",
-      draft: (): SalesbotInput => ({
-        ...EMPTY,
-        name: t("sb.code.botName"),
-        kind: "external",
-        external_secret: randomSecret(),
-      }),
-    },
-  ] as const;
-
+/** A small drawing of each editor, so the choice is seen, not read. */
+function ModeSketch({ mode }: { mode: Mode }) {
+  if (mode === "simple")
+    return (
+      <div className="flex h-full flex-col justify-center gap-1.5 px-4">
+        <span className="h-3 w-[62%] rounded-full rounded-bl-sm bg-border" />
+        <span className="ml-auto h-3 w-[34%] rounded-full rounded-br-sm bg-emerald-500/60" />
+        <span className="h-3 w-[54%] rounded-full rounded-bl-sm bg-border" />
+        <span className="ml-auto h-3 w-[28%] rounded-full rounded-br-sm bg-emerald-500/60" />
+      </div>
+    );
+  if (mode === "canvas")
+    return (
+      <svg viewBox="0 0 200 96" className="h-full w-full" aria-hidden="true">
+        <g
+          className="text-violet-500"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          fill="none"
+          opacity="0.7"
+        >
+          <path d="M58 48 C78 48 78 26 98 26" />
+          <path d="M58 48 C78 48 78 70 98 70" />
+          <path d="M146 26 C160 26 160 48 172 48" />
+        </g>
+        <g className="fill-border">
+          <rect x="14" y="38" width="44" height="20" rx="6" />
+          <rect x="98" y="16" width="48" height="20" rx="6" />
+          <rect x="98" y="60" width="48" height="20" rx="6" />
+          <rect x="172" y="38" width="20" height="20" rx="6" />
+        </g>
+      </svg>
+    );
   return (
-    <div className="min-w-0 space-y-3">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">{t("sb.choose.title")}</h2>
-        <p className="text-sm text-muted-foreground">{t("sb.choose.desc")}</p>
-      </div>
-      <div className="grid gap-3 lg:grid-cols-3">
-        {choices.map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            onClick={() => onPick(c.draft())}
-            className={cn(
-              "group relative flex flex-col items-start gap-3 rounded-2xl border bg-card p-5 text-left transition-colors hover:border-primary/50",
-              c.key === "template" ? "border-emerald-500/40" : "border-border",
-            )}
-          >
-            {c.key === "template" && (
-              <span className="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                <Sparkles className="h-3 w-3" /> {t("sb.choose.recommended")}
-              </span>
-            )}
-            <span className={cn("grid h-11 w-11 place-items-center rounded-xl", c.tile)}>
-              <c.icon className="h-5 w-5" />
-            </span>
-            <span className="text-[15px] font-semibold text-foreground">
-              {t(`sb.choose.${c.key}`)}
-            </span>
-            <span className="text-sm leading-relaxed text-muted-foreground">
-              {t(`sb.choose.${c.key}Desc`)}
-            </span>
-            <span className="mt-auto pt-1 text-sm font-semibold text-primary group-hover:underline">
-              {t(`sb.choose.${c.key}Cta`)} →
-            </span>
-          </button>
-        ))}
-      </div>
+    <div className="flex h-full flex-col justify-center gap-1 px-4 font-mono text-[10.5px] leading-tight">
+      <span className="text-sky-600 dark:text-sky-400">POST /salesiq</span>
+      <span className="text-muted-foreground">{'{ "event": "start",'}</span>
+      <span className="pl-3 text-muted-foreground">{'"lead": { … } }'}</span>
+      <span className="text-emerald-600 dark:text-emerald-400">→ 200 ok</span>
+    </div>
+  );
+}
 
-      <div className="pt-2">
-        <h3 className="text-sm font-semibold text-foreground">{t("sb.t6.title")}</h3>
-        <p className="text-xs text-muted-foreground">{t("sb.t6.desc")}</p>
-      </div>
-      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-        {TEMPLATE_KEYS.map((k) => {
-          const tpl = botTemplate(k, t);
-          return (
+const BLANK_SIMPLE = {
+  greeting: "",
+  questions: [{ text: "", saveTo: "note" as const, options: [] }],
+  finish: "",
+  stageId: "",
+  tag: "",
+  task: null,
+};
+
+function NewBotChooser({
+  onPick,
+  onBack,
+}: {
+  onPick: (draft: SalesbotInput) => void;
+  /** Back to the bots list (absent when there are no bots yet). */
+  onBack?: (() => void) | undefined;
+}) {
+  const { t } = useI18n();
+  const [type, setType] = useState<"simple" | "canvas" | null>(null);
+
+  if (!type)
+    return (
+      <div className="min-w-0 space-y-4">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> {t("sb.backToList")}
+          </button>
+        )}
+        <div>
+          <h2 className="text-[18px] font-bold text-foreground">{t("sb.pick.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("sb.pick.desc")}</p>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {MODES.map((m) => (
             <button
-              key={k}
+              key={m}
               type="button"
               onClick={() =>
-                onPick({
-                  ...EMPTY,
-                  name: t(`sb.t6.${k}.name`),
-                  steps: tpl.steps,
-                  enabled: false,
-                  test_mode: true,
-                  trigger: tpl.trigger,
-                })
+                m === "code"
+                  ? onPick({
+                      ...EMPTY,
+                      name: t("sb.code.botName"),
+                      kind: "external",
+                      external_secret: randomSecret(),
+                    })
+                  : setType(m)
               }
-              className="group flex items-start gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/50"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-left transition-colors hover:border-primary/60"
             >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                <Bot className="h-4 w-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-foreground">
-                  {t(`sb.t6.${k}.name`)}
+              <div className="h-[104px] border-b border-border bg-surface">
+                <ModeSketch mode={m} />
+              </div>
+              <div className="flex flex-1 flex-col gap-2 p-5">
+                <div className="flex items-center gap-3">
+                  <ModeTile mode={m} />
+                  <span className="text-[16px] font-bold text-foreground">{t(`sb.mode.${m}`)}</span>
+                </div>
+                <span className="text-[13px] leading-relaxed text-muted-foreground">
+                  {t(`sb.pick.${m}Desc`)}
                 </span>
-                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                  {t(`sb.t6.${k}.desc`)}
+                <span className="text-[12px] text-subtle">{t(`sb.pick.${m}Who`)}</span>
+                <span className="mt-auto pt-2 text-sm font-semibold text-primary group-hover:underline">
+                  {t("sb.pick.choose")} →
                 </span>
-                <span className="mt-1.5 block text-[11px] font-medium text-subtle">
-                  {t("sb.t6.steps", { n: tpl.steps.length })} · {t(`sb.trigger.${tpl.trigger}`)}
-                </span>
-              </span>
+              </div>
             </button>
-          );
-        })}
+          ))}
+        </div>
       </div>
+    );
+
+  return (
+    <div className="min-w-0 space-y-4">
+      <button
+        type="button"
+        onClick={() => setType(null)}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> {t("sb.pick.changeType")}
+      </button>
+      <div className="flex items-center gap-3">
+        <ModeTile mode={type} size="lg" />
+        <div>
+          <h2 className="text-[18px] font-bold text-foreground">{t(`sb.pick.start.${type}`)}</h2>
+          <p className="text-sm text-muted-foreground">{t("sb.pick.startDesc")}</p>
+        </div>
+      </div>
+      {type === "simple" ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          <StartCard
+            icon={UserPlus}
+            title={t("sb.choose.template")}
+            desc={t("sb.choose.templateDesc")}
+            meta={t("sb.choose.recommended")}
+            onClick={() =>
+              onPick({
+                ...EMPTY,
+                name: t("sb.tpl.name"),
+                steps: buildSimpleSteps(registrationBot(t)),
+              })
+            }
+          />
+          <StartCard
+            icon={Plus}
+            title={t("sb.pick.blankSimple")}
+            desc={t("sb.pick.blankSimpleDesc")}
+            onClick={() => onPick({ ...EMPTY, steps: buildSimpleSteps(BLANK_SIMPLE) })}
+          />
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <StartCard
+            icon={Plus}
+            title={t("sb.choose.canvas")}
+            desc={t("sb.choose.canvasDesc")}
+            onClick={() => onPick({ ...EMPTY, steps: [blankStep("message")] })}
+          />
+          {TEMPLATE_KEYS.map((k) => {
+            const tpl = botTemplate(k, t);
+            return (
+              <StartCard
+                key={k}
+                icon={Bot}
+                title={t(`sb.t6.${k}.name`)}
+                desc={t(`sb.t6.${k}.desc`)}
+                meta={`${t("sb.t6.steps", { n: tpl.steps.length })} · ${t(`sb.trigger.${tpl.trigger}`)}`}
+                onClick={() =>
+                  onPick({
+                    ...EMPTY,
+                    name: t(`sb.t6.${k}.name`),
+                    steps: tpl.steps,
+                    enabled: false,
+                    test_mode: true,
+                    trigger: tpl.trigger,
+                  })
+                }
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
+  );
+}
+
+function StartCard({
+  icon: Icon,
+  title,
+  desc,
+  meta,
+  onClick,
+}: {
+  icon: typeof Bot;
+  title: string;
+  desc: string;
+  meta?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-start gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/60"
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-foreground">{title}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{desc}</span>
+        {meta && <span className="mt-1.5 block text-[11px] font-medium text-subtle">{meta}</span>}
+      </span>
+    </button>
   );
 }
 
@@ -774,11 +911,49 @@ function SharedBotBanner() {
   );
 }
 
+function BotCard({ bot, onOpen }: { bot: SalesbotRow; onOpen: () => void }) {
+  const { t } = useI18n();
+  const mode = modeOf(bot);
+  const trigger = (bot.trigger as SalesbotTrigger | undefined) ?? "manual";
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex flex-col rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/60"
+    >
+      <div className="flex items-start gap-3">
+        <ModeTile mode={mode} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[15px] font-semibold text-foreground">{bot.name}</p>
+          <p className="text-xs text-muted-foreground">{t(`sb.mode.${mode}`)}</p>
+        </div>
+        <BotStatus enabled={bot.enabled} test={bot.test_mode ?? false} />
+      </div>
+      <div className="mt-3 space-y-1.5 border-t border-border pt-3 text-[12.5px] text-muted-foreground">
+        <p className="flex items-center gap-2">
+          <Zap className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+          <span className="truncate">
+            {mode === "code" ? t("sb.card.code") : t(`sb.trigger.${trigger}`)}
+          </span>
+        </p>
+        <p className="flex items-center gap-2">
+          <Send className="h-3.5 w-3.5 shrink-0 text-sky-500" />
+          <span className="truncate">{t(`dp.channel.${bot.channel}`)}</span>
+        </p>
+      </div>
+      <span className="mt-3 text-sm font-semibold text-primary group-hover:underline">
+        {t("sb.openBot")} →
+      </span>
+    </button>
+  );
+}
+
 function SalesbotsPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useI18n();
   const { data: bots, isLoading } = useSalesbots();
   const { data: stages } = useCrmStages();
-  const [selected, setSelected] = useState<string>(NEW);
+  // null = the list, NEW = a new bot (chooser or an imported draft), else a bot's id.
+  const [selected, setSelected] = useState<string | null>(null);
   const [imported, setImported] = useState<{
     key: number;
     draft: SalesbotInput;
@@ -807,17 +982,96 @@ function SalesbotsPage({ embedded = false }: { embedded?: boolean }) {
 
   useEffect(() => {
     // ?bot=<id> opens that bot, ?bot=new the «Yangi bot» chooser (links
-    // from a trigger's «Salesbotni ishga tushirish»); else the first bot.
+    // from a trigger's «Salesbotni ishga tushirish»).
     const wanted =
       typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("bot");
-    if (wanted === "new") return;
-    if (wanted && bots?.some((b) => b.id === wanted)) return setSelected(wanted);
-    if (selected === NEW && bots?.length) setSelected(bots[0]!.id);
+    if (wanted === "new") return setSelected(NEW);
+    if (wanted && bots?.some((b) => b.id === wanted)) setSelected(wanted);
     // only on first load
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bots?.length]);
 
+  const toList = () => {
+    setImported(null);
+    setSelected(null);
+  };
   const bot = (bots ?? []).find((b) => b.id === selected) ?? null;
+  const list = bots ?? [];
+
+  let body: React.ReactNode;
+  if (bot || (selected === NEW && imported)) {
+    body = (
+      <BotEditor
+        key={bot?.id ?? `${NEW}-${imported?.key ?? 0}`}
+        bot={bot}
+        initial={bot ? undefined : imported?.draft}
+        warnings={bot ? undefined : imported?.warnings}
+        onBack={toList}
+        onSaved={(id) => {
+          setImported(null);
+          setSelected(id);
+        }}
+      />
+    );
+  } else if (selected === NEW || (!isLoading && list.length === 0)) {
+    body = (
+      <NewBotChooser
+        onBack={list.length > 0 ? toList : undefined}
+        onPick={(draft) => {
+          setImported({ key: Date.now(), draft, warnings: [] });
+          setSelected(NEW);
+        }}
+      />
+    );
+  } else {
+    body = (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[18px] font-bold text-foreground">
+              {t("sb.list.title")}{" "}
+              <span className="text-muted-foreground tabular-nums">{list.length}</span>
+            </h2>
+            <p className="text-sm text-muted-foreground">{t("sb.list.desc")}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="ctl-soft inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl px-4 text-sm font-semibold">
+              <Upload className="h-4 w-4" /> {t("sb.importAmo")}
+              <input
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void importAmo(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setImported(null);
+                setSelected(NEW);
+              }}
+              className="ctl-lit inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold"
+            >
+              <Plus className="h-4 w-4" /> {t("sb.new")}
+            </button>
+          </div>
+        </div>
+        {isLoading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-subtle" />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {list.map((b) => (
+              <BotCard key={b.id} bot={b} onOpen={() => setSelected(b.id)} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -825,83 +1079,7 @@ function SalesbotsPage({ embedded = false }: { embedded?: boolean }) {
         <PageHeader title={t("sb.title")} icon={Bot} tone="rose" description={t("sb.desc")} />
       )}
       <SharedBotBanner />
-      <div className="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <div className="space-y-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              setImported(null);
-              setSelected(NEW);
-            }}
-            className={cn(
-              "flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold",
-              selected === NEW
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-dashed border-border text-muted-foreground hover:border-primary/40",
-            )}
-          >
-            <Plus className="h-4 w-4" /> {t("sb.new")}
-          </button>
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin text-subtle" />}
-          {(bots ?? []).map((b) => {
-            const Icon = MODE_ICON[modeOf(b)];
-            return (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => setSelected(b.id)}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm",
-                  selected === b.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-card hover:border-primary/40",
-                )}
-              >
-                <Icon
-                  className={cn("h-4 w-4 shrink-0", b.enabled ? "text-primary" : "text-subtle")}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium text-foreground">{b.name}</span>
-                  <span className="block text-[11px] text-subtle">
-                    {t(`sb.mode.${modeOf(b)}`)}
-                    {!b.enabled && ` · ${t("sb.offShort")}`}
-                    {b.test_mode && ` · ${t("sb.test")}`}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-          <label className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-subtle hover:text-foreground">
-            <Upload className="h-3.5 w-3.5" /> {t("sb.importAmo")}
-            <input
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void importAmo(f);
-                e.target.value = "";
-              }}
-            />
-          </label>
-        </div>
-        {!bot && !imported ? (
-          <NewBotChooser
-            onPick={(draft) => setImported({ key: Date.now(), draft, warnings: [] })}
-          />
-        ) : (
-          <BotEditor
-            key={bot?.id ?? `${NEW}-${imported?.key ?? 0}`}
-            bot={bot}
-            initial={bot ? undefined : imported?.draft}
-            warnings={bot ? undefined : imported?.warnings}
-            onSaved={(id) => {
-              setImported(null);
-              setSelected(id);
-            }}
-          />
-        )}
-      </div>
+      {body}
     </>
   );
 }

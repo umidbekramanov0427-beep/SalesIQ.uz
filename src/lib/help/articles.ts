@@ -1550,19 +1550,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
     steps: [
       {
-        uz: "**Admin → Salesbotlar**ni oching, **Yangi salesbot** → **Tayyor bot: mijozni ro'yxatdan o'tkazish**ni yoki pastdagi 6 ta **tayyor shablon**dan birini tanlang (salomlashuvchi, xodimga uzatish, pochta orqali taklif, kalit so'z, email yig'ish, ish vaqtidan tashqari).",
-        ru: "Откройте **Админ → Сейлзботы**, **Новый салесбот** → **Готовый бот: регистрация клиента** или один из 6 **готовых шаблонов** ниже (приветствие, передача сотруднику, предложение на почту, ключевое слово, сбор email, нерабочее время).",
-        en: "Open **Admin → Salesbots**, **New salesbot** → **Ready bot: register a client**, or one of the 6 **ready templates** below (greeting, hand to a person, offer by email, keyword, collect an email, outside working hours).",
+        uz: "**Botlar → Salesbotlar**ni oching: botlaringiz kartalar bo'lib turadi. **Yangi salesbot**ni bosing va turini tanlang: **Oddiy sozlash** (savol-javob), **Sxema** (tarmoqli bot) yoki **O'z botim (kod)**. Oddiy va Sxema uchun keyin shablonni tanlaysiz: ro'yxatdan o'tkazish boti yoki 6 ta tayyor shablondan biri (salomlashuvchi, xodimga uzatish, pochta orqali taklif, kalit so'z, email yig'ish, ish vaqtidan tashqari).",
+        ru: "Откройте **Боты → Сейлзботы**: ваши боты показаны карточками. Нажмите **Новый салесбот** и выберите тип: **Простая настройка** (вопрос-ответ), **Схема** (бот с ветками) или **Свой бот (код)**. Для простого и схемы затем выберите шаблон: бот регистрации или один из 6 готовых (приветствие, передача сотруднику, предложение на почту, ключевое слово, сбор email, нерабочее время).",
+        en: "Open **Bots → Salesbots**: your bots are shown as cards. Press **New salesbot** and choose the type: **Simple setup** (questions and answers), **Flow** (a bot with branches) or **Your own bot (code)**. For Simple and Flow you then pick a template: the registration bot or one of 6 ready ones (greeting, hand to a person, offer by email, keyword, collect an email, outside working hours).",
       },
       {
-        uz: "**Oddiy sozlash**da salomlashish, savollar (javob qayerga yozilishi: ism, telefon, izoh...), yakuniy xabar va keyingi CRM amallarini (bosqich, teg, menejerga vazifa) moslang. O'ngda suhbat Telegram'da qanday ko'rinishi chiqadi.",
-        ru: "В **Простой настройке** поправьте приветствие, вопросы (куда записать ответ: имя, телефон, примечание...), финальное сообщение и действия в CRM (этап, тег, задача менеджеру). Справа видно, как диалог выглядит в Telegram.",
-        en: "In **Simple setup** adjust the greeting, the questions (where each answer goes: name, phone, note...), the final message and the CRM actions (stage, tag, task for the manager). The right side shows how the chat looks in Telegram.",
+        uz: "**Oddiy sozlash** — suhbat lentasi: salomlashish, savollar va yakuniy xabar mijoz ko'radigan tartibda turadi. Har savol ostida javob qayerga yozilishini tanlang (ism, telefon, izoh...), savollar orasidagi **+ Savol qo'shish** bilan yangisini qo'ying. O'ngda telefondagi ko'rinish va **Javoblardan keyin CRM'da** kartasi (bosqich, teg, menejerga vazifa).",
+        ru: "**Простая настройка** — лента разговора: приветствие, вопросы и финал в том порядке, как их видит клиент. Под каждым вопросом выберите, куда записать ответ (имя, телефон, примечание...), новый вопрос — **+ Добавить вопрос** между вопросами. Справа — вид на телефоне и карточка **После ответов в CRM** (этап, тег, задача менеджеру).",
+        en: "**Simple setup** is a conversation lane: greeting, questions and final message in the order the client sees them. Under each question choose where the answer goes (name, phone, note...), add one with **+ Add question** between questions. On the right: the phone preview and the **After the answers, in the CRM** card (stage, tag, task for the manager).",
       },
       {
-        uz: "**Saqlash**ni bosing — **Sinab ko'rish va ulashish** blokida botning Telegram havolasi chiqadi. **Telegram'da sinash**ni bosib, o'zingiz ro'yxatdan o'tib ko'ring.",
-        ru: "Нажмите **Сохранить** — в блоке **Проверить и поделиться** появится ссылка на бота в Telegram. Нажмите **Проверить в Telegram** и пройдите регистрацию сами.",
-        en: "Press **Save** — the bot's Telegram link appears under **Test and share**. Press **Test in Telegram** and register yourself.",
+        uz: "Yuqoridagi **Saqlash**ni bosing, keyin **Ulash** tabida botning Telegram havolasi chiqadi. **Telegram'da sinash**ni bosib, o'zingiz ro'yxatdan o'tib ko'ring. **Tarix** tabida har bir ishga tushish va xatolar ko'rinadi.",
+        ru: "Нажмите **Сохранить** вверху — на вкладке **Подключение** появится ссылка на бота в Telegram. Нажмите **Проверить в Telegram** и пройдите регистрацию сами. На вкладке **История** видны все запуски и ошибки.",
+        en: "Press **Save** at the top; the bot's Telegram link appears on the **Link** tab. Press **Test in Telegram** and register yourself. The **History** tab shows every run and error.",
       },
       {
         uz: "Havolani reklama, Instagram bio yoki saytga qo'ying: ochgan har bir odam CRM'da «Telegram bot» manbali lid bo'ladi.",
@@ -1572,14 +1572,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
     ],
     notes: [
       {
-        uz: "Shartlar va tarmoqlar kerak bo'lsa — **Sxema (kengaytirilgan)** rejimida bloklarni o'zingiz bog'laysiz. Bunday botni avtomatizatsiyadan yoki lid kartasidan ham ishga tushirish mumkin.",
-        ru: "Если нужны условия и ветки — в режиме **Схема (расширенная)** блоки соединяются вручную. Такого бота можно запускать и из автоматизации или карточки лида.",
-        en: "Need conditions and branches? In **Flow (advanced)** you connect the blocks yourself. Such a bot can also be started from an automation or the lead card.",
+        uz: "**Sxema** — butun ekranli taxta: chapdagi **Qadam qo'shish** panelidan blok qo'shasiz (yopilsa, **Blok qo'shish** tugmasi qoladi), blokni bossangiz o'ng tomonda uning sozlamasi ochiladi. Bunday botni avtomatizatsiyadan yoki lid kartasidan ham ishga tushirish mumkin.",
+        ru: "**Схема** — доска на весь экран: блоки добавляются из панели **Добавить шаг** слева (если её закрыть, остаётся кнопка **Добавить блок**), по нажатию на блок справа открываются его настройки. Такого бота можно запускать и из автоматизации или карточки лида.",
+        en: "**Flow** is a full-width board: add blocks from the **Add a step** panel on the left (closed, it leaves an **Add a block** button); click a block and its settings open on the right. Such a bot can also be started from an automation or the lead card.",
       },
       {
-        uz: "Botingiz Python, Node yoki boshqa tilda yozilgan bo'lsa — **O'z botim (kod)** rejimida maxfiy API manzil yarating va bot mijozni yig'ib bo'lgach unga `name`, `phone`, `message` bilan bitta POST so'rov yuborsin. Tayyor kod namunasi shu yerda.",
-        ru: "Если ваш бот написан на Python, Node или другом языке — в режиме **Свой бот (код)** создайте закрытый API-адрес, и пусть бот отправит на него один POST-запрос с `name`, `phone`, `message`. Готовый пример кода там же.",
-        en: "If your bot is written in Python, Node or another language, create a private API address in **Your own bot (code)** and have the bot send one POST request with `name`, `phone`, `message`. A ready code sample is right there.",
+        uz: "**O'z botim (kod)** — dasturchingizning serveridagi bot uchun 3 qadam: **serveringiz manzili** (https), **maxfiy kalit** (har so'rov HMAC-SHA256 bilan imzolanadi) va **almashinuv**: SalesIQ mijoz xabarini serveringizga yuboradi, serveringiz javobni `reply_url` ga qaytaradi. Python va Node uchun ishlaydigan misol shu yerda. Pastda — botingiz yig'gan mijozni bitta POST so'rov bilan lid qilish uchun API manzil.",
+        ru: "**Свой бот (код)** — три шага для бота на сервере вашего разработчика: **адрес сервера** (https), **секретный ключ** (каждый запрос подписан HMAC-SHA256) и **обмен**: SalesIQ отправляет сообщение клиента на ваш сервер, сервер возвращает ответ на `reply_url`. Рабочий пример на Python и Node там же. Ниже — API-адрес, чтобы одним POST-запросом создать лид из клиента, собранного вашим ботом.",
+        en: "**Your own bot (code)** is three steps for a bot on your developer's server: **your server's address** (https), the **secret key** (every request is signed with HMAC-SHA256) and the **exchange**: SalesIQ posts the client's message to your server, which posts its reply to `reply_url`. Working Python and Node examples are there. Below it: an API address to turn a client your bot collected into a lead with one POST request.",
       },
       {
         uz: "**Ishga tushish sharti**: qo'lda / trigger orqali, **Mijoz yozganda**, **Lid bosqichga tushganda** (bosqichni tanlang), **Mijoz tugmani bosganda**, Telegram botida **/start**, **tugma**, **xabar** yoki **har kuni belgilangan vaqtda** (Toshkent). Mijoz yozganda ishlaydigan bot bitta mijozga 12 soatda bir marta ishga tushadi.",
@@ -1592,9 +1592,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
         en: "With **Test** on the bot sends its messages but changes nothing in the CRM: actions, notes, fields, distribution and outside calls are only written to the history as «Test». A bot made from a template starts switched off and in test mode.",
       },
       {
-        uz: "**Bot ko'rinishi** — mijoz «Ha» yo'li bo'yicha ko'radigan suhbat. **</>** — botning JSON kodi: nusxa olib boshqa kompaniyaga ko'chiring yoki **Boshqa CRM'dan import** (amoCRM salesbot ham) bilan qo'ying. Kanvasda mini-xarita bor: bosib o'sha joyga o'ting.",
-        ru: "**Вид бота** — диалог, который клиент увидит по пути «Да». **</>** — JSON-код бота: скопируйте в другую компанию или вставьте через **Импорт из другой CRM** (и сейлсбот amoCRM). На холсте есть мини-карта: нажмите, чтобы перейти туда.",
-        en: "**Bot view** shows the chat the client sees along the «Yes» path. **</>** is the bot's JSON: copy it to another company or paste one with **Import from another CRM** (amoCRM salesbots too). The canvas has a mini-map: click it to jump there.",
+        uz: "Yuqoridagi **…** menyusida: **Bot ko'rinishi** — mijoz «Ha» yo'li bo'yicha ko'radigan suhbat; **Turini o'zgartirish** (tasdiq so'raydi); **O'chirish**. Sxemada u yerda **JSON** ham bor — botning kodi: nusxa olib boshqa kompaniyaga ko'chiring yoki **Boshqa CRM'dan import** (amoCRM salesbot ham) bilan qo'ying. Kanvasda mini-xarita bor: bosib o'sha joyga o'ting.",
+        ru: "В меню **…** вверху: **Вид бота** — диалог, который клиент увидит по пути «Да»; **Сменить тип** (с подтверждением); **Удалить**. У схемы там же **JSON** — код бота: скопируйте в другую компанию или вставьте через **Импорт из другой CRM** (и сейлсбот amoCRM). На холсте есть мини-карта: нажмите, чтобы перейти туда.",
+        en: "The **…** menu at the top has **Bot view** (the chat the client sees along the «Yes» path), **Change type** (asks first) and **Delete**; a flow bot also has **JSON** there, the bot's code: copy it to another company or paste one with **Import from another CRM** (amoCRM salesbots too). The canvas has a mini-map: click it to jump there.",
       },
     ],
     faq: [
@@ -1605,9 +1605,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
           en: "The link opens but the bot doesn't answer",
         },
         a: {
-          uz: "Bot **yoqilgan** va **saqlangan**ligini, kanal «Avtomatik» yoki «Telegram» ekanini tekshiring. Pastdagi **So'nggi ishga tushirishlar**da xato sababi yoziladi.",
-          ru: "Проверьте, что бот **включён** и **сохранён**, а канал — «Авто» или «Telegram». Причина ошибки видна ниже в **Последних запусках**.",
-          en: "Check that the bot is **on** and **saved** and the channel is Auto or Telegram. **Recent runs** below shows the error.",
+          uz: "Bot **yoqilgan** va **saqlangan**ligini, kanal «Avtomatik» yoki «Telegram» ekanini tekshiring. **Tarix** tabida xato sababi yoziladi.",
+          ru: "Проверьте, что бот **включён** и **сохранён**, а канал — «Авто» или «Telegram». Причина ошибки видна на вкладке **История**.",
+          en: "Check that the bot is **on** and **saved** and the channel is Auto or Telegram. The **History** tab shows the error.",
         },
       },
     ],

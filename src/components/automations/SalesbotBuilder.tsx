@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Flag, MousePointerClick, Plus, Trash2, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -142,6 +143,7 @@ export function SalesbotBuilder({
   const { t } = useI18n();
   const index = steps.findIndex((s) => s.id === selectedId);
   const selected = steps[index];
+  const [paletteOpen, setPaletteOpen] = useState(true);
 
   /** Adds a block after `afterId` (or after the flow's first open exit). */
   function add(type: BotStepType, afterId?: string | null) {
@@ -152,7 +154,9 @@ export function SalesbotBuilder({
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+    // The canvas takes the whole width; the blocks list floats on its left
+    // and the chosen block's settings slide in on its right.
+    <div className="relative min-w-0">
       <BotCanvas
         steps={steps}
         onChange={onChange}
@@ -161,10 +165,33 @@ export function SalesbotBuilder({
         makeStep={blankStep}
         makeId={newStepId}
         addOptions={BOT_STEP_TYPES}
-        className="h-[calc(100vh-280px)] min-h-[520px]"
+        insetLeft={
+          paletteOpen &&
+          !(typeof document !== "undefined" && document.documentElement.classList.contains("phone"))
+            ? 280
+            : 0
+        }
+        className="h-[calc(100vh-250px)] min-h-[560px] phone:h-[62vh] phone:min-h-0"
       />
-      <aside className="flex max-h-[calc(100vh-280px)] min-h-[520px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
-        {selected ? (
+      {paletteOpen ? (
+        <aside className="absolute top-3 bottom-14 left-3 z-10 flex w-[264px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg phone:static phone:mt-3 phone:w-full">
+          <StepPalette
+            steps={steps}
+            onAdd={(type) => add(type, selected?.id ?? null)}
+            onClose={() => setPaletteOpen(false)}
+          />
+        </aside>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          className="absolute top-3 left-3 z-10 inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lg hover:opacity-90 phone:static phone:mt-3"
+        >
+          <Plus className="h-4 w-4" /> {t("sb.addBlock")}
+        </button>
+      )}
+      {selected && (
+        <aside className="absolute top-3 right-3 bottom-3 z-20 flex w-[380px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl animate-in fade-in slide-in-from-right-4 duration-150 phone:static phone:mt-3 phone:w-full">
           <StepEditor
             key={selected.id}
             step={selected}
@@ -180,23 +207,39 @@ export function SalesbotBuilder({
             onMakeStart={() => onChange([selected, ...steps.filter((x) => x.id !== selected.id)])}
             onAddNext={(type) => add(type, selected.id)}
           />
-        ) : (
-          <StepPalette steps={steps} onAdd={(type) => add(type)} />
-        )}
-      </aside>
+        </aside>
+      )}
     </div>
   );
 }
 
 /* ------------------------------ palette ------------------------------ */
 
-function StepPalette({ steps, onAdd }: { steps: BotStep[]; onAdd: (t: BotStepType) => void }) {
+function StepPalette({
+  steps,
+  onAdd,
+  onClose,
+}: {
+  steps: BotStep[];
+  onAdd: (t: BotStepType) => void;
+  onClose: () => void;
+}) {
   const { t } = useI18n();
   const willConnect = steps.length === 0 || !!firstOpenPort(steps);
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-border px-4 py-3">
-        <p className="text-sm font-bold text-foreground">{t("sb.paletteTitle")}</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-bold text-foreground">{t("sb.paletteTitle")}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("common.close")}
+            className="grid h-7 w-7 place-items-center rounded-md text-subtle hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
         <p className="mt-0.5 text-xs text-subtle">
           {willConnect ? t("sb.paletteHintChain") : t("sb.paletteHintFree")}
         </p>
@@ -1065,7 +1108,7 @@ function StepEditor({
       </div>
 
       {canContinue && (
-        <div className="border-t border-border bg-surface/60 p-3">
+        <div className="max-h-[40%] shrink-0 overflow-y-auto border-t border-border bg-surface/60 p-3">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
             {t("sb.addNextTitle")}
           </p>

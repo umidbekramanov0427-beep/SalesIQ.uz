@@ -350,3 +350,199 @@ export function CodeBotPanel() {
     </SectionCard>
   );
 }
+
+/* ---------------------- «Kod» bot: the developer's setup ---------------------- */
+
+const HANDLER_LANGS = ["python", "node"] as const;
+type HandlerLang = (typeof HANDLER_LANGS)[number];
+
+const RECEIVE_SAMPLE = `POST <your URL>
+x-salesiq-signature: HMAC_SHA256(secret, body)
+
+{
+  "event": "start",            // or "message"
+  "run_id": "6f1c…",
+  "bot_id": "a2d9…",
+  "lead": {
+    "id": "…", "name": "Aziz Karimov",
+    "phone": "+998901234567", "stage_id": "…",
+    "tags": ["IELTS"], "manager": "Dilnoza"
+  },
+  "text": "Narxi qancha?",      // only on "message"
+  "reply_url": "https://salesiq.uz/salesbots/external-reply"
+}`;
+
+const SEND_SAMPLE = `POST reply_url
+x-salesiq-signature: HMAC_SHA256(secret, body)
+
+{
+  "run_id": "6f1c…",
+  "text": "Kurs narxi 990 000 so'm. Yozilasizmi?",
+  "actions": [{ "type": "add_tag", "tag": "narx so'radi" }],
+  "finish": false               // true ends the bot
+}`;
+
+function handlerSnippet(lang: HandlerLang) {
+  if (lang === "python") {
+    return `import hashlib, hmac, json, os
+import requests
+from flask import Flask, request
+
+SECRET = os.environ["SALESIQ_SECRET"].encode()
+app = Flask(__name__)
+
+def sign(body: bytes) -> str:
+    return hmac.new(SECRET, body, hashlib.sha256).hexdigest()
+
+@app.post("/salesiq")
+def salesiq():
+    got = request.headers.get("x-salesiq-signature", "")
+    if not hmac.compare_digest(sign(request.data), got):
+        return "bad signature", 401
+    event = request.get_json()
+    if event["event"] == "start":
+        text = "Assalomu alaykum! Qaysi kurs qiziqtiradi?"
+    else:
+        text = f"Rahmat! Siz yozdingiz: {event.get('text', '')}"
+    reply = json.dumps({"run_id": event["run_id"], "text": text}).encode()
+    requests.post(event["reply_url"], data=reply, timeout=10, headers={
+        "content-type": "application/json",
+        "x-salesiq-signature": sign(reply),
+    })
+    return "ok"`;
+  }
+  return `import crypto from "node:crypto";
+import express from "express";
+
+const SECRET = process.env.SALESIQ_SECRET;
+const sign = (body) => crypto.createHmac("sha256", SECRET).update(body).digest("hex");
+const app = express();
+
+app.post("/salesiq", express.raw({ type: "application/json" }), async (req, res) => {
+  if (sign(req.body) !== req.get("x-salesiq-signature")) return res.status(401).end();
+  const event = JSON.parse(req.body);
+  const text = event.event === "start"
+    ? "Assalomu alaykum! Qaysi kurs qiziqtiradi?"
+    : \`Rahmat! Siz yozdingiz: \${event.text ?? ""}\`;
+  const reply = JSON.stringify({ run_id: event.run_id, text });
+  await fetch(event.reply_url, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-salesiq-signature": sign(reply) },
+    body: reply,
+  });
+  res.send("ok");
+});
+
+app.listen(3000);`;
+}
+
+function Step({
+  n,
+  title,
+  desc,
+  children,
+}: {
+  n: number;
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-[13px] font-bold text-primary-foreground tabular-nums">
+          {n}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[15px] font-bold text-foreground">{title}</h3>
+          <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{desc}</p>
+          <div className="mt-3">{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CodeBlock({ title, code }: { title: string; code: string }) {
+  const { t } = useI18n();
+  return (
+    <div className="min-w-0 overflow-hidden rounded-xl border border-border">
+      <div className="flex items-center justify-between border-b border-border bg-surface px-3 py-1.5">
+        <span className="text-[12px] font-semibold text-foreground">{title}</span>
+        <button
+          type="button"
+          onClick={() => copy(code, t("sb.copied"))}
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium text-subtle hover:text-foreground"
+        >
+          <Copy className="h-3 w-3" /> {t("pc.copy")}
+        </button>
+      </div>
+      <pre className="max-h-[360px] overflow-auto bg-background p-3 font-mono text-[11.5px] leading-relaxed text-foreground">
+        {code}
+      </pre>
+    </div>
+  );
+}
+
+/**
+ * «Kod» salesbot: a bot that runs on the company's own server. SalesIQ posts
+ * each start and client message to its URL and it answers on reply_url
+ * (engine.server.ts postJson, routes/salesbots.external-reply.ts).
+ */
+export function CodeBotSetup({
+  url,
+  secret,
+  onUrl,
+  onRegenerate,
+}: {
+  url: string;
+  secret: string;
+  onUrl: (v: string) => void;
+  onRegenerate: () => void;
+}) {
+  const { t } = useI18n();
+  const [lang, setLang] = useState<HandlerLang>("python");
+  const urlOk = /^https:\/\/\S+$/.test(url);
+  return (
+    <div className="min-w-0 space-y-3">
+      <Step n={1} title={t("sb.kod.urlTitle")} desc={t("sb.kod.urlDesc")}>
+        <input
+          value={url}
+          onChange={(e) => onUrl(e.target.value.trim())}
+          placeholder="https://bot.example.uz/salesiq"
+          className={cn(inputCls, "h-10 font-mono text-[13px]")}
+        />
+        {url && !urlOk && <p className="mt-1.5 text-xs text-warning">{t("sb.needUrl")}</p>}
+      </Step>
+      <Step n={2} title={t("sb.kod.secretTitle")} desc={t("sb.kod.secretDesc")}>
+        <div className="flex gap-2">
+          <div className="min-w-0 flex-1">
+            <CopyField value={secret} />
+          </div>
+          <button
+            type="button"
+            onClick={onRegenerate}
+            className="ctl-soft inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold"
+          >
+            <KeyRound className="h-4 w-4" /> {t("sb.kod.newSecret")}
+          </button>
+        </div>
+      </Step>
+      <Step n={3} title={t("sb.kod.flowTitle")} desc={t("sb.kod.flowDesc")}>
+        <div className="grid gap-3 xl:grid-cols-2">
+          <CodeBlock title={t("sb.kod.receive")} code={RECEIVE_SAMPLE} />
+          <CodeBlock title={t("sb.kod.send")} code={SEND_SAMPLE} />
+        </div>
+        <div className="mt-3 space-y-2">
+          <SegmentedControl
+            value={lang}
+            options={HANDLER_LANGS}
+            onChange={setLang}
+            render={(l) => (l === "python" ? "Python (Flask)" : "Node.js (Express)")}
+          />
+          <CodeBlock title={t("sb.kod.example")} code={handlerSnippet(lang)} />
+        </div>
+      </Step>
+    </div>
+  );
+}

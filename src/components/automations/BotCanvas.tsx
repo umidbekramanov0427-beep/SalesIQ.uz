@@ -448,6 +448,7 @@ export function BotCanvas({
   makeId,
   addOptions,
   className,
+  insetLeft = 0,
 }: {
   steps: BotStep[];
   onChange: (steps: BotStep[]) => void;
@@ -458,9 +459,13 @@ export function BotCanvas({
   makeId: () => string;
   addOptions: BotStepType[];
   className?: string;
+  /** Width covered by a panel floating over the canvas' left side; fitting keeps blocks clear of it. */
+  insetLeft?: number;
 }) {
   const { t } = useI18n();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const insetRef = useRef(insetLeft);
+  insetRef.current = insetLeft;
   const [view, setView] = useState({ x: 0, y: 0, zoom: 0.9 });
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -487,11 +492,12 @@ export function BotCanvas({
     const minY = Math.min(...ys) - 30;
     const maxX = Math.max(START_POS.x + START_W, ...list.map((s) => (s.pos?.x ?? 0) + NODE_W)) + 80;
     const maxY = Math.max(240, ...list.map((s) => (s.pos?.y ?? 0) + nodeHeight(s))) + 40;
+    const inset = insetRef.current;
     const zoom = Math.max(
       0.35,
-      Math.min(1, el.clientWidth / (maxX - minX), el.clientHeight / (maxY - minY)),
+      Math.min(1, (el.clientWidth - inset) / (maxX - minX), el.clientHeight / (maxY - minY)),
     );
-    setView({ zoom, x: -minX * zoom, y: -minY * zoom });
+    setView({ zoom, x: inset - minX * zoom, y: -minY * zoom });
   }, []);
 
   // Fit once when a bot opens.
