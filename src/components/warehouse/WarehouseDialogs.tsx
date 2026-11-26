@@ -1,7 +1,7 @@
 // Ombor dialogs: a product (add / edit), a stock document (kirim, chiqim,
 // hisobdan chiqarish) and a new order for a client (lead).
 import { useMemo, useState } from "react";
-import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { Archive, Loader2, Plus, Search, Star, Trash2, Warehouse } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,9 @@ import {
   useProductStock,
   useProducts,
   useSaveProduct,
+  useSaveWarehouse,
+  useStockLevels,
+  useWarehouses,
   type LeadBrief,
   type ProductRow,
 } from "@/hooks/crm/warehouse";
@@ -200,7 +203,164 @@ function ProductPicker({
   );
 }
 
-export type MoveKind = "in" | "out" | "writeoff";
+export type MoveKind = "in" | "out" | "writeoff" | "transfer";
+
+/** The open warehouses, the default first. */
+export function useOpenWarehouses() {
+  const { data = [] } = useWarehouses();
+  return useMemo(
+    () =>
+      data
+        .filter((w) => !w.archived_at)
+        .sort((a, b) => Number(b.is_default) - Number(a.is_default)),
+    [data],
+  );
+}
+
+/** «Ombor:» — shown only when the company has more than one. */
+export function WarehouseSelect({
+  value,
+  onChange,
+  label,
+  exclude,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+  label: string;
+  exclude?: string;
+}) {
+  const list = useOpenWarehouses().filter((w) => w.id !== exclude);
+  return (
+    <Field label={label}>
+      <select className={fieldCls} value={value} onChange={(e) => onChange(e.target.value)}>
+        {list.map((w) => (
+          <option key={w.id} value={w.id}>
+            {w.name}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+}
+
+/** «Omborlar»: the company's warehouses — add, rename, make default, archive. */
+export function WarehousesDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const { data: all = [] } = useWarehouses();
+  const { data: levels } = useStockLevels();
+  const { data: products = [] } = useProducts();
+  const save = useSaveWarehouse();
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const cost = new Map(products.map((p) => [p.id, p.cost]));
+  const list = all.filter((w) => !w.archived_at);
+  const run = async (input: Parameters<typeof save.mutateAsync>[0]) => {
+    try {
+      await save.mutateAsync(input);
+      toast.success(t("wh.saved"));
+    } catch (e) {
+      toast.error(describeError(e, t("wh.failed")));
+    }
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Warehouse className="h-4 w-4" /> {t("wh.whs.title")}
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-[13px] text-muted-foreground">{t("wh.whs.desc")}</p>
+        <div className="divide-y divide-border rounded-xl border border-border">
+          {list.length === 0 && (
+            <p className="px-3 py-3 text-[13px] text-muted-foreground">{t("wh.whs.none")}</p>
+          )}
+          {list.map((w) => {
+            const m = levels?.get(w.id);
+            let units = 0;
+            let value = 0;
+            for (const [pid, q] of m ?? []) {
+              units += q;
+              value += q * (cost.get(pid) ?? 0);
+            }
+            return (
+              <div key={w.id} className="flex items-center gap-3 px-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <input
+                    defaultValue={w.name}
+                    onBlur={(e) =>
+                      e.target.value.trim() &&
+                      e.target.value.trim() !== w.name &&
+                      void run({ id: w.id, name: e.target.value })
+                    }
+                    className="w-full bg-transparent text-[14px] font-semibold outline-none focus:underline"
+                  />
+                  <p className="truncate text-[12px] text-muted-foreground">
+                    {w.address ? `${w.address} · ` : ""}
+                    {t("wh.whs.units", { n: Math.round(units) })} · {formatUzs(value)}
+                  </p>
+                </div>
+                {w.is_default ? (
+                  <span className="inline-flex h-7 items-center gap-1 rounded-full border border-amber-300 px-2.5 text-[11.5px] font-semibold text-amber-700 dark:text-amber-300">
+                    <Star className="h-3 w-3" /> {t("wh.whs.default")}
+                  </span>
+                ) : (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void run({ id: w.id, is_default: true })}
+                    >
+                      <Star className="h-3.5 w-3.5" /> {t("wh.whs.makeDefault")}
+                    </Button>
+                    <button
+                      type="button"
+                      title={units > 0 ? t("wh.whs.notEmpty") : t("wh.whs.archive")}
+                      disabled={units > 0}
+                      onClick={() => void run({ id: w.id, archived: true })}
+                      className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:text-destructive disabled:opacity-40"
+                    >
+                      <Archive className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <Field label={t("wh.whs.name")}>
+            <input className={fieldCls} value={name} onChange={(e) => setName(e.target.value)} />
+          </Field>
+          <Field label={t("wh.whs.address")}>
+            <input
+              className={fieldCls}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+          </Field>
+          <Button
+            disabled={!name.trim() || save.isPending}
+            onClick={() =>
+              void run({ name, address, is_default: list.length === 0 }).then(() => {
+                setName("");
+                setAddress("");
+              })
+            }
+          >
+            <Plus className="h-4 w-4" /> {t("wh.whs.add")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function StockDialog({
   open,
@@ -216,6 +376,13 @@ export function StockDialog({
   const { t } = useI18n();
   const { data: products = [] } = useProducts();
   const add = useAddMoves();
+  const whs = useOpenWarehouses();
+  const { data: levels } = useStockLevels();
+  const [wh, setWh] = useState("");
+  const [to, setTo] = useState("");
+  const from = wh || whs[0]?.id || "";
+  const dest = to || whs.find((w) => w.id !== from)?.id || "";
+  const many = whs.length > 1;
   const [kind, setKind] = useState<MoveKind>(initialKind);
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<Line[]>(() =>
@@ -227,6 +394,8 @@ export function StockDialog({
       await add.mutateAsync({
         kind,
         note,
+        warehouseId: from || null,
+        ...(kind === "transfer" ? { toWarehouseId: dest || null } : {}),
         lines: lines
           .map((l) => ({
             productId: l.productId,
@@ -241,7 +410,9 @@ export function StockDialog({
       toast.error(describeError(e, t("wh.failed")));
     }
   }
-  const valid = lines.some((l) => num(l.qty) > 0);
+  const valid =
+    lines.some((l) => num(l.qty) > 0) && (kind !== "transfer" || (!!dest && dest !== from));
+  const have = (pid: string) => levels?.get(from)?.get(pid) ?? 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
@@ -251,17 +422,44 @@ export function StockDialog({
         <Segmented
           value={kind}
           onChange={setKind}
-          options={(["in", "out", "writeoff"] as const).map((k) => ({
+          options={(many
+            ? (["in", "out", "writeoff", "transfer"] as const)
+            : (["in", "out", "writeoff"] as const)
+          ).map((k) => ({
             value: k,
             label: t(`wh.move.${k}`),
           }))}
         />
+        {many && (
+          <div className={cn("grid gap-2", kind === "transfer" && "sm:grid-cols-2")}>
+            <WarehouseSelect
+              value={from}
+              onChange={setWh}
+              label={kind === "transfer" ? t("wh.whs.from") : t("wh.whs.one")}
+            />
+            {kind === "transfer" && (
+              <WarehouseSelect
+                value={dest}
+                onChange={setTo}
+                label={t("wh.whs.to")}
+                exclude={from}
+              />
+            )}
+          </div>
+        )}
         <div className="space-y-2">
           {lines.map((l, i) => {
             const p = byId.get(l.productId);
             return (
               <div key={l.productId} className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{p?.name}</span>
+                <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
+                  {p?.name}
+                  {kind !== "in" && (
+                    <span className="ml-1.5 text-[12px] font-normal text-muted-foreground">
+                      ({t("wh.whs.have", { n: have(l.productId) })})
+                    </span>
+                  )}
+                </span>
                 <input
                   className={`${fieldCls} w-24`}
                   inputMode="decimal"
@@ -348,6 +546,8 @@ export function OrderDialog({
   const { data: stock } = useProductStock();
   const create = useCreateOrder();
   const save = useSaveOrder();
+  const whs = useOpenWarehouses();
+  const [wh, setWh] = useState("");
   // Once the goods have left the stock the lines are fixed (the stock
   // journal already holds them); everything else can still change.
   const locked = !!order?.stock_out_at;
@@ -419,6 +619,7 @@ export function OrderDialog({
         deliveryMethod: delivery || null,
         deliveryAddress: address || null,
         source: "manual",
+        warehouseId: wh || whs[0]?.id || null,
       });
       toast.success(t("wh.order.created"));
       onOpenChange(false);
@@ -436,6 +637,9 @@ export function OrderDialog({
             {order ? t("wh.order.title", { n: order.number }) : t("wh.order.new")}
           </DialogTitle>
         </DialogHeader>
+        {!order && whs.length > 1 && (
+          <WarehouseSelect value={wh || whs[0]!.id} onChange={setWh} label={t("wh.whs.one")} />
+        )}
         {order && (
           // Where the order is: one click moves it (the lead's stage follows).
           <div className="flex flex-wrap gap-1">

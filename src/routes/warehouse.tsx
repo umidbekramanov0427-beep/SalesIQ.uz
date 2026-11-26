@@ -17,6 +17,7 @@ import {
   Trophy,
   Truck,
   Wallet,
+  Warehouse,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, StatCard } from "@/components/layout/Primitives";
@@ -27,6 +28,8 @@ import {
   OrderDialog,
   ProductDialog,
   StockDialog,
+  WarehousesDialog,
+  useOpenWarehouses,
   type MoveKind,
   type OrderDraft,
 } from "@/components/warehouse/WarehouseDialogs";
@@ -38,6 +41,7 @@ import {
   useProductStock,
   useProducts,
   useRepeatTask,
+  useStockLevels,
   useUpdateOrder,
   type OrderWithItems,
   type ProductRow,
@@ -96,6 +100,7 @@ function WarehousePage() {
     open: false,
     key: 0,
   });
+  const [whsOpen, setWhsOpen] = useState(false);
   const openOrder = (initial?: OrderDraft) =>
     setOrderDlg((s) => ({ open: true, initial, key: s.key + 1 }));
 
@@ -119,6 +124,9 @@ function WarehousePage() {
         tone="amber"
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setWhsOpen(true)}>
+              <Warehouse className="h-4 w-4" /> {t("wh.whs.title")}
+            </Button>
             <Button variant="outline" onClick={() => setStockDlg({ open: true, kind: "in" })}>
               <PackagePlus className="h-4 w-4" /> {t("wh.move.btn")}
             </Button>
@@ -165,6 +173,7 @@ function WarehousePage() {
           onOpenChange={(v) => !v && setStockDlg({ open: false, kind: "in" })}
         />
       )}
+      {whsOpen && <WarehousesDialog open onOpenChange={setWhsOpen} />}
       {orderDlg.open && (
         <OrderDialog
           key={orderDlg.key}
@@ -450,6 +459,9 @@ function ProductsTab({
   const { t } = useI18n();
   const { data: products = [], isLoading } = useProducts();
   const { data: stock } = useProductStock();
+  const { data: levels } = useStockLevels();
+  const whs = useOpenWarehouses();
+  const [whF, setWhF] = useState("");
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const cats = [...new Set(products.map((p) => p.category).filter(Boolean))] as string[];
@@ -476,6 +488,21 @@ function ProductsTab({
               onChange={(e) => setQ(e.target.value)}
             />
           </label>
+          {whs.length > 1 && (
+            <select
+              className="h-9 rounded-lg border border-border bg-card px-2 text-[14px]"
+              value={whF}
+              onChange={(e) => setWhF(e.target.value)}
+              aria-label={t("wh.whs.one")}
+            >
+              <option value="">{t("wh.whs.all")}</option>
+              {whs.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          )}
           {cats.length > 0 && (
             <select
               className="h-9 rounded-lg border border-border bg-card px-2 text-[14px]"
@@ -527,8 +554,9 @@ function ProductsTab({
             <tbody>
               {list.map((p) => {
                 const st = stock?.get(p.id);
-                const qty = st?.qty ?? 0;
-                const res = st?.reserved ?? 0;
+                // One warehouse: its own stock (reservations are company-wide).
+                const qty = whF ? (levels?.get(whF)?.get(p.id) ?? 0) : (st?.qty ?? 0);
+                const res = whF ? 0 : (st?.reserved ?? 0);
                 const state = stockState(qty, res, p.min_stock);
                 return (
                   <tr key={p.id} className="border-b border-border/60 hover:bg-muted/40">

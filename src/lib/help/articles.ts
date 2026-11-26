@@ -1246,6 +1246,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ru: "Если при создании воронки выбрать тип **Склад (заказы)**, её этапы привязаны к статусам заказа: лид в «В пути» — и заказ в пути, и наоборот. На карточках этой воронки виден № и статус последнего заказа.",
         en: "A funnel created with the **Warehouse orders** type has stages tied to order statuses: move the lead to On the way and the order follows, and vice versa. Its cards show the latest order's number and status.",
       },
+      {
+        uz: "Bir nechta ombor: tepada **Omborlar**ni bosing — yangi ombor qo'shing, nomini o'zgartiring, **Asosiy qilish** yoki bo'sh omborni arxivlang. Omborlar ikkita yoki ko'p bo'lsa, kirim/chiqim va yangi buyurtmada omborni tanlaysiz, **Ko'chirish** bilan tovarni bir ombordan boshqasiga o'tkazasiz, **Mahsulotlar**da esa qoldiqni bitta ombor bo'yicha ko'rasiz.",
+        ru: "Несколько складов: нажмите **Склады** сверху — добавьте склад, переименуйте, **Сделать основным** или отправьте пустой склад в архив. Когда складов два и больше, в приходе/расходе и новом заказе выбирается склад, **Перемещение** переносит товар между складами, а в **Товарах** остаток можно смотреть по одному складу.",
+        en: "Several warehouses: press **Warehouses** at the top to add one, rename it, **Make default** or archive an empty one. With two or more, stock documents and new orders let you pick the warehouse, **Transfer** moves goods between them, and **Products** can show one warehouse's stock.",
+      },
+      {
+        uz: "Inbox'da xarid qilgan mijozning suhbatida **Ombor mijozi** belgisi chiqadi, ikki va undan ko'p yetkazilgan buyurtmasi bo'lsa — **Doimiy mijoz**.",
+        ru: "Во входящих у купившего клиента появляется метка **Клиент склада**, а при двух и более доставленных заказах — **Постоянный клиент**.",
+        en: "In the Inbox a client who has bought shows a **Warehouse client** badge, and with two or more delivered orders a **Regular client** badge.",
+      },
     ],
     notes: [],
     faq: [],

@@ -18,7 +18,9 @@ import {
   Star,
   Trash2,
   X,
+  Package,
 } from "lucide-react";
+import { useWarehouseClients } from "@/hooks/crm/warehouse";
 import { toast } from "sonner";
 import { AmoLeadCard } from "@/components/lead/AmoLeadCard";
 import { ClientAvatar, chatFileLabel } from "@/components/lead/ChatParts";
@@ -131,6 +133,7 @@ function InboxPage() {
   const { data: stages = [] } = usePipelineStagesRaw();
   const { data: marks } = useInboxMarks();
   const { data: chatStates } = useInboxChatStates();
+  const whClients = useWarehouseClients();
   // Blocked chats (spam) stay out of the list until "Bloklanganlar" is on.
   const [showBlocked, setShowBlocked] = useState(false);
   // «Mas'ulsizlarni taqsimlash» (admins and heads of sales).
@@ -353,6 +356,7 @@ function InboxPage() {
                 blocked={isBlocked(c.leadId)}
                 favorite={!!marks?.favorites.has(c.leadId)}
                 onOpen={() => pick(c.leadId)}
+                whOrders={whClients.get(c.leadId) ?? 0}
               />
             ))
           )}
@@ -550,6 +554,7 @@ function ConversationRow({
   onOpen,
   closed,
   blocked,
+  whOrders = 0,
 }: {
   chat: InboxConversation;
   active: boolean;
@@ -559,6 +564,8 @@ function ConversationRow({
   onOpen: () => void;
   closed: boolean;
   blocked: boolean;
+  /** Delivered warehouse orders: «Ombor mijozi» (2+ = a regular client). */
+  whOrders?: number;
 }) {
   const { t } = useI18n();
   const toggleFav = useToggleInboxFavorite();
@@ -653,6 +660,15 @@ function ConversationRow({
             )}
           </span>
           <span className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-subtle">
+            {whOrders > 0 && (
+              <span
+                title={t("wh.inbox.badgeHint", { n: whOrders })}
+                className="mr-1 inline-flex shrink-0 items-center gap-0.5 rounded border border-amber-300 px-1 text-[10.5px] font-bold text-amber-700 dark:text-amber-300"
+              >
+                <Package className="h-2.5 w-2.5" />
+                {whOrders >= 2 ? t("wh.inbox.regular") : t("wh.inbox.client")}
+              </span>
+            )}
             {chat.leadNumber && <span className="font-mono">#{chat.leadNumber}</span>}
             <span className="truncate">
               {chat.leadNumber ? " · " : ""}

@@ -74,6 +74,72 @@ export const useWarehouses = () =>
 export const useStockMoves = () =>
   useOrgList<StockMoveRow>("wh_moves", "stock_moves", "created_at", false);
 
+/** Stock per warehouse: warehouse id → product id → quantity on hand. */
+export function useStockLevels() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["wh_levels", user?.organizationId],
+    enabled: !!user?.organizationId,
+    queryFn: async (): Promise<Map<string, Map<string, number>>> => {
+      const { data, error } = await supabase
+        .from("stock_levels")
+        .select("warehouse_id, product_id, qty")
+        .eq("organization_id", user!.organizationId!)
+        .limit(20000);
+      const out = new Map<string, Map<string, number>>();
+      if (error) return out;
+      for (const r of data ?? []) {
+        let m = out.get(r.warehouse_id);
+        if (!m) out.set(r.warehouse_id, (m = new Map()));
+        m.set(r.product_id, Number(r.qty));
+      }
+      return out;
+    },
+  });
+}
+
+/** «Omborlar»: add or change a warehouse; making one the default unmarks the rest. */
+export function useSaveWarehouse() {
+  const { user } = useAuth();
+  const done = useInvalidateWarehouse();
+  return useMutation({
+    mutationFn: async (input: {
+      id?: string;
+      name?: string;
+      address?: string | null;
+      is_default?: boolean;
+      archived?: boolean;
+    }) => {
+      const org = user!.organizationId!;
+      if (input.is_default) {
+        await supabase
+          .from("warehouses")
+          .update({ is_default: false })
+          .eq("organization_id", org)
+          .neq("id", input.id ?? "00000000-0000-0000-0000-000000000000");
+      }
+      const row = {
+        ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+        ...(input.address !== undefined ? { address: input.address?.trim() || null } : {}),
+        ...(input.is_default !== undefined ? { is_default: input.is_default } : {}),
+        ...(input.archived !== undefined
+          ? { archived_at: input.archived ? new Date().toISOString() : null }
+          : {}),
+      };
+      if (input.id) {
+        const { error } = await supabase.from("warehouses").update(row).eq("id", input.id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase
+        .from("warehouses")
+        .insert({ organization_id: org, name: input.name?.trim() || "Ombor", ...row });
+      if (error) throw error;
+    },
+    onSuccess: done,
+  });
+}
+
 export function useProductStock() {
   const { user } = useAuth();
   return useQuery({
@@ -89,6 +155,35 @@ export function useProductStock() {
     },
   });
 }
+
+/**
+ * «Ombor mijozi» in the Inbox: lead id → delivered orders, for a company with
+ * the module (an empty map otherwise, without a query).
+ */
+export function useWarehouseClients(): Map<string, number> {
+  const { user } = useAuth();
+  const on = useHasModule("warehouse");
+  const { data } = useQuery({
+    queryKey: ["wh_clients", user?.organizationId],
+    enabled: on && !!user?.organizationId,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<Map<string, number>> => {
+      const { data: rows, error } = await supabase
+        .from("orders")
+        .select("lead_id")
+        .eq("organization_id", user!.organizationId!)
+        .eq("status", "delivered")
+        .not("lead_id", "is", null)
+        .limit(10000);
+      const m = new Map<string, number>();
+      if (error) return m;
+      for (const r of rows ?? []) if (r.lead_id) m.set(r.lead_id, (m.get(r.lead_id) ?? 0) + 1);
+      return m;
+    },
+  });
+  return on && data ? data : EMPTY_CLIENTS;
+}
+const EMPTY_CLIENTS = new Map<string, number>();
 
 export function useOrders(leadId?: string) {
   const { user } = useAuth();
@@ -129,7 +224,14 @@ export function useOrders(leadId?: string) {
 function useInvalidateWarehouse() {
   const qc = useQueryClient();
   return () => {
-    for (const k of ["wh_products", "wh_warehouses", "wh_moves", "wh_stock", "wh_orders"])
+    for (const k of [
+      "wh_products",
+      "wh_warehouses",
+      "wh_moves",
+      "wh_stock",
+      "wh_orders",
+      "wh_levels",
+    ])
       void qc.invalidateQueries({ queryKey: [k] });
     void qc.invalidateQueries({ queryKey: ["leads"] });
   };
@@ -253,13 +355,39 @@ export function useAddMoves() {
   const done = useInvalidateWarehouse();
   return useMutation({
     mutationFn: async (input: {
-      kind: "in" | "out" | "writeoff" | "adjust";
+      kind: "in" | "out" | "writeoff" | "adjust" | "transfer";
       lines: MoveLine[];
       warehouseId?: string | null;
+      /** «Ko'chirish»: the warehouse the goods go to. */
+      toWarehouseId?: string | null;
       note?: string;
     }) => {
       const org = user!.organizationId!;
       const wh = input.warehouseId || (await ensureWarehouse(org));
+      if (input.kind === "transfer") {
+        const to = input.toWarehouseId;
+        if (!to || to === wh) throw new Error("Boshqa omborni tanlang");
+        const rows = input.lines
+          .filter((l) => l.qty > 0)
+          .flatMap((l) =>
+            [
+              { warehouse_id: wh, qty: -Math.abs(l.qty) },
+              { warehouse_id: to, qty: Math.abs(l.qty) },
+            ].map((x) => ({
+              organization_id: org,
+              product_id: l.productId,
+              kind: "transfer",
+              unit_cost: null,
+              note: input.note || null,
+              created_by: user!.id,
+              ...x,
+            })),
+          );
+        if (!rows.length) return;
+        const { error } = await supabase.from("stock_moves").insert(rows);
+        if (error) throw error;
+        return;
+      }
       const sign = input.kind === "in" ? 1 : input.kind === "adjust" ? 1 : -1;
       const rows = input.lines
         .filter((l) => l.qty !== 0)
@@ -295,9 +423,10 @@ export function useCreateOrder() {
       deliveryAddress?: string | null;
       note?: string | null;
       source?: string | null;
+      warehouseId?: string | null;
     }): Promise<OrderRow> => {
       const org = user!.organizationId!;
-      const wh = await ensureWarehouse(org);
+      const wh = input.warehouseId || (await ensureWarehouse(org));
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
