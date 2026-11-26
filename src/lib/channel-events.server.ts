@@ -179,7 +179,7 @@ const botIds = new Map<string, number>();
  */
 export async function botIsAdmin(chatId: number, token?: string): Promise<boolean | null> {
   const own = !token;
-  token = token ?? botToken("client");
+  token = token ?? botToken("client") ?? undefined;
   if (!token) return null;
   try {
     let id = own ? botId : (botIds.get(token) ?? null);

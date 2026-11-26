@@ -39,12 +39,12 @@ import { botToken } from "@/lib/bot-tokens.server";
 const tashkentDay = (d = new Date()) =>
   new Date(d.getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
 
-function botToken(): string | null {
+function clientToken(): string | null {
   return botToken("client") ?? null;
 }
 
 async function memberCount(chat: string | number, fallback?: string | null): Promise<number> {
-  const token = botToken();
+  const token = clientToken();
   if (!token && !fallback) throw new Error("TELEGRAM_BOT_TOKEN yo'q");
   // A private channel only the company's marketing bot is in: its token.
   if (fallback) {
@@ -107,7 +107,7 @@ export async function addChannel(
   userId: string,
   input: AddChannelInput,
 ): Promise<{ id: string; title: string; members: number }> {
-  const token = botToken();
+  const token = clientToken();
   if (!token) throw new Error("Platformaning Telegram boti sozlanmagan.");
   let target: string | number;
   if (input.chatId != null) {

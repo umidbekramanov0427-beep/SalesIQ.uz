@@ -102,7 +102,7 @@ export async function insertLeadChatMessage(row: LeadChatRow): Promise<void> {
   if (again) throw again;
 }
 
-function botToken(): string | null {
+function clientToken(): string | null {
   return botToken("client") ?? null;
 }
 
@@ -111,14 +111,14 @@ async function chatToken(chatId: number): Promise<string | null> {
   try {
     return (await tokenForChat(chatId)).token;
   } catch {
-    return botToken();
+    return clientToken();
   }
 }
 
 async function telegram<T>(
   method: string,
   payload: Record<string, unknown>,
-  token: string | null = botToken(),
+  token: string | null = clientToken(),
 ): Promise<T | null> {
   if (!token) return null;
   const controller = new AbortController();
@@ -150,7 +150,7 @@ export async function downloadChatFile(
   orgId?: string | null,
 ): Promise<{ data: ArrayBuffer; path: string } | null> {
   const own = orgId ? await orgBot(orgId) : null;
-  for (const token of [own?.token ?? null, botToken()]) {
+  for (const token of [own?.token ?? null, clientToken()]) {
     if (!token) continue;
     const meta = await telegram<{ file_path?: string; file_size?: number }>(
       "getFile",
