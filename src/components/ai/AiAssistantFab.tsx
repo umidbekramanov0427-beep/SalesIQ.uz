@@ -259,7 +259,20 @@ export function AiAssistantFab() {
     void send(input);
   }
 
-  const suggestions = [t("fab.q1"), t("fab.q2"), t("fab.q3")];
+  // Quick replies belong to the newest answer, even when a setup card
+  // follows it; a later message from the user retires them.
+  const repliesAt = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]!;
+      if (m.role === "user") return -1;
+      if (!m.card && !m.error) return i;
+    }
+    return -1;
+  })();
+  // The company admin also gets the setup ones (lib/ai/setup-cards.ts).
+  const suggestions = isAdmin
+    ? [t("fab.qSetup"), t("fab.qBot"), t("fab.q1")]
+    : [t("fab.q1"), t("fab.q2"), t("fab.q3")];
   // The chat opens on whichever side of the button has more room, and is
   // never taller than that room.
   const roomAbove = typeof window !== "undefined" ? topOf(spot) - EDGE - 12 : 560;
@@ -447,6 +460,7 @@ export function AiAssistantFab() {
                       token={m.token}
                       finished={m.cardDone}
                       onFinished={(summary) => cardFinished(i, summary)}
+                      onAsk={(text) => void send(text)}
                     />
                   ) : m.status ? (
                     <p
@@ -472,7 +486,7 @@ export function AiAssistantFab() {
                         : m.content}
                       {m.role === "assistant" &&
                         !m.error &&
-                        i === messages.length - 1 &&
+                        i === repliesAt &&
                         !chat.isPending &&
                         splitQuickReplies(m.content).replies.length > 0 && (
                           <span className="mt-2.5 flex flex-wrap gap-1.5 whitespace-normal">

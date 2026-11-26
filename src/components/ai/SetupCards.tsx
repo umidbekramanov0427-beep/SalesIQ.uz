@@ -13,7 +13,9 @@ import {
   Copy,
   ExternalLink,
   KeyRound,
+  Circle,
   Loader2,
+  Map as MapIcon,
   Plus,
   Send,
   UserPlus,
@@ -29,6 +31,13 @@ import { cn, describeError } from "@/lib/utils";
 import { buildSimpleSteps } from "@/lib/salesbots/simple-bot";
 import { DEFAULT_FUNNEL_STAGES, createStageRows, defaultStageRows } from "@/lib/funnel-defaults";
 import type { SetupCardSpec, SetupQuestion } from "@/lib/ai/setup-cards";
+import {
+  SETUP_TOPICS,
+  SETUP_TOPIC_INFO,
+  nextSetupTopic,
+  setupDone,
+  type SetupMapState,
+} from "@/lib/ai/setup-map";
 import { useSaveSalesbot } from "@/hooks/use-automations";
 import {
   useCreatePipeline,
@@ -51,6 +60,7 @@ const META: Record<SetupCardSpec["kind"], { icon: LucideIcon; tone: string }> = 
   employee: { icon: UserPlus, tone: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400" },
   funnel: { icon: Workflow, tone: "bg-amber-500/12 text-amber-600 dark:text-amber-400" },
   business_profile: { icon: Building2, tone: "bg-primary/10 text-primary" },
+  setup_map: { icon: MapIcon, tone: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400" },
 };
 
 export function SetupCard({
@@ -58,8 +68,11 @@ export function SetupCard({
   token,
   finished,
   onFinished,
+  onAsk,
 }: {
   card: SetupCardSpec;
+  /** Sends a message to the assistant (the map's «AI qilsin» / «Birga» buttons). */
+  onAsk?: ((text: string) => void) | undefined;
   /** A bot token the admin typed into the chat, moved into the card's own field. */
   token?: string | undefined;
   /** Set once the card ran; the card then shows its result only. */
@@ -87,6 +100,8 @@ export function SetupCard({
         return <FunnelForm card={card} onDone={finish} />;
       case "business_profile":
         return <BusinessForm card={card} onDone={finish} />;
+      case "setup_map":
+        return <SetupMapView onAsk={onAsk} />;
     }
   })();
   return (
@@ -847,6 +862,111 @@ function BusinessForm({
       <Run busy={update.isPending} disabled={!v.description.trim()} onClick={() => void saveIt()}>
         {t("aic.business_profile.run")}
       </Run>
+    </>
+  );
+}
+
+/* ------------------------------ the setup map ------------------------------ */
+
+function SetupMapView({ onAsk }: { onAsk?: ((text: string) => void) | undefined }) {
+  const { t } = useI18n();
+  const map = useQuery({
+    queryKey: ["setup_map"],
+    staleTime: 0,
+    queryFn: async (): Promise<SetupMapState | null> => {
+      const res = await apiFetch("/account/setup-map");
+      if (!res.ok) return null;
+      return ((await res.json()) as { state: SetupMapState }).state;
+    },
+  });
+  if (map.isLoading) return <Loader2 className="h-4 w-4 animate-spin text-subtle" />;
+  const state = map.data;
+  if (!state) return <ErrorLine error={t("aic.failed")} />;
+  const { done, total } = setupDone(state);
+  const next = nextSetupTopic(state);
+  return (
+    <>
+      <div>
+        <div className="flex items-baseline justify-between text-[12px]">
+          <span className="font-semibold text-foreground">
+            {t("aic.setup_map.progress", { done, total })}
+          </span>
+          <span className="text-muted-foreground tabular-nums">
+            {Math.round((done / total) * 100)}%
+          </span>
+        </div>
+        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface">
+          <div
+            className="h-full rounded-full bg-emerald-500"
+            style={{ width: `${(done / total) * 100}%` }}
+          />
+        </div>
+      </div>
+      <ul className="divide-y divide-border rounded-lg border border-border">
+        {SETUP_TOPICS.map((k) => {
+          const info = SETUP_TOPIC_INFO[k];
+          const label = t(`aic.topic.${k}`);
+          const ok = state[k];
+          const [path, query] = info.path.split("?");
+          return (
+            <li key={k} className={cn("px-2.5 py-2", k === next && "bg-primary/[0.04]")}>
+              <div className="flex items-center gap-2">
+                {ok ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                ) : (
+                  <Circle
+                    className={cn("h-4 w-4 shrink-0", k === next ? "text-primary" : "text-subtle")}
+                  />
+                )}
+                <Link
+                  to={path!}
+                  {...(query
+                    ? { search: Object.fromEntries(new URLSearchParams(query)) as never }
+                    : {})}
+                  className={cn(
+                    "min-w-0 flex-1 truncate text-[12.5px] hover:underline",
+                    ok ? "text-muted-foreground" : "font-semibold text-foreground",
+                  )}
+                >
+                  {label}
+                  {info.optional && !ok && (
+                    <span className="ml-1 font-normal text-subtle">
+                      · {t("aic.setup_map.optional")}
+                    </span>
+                  )}
+                </Link>
+              </div>
+              {!ok && onAsk && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5 pl-6">
+                  {info.card && (
+                    <button
+                      type="button"
+                      onClick={() => onAsk(t("aic.setup_map.askAi", { topic: label }))}
+                      className="inline-flex h-7 items-center rounded-md border border-primary/40 bg-background px-2 text-[11.5px] font-semibold text-primary hover:bg-primary/10"
+                    >
+                      {t("aic.setup_map.ai")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onAsk(t("aic.setup_map.askTogether", { topic: label }))}
+                    className="ctl-soft inline-flex h-7 items-center rounded-md px-2 text-[11.5px] font-semibold"
+                  >
+                    {t("aic.setup_map.together")}
+                  </button>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <button
+        type="button"
+        onClick={() => void map.refetch()}
+        className="text-[11.5px] font-semibold text-primary hover:underline"
+      >
+        {t("aic.setup_map.refresh")}
+      </button>
     </>
   );
 }

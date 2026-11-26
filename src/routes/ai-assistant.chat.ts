@@ -5,8 +5,9 @@ import { loadOrgAccess } from "@/lib/org-access.server";
 import { getRequestUserId } from "@/lib/auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runChatRounds, type ChatEvent, type GeminiContent } from "@/lib/ai-chat-rounds.server";
-import { guideRules, pageIndex, setupProgress } from "@/lib/ai/platform-guide";
-import { loadFirstSteps } from "@/lib/first-steps.server";
+import { guideRules, pageIndex } from "@/lib/ai/platform-guide";
+import { loadSetupMap } from "@/lib/ai/setup-map.server";
+import { SETUP_TOPICS, setupMapPrompt, type SetupTopic } from "@/lib/ai/setup-map";
 import { SHOW_SETUP_CARD_TOOL, parseSetupCard, setupRules } from "@/lib/ai/setup-cards";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -1094,8 +1095,16 @@ Other pages:
             .select("telegram_chat_id")
             .eq("id", userId)
             .maybeSingle();
-          const setup = await loadFirstSteps(orgId, !!me?.telegram_chat_id).catch(() => null);
-          if (setup) systemPrompt += "\n\n" + setupProgress(setup.steps, setup.ownBot);
+          const map = await loadSetupMap(orgId, !!me?.telegram_chat_id).catch(() => null);
+          if (map) {
+            const labels = Object.fromEntries(
+              SETUP_TOPICS.map((k) => [
+                k,
+                (uzDict as Record<string, string>)[`aic.topic.${k}`] ?? k,
+              ]),
+            ) as Record<SetupTopic, string>;
+            systemPrompt += "\n\n" + setupMapPrompt(map, labels);
+          }
         }
         if (profile) {
           const context = [

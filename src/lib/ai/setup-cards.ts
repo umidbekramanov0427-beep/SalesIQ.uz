@@ -13,6 +13,7 @@ export const SETUP_CARD_KINDS = [
   "employee",
   "funnel",
   "business_profile",
+  "setup_map",
 ] as const;
 export type SetupCardKind = (typeof SETUP_CARD_KINDS)[number];
 
@@ -104,7 +105,7 @@ export function redactBotToken(text: string): string {
  */
 export function splitQuickReplies(text: string): { text: string; replies: string[] } {
   const replies: string[] = [];
-  const cleaned = text.replace(/\[\[([^\[\]\n]{1,60})\]\]/g, (_m, label: string) => {
+  const cleaned = text.replace(/\[\[([^[\]\n]{1,60})\]\]/g, (_m, label: string) => {
     const l = label.trim();
     if (l && !replies.includes(l)) replies.push(l);
     return "";
@@ -122,7 +123,7 @@ export function splitQuickReplies(text: string): { text: string; replies: string
 export const SHOW_SETUP_CARD_TOOL = {
   name: "show_setup_card",
   description:
-    "Show the company admin a setup card inside this chat that does a setup for them after they check it and press its button. Kinds: client_bot -- connect the company's own Telegram bot for its clients (the card asks for the @BotFather token itself); my_telegram -- link the admin's own Telegram to the SalesIQ bot for reports, reminders and sign-in codes (the card shows a link and a code to send to the bot); salesbot -- create a simple salesbot (greeting, questions with where each answer is saved, final message, a tag); employee -- add an employee (name, email; the card makes a password); funnel -- create a funnel with work stages (won/lost stages are added by themselves); business_profile -- fill in what the company sells, for whom and how it talks. Fill prefill with everything you already know from the conversation and the business context so the admin only checks it.",
+    "Show the company admin a setup card inside this chat that does a setup for them after they check it and press its button. Kinds: client_bot -- connect the company's own Telegram bot for its clients (the card asks for the @BotFather token itself); my_telegram -- link the admin's own Telegram to the SalesIQ bot for reports, reminders and sign-in codes (the card shows a link and a code to send to the bot); salesbot -- create a simple salesbot (greeting, questions with where each answer is saved, final message, a tag); employee -- add an employee (name, email; the card makes a password); funnel -- create a funnel with work stages (won/lost stages are added by themselves); business_profile -- fill in what the company sells, for whom and how it talks; setup_map -- the company's whole setup map with what is done and what is left (no prefill). Fill prefill with everything you already know from the conversation and the business context so the admin only checks it.",
   parameters: {
     type: "object",
     properties: {
@@ -176,6 +177,7 @@ export function setupRules(isAdmin: boolean): string {
     "- «AI o'zi qilsin», or when they plainly ask you to do it ('ulab ber', 'qo'shib ber', 'yaratib ber'): ask only what you really need, one question at a time, with quick replies for the choices (for example for a bot: [[Mijozlar uchun Telegram bot]] [[Hisobot boti (o'z Telegramim)]] [[Salesbot]]), then call show_setup_card with the right kind and everything you know in prefill. Supported now: client_bot, my_telegram, salesbot, employee, funnel, business_profile. For anything else (telephony, Instagram, amoCRM, payments, triggers) go «Birga» with links.",
     "- After calling show_setup_card write ONE short sentence: what to check or fill in on the card and which button to press. Never ask them to type a token, password or secret key into the chat -- the card has its own safe field.",
     "- A user message starting with «✓» is the result of a card the admin ran: confirm it in one line and offer the next useful step (with quick replies), e.g. after a client bot: test it with /start; after a salesbot: open it or set it as the bot's start; after the Telegram link: suggest connecting the company's client bot.",
+    "- THE WHOLE PLATFORM: when they want the company set up ('platformani sozlab ber', 'nimadan boshlay', 'hammasini sozlaymiz', a new company), call show_setup_card with kind setup_map first, then lead them through the topics that are NOT DONE in the map's order, one topic at a time: name it in one line, say why it matters in one line, and offer [[AI o'zi qilsin]] (only for topics you can do with a card) [[Birga sozlaymiz]] [[Keyinroq]]. After each topic is done or put off, go to the next one until the map is finished. Use the setup map in this prompt for what is done.",
     "- Quick replies are written as [[Label]] -- the chat shows them as buttons. Use at most 4, short.",
   ].join("\n");
 }

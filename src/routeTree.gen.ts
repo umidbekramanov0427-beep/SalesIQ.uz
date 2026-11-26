@@ -63,6 +63,7 @@ import { Route as AccountMyMeetingRouteImport } from './routes/account.my-meetin
 import { Route as AccountOnlineRouteImport } from './routes/account.online'
 import { Route as AccountQuickLoginRouteImport } from './routes/account.quick-login'
 import { Route as AccountSessionEventsRouteImport } from './routes/account.session-events'
+import { Route as AccountSetupMapRouteImport } from './routes/account.setup-map'
 import { Route as AdminAiAgentsRouteImport } from './routes/admin.ai-agents'
 import { Route as AdminAiOverviewRouteImport } from './routes/admin.ai-overview'
 import { Route as AdminAmocrmCatalogRouteImport } from './routes/admin.amocrm-catalog'
@@ -616,6 +617,11 @@ const AccountQuickLoginRoute = AccountQuickLoginRouteImport.update({
 const AccountSessionEventsRoute = AccountSessionEventsRouteImport.update({
   id: '/account/session-events',
   path: '/account/session-events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSetupMapRoute = AccountSetupMapRouteImport.update({
+  id: '/account/setup-map',
+  path: '/account/setup-map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAiAgentsRoute = AdminAiAgentsRouteImport.update({
@@ -2149,6 +2155,7 @@ export interface FileRoutesByFullPath {
   '/account/online': typeof AccountOnlineRoute
   '/account/quick-login': typeof AccountQuickLoginRoute
   '/account/session-events': typeof AccountSessionEventsRoute
+  '/account/setup-map': typeof AccountSetupMapRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
@@ -2487,6 +2494,7 @@ export interface FileRoutesByTo {
   '/account/online': typeof AccountOnlineRoute
   '/account/quick-login': typeof AccountQuickLoginRoute
   '/account/session-events': typeof AccountSessionEventsRoute
+  '/account/setup-map': typeof AccountSetupMapRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
@@ -2826,6 +2834,7 @@ export interface FileRoutesById {
   '/account/online': typeof AccountOnlineRoute
   '/account/quick-login': typeof AccountQuickLoginRoute
   '/account/session-events': typeof AccountSessionEventsRoute
+  '/account/setup-map': typeof AccountSetupMapRoute
   '/admin/ai-agents': typeof AdminAiAgentsRouteWithChildren
   '/admin/ai-overview': typeof AdminAiOverviewRoute
   '/admin/amocrm-catalog': typeof AdminAmocrmCatalogRoute
@@ -3166,6 +3175,7 @@ export interface FileRouteTypes {
     | '/account/online'
     | '/account/quick-login'
     | '/account/session-events'
+    | '/account/setup-map'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
     | '/admin/amocrm-catalog'
@@ -3504,6 +3514,7 @@ export interface FileRouteTypes {
     | '/account/online'
     | '/account/quick-login'
     | '/account/session-events'
+    | '/account/setup-map'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
     | '/admin/amocrm-catalog'
@@ -3842,6 +3853,7 @@ export interface FileRouteTypes {
     | '/account/online'
     | '/account/quick-login'
     | '/account/session-events'
+    | '/account/setup-map'
     | '/admin/ai-agents'
     | '/admin/ai-overview'
     | '/admin/amocrm-catalog'
@@ -4181,6 +4193,7 @@ export interface RootRouteChildren {
   AccountOnlineRoute: typeof AccountOnlineRoute
   AccountQuickLoginRoute: typeof AccountQuickLoginRoute
   AccountSessionEventsRoute: typeof AccountSessionEventsRoute
+  AccountSetupMapRoute: typeof AccountSetupMapRoute
   AnnouncementsActiveRoute: typeof AnnouncementsActiveRoute
   ApiPricingRoute: typeof ApiPricingRoute
   ApplicationsSlotsRoute: typeof ApplicationsSlotsRoute
@@ -4732,6 +4745,13 @@ declare module '@tanstack/react-router' {
       path: '/account/session-events'
       fullPath: '/account/session-events'
       preLoaderRoute: typeof AccountSessionEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/setup-map': {
+      id: '/account/setup-map'
+      path: '/account/setup-map'
+      fullPath: '/account/setup-map'
+      preLoaderRoute: typeof AccountSetupMapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/ai-agents': {
@@ -7192,6 +7212,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountOnlineRoute: AccountOnlineRoute,
   AccountQuickLoginRoute: AccountQuickLoginRoute,
   AccountSessionEventsRoute: AccountSessionEventsRoute,
+  AccountSetupMapRoute: AccountSetupMapRoute,
   AnnouncementsActiveRoute: AnnouncementsActiveRoute,
   ApiPricingRoute: ApiPricingRoute,
   ApplicationsSlotsRoute: ApplicationsSlotsRoute,
