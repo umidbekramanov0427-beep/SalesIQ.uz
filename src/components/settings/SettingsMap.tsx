@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, ChevronDown, ChevronRight, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, ChevronRight, type LucideIcon } from "lucide-react";
 import type { CardTone } from "@/components/layout/Primitives";
 import { TONE_TILE } from "@/lib/tones";
 import { useI18n } from "@/lib/i18n";
@@ -28,8 +28,6 @@ export type SettingsMapItem = {
 };
 
 type Cable = { key: string; d: string; state: MapState; current: boolean };
-
-const FOLD_KEY = "salesiq.settings.mapOpen";
 
 function MapCard({
   item,
@@ -129,13 +127,17 @@ export function SettingsMap({
   activeKey,
   onOpen,
   core,
+  variant = "map",
 }: {
   left: SettingsMapItem[];
   right: SettingsMapItem[];
   leftCaption: string;
   rightCaption: string;
-  activeKey: string;
+  /** The open section (none on the map itself). */
+  activeKey: string | null;
   onOpen: (key: string) => void;
+  /** The whole map (Sozlamalar's front page) or one row over an open section. */
+  variant?: "map" | "row";
   core: { name: string; initials: string; avatarUrl: string | null; role: string };
 }) {
   const { t } = useI18n();
@@ -144,22 +146,7 @@ export function SettingsMap({
   const done = stateful.filter((i) => i.state === "ok").length;
   const share = stateful.length ? done / stateful.length : 1;
 
-  const [open, setOpen] = useState(() => {
-    try {
-      return window.localStorage.getItem(FOLD_KEY) !== "0";
-    } catch {
-      return true;
-    }
-  });
-  const toggle = () =>
-    setOpen((v) => {
-      try {
-        window.localStorage.setItem(FOLD_KEY, v ? "0" : "1");
-      } catch {
-        // storage unavailable: folds for this visit only
-      }
-      return !v;
-    });
+  const open = variant === "map";
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const coreRef = useRef<HTMLDivElement>(null);
@@ -231,23 +218,10 @@ export function SettingsMap({
   const R = 62;
   const C = 2 * Math.PI * R;
 
-  const foldButton = (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-expanded={open}
-      className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-subtle transition-colors hover:bg-accent hover:text-foreground"
-    >
-      {open ? t("console.mapHide") : t("console.mapShow")}
-      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
-    </button>
-  );
-
   if (!open) {
-    // Folded: one row of the sections, still one click to each.
+    // Over an open section: one row of the sections, one click to each.
     return (
       <div className="mb-6 phone:hidden">
-        <div className="mb-2 flex justify-end">{foldButton}</div>
         <div className="admin-card flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-card/70 p-1.5">
           {all.map((it) => {
             const Icon = it.icon;
@@ -282,9 +256,8 @@ export function SettingsMap({
   }
 
   return (
-    <div className="mb-8 phone:hidden">
-      <div className="mb-2 flex justify-end">{foldButton}</div>
-      <section className="admin-card relative overflow-hidden rounded-[20px] border border-border bg-card/70 p-5">
+    <div className="mb-8">
+      <section className="admin-card relative overflow-hidden rounded-[20px] border border-border bg-card/70 p-5 phone:p-3.5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <p className="console-caption">{t("setmap.caption")}</p>
           <p className="console-caption">
@@ -293,11 +266,11 @@ export function SettingsMap({
         </div>
         <div
           ref={wrapRef}
-          className="relative grid grid-cols-[minmax(0,1fr)_minmax(190px,220px)_minmax(0,1fr)] gap-x-14"
+          className="relative grid grid-cols-[minmax(0,1fr)_minmax(190px,220px)_minmax(0,1fr)] gap-x-14 phone:grid-cols-1 phone:gap-y-5"
         >
           <svg
             aria-hidden
-            className="pointer-events-none absolute inset-0"
+            className="pointer-events-none absolute inset-0 phone:hidden"
             width={box.w}
             height={box.h}
             viewBox={`0 0 ${box.w || 1} ${box.h || 1}`}
@@ -335,7 +308,7 @@ export function SettingsMap({
 
           {column(left, leftCaption)}
 
-          <div className="relative flex flex-col items-center justify-center py-2">
+          <div className="relative flex flex-col items-center justify-center py-2 phone:order-first">
             <div
               ref={coreRef}
               className="console-core-pulse relative grid h-[148px] w-[148px] place-items-center rounded-full bg-[radial-gradient(circle_at_50%_40%,color-mix(in_oklab,var(--primary)_18%,var(--card)),var(--card)_70%)]"

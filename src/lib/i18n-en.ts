@@ -3416,6 +3416,8 @@ export const en: Record<string, string> = {
   "settings.nav.business": "Business profile",
   "settings.nav.general": "General",
   "settings.nav.company": "Company",
+  "setmap.back": "Settings",
+  "setmap.hubDesc": "Your profile, security and company settings — pick a section",
   "setmap.here": "You are here",
   "setmap.open": "Open",
   "setmap.go": "Go",

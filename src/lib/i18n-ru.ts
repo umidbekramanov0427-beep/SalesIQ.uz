@@ -3435,6 +3435,8 @@ const ru: Record<string, string> = {
   "settings.nav.business": "Бизнес-профиль",
   "settings.nav.general": "Общее",
   "settings.nav.company": "Компания",
+  "setmap.back": "Настройки",
+  "setmap.hubDesc": "Профиль, безопасность и настройки компании — выберите раздел",
   "setmap.here": "Вы здесь",
   "setmap.open": "Открыть",
   "setmap.go": "Перейти",

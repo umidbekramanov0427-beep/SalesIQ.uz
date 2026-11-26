@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import {
   BookOpen,
+  ArrowLeft,
   UserRound,
   Bell,
   Inbox,
@@ -1718,27 +1719,24 @@ function SettingsPage() {
         : k === "business"
           ? "profile"
           : null;
-  const [section, setSection] = useState<SectionKey>(() => {
+  // No section: Sozlamalar's front page, the map. A section opens on its own.
+  const section: SectionKey | null = (() => {
     const k = alias(sectionParam);
-    return k && allowedSections.has(k) ? k : "personal";
-  });
+    return k && allowedSections.has(k) ? k : null;
+  })();
   const [companyTab, setCompanyTab] = useState<CompanyTab>(() => tabOf(sectionParam) ?? "profile");
-  // A link to another section while already here (the bell's
-  // "Hammasini ko'rish") switches to it.
+  // A link to a company tab while already here switches to it.
   useEffect(() => {
-    const k = alias(sectionParam);
-    if (k && allowedSections.has(k)) setSection(k);
     const tab = tabOf(sectionParam);
     if (tab) setCompanyTab(tab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectionParam]);
-  // Picking a section on the map brings its settings into view.
-  const contentRef = useRef<HTMLDivElement>(null);
+  // A card on the map opens its section as a page of its own (the
+  // browser's back button returns to the map).
+  const navigate = Route.useNavigate();
   const openSection = (key: string) => {
-    setSection(key as SectionKey);
-    requestAnimationFrame(() =>
-      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
-    );
+    void navigate({ search: { section: key as SectionKey } });
+    document.querySelector("main")?.scrollTo({ top: 0 });
   };
 
   // What each card on the map says about where it stands.
@@ -1832,22 +1830,45 @@ function SettingsPage() {
   const mapRight = navAll
     .filter((i) => !(i.type === "section" && PERSONAL.has(i.key)))
     .map(toMapItem);
-  const current = generalItems.find((i) => i.type === "section" && i.key === section);
-  const currentMeta = META[section];
+  const current = section
+    ? generalItems.find((i) => i.type === "section" && i.key === section)
+    : undefined;
+  const currentMeta = section ? META[section] : undefined;
+  const mapCore = {
+    name: user?.name ?? "",
+    initials: user?.initials ?? "",
+    avatarUrl: user?.avatarUrl ?? null,
+    role: t(`pf.role.${user?.role ?? "sotuv_menejeri"}`),
+  };
 
   return (
     <SettingsLayout variant="admin" gutter={false}>
       <div className="mx-auto w-full max-w-[1240px] phone:max-w-none">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <BackButton />
+          {section ? (
+            <Link
+              to="/settings"
+              search={{}}
+              className="group inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-[13px] font-semibold text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05)] transition-colors hover:border-primary/40 hover:text-primary phone:h-8 phone:px-3 phone:text-[12.5px]"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+              {t("setmap.back")}
+            </Link>
+          ) : (
+            <BackButton />
+          )}
           <SaveStatus />
         </div>
         <AdminConsoleHeader
-          caption={`${t("nav./settings")} · ${PERSONAL.has(section) ? t("setmap.mine") : t("setmap.company")}`}
+          caption={
+            section
+              ? `${t("nav./settings")} · ${PERSONAL.has(section) ? t("setmap.mine") : t("setmap.company")}`
+              : t("setmap.caption")
+          }
           title={current?.label ?? t("nav./settings")}
-          icon={current?.icon}
+          icon={current?.icon ?? SlidersHorizontal}
           tone={current ? (SETTINGS_ICON_TONES.get(current.icon) ?? "primary") : "primary"}
-          description={currentMeta?.description}
+          description={currentMeta?.description ?? t("setmap.hubDesc")}
           actions={
             <>
               <label className="relative phone:w-full">
@@ -1869,41 +1890,43 @@ function SettingsPage() {
           }
         />
 
-        {/* Phones: the sections as one sideways row of pills. */}
-        <div className="mb-4 hidden gap-2 overflow-x-auto phone:flex phone-tabs">
-          {navAll.map((item) =>
-            item.type === "section" ? (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setSection(item.key)}
-                className={cn(
-                  "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors",
-                  section === item.key
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-surface text-muted-foreground",
-                )}
-              >
-                <item.icon
+        {/* Phones, inside a section: the sections as one sideways row of pills. */}
+        {section && (
+          <div className="mb-4 hidden gap-2 overflow-x-auto phone:flex phone-tabs">
+            {navAll.map((item) =>
+              item.type === "section" ? (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => openSection(item.key)}
                   className={cn(
-                    "h-3.5 w-3.5 shrink-0",
-                    section !== item.key && settingsIconTone(item.icon),
+                    "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors",
+                    section === item.key
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-surface text-muted-foreground",
                   )}
-                />
-                {item.label}
-              </button>
-            ) : (
-              <Link
-                key={`${item.to}-m`}
-                to={item.to}
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
-              >
-                <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
-                {item.label}
-              </Link>
-            ),
-          )}
-        </div>
+                >
+                  <item.icon
+                    className={cn(
+                      "h-3.5 w-3.5 shrink-0",
+                      section !== item.key && settingsIconTone(item.icon),
+                    )}
+                  />
+                  {item.label}
+                </button>
+              ) : (
+                <Link
+                  key={`${item.to}-m`}
+                  to={item.to}
+                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-muted-foreground"
+                >
+                  <item.icon className={cn("h-3.5 w-3.5 shrink-0", settingsIconTone(item.icon))} />
+                  {item.label}
+                </Link>
+              ),
+            )}
+          </div>
+        )}
 
         {q && navAll.length === 0 ? (
           <p className="mb-6 font-mono text-[12.5px] text-muted-foreground">{t("set.nothing")}</p>
@@ -1915,16 +1938,12 @@ function SettingsPage() {
             rightCaption={t("setmap.company")}
             activeKey={section}
             onOpen={openSection}
-            core={{
-              name: user?.name ?? "",
-              initials: user?.initials ?? "",
-              avatarUrl: user?.avatarUrl ?? null,
-              role: t(`pf.role.${user?.role ?? "sotuv_menejeri"}`),
-            }}
+            core={mapCore}
+            variant={section ? "row" : "map"}
           />
         )}
 
-        <div ref={contentRef} className="scroll-mt-4">
+        <div>
           {section === "personal" && <PersonalSection />}
           {section === "guides" && <GuidesSection />}
           {section === "security" && <SecuritySection />}
@@ -1947,7 +1966,7 @@ function SettingsPage() {
             <Navigate to="/billing" replace />
           )}
           {/* AI -> amoCRM moved to the amoCRM integration page. */}
-          {section === "amocrm" && (
+          {sectionParam === "amocrm" && (
             <Navigate to="/integrations/$slug" params={{ slug: "amocrm" }} replace />
           )}
           {section === "reportProblem" && <ReportProblemSection />}

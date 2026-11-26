@@ -3486,6 +3486,8 @@ const uz: Record<string, string> = {
   "settings.nav.business": "Biznes profili",
   "settings.nav.general": "Umumiy",
   "settings.nav.company": "Kompaniya",
+  "setmap.back": "Sozlamalar",
+  "setmap.hubDesc": "Profilingiz, xavfsizlik va kompaniya sozlamalari — bo'limni tanlang",
   "setmap.here": "Shu yerdasiz",
   "setmap.open": "Ochish",
   "setmap.go": "O'tish",
