@@ -27,22 +27,11 @@ export const Route = createFileRoute("/telegram/link")({
           .single();
         if (error) return Response.json({ error: error.message }, { status: 400 });
 
-        const { data: botSetting } = caller.organization_id
-          ? await supabaseAdmin
-              .from("integration_settings")
-              .select("config")
-              .eq("organization_id", caller.organization_id)
-              .eq("key", "telegram_bot")
-              .maybeSingle()
-          : { data: null };
-        const config = (botSetting?.config ?? {}) as { username?: string };
-
-        // An org's own bot when it set one up, otherwise the platform's
-        // staff bot (Platforma -> Botlar) when there is one, else the shared
-        // bot -- so the page can always open a t.me deep link.
+        // People link to the platform's companies' bot (Platforma -> Botlar),
+        // else the clients' bot -- whatever is set there now. (An old
+        // per-company bot name in integration_settings is no longer used.)
         await refreshBotTokens();
         const botUsername =
-          config.username ??
           (await platformBotUsername("staff")) ??
           (await getTelegramBotUsername().catch(() => null));
 

@@ -54,7 +54,6 @@ import {
   useBusinessProfile,
   useLinkTelegramGroup,
   useMyOrganization,
-  useIntegrationSetting,
   useLinkTelegram,
   useOrgGeneralSettings,
   useOrgNotificationSettings,
@@ -168,14 +167,10 @@ const STAGE_COLORS = [
 function TelegramLinkCard() {
   const { t } = useI18n();
   const { user, refreshProfile } = useAuth();
-  const { data: botSetting } = useIntegrationSetting("telegram_bot");
   const linkTelegram = useLinkTelegram();
   const [linkInfo, setLinkInfo] = useState<{ code: string; botUsername: string | null } | null>(
     null,
   );
-
-  const config = (botSetting?.config ?? null) as { username?: string } | null;
-  const botUsername = config?.username?.trim() || null;
 
   async function generateCode() {
     try {
@@ -224,14 +219,14 @@ function TelegramLinkCard() {
                 <div className="mt-4 space-y-2 rounded-lg bg-accent p-3.5 text-sm">
                   <p>
                     1.{" "}
-                    {(linkInfo.botUsername ?? botUsername) ? (
+                    {linkInfo.botUsername ? (
                       <a
-                        href={`https://t.me/${linkInfo.botUsername ?? botUsername}`}
+                        href={`https://t.me/${linkInfo.botUsername}`}
                         target="_blank"
                         rel="noreferrer"
                         className="font-semibold text-primary hover:underline"
                       >
-                        @{linkInfo.botUsername ?? botUsername}
+                        @{linkInfo.botUsername}
                       </a>
                     ) : (
                       "Botni"
@@ -313,7 +308,6 @@ function NotificationsSection() {
     user?.role === "super_admin" || user?.role === "rop" || user?.role === "platform_owner";
   const { data: settings, isLoading } = useOrgNotificationSettings();
   const updateSettings = useUpdateOrgNotificationSettings();
-  const { data: botSetting } = useIntegrationSetting("telegram_bot");
   const { data: boundChats = [] } = useTelegramBoundChats();
   const unbind = useUnbindTelegramChat();
   const linkGroup = useLinkTelegramGroup();
@@ -438,8 +432,7 @@ function NotificationsSection() {
     },
   ];
 
-  const config = (botSetting?.config ?? null) as { username?: string } | null;
-  const botUsername = bindInfo?.botUsername ?? config?.username?.trim() ?? null;
+  const botUsername = bindInfo?.botUsername ?? null;
 
   return (
     <div className="space-y-5">

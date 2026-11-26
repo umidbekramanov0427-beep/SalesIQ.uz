@@ -603,27 +603,6 @@ export function useSetAmoCrmCredentials() {
   });
 }
 
-export function useSetTelegramBotUsername() {
-  const qc = useQueryClient();
-  const { user } = useAuth();
-  return useMutation({
-    mutationFn: async (username: string) => {
-      const { error } = await supabase.from("integration_settings").upsert(
-        {
-          organization_id: user!.organizationId!,
-          key: "telegram_bot",
-          config: { username },
-          enabled: true,
-        },
-        { onConflict: "organization_id,key" },
-      );
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ["integration_settings", "telegram_bot"] }),
-  });
-}
-
 /* ------------------------------------------------------------------ */
 /* Office location — a single precise address (OpenStreetMap search/    */
 /* embed, no maps API key needed) shown in the header, admin-editable.  */

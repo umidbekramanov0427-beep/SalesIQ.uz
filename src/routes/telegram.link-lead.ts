@@ -54,17 +54,10 @@ export const Route = createFileRoute("/telegram/link-lead")({
         );
         if (error) return Response.json({ error: error.message }, { status: 400 });
 
-        const { data: botSetting } = await supabaseAdmin
-          .from("integration_settings")
-          .select("config")
-          .eq("organization_id", caller.organizationId)
-          .eq("key", "telegram_bot")
-          .maybeSingle();
-        const config = (botSetting?.config ?? {}) as { username?: string };
         // The client sends the code to the company's own bot when it has one,
         // else to the shared bot.
         const own = await orgBot(caller.organizationId);
-        const botUsername = own?.username ?? config.username ?? (await sharedBotUsername());
+        const botUsername = own?.username ?? (await sharedBotUsername());
 
         return Response.json({ code, botUsername, expiresAt });
       },

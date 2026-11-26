@@ -57,16 +57,15 @@ export const Route = createFileRoute("/telegram/link-group")({
         );
         if (error) return Response.json({ error: error.message }, { status: 400 });
 
-        const { data: botSetting } = await supabaseAdmin
-          .from("integration_settings")
-          .select("config")
-          .eq("organization_id", caller.organization_id)
-          .eq("key", "telegram_bot")
-          .maybeSingle();
-        const config = (botSetting?.config ?? {}) as { username?: string };
-        // The platform's shared bot when the org hasn't set its own.
+        // Report groups bind to the platform's companies' bot (Platforma ->
+        // Botlar), else the clients' bot.
+        const { botUsername: platformBot, refreshBotTokens } =
+          await import("@/lib/bot-tokens.server");
+        await refreshBotTokens();
         const botUsername =
-          config.username ?? (await getTelegramBotUsername().catch(() => null)) ?? null;
+          (await platformBot("staff")) ??
+          (await getTelegramBotUsername().catch(() => null)) ??
+          null;
 
         return Response.json({ code, botUsername, expiresAt });
       },

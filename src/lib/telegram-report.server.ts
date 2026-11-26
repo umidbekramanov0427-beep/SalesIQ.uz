@@ -23,17 +23,13 @@ function requireBotToken(): string {
 // link (t.me/<username>?start=...), which Telegram never hands you at
 // token-creation time, only via getMe. Cached in memory for the life of
 // this server instance since a bot's username essentially never changes.
-let cachedBotUsername: string | null = null;
-
 export async function getTelegramBotUsername(): Promise<string> {
-  if (cachedBotUsername) return cachedBotUsername;
-  const token = requireBotToken();
-  const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
-  if (!res.ok) throw new Error(`Telegram getMe failed (${res.status}): ${await res.text()}`);
-  const json = (await res.json()) as { ok?: boolean; result?: { username?: string } };
-  const username = json.result?.username;
+  // Follows the client bot's current token (Platforma -> Botlar): a swapped
+  // bot shows its own name at once, not the old one cached until a restart.
+  const { botUsername } = await import("@/lib/bot-tokens.server");
+  requireBotToken();
+  const username = await botUsername("client");
   if (!username) throw new Error("Telegram bot has no username.");
-  cachedBotUsername = username;
   return username;
 }
 
