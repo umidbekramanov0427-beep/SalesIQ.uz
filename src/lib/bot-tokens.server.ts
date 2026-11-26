@@ -107,9 +107,11 @@ export async function saveBotToken(
     if (!me)
       throw new Error("Telegram bu tokenni qabul qilmadi: @BotFather'dagi tokenni tekshiring");
     const others = (["client", "staff", "ops"] as const).filter((k) => k !== kind);
-    if (others.some((k) => botToken(k) === t)) {
+    const busy = others.find((k) => botToken(k) === t);
+    if (busy) {
+      const card = { client: "Mijozlar boti", staff: "Kompaniyalar boti", ops: "Egasi boti" }[busy];
       throw new Error(
-        "Bu token boshqa bot uchun ishlatilyapti: avval u botning tokenini almashtiring yoki har bot uchun alohida bot oching",
+        `Bu token «${card}» kartasida (@${me.username}) ishlatilyapti. Har bir karta uchun @BotFather'da alohida bot oching (/newbot).`,
       );
     }
     username = me.username;

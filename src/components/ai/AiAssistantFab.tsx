@@ -209,7 +209,6 @@ export function AiAssistantFab() {
     void ask([...next, { role: "user", content: `✓ ${summary}`, status: true }]);
   }
 
-
   /** The last question again, after an error. */
   function retry() {
     if (chat.isPending) return;
